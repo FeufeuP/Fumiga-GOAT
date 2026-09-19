@@ -1636,6 +1636,15 @@ function drawBanner(b) {
   const raw = clamp(Math.min((total - b.t) / IN, b.t / OUT), 0, 1);
   const a = 1 - Math.pow(1 - raw, 3);
 
+  // clarão subliminar: só no comecinho da entrada, na cor do anúncio — o
+  // quadro "pisca" por um instante e a onda parece entrar com impacto
+  const flash = b.t < IN ? Math.max(0, 1 - (IN - b.t) / (IN * 0.22)) : 0;
+  if (flash > 0) {
+    const col = b.kind === "boss" ? "255,77,90" : b.kind === "clear" ? "127,214,160" : "255,212,121";
+    ctx.fillStyle = `rgba(${col},${(0.16 * flash).toFixed(3)})`;
+    ctx.fillRect(0, 0, VIEW_W, VIEW_H);
+  }
+
   // ---- letterbox (barras que abrem/fecham): profundidade cinematográfica
   const barH = 20 * a;
   ctx.globalAlpha = 0.5;

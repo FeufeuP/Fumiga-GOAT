@@ -125,6 +125,11 @@ function startWave() {
   // treme de leve — a onda "entra" em vez de simplesmente aparecer
   G.slowMo = Math.max(G.slowMo || 0, 0.22);
   shake(0.22);
+  // a arena "abre": um anel de poeira quente sai do formigueiro
+  const AA = world.anthill;
+  ring(AA.x, AA.y, { r0: 30, r1: 330, life: 0.75, color: "#ffd479", width: 4 });
+  ring(AA.x, AA.y, { r0: 14, r1: 210, life: 0.55, color: "#ff8a4a", width: 2 });
+  dust(AA.x, AA.y + 10, { n: 16, power: 1.15, color: "#3a2c4c" });
   if (w.boss && !director.bossSpawned) {
     director.bossSpawned = true;
     spawnBoss(m.boss, run.wave);
