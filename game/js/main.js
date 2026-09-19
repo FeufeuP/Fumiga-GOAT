@@ -1,7 +1,7 @@
 // ============================================================================
 // FUMIGA-GOAT — bootstrap: carregamento, loop principal, redimensionamento
 // ============================================================================
-import { VIEW_W, VIEW_H, PAL, GIANT_SCALE } from "./config.js";
+import { VIEW_W, VIEW_H, PAL, GIANT_SCALE, ANT_SIZES } from "./config.js";
 import { G, loadSave } from "./state.js";
 import { loadAll, bakeRot, bakeRotTinted, dupSprite, setRotDrawScale } from "./assets.js";
 import { loadFonts, drawText } from "./font.js";
@@ -26,17 +26,6 @@ window.addEventListener("resize", fit);
 fit();
 
 // ------------------------------------------------------------- loading -----
-const ANT_SIZES = {
-  worker: 34, soldier: 48, spitter: 44, tank: 54, queen: 142,
-  scout: 36, healer: 40, bomber: 46,
-  // a GIGANTE é assada 5x maior que a soldado (pad 315 = 5x63) e desenhada
-  // com fator 4 = 20x exatos (ver setRotDrawScale abaixo): blocos de pixel
-  // uniformes sem pagar o custo de um canvas de 1260px por ângulo
-  giant: 247,
-  e_runner: 30, e_swarm: 34, e_warrior: 48, e_spitter: 46, e_reaper: 44,
-  e_matron: 80, e_sentinel: 62,
-};
-
 let progress = 0, phase = "CARREGANDO ESPOROS", ready = false, loadError = null;
 
 function drawLoading() {
@@ -98,7 +87,7 @@ async function bootAll() {
   progress = 1;
   boot();
   ready = true;
-  G.screen = "TITLE";
+  G.screen = "SPLASH";   // pré-menu: só o título + "clique para jogar"
 }
 
 // primeira interação: destrava áudio

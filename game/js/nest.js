@@ -17,6 +17,7 @@ import { SFX } from "./audio.js";
 import {
   allies, spawnAnt, popUsed, popCapTotal, recomputeAllies,
 } from "./units.js";
+import { colony } from "./ai.js";
 import { clamp, rand, lerp, TAU } from "./utils.js";
 
 // ------------------------------------------------------------------ salas ---
@@ -137,9 +138,11 @@ function makeNestAnt(a) {
     id: a.id, type: a.type, job: jobFor(a.type), sprite: a.def ? a.def.sprite : a.type,
     x: c.x + rnd(-40, 40), y: c.y + rnd(-20, 20),
     angle: rnd(0, TAU), bob: rnd(0, 6.28), speed: rnd(92, 118) * (mods().nestSpeed || 1),
+    baseSpeed: 0, zeal: rnd(0.85, 1.2),     // jeito próprio de trabalhar
     room: home, route: null, leg: 0, t: rnd(0, 3),
     carry: null, workT: 0, scale: 0,
   };
+  n.baseSpeed = n.speed;
   // o colosso não passa nos túneis: fica de folga no quartel
   if (n.job === "colossus") n.scale = 105 / Math.max(1, rotDrawSize("giant") || 105);
   return n;
@@ -185,10 +188,22 @@ export function nestUpdate(dt) {
   nest.t += dt;
   syncAnts();
 
+  // ---- CÉREBRO DA COLÔNIA falando com o formigueiro ----------------------
+  // Fome lá fora = mais carregadoras e menos escavadoras; alarme = guardas
+  // convocadas à entrada; perigo iminente = todo mundo trabalha mais rápido.
+  const hungry = colony.needs.food;
+  const alarmed = colony.needs.defense;
+  for (const n of nest.ants) {
+    const boost = 1 + hungry * 0.3 + alarmed * 0.2 * (n.job === "guard" ? 1.6 : 1);
+    n.speed = n.baseSpeed * boost * n.zeal;
+    if (alarmed > 0.5 && n.job === "guard" && !n.route && n.room !== "entrance") setRoute(n, "entrance");
+    if (alarmed > 0.7) n.bob += dt * 3;          // agitação: as formigas sentem
+  }
+
   // ---- quem pega na picareta: operárias largam a coleta e vão para a obra
   {
     let diggers = nest.ants.filter((n) => n.job === "digger").length;
-    const want = nest.dig ? 4 : 0;
+    const want = nest.dig ? Math.max(2, 5 - Math.round(hungry * 3)) : 0;
     for (const n of nest.ants) {
       if (n.job === "carrier" && diggers < want) { n.job = "digger"; n.route = null; diggers++; }
       else if (n.job === "digger" && diggers > want) { n.job = "carrier"; n.route = null; diggers--; }

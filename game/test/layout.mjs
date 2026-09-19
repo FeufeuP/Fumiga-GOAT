@@ -183,6 +183,10 @@ const { boot, update, render, setLastDt } = await import(BASE + "game.js");
 const { mouse, pressed, endTick } = await import(BASE + "input.js");
 const { uiButtons } = await import(BASE + "ui.js");
 const { startTutorial, stopTutorial, TUT } = await import(BASE + "tutorial.js");
+// a cortina de troca de tela é animação: o teste audita o LAYOUT, então ela é
+// encerrada antes de cada quadro auditado (senão o escurecedor de abertura
+// esconderia a interface toda).
+const { finishTransition } = await import(BASE + "transition.js");
 const { enterTree } = await import(BASE + "meta.js");
 const { director, resetDirector } = await import(BASE + "waves.js");
 const { spawnBoss, foes } = await import(BASE + "enemies.js");
@@ -194,15 +198,8 @@ await loadFonts();
 await loadAll();
 // mesmo "bake" do boot real (main.js): sprites girados e sheets de chefe
 const { bakeRot, bakeRotTinted, dupSprite, setRotDrawScale, rotDrawSize } = await import(BASE + "assets.js");
-const { GIANT_SCALE } = await import(BASE + "config.js");
+const { GIANT_SCALE, ANT_SIZES } = await import(BASE + "config.js");
 const { bakeBossSheets } = await import(BASE + "render.js");
-const ANT_SIZES = {
-  worker: 34, soldier: 48, spitter: 44, tank: 54, queen: 142,
-  scout: 36, healer: 40, bomber: 46,
-  giant: 247,   // mesmo assado do main.js (5x o da soldado)
-  e_runner: 30, e_swarm: 34, e_warrior: 48, e_spitter: 46, e_reaper: 44,
-  e_matron: 80, e_sentinel: 62,
-};
 dupSprite("soldier", "giant");
 for (const [k, s] of Object.entries(ANT_SIZES)) bakeRot(k, s);
 setRotDrawScale("giant", "soldier", GIANT_SCALE);
@@ -218,6 +215,7 @@ function frame() {
   REC = { canvas: mainCanvas, ops: [] };
   setLastDt(1 / 60);
   update(1 / 60);
+  finishTransition();
   render(1 / 60);
   const ops = REC.ops;
   REC = null;
@@ -342,6 +340,10 @@ const clickAt = (x, y) => {
 // ---------------------------------------------------------------- cenários --
 await wait(30);
 
+// SPLASH (pré-menu: título grande + convite)
+G.screen = "SPLASH";
+auditFrame("SPLASH", frame());
+
 // TÍTULO
 G.screen = "TITLE";
 auditFrame("TÍTULO", frame());
@@ -358,8 +360,13 @@ G.save.nodes = { raiz: 1, t_col: 2, g_dan: 5, r_pop: 4 };
 auditFrame("ÁRVORE", frame(), { allowOffscreen: true });
 G.screen = "TITLE"; frame();
 
-// RUN: começa clicando em INICIAR EXPEDIÇÃO (mesmo caminho do jogador)
+// SELEÇÃO DE MODO: JOGAR no menu → escolha do modo → gameplay
 clickAt(200, 294);
+if (G.screen !== "MODE") { console.error("não abriu a seleção de modo (screen=" + G.screen + ")"); process.exit(3); }
+auditFrame("SELEÇÃO DE MODO", frame());
+
+// RUN: JOGAR na seleção de modo (mesmo caminho do jogador)
+clickAt(480, 430);
 if (G.screen !== "RUN") { console.error("não entrou na RUN (screen=" + G.screen + ")"); process.exit(3); }
 auditFrame("RUN hud", frame(), { uiStart: "auto" });
 

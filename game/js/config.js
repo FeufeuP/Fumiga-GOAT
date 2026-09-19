@@ -41,6 +41,22 @@ export const PAL = {
 // o assado (main.js) e o desenho (render.js) se ajustam sozinhos.
 export const GIANT_SCALE = 20;
 
+// ------------------------------------------------------------- assado da arte
+// Tamanho ASSADO de cada formiga (altura em px nos canvases de rotação). Os
+// sprites saíram de tools/prepare_ants.py ~15-20% maiores e com contorno, para
+// a colônia ficar legível no chão escuro. Os testes (layout.mjs, assets.mjs)
+// leem daqui — nada de copiar números entre arquivos.
+export const ANT_SIZES = {
+  worker: 38, soldier: 56, spitter: 50, tank: 64, queen: 152,
+  scout: 40, healer: 42, bomber: 58,
+  // a GIGANTE é assada 5x maior que a soldado (pad 370 = 5x74) e desenhada
+  // com fator 4 = 20x exatos (setRotDrawScale): blocos de pixel uniformes sem
+  // pagar o custo de um canvas gigante por ângulo
+  giant: 289,
+  e_runner: 36, e_swarm: 42, e_warrior: 56, e_spitter: 54, e_reaper: 52,
+  e_matron: 86, e_sentinel: 68,
+};
+
 export const UNITS = {
   worker: {
     id: "worker", key: null, name: "OPERÁRIA",
@@ -387,6 +403,33 @@ export const SKIP_BONUS = 15;      // essência por invocar onda cedo
 // ============================================================ MAPAS / BIOMAS =
 // Cada mapa (estilo Dead Cells) termina num CHEFÃO. Limpar o mapa avança a
 // expedição para um bioma novo — a colônia migra com você.
+// ------------------------------------------------------------- modos de jogo
+// A escolha do modo acontece num passo próprio do menu (tela MODE) e muda as
+// regras da expedição: pressão das ondas, recompensa e duração.
+export const GAME_MODES = [
+  {
+    id: "expedicao", name: "EXPEDIÇÃO", sub: "A jornada clássica",
+    desc: "Seis biomas, um chefe por mapa. Colete, evolua e leve a colônia até o fim.",
+    accent: "#ffd479", icon: "i_food",
+    chips: ["6 MAPAS", "PADRÃO", "ESSÊNCIA x1"],
+    waveBonus: 0, essenceMult: 1, xpMult: 1, calmMult: 1, endless: false,
+  },
+  {
+    id: "tempestade", name: "TEMPESTADE", sub: "Mais rápido, mais cruel",
+    desc: "As ondas começam adiantadas e a calmaria dura menos. A colônia cresce depressa — se aguentar.",
+    accent: "#ff7a3d", icon: "i_hourglass",
+    chips: ["+2 ONDAS", "CALMARIA CURTA", "ESSÊNCIA x1.5"],
+    waveBonus: 2, essenceMult: 1.5, xpMult: 1.3, calmMult: 0.6, endless: false,
+  },
+  {
+    id: "sobrevivencia", name: "SOBREVIVÊNCIA", sub: "Até a última formiga",
+    desc: "Um único bioma e ondas infinitas, mais duras a cada ciclo. Quanto tempo a colônia aguenta?",
+    accent: "#37e6c8", icon: "i_crown",
+    chips: ["ONDAS INFINITAS", "SEM MAPAS", "ESSÊNCIA x1.3"],
+    waveBonus: 0, essenceMult: 1.3, xpMult: 1, calmMult: 0.85, endless: true,
+  },
+];
+
 export const MAPS = [
   {
     id: "planicie", name: "PLANÍCIE DO AMANHECER",

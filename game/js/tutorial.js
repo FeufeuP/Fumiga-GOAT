@@ -4,10 +4,11 @@
 // jogador realiza a ação pedida. Tecla T pula. Persiste em save.tutorial.
 // ============================================================================
 import { G, persistSave } from "./state.js";
+import { IMG } from "./assets.js";
 import { PAL } from "./config.js";
 import { drawText, wrapText } from "./font.js";
 import { clamp } from "./utils.js";
-import { uiButtons, pointInRect } from "./ui.js";
+import { uiButtons, pointInRect, chamferPath, withAlpha } from "./ui.js";
 import { mouse } from "./input.js";
 import { SFX } from "./audio.js";
 
@@ -136,7 +137,8 @@ function cardMetrics(st) {
   // A descrição é quebrada dentro do cartão: antes, textos de até 71 caracteres
   // vazavam da caixa e ficavam escondidos atrás do botão de invocar onda.
   // A largura também não pode invadir o painel do jogador (x 10..272).
-  return { w: CARD_W, h: 40 + wrapText(st.desc, CARD_W - 32, {}).length * 17 + 18 };
+  // o texto começa depois do ícone (32 px), então a quebra usa a largura útil
+  return { w: CARD_W, h: 40 + wrapText(st.desc, CARD_W - 66, {}).length * 17 + 18 };
 }
 
 /** Retângulo de repouso do cartão (ou null se o tutorial não está ativo). */
@@ -152,34 +154,67 @@ export function drawTutorial(ctx, VIEW_W) {
   const st = TUT.steps[TUT.idx];
   if (!TUT.active || !st) return;
   const { x, w, h, y: yRest } = tutorialCardRect(VIEW_W);
-  const descLines = wrapText(st.desc, w - 32, {});
+  const descLines = wrapText(st.desc, w - 66, {});
   const yIn = clamp((TUT.t) / 0.5, 0, 1);
   const yStart = -h - 12;                            // entra deslizando por cima da borda
   const y = yStart + (yRest - yStart) * (1 - Math.pow(1 - yIn, 3));
 
   ctx.globalAlpha = clamp(TUT.t / 0.25, 0, 1);
-  // corpo
-  ctx.fillStyle = "rgba(16,12,26,0.92)";
-  ctx.fillRect(x, y, w, h);
-  ctx.strokeStyle = TUT._done ? "#7fd6a0" : "#37e6c8";
-  ctx.lineWidth = 2;
-  ctx.strokeRect(x + 1, y + 1, w - 2, h - 2);
-  ctx.fillStyle = "#37e6c8";
-  ctx.fillRect(x, y, 4, h);
+  const accent = TUT._done ? "#7fd6a0" : "#37e6c8";
 
-  drawText(ctx, st.title, x + 16, y + 10, { font: "big", scale: 1, color: TUT._done ? "#7fd6a0" : "#ffd479" });
-  descLines.forEach((L, li) => drawText(ctx, L, x + 16, y + 34 + li * 17, { color: PAL.text }));
-  drawText(ctx, "PASSO " + (TUT.idx + 1) + "/" + TUT.steps.length, x + 16, y + h - 16, { color: PAL.textDim });
+  // sombra + corpo chamfrado (mesma chapa dos painéis do HUD)
+  ctx.fillStyle = "rgba(4,2,10,0.6)";
+  chamferPath(ctx, x + 2, y + 3, w, h, 8);
+  ctx.fill();
+  const cg = ctx.createLinearGradient(x, y, x, y + h);
+  cg.addColorStop(0, "rgba(28,21,48,0.96)");
+  cg.addColorStop(1, "rgba(15,11,28,0.96)");
+  ctx.fillStyle = cg;
+  chamferPath(ctx, x, y, w, h, 8);
+  ctx.fill();
+  ctx.strokeStyle = withAlpha(accent, TUT._done ? 0.95 : 0.7);
+  ctx.lineWidth = 1.6;
+  ctx.stroke();
+  // filete superior + barra lateral de acento
+  ctx.fillStyle = withAlpha(accent, 0.9);
+  ctx.fillRect(x + 6, y + 2, w - 12, 2);
+  ctx.fillStyle = accent;
+  ctx.fillRect(x, y + 6, 3.5, h - 12);
+
+  // ícone do passo (mesmo vocabulário visual da árvore)
+  const ic = IMG[st.icon];
+  const tx = x + 16;
+  if (ic) {
+    ctx.fillStyle = "rgba(9,6,18,0.8)";
+    ctx.beginPath(); ctx.arc(tx + 11, y + 22, 14, 0, Math.PI * 2); ctx.fill();
+    ctx.strokeStyle = withAlpha(accent, 0.6);
+    ctx.lineWidth = 1.2;
+    ctx.stroke();
+    ctx.imageSmoothingEnabled = false;
+    ctx.drawImage(ic, tx + 11 - ic.width * 0.62, y + 22 - ic.height * 0.62, ic.width * 1.25, ic.height * 1.25);
+    ctx.imageSmoothingEnabled = false;
+  }
+  drawText(ctx, st.title, tx + 32, y + 10, { font: "big", scale: 1, color: TUT._done ? "#7fd6a0" : "#ffd479" });
+  descLines.forEach((L, li) => drawText(ctx, L, tx + 32, y + 34 + li * 17, { color: PAL.text }));
+
+  // progresso: barra fina + contador (o jogador vê o quanto falta)
+  const pct = (TUT.idx) / TUT.steps.length;
+  ctx.fillStyle = "rgba(9,6,18,0.85)";
+  ctx.fillRect(tx, y + h - 16, 116, 6);
+  ctx.fillStyle = withAlpha(accent, 0.9);
+  ctx.fillRect(tx, y + h - 16, 116 * pct, 6);
+  drawText(ctx, "PASSO " + (TUT.idx + 1) + "/" + TUT.steps.length, tx + 126, y + h - 18, { color: PAL.textDim });
 
   // botão "PULAR" sempre clicável (rótulo curto: o antigo vazava do cartão)
-  const bw = 92, bh = 20;
+  const bw = 92, bh = 22;
   const bx = x + w - bw - 10, by = y + h - bh - 8;
   const hot = pointInRect(mouse.x, mouse.y, bx, by, bw, bh);
-  ctx.fillStyle = hot ? "#4a3a6e" : "#2c2444";
-  ctx.fillRect(bx, by, bw, bh);
-  ctx.strokeStyle = hot ? "#8f7bd6" : "#4a3a6e";
+  ctx.fillStyle = hot ? "rgba(74,58,110,0.95)" : "rgba(30,23,50,0.95)";
+  chamferPath(ctx, bx, by, bw, bh, 4);
+  ctx.fill();
+  ctx.strokeStyle = hot ? "#a58bf0" : "rgba(74,58,110,0.9)";
   ctx.lineWidth = 1;
-  ctx.strokeRect(bx + 0.5, by + 0.5, bw - 1, bh - 1);
+  ctx.stroke();
   drawText(ctx, "PULAR (T)", bx + bw / 2, by + 6, { color: hot ? "#efe9ff" : PAL.textDim, align: "center" });
   uiButtons().push({ x: bx, y: by, w: bw, h: bh, id: "tutSkip" });
   if (hot && mouse.justDown) {

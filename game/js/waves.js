@@ -7,8 +7,10 @@ import { G, mods } from "./state.js";
 import { world, randGate } from "./world.js";
 import { rand, irand, pick, chance } from "./utils.js";
 import { spawnEnemy, unlockedTypes, foes, boss, spawnBoss, clearFoes } from "./enemies.js";
-import { floatText, ring } from "./particles.js";
+import { floatText, ring, dust, sparks, soul } from "./particles.js";
+import { allies } from "./units.js";
 import { SFX, setCombat } from "./audio.js";
+import { shake } from "./camera.js";
 import { tutEvent } from "./tutorial.js";
 
 export const director = {
@@ -22,6 +24,19 @@ export const director = {
   bossSpawned: false,
   inactivity: 0,
 };
+
+/** Ajusta o diretor ao MODO escolhido (chamado por newRun antes de tudo). */
+export function primeDirector(cfg = {}) {
+  resetDirector();
+  const calm = cfg.calmMult || 1;
+  director.timer = CALM_START * calm;
+}
+
+function modeCfg() {
+  const run = window.__run;
+  return (run && run.modeCfg) || {};
+}
+function calmMult() { return modeCfg().calmMult || 1; }
 
 export function resetDirector() {
   director.phase = "calm";
@@ -86,6 +101,13 @@ export function updateDirector(dt) {
 
 function startWave() {
   const run = window.__run;
+  // TEMPESTADE: a primeira onda do primeiro mapa já começa avançada
+  const bonus = (modeCfg().waveBonus | 0);
+  if (bonus && director.mapIdx === 0 && director.waveInMap === 0) {
+    const skip = Math.min(bonus, Math.max(0, mapDef().waves.length - 2));
+    director.waveInMap += skip;
+    run.wave += skip;
+  }
   director.waveInMap++;
   run.wave++;
   const m = mapDef();
@@ -93,14 +115,25 @@ function startWave() {
   director.phase = "wave";
   director.budget = w.budget;
   director.spawnT = 0.5;
-  run.banner = { title: "ONDA " + director.waveInMap + "/" + m.waves.length + " — " + w.title, sub: w.tip || "", t: 3.2 };
+  run.banner = {
+    title: "ONDA " + director.waveInMap + "/" + m.waves.length + " — " + w.title,
+    sub: w.tip || "", t: 3.2, total: 3.2, kind: "wave",
+  };
   SFX.horn();
   tutEvent("waveStart");
+  // respiro cinematográfico: o mundo desacelera por um instante e a tela
+  // treme de leve — a onda "entra" em vez de simplesmente aparecer
+  G.slowMo = Math.max(G.slowMo || 0, 0.22);
+  shake(0.22);
   if (w.boss && !director.bossSpawned) {
     director.bossSpawned = true;
     spawnBoss(m.boss, run.wave);
     run.banner.title = "CHEFÃO DE MAPA — " + w.title;
     run.banner.sub = w.tip || "Algo imenso se aproxima...";
+    run.banner.kind = "boss";
+    run.banner.t = run.banner.total = 4.2;
+    G.slowMo = 0.5;
+    shake(0.6);
   }
 }
 
@@ -127,6 +160,8 @@ function spawnLogic(dt) {
     const ex = gate.x + rand(-46, 46), ey = gate.y + rand(-46, 46);
     spawnEnemy(type, ex, ey, wN);
     ring(ex, ey, { r0: 4, r1: 30, life: 0.4, color: "#a32e46", width: 2 });
+    dust(ex, ey + 4, { n: 5, power: 0.7, color: "#4a3a52" });
+    sparks(ex, ey, { n: 3, color: "#ff4d5a" });
   }
 }
 
@@ -149,12 +184,32 @@ function endWave() {
   const m = mapDef();
   const reward = run.wave * 6;
   run.essencePool += reward;
-  run.xp += Math.round((XP_WAVE_BASE + XP_WAVE_PER * run.wave) * mods().xpGain);
+  run.xp += Math.round((XP_WAVE_BASE + XP_WAVE_PER * run.wave) * mods().xpGain * (modeCfg().xpMult || 1));
   tutEvent("waveEnd");
   SFX.waveDone();
   if (run.wave > run.bestWaveThisRun) run.bestWaveThisRun = run.wave;
 
   if (w.boss) {
+    // --------------------- SOBREVIVÊNCIA: ciclo infinito -------------------
+    if (modeCfg().endless) {
+      run.cycles = (run.cycles || 0) + 1;
+      if (run.cycles === 1) run.mapsCleared++;      // o bioma foi dominado uma vez
+      director.waveInMap = 0;
+      director.bossSpawned = false;
+      director.phase = "calm";
+      director.timer = CALM_BETWEEN * calmMult() * 1.25;
+      const reward = 220 + run.cycles * 60;
+      run.essencePool += reward;
+      run.banner = {
+        title: "CICLO " + (run.cycles + 1) + " — A HORDA VOLTOU",
+        sub: "Mais forte, mais rápida. Quanto tempo a colônia aguenta?",
+        t: 3.6, total: 3.6, kind: "boss",
+      };
+      G.slowMo = Math.max(G.slowMo || 0, 0.34);
+      shake(0.42);
+      floatText(world.anthill.x, world.anthill.y - 100, "+" + reward + " ESSÊNCIA", { color: "#c77dff", life: 2 });
+      return;
+    }
     // ----------------------------- MAPA LIMPO! -----------------------------
     run.mapsCleared++;
     director.phase = "mapClear";
@@ -162,15 +217,28 @@ function endWave() {
     return;
   }
 
-  floatText(world.anthill.x, world.anthill.y - 100, "ONDA REPELIDA! +" + reward + " ESSÊNCIA", {
+  floatText(world.anthill.x, world.anthill.y - 100, "+" + reward + " ESSÊNCIA", {
     color: "#37e6c8", life: 2, scale: 1,
   });
+  // transição de volta para a calmaria: anúncio curto + alma dos caídos
+  run.banner = {
+    title: "ONDA REPELIDA!", sub: "A colônia respira — recolha, cure e reorganize.",
+    t: 2.4, total: 2.4, kind: "clear",
+  };
+  G.slowMo = Math.max(G.slowMo || 0, 0.24);
+  shake(0.18);
+  const A2 = world.anthill;
+  for (const a of allies) {
+    if (a.dead && a.dying > 0) { soul(a.x, a.y - 6, { n: 2, color: "#37e6c8" }); }
+  }
+  ring(A2.x, A2.y, { r0: 20, r1: 220, life: 0.6, color: "#37e6c8", width: 3 });
+  dust(A2.x, A2.y + 10, { n: 10, power: 0.8, color: "#3a2c4c" });
   // draft intermediário (marcado na config da onda)
   if (w.draftAfter && run.mutations.size < 12) {
     director.pendingDrafts++;
   }
   director.phase = "calm";
-  director.timer = CALM_BETWEEN * mods().muts.calmMult;
+  director.timer = CALM_BETWEEN * mods().muts.calmMult * calmMult();
   director.bossSpawned = false;
   director.inactivity = 0;
 }
@@ -178,7 +246,7 @@ function endWave() {
 /** Chamado por game.js quando o jogador confirma a transição de mapa. */
 export function nextMapCalm() {
   director.phase = "calm";
-  director.timer = 16;
+  director.timer = 16 * calmMult();
   director.waveInMap = 0;
   director.bossSpawned = false;
   director.budget = 0;

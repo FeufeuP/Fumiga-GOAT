@@ -9,7 +9,7 @@ import { cam, worldToScreen, visibleWorldRect, screenToWorld } from "./camera.js
 import { allies, eggs } from "./units.js";
 import { foes, boss } from "./enemies.js";
 import { orbs, projectiles, drawProjectiles, drawOrbs } from "./combat.js";
-import { drawTrails, drawParts, drawGlows, drawRings, drawFloats } from "./particles.js";
+import { drawTrails, drawParts, drawGlows, drawRings, drawFloats, drawStains, drawArcs } from "./particles.js";
 import { drawText } from "./font.js";
 import { clamp, TAU, lerp } from "./utils.js";
 import { fogDraw, fogVisible } from "./fog.js";
@@ -70,6 +70,7 @@ export function drawRun(ctx, dt) {
   if (R2.x < VIEW_W) ctx.fillRect(R2.x, 0, VIEW_W - R2.x, VIEW_H);
   if (R2.y < VIEW_H) ctx.fillRect(0, R2.y, VIEW_W, VIEW_H - R2.y);
 
+  drawStains(ctx, w2s, cam.zoom);   // manchas da briga fazem parte do chão
   drawTrails(ctx, w2s);
 
   // ------------------------------------------------------ pilhas e recursos -
@@ -157,7 +158,8 @@ export function drawRun(ctx, dt) {
 
   drawProjectiles(ctx, w2s);
   drawOrbs(ctx, w2s, G.time);
-  drawParts(ctx, w2s);
+  drawArcs(ctx, w2s, cam.zoom);     // golpes por cima das formigas
+  drawParts(ctx, w2s, cam.zoom);
   drawGlows(ctx, w2s);
   drawRings(ctx, w2s, cam.zoom);
 
@@ -533,186 +535,5 @@ function drawBoss(ctx, b, w2s) {
   }
 }
 
-// ================================================================= TÍTULO ===
-let titleBg = null;
-
-/** Partículas de brasa subindo (animadas por cima do fundo do título). */
-export function drawTitleMotes(ctx, time) {
-  for (let i = 0; i < 30; i++) {
-    const seed = i * 37.7;
-    const x = (seed * 61 + time * (8 + (i % 5) * 4)) % VIEW_W;
-    const y = 520 - ((seed * 29 + time * (14 + (i % 3) * 7)) % 520);
-    const a = 0.15 + 0.35 * (0.5 + 0.5 * Math.sin(time * 1.7 + i));
-    const r = 1 + (i % 3);
-    ctx.globalAlpha = a;
-    ctx.fillStyle = i % 3 ? "#ffd479" : "#ffeccb";
-    ctx.beginPath(); ctx.arc(x, y, r, 0, TAU); ctx.fill();
-  }
-  ctx.globalAlpha = 1;
-}
-
-export function drawTitleBg(ctx) {
-  if (!titleBg) bakeTitleBg();
-  ctx.drawImage(titleBg, 0, 0);
-}
-
-function bakeTitleBg() {
-  // ===== estilo DEAD CELLS: pôr-do-sol laranja, silhuetas, mar com reflexo ==
-  titleBg = document.createElement("canvas");
-  titleBg.width = VIEW_W; titleBg.height = VIEW_H;
-  const c = titleBg.getContext("2d");
-  c.imageSmoothingEnabled = false;
-  const HORIZON = 400;
-
-  // céu quente
-  const sky = c.createLinearGradient(0, 0, 0, HORIZON);
-  sky.addColorStop(0, "#ff5a1f");
-  sky.addColorStop(0.35, "#ff7a26");
-  sky.addColorStop(0.72, "#ffa53d");
-  sky.addColorStop(1, "#ffcf6a");
-  c.fillStyle = sky;
-  c.fillRect(0, 0, VIEW_W, HORIZON);
-
-  // nuvens com bordas incendiadas
-  for (let i = 0; i < 26; i++) {
-    const cx = Math.random() * VIEW_W, cy = 28 + Math.random() * 250;
-    const r = 34 + Math.random() * 90;
-    const gr = c.createRadialGradient(cx, cy, r * 0.2, cx, cy, r);
-    const hot = Math.random() < 0.5;
-    gr.addColorStop(0, hot ? "rgba(255,240,180,0.75)" : "rgba(255,190,120,0.55)");
-    gr.addColorStop(1, "rgba(255,140,70,0)");
-    c.fillStyle = gr;
-    c.beginPath(); c.arc(cx, cy, r, 0, TAU); c.fill();
-  }
-  // núcleos de nuvem pastel
-  for (let i = 0; i < 18; i++) {
-    const cx = Math.random() * VIEW_W, cy = 30 + Math.random() * 220;
-    c.fillStyle = "rgba(255,230,170,0.5)";
-    const r = 10 + Math.random() * 26;
-    c.beginPath(); c.ellipse(cx, cy, r, r * 0.6, 0, 0, TAU); c.fill();
-  }
-
-  // SOL gigante atrás da colina (glória quente)
-  const sun = c.createRadialGradient(690, 250, 20, 690, 250, 420);
-  sun.addColorStop(0, "rgba(255,250,220,0.75)");
-  sun.addColorStop(0.18, "rgba(255,230,150,0.5)");
-  sun.addColorStop(1, "rgba(255,180,80,0)");
-  c.fillStyle = sun;
-  c.fillRect(0, 0, VIEW_W, HORIZON);
-  c.fillStyle = "rgba(255,245,205,0.9)";
-  c.beginPath(); c.arc(690, 250, 52, 0, TAU); c.fill();
-
-  // ---------- colina-castelo: o FORMIGUEIRO torrando na silhueta -----------
-  // massa da colina
-  c.fillStyle = "#8a2857";
-  c.beginPath();
-  c.moveTo(180, HORIZON);
-  c.quadraticCurveTo(420, 210, 700, 300);
-  c.quadraticCurveTo(860, 348, 1080, HORIZON);
-  c.closePath();
-  c.fill();
-  // segunda massa (frente, mais escura)
-  c.fillStyle = "#6e2048";
-  c.beginPath();
-  c.moveTo(420, HORIZON);
-  c.quadraticCurveTo(640, 292, 900, 356);
-  c.quadraticCurveTo(1010, 380, 1120, HORIZON);
-  c.closePath();
-  c.fill();
-
-  // monte do formigueiro de perfil (naipe de "castelo" da colônia)
-  c.fillStyle = "#5c1b3d";
-  c.beginPath();
-  c.moveTo(560, 340);
-  c.quadraticCurveTo(600, 238, 660, 236);
-  c.quadraticCurveTo(716, 236, 742, 340);
-  c.closePath();
-  c.fill();
-  // buraco da entrada com luz interna
-  c.fillStyle = "#2c0e22";
-  c.beginPath(); c.ellipse(652, 332, 16, 20, 0, 0, TAU); c.fill();
-  c.fillStyle = "#ff9a3d";
-  c.globalAlpha = 0.85;
-  c.beginPath(); c.ellipse(652, 334, 7, 9, 0, 0, TAU); c.fill();
-  c.globalAlpha = 1;
-
-  // bandeira/rainha no topo + antenas de folha
-  c.strokeStyle = "#40102c";
-  c.lineWidth = 4;
-  c.beginPath(); c.moveTo(656, 240); c.lineTo(656, 196); c.stroke();
-  c.fillStyle = "#ffd479";
-  c.beginPath(); c.moveTo(656, 196); c.lineTo(690, 204); c.lineTo(656, 214); c.closePath(); c.fill();
-  // árvores-irmãs na colina
-  c.fillStyle = "#5c1b3d";
-  const tree = (tx, ty, s2) => {
-    c.fillRect(tx - 2 * s2, ty - 34 * s2, 4 * s2, 34 * s2);
-    c.beginPath(); c.ellipse(tx, ty - 40 * s2, 12 * s2, 10 * s2, 0, 0, TAU); c.fill();
-  };
-  tree(520, 316, 1.1); tree(796, 330, 0.9); tree(486, 334, 0.7); tree(838, 344, 1.2);
-
-  // coluna de formigas subindo a trilha (silhueta pitada)
-  c.fillStyle = "#40102c";
-  for (let i = 0; i < 7; i++) {
-    const t = i / 6;
-    const ax = 430 + t * 200, ay = 372 - t * 88 + Math.sin(i * 1.7) * 4;
-    c.fillRect(ax, ay, 4, 3);
-  }
-
-  // brilho quente na borda da colina (rim light do sol)
-  c.fillStyle = "rgba(255,180,80,0.35)";
-  c.beginPath();
-  c.moveTo(560, 340);
-  c.quadraticCurveTo(600, 236, 660, 234);
-  c.quadraticCurveTo(604, 246, 576, 340);
-  c.closePath(); c.fill();
-
-  // ------------------------------ mar espelhado ----------------------------
-  const sea = c.createLinearGradient(0, HORIZON, 0, VIEW_H);
-  sea.addColorStop(0, "#ff9440");
-  sea.addColorStop(0.4, "#e35a3b");
-  sea.addColorStop(1, "#7a2547");
-  c.fillStyle = sea;
-  c.fillRect(0, HORIZON, VIEW_W, VIEW_H - HORIZON);
-  // linha do horizonte ardente
-  c.fillStyle = "rgba(255,250,215,0.95)";
-  c.fillRect(0, HORIZON, VIEW_W, 2);
-  // reflexos: filetes horizontais que alongam do sol
-  for (let i = 0; i < 60; i++) {
-    const t = Math.random();
-    const y = HORIZON + 4 + t * (VIEW_H - HORIZON - 12);
-    const len = (40 + Math.random() * 260) * (1 - t * 0.4);
-    const x = 690 - len / 2 + (Math.random() - 0.5) * 120;
-    c.globalAlpha = 0.35 + Math.random() * 0.4;
-    c.fillStyle = i % 3 ? "#ffb864" : "#ffe2a0";
-    const h = 1 + Math.random() * 2;
-    c.fillRect(x, y, len, h);
-  }
-  c.globalAlpha = 1;
-  // barquinho (referência Dead Cells) com reflexo
-  c.fillStyle = "#4a1230";
-  c.beginPath();
-  c.moveTo(688, 436); c.lineTo(724, 436); c.lineTo(716, 446); c.lineTo(694, 446);
-  c.closePath(); c.fill();
-  c.fillRect(703, 404, 2, 32);
-  c.beginPath(); c.moveTo(705, 406); c.lineTo(724, 430); c.lineTo(705, 430); c.closePath();
-  c.fillStyle = "#6e2048"; c.fill();
-  c.globalAlpha = 0.4;
-  c.fillStyle = "#ffb864";
-  c.fillRect(690, 450, 34, 2);
-  c.globalAlpha = 1;
-
-  // primeiro plano: gramado preto (contraste de leitura do menu)
-  c.fillStyle = "#180a1e";
-  c.fillRect(0, VIEW_H - 26, VIEW_W, 26);
-  for (let x = 0; x < VIEW_W; x += 7) {
-    const h = 4 + ((x * 7919) % 11);
-    c.fillRect(x, VIEW_H - 26 - h, 2, h);
-  }
-
-  // vinheta suave nas bordas
-  const v = c.createRadialGradient(VIEW_W / 2, VIEW_H * 0.4, VIEW_H * 0.4, VIEW_W / 2, VIEW_H * 0.4, VIEW_H * 1.05);
-  v.addColorStop(0, "rgba(30,8,20,0)");
-  v.addColorStop(1, "rgba(24,6,18,0.5)");
-  c.fillStyle = v;
-  c.fillRect(0, 0, VIEW_W, VIEW_H);
-}
+// O fundo do título vive em js/titlebg.js (arte em camadas com paralaxe).
+export { drawTitleBg, drawTitleMotes } from "./titlebg.js";

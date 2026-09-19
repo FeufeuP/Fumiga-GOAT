@@ -49,13 +49,24 @@ console.log("screen:", G.screen);
 const problems = [];
 const expect = (cond, msg) => { console.log((cond ? "ok  " : "ERRO") + "  " + msg); if (!cond) problems.push(msg); };
 
-// ---- título → run (botão novo, coluna esquerda)
-mouse.x = 200; mouse.y = 294; mouse.down = mouse.justDown = true;
-await wait(60);
-mouse.down = mouse.justDown = false; mouse.justUp = true;
-await wait(40);
-mouse.justUp = false;
-expect(G.screen === "RUN", "run iniciou via botão do menu");
+// ---- SPLASH → menu → modo → run (fluxo novo, três telas até a gameplay)
+expect(G.screen === "SPLASH", "abre no splash (título + clique para jogar)");
+const click = async (x, y, ms = 60) => {
+  mouse.x = x; mouse.y = y; mouse.down = mouse.justDown = true;
+  await wait(ms);
+  mouse.down = mouse.justDown = false; mouse.justUp = true;
+  await wait(40);
+  mouse.justUp = false;
+  await wait(60);
+};
+await wait(900);                       // o splash só aceita clique depois de 0,75 s
+await click(480, 300);
+expect(G.screen === "TITLE", "clique no splash leva ao menu inicial");
+await click(200, 294);
+expect(G.screen === "MODE", "JOGAR leva à seleção de modo");
+await click(480, 430);
+expect(G.screen === "RUN", "JOGAR na seleção de modo inicia a expedição");
+expect(!!G.run && G.run.mode === "expedicao", "modo padrão registrado na run");
 expect(units.allies.filter(a => !a.dead).length >= 5,
   "esquadrão inicial 2 op. + 2 colet. + 1 explor. (vivas: " + units.allies.filter(a => !a.dead).length + ")");
 expect(units.allies.filter(a => a.type === "worker").length === 2, "2 operárias");

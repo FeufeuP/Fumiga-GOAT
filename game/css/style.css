@@ -26,4 +26,11 @@ body {
   background: #14101d;
   box-shadow: 0 0 0 2px #2b2340, 0 0 60px rgba(0,0,0,.8), 0 0 140px rgba(94,60,160,.15);
   cursor: crosshair;
+  /* escala junto com a janela: em telas pequenas o canvas encolhe mantendo
+     16:9 (a mira e os cliques usam getBoundingClientRect, então continuam
+     exatos em qualquer tamanho) */
+  width: min(100vw, 177.78vh);
+  height: auto;
+  aspect-ratio: 16 / 9;
+  max-height: 100vh;
 }

@@ -6,7 +6,7 @@ import { ENEMIES, ENEMY_SCALE, BOSSES, WORLD_W, WORLD_H, XP_KILL_FRAC, XP_BOSS }
 import { mods } from "./state.js";
 import { world, collide, smashProps } from "./world.js";
 import { rand, dist, dist2, clamp, angLerp, nextId, TAU, easeOutCubic } from "./utils.js";
-import { burst, ring, scent, floatText, spawnPart } from "./particles.js";
+import { burst, ring, scent, floatText, spawnPart, hitFx, deathFx, shards, dust, sparks, soul } from "./particles.js";
 import { SFX } from "./audio.js";
 import { spawnProj, dropOrb } from "./combat.js";
 import { shake } from "./camera.js";
@@ -47,6 +47,16 @@ export function spawnEnemy(typeId, x, y, wave) {
       this.revealT = 5; // golpeado: fica marcado no fog of war por 5s
       floatText(this.x + rand(-6, 6), this.y - this.bodyR - 8,
         Math.round(dmg), { color: dmg >= 25 ? "#ffd479" : "#efe9ff", life: 0.6 });
+      // EFEITOS DE IMPACTO: respingo de fluido + faíscas na direção do golpe
+      const ang = proj && proj.x !== undefined
+        ? Math.atan2(this.y - proj.y, this.x - proj.x)
+        : rand(0, TAU);
+      hitFx(this.x, this.y - 4, ang, {
+        dmg, crit: dmg >= 25,
+        color: ["#a32e46", "#ff4d5a", "#6e2537"],
+        stainColor: "#3d1020", dust: "#3a2c4c",
+      });
+      if (dmg >= 25) shake(0.16);
       if (proj && proj.slow) { this.slowT = 2; }
       if (proj && proj.weaken) { this.weakT = 3; }
       if (mm.muts.weakenOnHit && from === "ally") this.weakT = 3;
@@ -79,10 +89,11 @@ function killEnemy(e) {
   if (e.dying) return;
   e.dead = true;
   e.dying = 0.4;
-  burst(e.x, e.y, {
-    n: e.bodyR > 15 ? 22 : 12,
-    color: ["#ff4d5a", "#a32e46", "#6e2537", "#3a2c4c"],
-    spMin: 25, spMax: 130, life: 0.55, sizeMin: 1, sizeMax: 3, g: 60,
+  deathFx(e.x, e.y, {
+    big: e.bodyR > 15,
+    color: ["#ff4d5a", "#a32e46", "#6e2537"],
+    shard: "#6b4a3a", dust: "#3a2c4c", stain: "#3d1020",
+    soul: true, soulColor: e.def.ess >= 6 ? "#c77dff" : "#8fd3ff",
   });
   SFX.splat();
   dropOrb(e.x, e.y, e.def.ess);
@@ -287,7 +298,13 @@ function killBoss(b) {
   dropOrb(b.x, b.y, b.def.ess);
   shake(1);
   ring(b.x, b.y, { r0: 10, r1: 190, life: 0.7, color: "#ffd479", width: 5 });
+  ring(b.x, b.y, { r0: 30, r1: 320, life: 1.1, color: "#ff4d5a", width: 3 });
   burst(b.x, b.y, { n: 60, color: ["#ffd479", "#ff7a3d", "#ff4d5a", "#c77dff"], spMin: 40, spMax: 260, life: 0.9, sizeMin: 1.5, sizeMax: 4, glow: true });
+  deathFx(b.x, b.y, { big: true, color: ["#a32e46", "#ff4d5a", "#c9a06a"], shard: "#c9a06a", dust: "#4a3a3a", stain: "#3d1020", soul: true, soulColor: "#c77dff" });
+  shards(b.x, b.y, { n: 26, color: ["#c9a06a", "#8a6a4a", "#e8d5b0"], power: 1.7 });
+  dust(b.x, b.y, { n: 26, power: 1.8, color: "#5a4a44" });
+  soul(b.x, b.y - 20, { n: 14, color: "#ffd479" });
+  sparks(b.x, b.y, { n: 22, color: "#ffe9a8" });
   SFX.roar();
   SFX.slam();
 }

@@ -5,10 +5,11 @@ import { PAL, META_NODES, META_BRANCHES, VIEW_W, VIEW_H } from "./config.js";
 import { G, metaLevel, metaCanBuy, metaBuy } from "./state.js";
 import { drawText, textWidth, wrapText } from "./font.js";
 import { IMG } from "./assets.js";
-import { uiBegin, button, panel, pointInRect } from "./ui.js";
+import { uiBegin, button, panel, pointInRect, chamferPath, withAlpha, labelIcon } from "./ui.js";
 import { mouse, pressed } from "./input.js";
 import { SFX } from "./audio.js";
-import { clamp, lerp } from "./utils.js";
+import { clamp, lerp, TAU } from "./utils.js";
+import { drawTitleBg } from "./titlebg.js";
 
 const NODE_R = 34;      // raio do nó em px (sem zoom)
 const SP = 134;         // respiro horizontal entre os nós
@@ -100,40 +101,90 @@ export function updateTree(dt) {
 
 export function treeWasDragging() { return !dragStart || dragStart.d > 8; }
 
+// Retângulo do botão VOLTAR da árvore. É usado pelo desenho E pelo
+// tratamento de clique no update (js/game.js): se por algum motivo o desenho
+// não rodar num quadro, o clique continua valendo — o jogador nunca fica
+// preso na árvore.
+export const TREE_BACK = { x: VIEW_W - 170, y: 18, w: 156, h: 40 };
+
 export function drawTree(ctx, dt) {
-  // fundo
-  const g = ctx.createLinearGradient(0, 0, 0, VIEW_H);
-  g.addColorStop(0, "#120d1e");
-  g.addColorStop(1, "#1c1430");
-  ctx.fillStyle = g;
+  // fundo: a mesma paisagem do menu, escurecida — a árvore vive no mesmo mundo
+  drawTitleBg(ctx, G.time * 0.35);
+  ctx.fillStyle = "rgba(10,7,20,0.86)";
   ctx.fillRect(0, 0, VIEW_W, VIEW_H);
-  // poeiras estáticas de fundo
-  ctx.globalAlpha = 0.35;
-  for (let i = 0; i < 60; i++) {
+  // vinheta (fecha as bordas e joga o olho para o centro)
+  const vg = ctx.createRadialGradient(VIEW_W / 2, VIEW_H / 2, 120, VIEW_W / 2, VIEW_H / 2, 620);
+  vg.addColorStop(0, "rgba(0,0,0,0)");
+  vg.addColorStop(1, "rgba(4,2,10,0.75)");
+  ctx.fillStyle = vg;
+  ctx.fillRect(0, 0, VIEW_W, VIEW_H);
+  // grade sutil de "terreno cultivado"
+  ctx.strokeStyle = "rgba(120,96,180,0.09)";
+  ctx.lineWidth = 1;
+  for (let x = 0; x <= VIEW_W; x += 60) {
+    ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, VIEW_H); ctx.stroke();
+  }
+  for (let y = 0; y <= VIEW_H; y += 60) {
+    ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(VIEW_W, y); ctx.stroke();
+  }
+  // poeiras subindo devagar
+  ctx.globalAlpha = 0.4;
+  for (let i = 0; i < 70; i++) {
     const px = (i * 173) % VIEW_W, py = (i * 97 + ((G.time * 6) % 700)) % (VIEW_H + 60) - 30;
-    ctx.fillStyle = i % 3 ? "#3a2c4c" : "#4a3a6e";
+    ctx.fillStyle = i % 3 ? "#3a2c4c" : "#5a4a86";
     ctx.fillRect(px, py, 2, 2);
   }
   ctx.globalAlpha = 1;
 
-  // arestas
+  // clarão da raiz: um foco quente no primeiro nó, iluminando a árvore
+  const rootNode = META_NODES.find((n) => n.requires.length === 0) || META_NODES[0];
+  const rp = nodeScreen(rootNode);
+  const rg = ctx.createRadialGradient(rp.x, rp.y, 6, rp.x, rp.y, 340);
+  rg.addColorStop(0, "rgba(255,196,110,0.16)");
+  rg.addColorStop(0.5, "rgba(199,125,255,0.07)");
+  rg.addColorStop(1, "rgba(199,125,255,0)");
+  ctx.fillStyle = rg;
+  ctx.fillRect(rp.x - 340, rp.y - 340, 680, 680);
+
+  // arestas: raízes grossas quando a ligação está ativa, com "seiva" correndo
   for (const n of META_NODES) {
     const s = nodeScreen(n);
+    const br = META_BRANCHES[n.br];
     for (const reqId of n.requires) {
       const p = META_NODES.find(m => m.id === reqId);
       const sp = nodeScreen(p);
       const owned = metaLevel(n.id) > 0 && metaLevel(reqId) > 0;
       const avai = metaLevel(reqId) > 0;
-      ctx.strokeStyle = owned ? META_BRANCHES[n.br].color : avai ? "#5a4f88" : "#2c2444";
-      ctx.lineWidth = owned ? 3 : 2;
-      ctx.globalAlpha = owned ? 0.95 : 0.8;
-      ctx.beginPath();
-      ctx.moveTo(sp.x, sp.y);
-      ctx.lineTo(s.x, s.y);
-      ctx.stroke();
+      // sombra da raiz
+      ctx.strokeStyle = "rgba(6,3,12,0.75)";
+      ctx.lineWidth = owned ? 7 : 5;
+      ctx.beginPath(); ctx.moveTo(sp.x, sp.y + 2); ctx.lineTo(s.x, s.y + 2); ctx.stroke();
+      // corpo
+      ctx.strokeStyle = owned ? br.color : avai ? "#4a3f74" : "#282040";
+      ctx.lineWidth = owned ? 4 : 2.4;
+      ctx.globalAlpha = owned ? 0.95 : 0.75;
+      ctx.beginPath(); ctx.moveTo(sp.x, sp.y); ctx.lineTo(s.x, s.y); ctx.stroke();
+      ctx.globalAlpha = 1;
+      // seiva: traços claros que caminham do pré-requisito ao nó
+      if (owned) {
+        const dx2 = s.x - sp.x, dy2 = s.y - sp.y;
+        const len = Math.max(1, Math.hypot(dx2, dy2));
+        const ux = dx2 / len, uy = dy2 / len;
+        const off = (G.time * 90) % 34;
+        ctx.globalAlpha = 0.35;
+        ctx.strokeStyle = "#fff1c8";
+        ctx.lineWidth = 1.6;
+        for (let d = off; d < len; d += 34) {
+          const t0 = Math.min(len, d), t1 = Math.min(len, d + 12);
+          ctx.beginPath();
+          ctx.moveTo(sp.x + ux * t0, sp.y + uy * t0);
+          ctx.lineTo(sp.x + ux * t1, sp.y + uy * t1);
+          ctx.stroke();
+        }
+        ctx.globalAlpha = 1;
+      }
     }
   }
-  ctx.globalAlpha = 1;
 
   // nós
   const R = NODE_R * zoom;
@@ -155,33 +206,65 @@ export function drawTree(ctx, dt) {
       ctx.globalAlpha = 1;
     }
 
-    // corpo do nó
-    ctx.fillStyle = lvl > 0 ? shade(br.color, "#18122a") : PAL.panel;
+    // corpo do nó: placa chamfrada (mesma linguagem dos painéis do HUD)
+    const nx = s.x - R, ny = s.y - R, nw = R * 2, nh = R * 2;
+    const rr = Math.max(3, R * 0.32);
+    ctx.fillStyle = "rgba(5,3,10,0.7)";
+    chamferPath(ctx, nx + 2, ny + 3, nw, nh, rr);
+    ctx.fill();
+    const ng = ctx.createLinearGradient(nx, ny, nx, ny + nh);
+    if (lvl > 0) {
+      ng.addColorStop(0, shade(br.color, "#2a1f3e"));
+      ng.addColorStop(1, "#150f24");
+    } else {
+      ng.addColorStop(0, "#1e1732");
+      ng.addColorStop(1, "#140f24");
+    }
+    ctx.fillStyle = ng;
+    chamferPath(ctx, nx, ny, nw, nh, rr);
+    ctx.fill();
     ctx.strokeStyle = lvl > 0 ? br.color : chk.ok ? br.color : "#3a3054";
-    ctx.lineWidth = hot ? 4 : 3;
-    ctx.beginPath(); ctx.arc(s.x, s.y, R, 0, 6.29);
-    ctx.fill(); ctx.stroke();
+    ctx.lineWidth = hot ? 3.5 : 2.5;
+    ctx.stroke();
+    // filete superior na cor do ramo
+    ctx.fillStyle = withAlpha(br.color, lvl > 0 ? 0.95 : chk.ok ? 0.6 : 0.25);
+    ctx.fillRect(nx + 3, ny + 2, nw - 6, 2);
     if (lvl >= max) {
       ctx.strokeStyle = "#ffd479";
       ctx.lineWidth = 2;
-      ctx.beginPath(); ctx.arc(s.x, s.y, R + 4, 0, 6.29); ctx.stroke();
+      chamferPath(ctx, nx - 4, ny - 4, nw + 8, nh + 8, rr + 3);
+      ctx.stroke();
     }
 
-    // ícone
+    // ícone sobre um soquete (dá contraste e leitura de "slot" de upgrade)
     const icon = IMG["i_" + n.icon];
     if (icon) {
+      const sr = R * 0.78;
+      ctx.fillStyle = lvl > 0 ? withAlpha(br.color, 0.22) : "rgba(10,7,20,0.72)";
+      ctx.beginPath(); ctx.arc(s.x, s.y, sr, 0, TAU); ctx.fill();
+      ctx.strokeStyle = withAlpha(br.color, lvl > 0 ? 0.75 : chk.ok ? 0.5 : 0.22);
+      ctx.lineWidth = 1.4;
+      ctx.beginPath(); ctx.arc(s.x, s.y, sr, 0, TAU); ctx.stroke();
       ctx.imageSmoothingEnabled = false;
-      if (lvl === 0 && !chk.ok) ctx.globalAlpha = 0.3;
-      const size = (n.icon.startsWith("sk_") ? 32 : 36) * zoom;
+      if (lvl === 0 && !chk.ok) ctx.globalAlpha = 0.32;
+      const size = (n.icon.startsWith("sk_") ? 30 : 34) * zoom;
       ctx.drawImage(icon, s.x - size / 2, s.y - size / 2, size, size);
       ctx.globalAlpha = 1;
     }
 
-    // pips de nível
+    // pips de nível (placas pequenas; o preenchido acende na cor do ramo)
     for (let i = 0; i < max; i++) {
       const px = s.x - (max - 1) * 5.5 * zoom + i * 11 * zoom;
-      ctx.fillStyle = i < lvl ? br.color : "#2c2444";
-      ctx.fillRect(px - 3, s.y + R + 7 * zoom, 7, 4.5);
+      const pw = 7, ph = 5;
+      ctx.fillStyle = i < lvl ? br.color : "#241c3a";
+      chamferPath(ctx, px - pw / 2, s.y + R + 7 * zoom, pw, ph, 1.5);
+      ctx.fill();
+      if (i < lvl) {
+        ctx.globalAlpha = 0.35;
+        ctx.fillStyle = "#fff1c8";
+        ctx.fillRect(px - pw / 2 + 1, s.y + R + 8 * zoom, pw - 2, 1);
+        ctx.globalAlpha = 1;
+      }
     }
 
     // PREÇO: próximo nível sempre visível sob o nó
@@ -190,15 +273,20 @@ export function drawTree(ctx, dt) {
       const afford = G.save.essence >= price;
       const py = s.y + R + 16 * zoom;
       const label = String(price);
-      const tw = label.length * 7 + 20;
-      ctx.fillStyle = "rgba(10,8,16,0.78)";
-      ctx.fillRect(s.x - tw / 2 - 1, py - 1, tw + 2, 14);
-      ctx.strokeStyle = "rgba(74,58,110,0.6)";
+      const tw = label.length * 7 + 26;
+      ctx.fillStyle = "rgba(8,5,16,0.88)";
+      chamferPath(ctx, s.x - tw / 2 - 1, py - 2, tw + 2, 17, 3);
+      ctx.fill();
+      ctx.strokeStyle = afford ? "rgba(199,125,255,0.75)" : "rgba(163,46,70,0.7)";
       ctx.lineWidth = 1;
-      ctx.strokeRect(s.x - tw / 2 - 0.5, py - 0.5, tw + 1, 15);
-      ctx.fillStyle = afford ? "#c77dff" : "#a32e46";
-      ctx.fillRect(s.x - tw / 2 + 3, py + 3, 8, 8);
-      drawText(ctx, label, s.x - tw / 2 + 15, py + 3, { color: afford ? "#efe9ff" : "#ff8a96" });
+      ctx.stroke();
+      const essIcon = IMG.i_essence;
+      if (essIcon) labelIcon(ctx, essIcon, s.x - tw / 2 + 3, py + 2, 1.4);
+      else {
+        ctx.fillStyle = afford ? "#c77dff" : "#a32e46";
+        ctx.fillRect(s.x - tw / 2 + 4, py + 3, 9, 9);
+      }
+      drawText(ctx, label, s.x - tw / 2 + 20, py + 3, { color: afford ? "#efe9ff" : "#ff8a96" });
     } else {
       drawText(ctx, "MAX", s.x, s.y + R + 17 * zoom, { color: "#ffd479", align: "center" });
     }
@@ -209,13 +297,25 @@ export function drawTree(ctx, dt) {
 
   // ------------------------------------------------------------- HUD topo --
   const owned = META_NODES.filter((n) => metaLevel(n.id) > 0).length;
-  panel(ctx, 12, 10, 430, 54);
+  const pct = Math.round((owned / META_NODES.length) * 100);
+  panel(ctx, 12, 10, 430, 54, { topAccent: withAlpha(PAL.amberHot, 0.8) });
   drawText(ctx, "ÁRVORE DA EVOLUÇÃO", 28, 20, { font: "big", scale: 1, color: "#ffd479" });
   drawText(ctx, "Evolua a colônia para sempre", 28, 48, { color: PAL.textDim });
-  drawText(ctx, "NÓS " + owned + "/" + META_NODES.length, 300, 22, { color: "#efe9ff" });
-  drawText(ctx, Math.round((owned / META_NODES.length) * 100) + "%", 300, 42, { color: "#c77dff" });
+  // contador em placa pequena + barra fina de progresso
+  ctx.fillStyle = "rgba(8,5,16,0.7)";
+  chamferPath(ctx, 296, 18, 132, 38, 4);
+  ctx.fill();
+  ctx.strokeStyle = "rgba(199,125,255,0.5)";
+  ctx.lineWidth = 1;
+  ctx.stroke();
+  drawText(ctx, "NÓS " + owned + "/" + META_NODES.length, 306, 22, { color: "#efe9ff" });
+  drawText(ctx, pct + "%", 386, 22, { color: "#c77dff" });
+  ctx.fillStyle = "#1c1430";
+  ctx.fillRect(306, 44, 112, 6);
+  ctx.fillStyle = "#c77dff";
+  ctx.fillRect(306, 44, 112 * (owned / META_NODES.length), 6);
   // essência (à esquerda dos botões)
-  panel(ctx, VIEW_W - 500, 10, 150, 54);
+  panel(ctx, VIEW_W - 500, 10, 150, 54, { border: "rgba(199,125,255,0.45)", topAccent: "rgba(199,125,255,0.8)" });
   drawEssence(ctx, VIEW_W - 492, 16);
 
   // botão voltar + ver tudo
@@ -223,16 +323,32 @@ export function drawTree(ctx, dt) {
     treeFit();
     SFX.uiClick();
   }
-  if (button(ctx, { x: VIEW_W - 170, y: 18, w: 156, h: 40, label: "VOLTAR", id: "treeBack", font: "small" })) {
+  if (button(ctx, { ...TREE_BACK, label: "VOLTAR", id: "treeBack", font: "small", hotkey: "ESC" })) {
     return "back";
   }
 
   // legenda dos ramos: quantos nós de cada ramo já foram comprados
   drawLegend(ctx, 12, 72);
 
-  // dica
-  drawText(ctx, "CLIQUE PARA EVOLUIR  •  ARRASTE PARA MOVER  •  RODA OU VER TUDO: ZOOM (" + Math.round(zoom * 100) + "%)",
-    VIEW_W / 2, VIEW_H - 26, { color: PAL.textDim, align: "center" });
+  // rodapé: a dica fica numa faixa própria (sobre a árvore o texto puro sumia)
+  const fg = ctx.createLinearGradient(0, VIEW_H - 40, 0, VIEW_H);
+  fg.addColorStop(0, "rgba(8,5,16,0)");
+  fg.addColorStop(0.5, "rgba(8,5,16,0.85)");
+  fg.addColorStop(1, "rgba(8,5,16,0.95)");
+  ctx.fillStyle = fg;
+  ctx.fillRect(0, VIEW_H - 40, VIEW_W, 40);
+  drawText(ctx, "CLIQUE: EVOLUIR   •   ARRASTE: MOVER   •   RODA / VER TUDO: ZOOM   •   ESC: VOLTAR",
+    VIEW_W / 2, VIEW_H - 26, { color: "#c9b6d8", align: "center" });
+  // zoom atual em chip, à direita
+  const zt = Math.round(zoom * 100) + "%";
+  const zw = textWidth(zt, {}) + 20;
+  ctx.fillStyle = "rgba(8,5,16,0.85)";
+  chamferPath(ctx, VIEW_W - zw - 14, VIEW_H - 32, zw, 20, 3);
+  ctx.fill();
+  ctx.strokeStyle = "rgba(199,125,255,0.55)";
+  ctx.lineWidth = 1;
+  ctx.stroke();
+  drawText(ctx, zt, VIEW_W - zw / 2 - 14, VIEW_H - 29, { color: "#c77dff", align: "center" });
   return null;
 }
 

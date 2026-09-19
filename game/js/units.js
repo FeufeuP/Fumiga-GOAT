@@ -6,7 +6,12 @@ import { UNITS, QUEEN, START, LEVEL_HP, LEVEL_DMG } from "./config.js";
 import { mods } from "./state.js";
 import { world, nearestPile, nearestNode, collide, smashProps } from "./world.js";
 import { SpatialGrid, rand, irand, dist, dist2, clamp, lerp, angLerp, nextId, chance } from "./utils.js";
-import { spawnPart, burst, scent, floatText, ring } from "./particles.js";
+import {
+  colony, colonyReset, colonyTick, antBrain, decideWorker, decideFighter,
+  decideHealTarget, squadSlot, pickResource, alarmAt, reportResource,
+  reinforceTrail, pheromoneMark, pheromoneAt,
+} from "./ai.js";
+import { spawnPart, burst, scent, floatText, ring, hitFx, deathFx, blood, sparks, dust, soul, slash } from "./particles.js";
 import { shake } from "./camera.js";
 import { SFX } from "./audio.js";
 import { spawnProj, dropOrb } from "./combat.js";
@@ -129,10 +134,21 @@ export function spawnAnt(typeId, x, y, opts = {}) {
       dmg *= mm.muts.dmgTaken * (1 - mm.armor);
       this.hp -= dmg;
       this.hitT = 0.12;
+      if (attacker && attacker.x !== undefined) {
+        blood(this.x, this.y - 4, Math.atan2(this.y - attacker.y, this.x - attacker.x),
+          { n: 7, power: 1, color: ["#ff7a3d", "#c94f2e", "#8a4a3a"], stain: dmg > 12, stainR: 11, stainColor: "#4a2418" });
+        sparks(this.x, this.y - 4, { n: 4, color: "#ffb347" });
+        if (dmg > 12) shake(0.14);
+      }
+      // CÉREBRO: quem apanha solta feromônio de alarme — a colônia inteira
+      // sente o cheiro e a guarda converge para o ponto do ataque.
+      alarmAt(this.x, this.y, 0.8);
+      const b = antBrain(this);
+      b.lastHit = 2.5;
       if (chance(0.3)) SFX.hurt();
       // trabalhadoras e curandeiras fogem ao serem atacadas
       if ((this.def.role === "worker" || this.type === "healer") && this.state !== "flee") {
-        this.state = "flee"; this.fleeT = 1.4;
+        this.state = "flee"; this.fleeT = 1.4 + b.traits.courage * 0.4;
       }
       // mutação SANGUE ÁCIDO: quem morde pega fogo
       if (attacker && mm.muts.venenoBurn) {
@@ -152,6 +168,7 @@ export function spawnAnt(typeId, x, y, opts = {}) {
       }
     },
   };
+  antBrain(a);                 // cada formiga nasce com o próprio cérebro
   allies.push(a);
   return a;
 }
@@ -161,7 +178,13 @@ export function killAnt(a) {
   a.dying = 0.45;
   a.dead = true;
   a.selected = false;
-  burst(a.x, a.y, { n: 10, color: ["#ff7a3d", "#c94f2e", "#5a3a4a"], spMin: 20, spMax: 100, life: 0.5, sizeMin: 1, sizeMax: 3, g: 80 });
+  alarmAt(a.x, a.y, 0.5);      // a morte alarma as irmãs
+  deathFx(a.x, a.y, {
+    big: a.bodyR > 20,
+    color: ["#ff7a3d", "#c94f2e", "#7a4a3a"],
+    shard: "#8a6a4a", dust: "#3a2c4c", stain: "#4a2418",
+    soul: true, soulColor: "#37e6c8",
+  });
   SFX.splat();
   if (a.carry > 0 && a.carryKind === "food") {
     // derruba metade da comida como partículas âmbar
@@ -264,6 +287,11 @@ export function updateAllies(dt, foes) {
 
   hatchTick(dt);
 
+  // ------------------------------------------------ CÉREBRO DA COLÔNIA ------
+  // Um tique por frame: mede necessidades, evapora o cheiro, publica a
+  // diretriz e combina o alvo de ataque. As formigas decidem sozinhas.
+  colonyTick(dt, { allies, foes, run: G2, queen: allies.queen });
+
   // grade espacial
   grid.clear();
   for (const a of allies) if (!a.dead) grid.insert(a);
@@ -275,6 +303,13 @@ export function updateAllies(dt, foes) {
       if (a.dying <= 0) allies.splice(i, 1);
       continue;
     }
+    // relógios do cérebro individual (pânico, ciclos de decisão)
+    const br = antBrain(a);
+    br.decideT -= dt;
+    if (br.lastHit > 0) br.lastHit -= dt;
+    if (br.panic > 0) br.panic = Math.max(0, br.panic - dt * 0.6);
+    br.fatigue += dt * (a.state === "rest" ? -1.4 : 0.09);
+
     // colossos não são empurrados pelo mato: arrancam a vegetação ao passar
     if (a.def.smash) {
       a.smashT = (a.smashT || 0) - dt;
@@ -288,8 +323,7 @@ export function updateAllies(dt, foes) {
 }
 
 function moveToward(a, tx, ty, dt, speedMult = 1) {
-  const m = mods();
-  let sp = a.st.speed * speedMult;
+  let sp = a.st.speed * speedMult * (a.speedJitter || 1);
   if (a.slowT > 0) sp *= 0.75;
   const dx = tx - a.x, dy = ty - a.y;
   const d = Math.hypot(dx, dy);
@@ -355,9 +389,13 @@ function attackMelee(a, target, dt) {
   // a mordida acompanha o tamanho da formiga: 10px à frente de uma soldado
   // (bodyR 12) ou 190px à frente de uma GIGANTE, na ponta das mandíbulas
   const reach = Math.max(10, a.bodyR * 0.8);
-  const biteN = a.bodyR > 40 ? 14 : 4;
-  burst(a.x + Math.cos(a.angle) * reach, a.y + Math.sin(a.angle) * reach,
-    { n: biteN, color: ["#ffb347", "#ff7a3d"], spMin: 15, spMax: 70 + a.bodyR, life: 0.3, sizeMin: 1, sizeMax: 2 + a.bodyR / 60 });
+  const fx = { x: a.x + Math.cos(a.angle) * reach, y: a.y + Math.sin(a.angle) * reach };
+  slash(fx.x, fx.y, a.angle, { len: 18 + a.bodyR * 0.9, color: crit ? "#ffd479" : "#fff3d0", width: crit ? 7 : 4 });
+  hitFx(fx.x, fx.y, a.angle, {
+    dmg, crit, color: ["#a32e46", "#ff4d5a", "#6e2537"],
+    stainColor: "#3d1020", dust: "#3a2c4c",
+  });
+  if (a.bodyR > 40) { sparks(fx.x, fx.y, { n: 10, angle: a.angle }); dust(fx.x, fx.y, { n: 8, power: 1.4, color: "#3a2c4c" }); }
   if (crit) floatText(a.x + rand(-6, 6), a.y - (a.bodyR + 4), "CRITICO", { color: "#ff4d5a", life: 0.8, scale: 1 });
 }
 
@@ -382,30 +420,105 @@ function updateAnt(a, dt, foes, m) {
 
 // ------------------------------------------------------------- trabalhadora -
 function updateWorker(a, dt, foes, think, m, G2) {
-  // detecção de perigo
+  const B = antBrain(a);
+  // detecção de perigo (a corajosa aguenta mais perto antes de fugir)
   if (think && a.state !== "flee") {
-    const danger = nearestFoe(a, foes, 105);
+    const danger = nearestFoe(a, foes, 90 + B.traits.courage * 70);
     if (danger) {
-      if (dist2(a.x, a.y, danger.x, danger.y) < 90 * 90 || a.state === "return") {
-        a.state = "flee"; a.fleeT = 1.5;
+      const close = dist2(a.x, a.y, danger.x, danger.y) < (70 + B.traits.courage * 60) ** 2;
+      if (close || a.state === "return") {
+        a.state = "flee"; a.fleeT = 1.2 + B.traits.courage * 0.8;
       }
     }
   }
 
+  // -------------------------------------------------- pensamento individual --
+  // Só troca de tarefa quando a anterior terminou ou o ciclo de decisão venceu
+  // (cada formiga tem o seu ritmo: 3 a 5 decisões por segundo).
+  if (think && B.decideT <= 0 && a.state !== "goto" && a.state !== "gather" && a.state !== "return") {
+    B.decideT = 0.22 + Math.random() * 0.18;
+    const d = decideWorker(a, foes);
+    a.aiTask = d.kind;
+    B.task = d.kind;
+    switch (d.kind) {
+      case "return":
+        a.state = "return";
+        break;
+      case "flee":
+      case "refuge":
+        a.state = "flee";
+        a.fleeT = Math.max(a.fleeT, 1.0 + B.traits.courage);
+        break;
+      case "rest":
+        a.state = "rest";
+        B.restT = 2 + Math.random() * 3;
+        a.tx = d.x; a.ty = d.y;
+        break;
+      case "gather": {
+        const res = d.res;
+        if (res) {
+          a.pile = res.kind === "food" ? res : null;
+          a.node = res.kind === "food" ? null : res;
+          a.gotoT = 0; a.gotoBest = undefined;
+          a.state = "goto";
+          reportResource(a, res);
+        } else a.state = "idle";
+        break;
+      }
+      case "follow":
+      case "explore":
+        a.tx = d.x; a.ty = d.y;
+        a.state = d.kind === "follow" ? "follow" : "move";
+        break;
+      default:
+        a.state = "idle";
+    }
+  }
+
   switch (a.state) {
+    case "rest": {
+      // descanso curto no pátio do formigueiro (a formiga se limpa e volta): fica parada "limpando as antenas"
+      B.restT -= dt;
+      const d = dist2(a.x, a.y, a.tx || a.x, a.ty || a.y);
+      if (d > 26 * 26) moveToward(a, a.tx, a.ty, dt, 0.8);
+      else a.bob += dt * 1.5;
+      if (B.restT <= 0 || nearestFoe(a, foes, 120)) { a.state = "idle"; B.fatigue = 0; }
+      break;
+    }
+    case "follow": {
+      // seguindo a trilha de uma irmã: anda no sentido do cheiro e REFORÇA o
+      // rastro por onde passa (estigmergia: a trilha fica cada vez mais forte)
+      const arrived = moveToward(a, a.tx, a.ty, dt);
+      const tr = pheromoneAt("recruit", a.x, a.y);
+      // achou o recurso que a trilha apontava? assume a coleta
+      const near = pickResource(a, colony.directive === "ESSÊNCIA" ? "essence" : "food");
+      if (near && dist2(near.x, near.y, a.x, a.y) < 150 * 150) {
+        a.pile = near.kind === "food" ? near : null;
+        a.node = near.kind === "food" ? null : near;
+        a.gotoT = 0; a.gotoBest = undefined;
+        a.state = "goto";
+        break;
+      }
+      if (arrived || tr < 0.05) { a.state = "idle"; B.decideT = 0; }
+      break;
+    }
     case "flee": {
       a.fleeT -= dt;
       const A = world.anthill;
       moveToward(a, A.x, A.y, dt, 1.12);
-      if (a.fleeT <= 0 && !nearestFoe(a, foes, 150)) {
+      if (a.fleeT <= 0 && !nearestFoe(a, foes, 150 + B.traits.courage * 60)) {
         a.state = "idle"; a.pile = a.pile && a.pile.amount > 0 ? a.pile : null;
         if (!a.pile) a.node = a.node && a.node.amount > 0 ? a.node : null;
+        B.decideT = 0;
       }
       break;
     }
     case "idle": {
       // escolhe pilha/nó
-      if (a.carry >= a.st.carry) { a.state = "return"; break; }
+      if (a.carry >= a.st.carry ||
+          (a.carry > 0 && colony.needs.food > 0.55 && a.carry >= a.st.carry * 0.4)) {
+        a.state = "return"; break;
+      }
       if (a.cmdPos) { a.tx = a.cmdPos.x; a.ty = a.cmdPos.y; a.state = "move"; break; }
       acquireResource(a);
       break;
@@ -475,6 +588,9 @@ function updateWorker(a, dt, foes, think, m, G2) {
       const arrived = dist2(a.x, a.y, A.x, A.y) < 118 * 118;
       if (!arrived) {
         moveToward(a, A.x, A.y, dt);
+        // a carregadora vai MARCANDO o caminho da volta: é essa trilha que as
+        // irmãs ociosas seguem depois (nada de ninguém combinando nada)
+        if (a.carry > 0) reinforceTrail(a, a.carryKind === "essence" ? "essence" : a.carryKind);
       } else {
         deposit(a, m, G2);
       }
@@ -492,27 +608,31 @@ function updateWorker(a, dt, foes, think, m, G2) {
   }
 }
 
+/**
+ * Escolha do recurso — agora pelo cérebro: a diretriz da colônia decide se a
+ * vez é de COMIDA ou de ESSÊNCIA, o faro pessoal (curiosidade) decide o
+ * alcance e a memória individual evita becos sem saída já conhecidos.
+ */
 function acquireResource(a) {
-  // prioriza comida; se sobrar nada, vai para essência
-  const start = (target) => {
+  const B = antBrain(a);
+  const want = colony.directive === "ESSÊNCIA" ? "essence"
+    : colony.directive === "CURA" || colony.directive === "DEFESA" ? "food" : "food";
+  const target = pickResource(a, want);
+  if (target) {
     a.pile = target.kind === "food" ? target : null;
     a.node = target.kind === "food" ? null : target;
     a.gotoT = 0; a.gotoBest = undefined;
     a.state = "goto";
-  };
-  const pile = nearestPile(a.x, a.y);
-  if (pile) { start(pile); return; }
-  const ess = nearestNode(a.x, a.y, "essence");
-  if (ess) { start(ess); return; }
-  const amber = nearestNode(a.x, a.y, "amber");
-  if (amber) { start(amber); return; }
-  // nada para coletar: vagar perto
-  if (Math.random() < 0.02) {
-    const A = world.anthill;
-    const ang = Math.random() * 6.28, d = 120 + Math.random() * 150;
-    a.tx = A.x + Math.cos(ang) * d; a.ty = A.y + Math.sin(ang) * d;
-    a.state = "move";
+    B.task = target.kind === "food" ? "levando comida" : "levando essência";
+    return;
   }
+  // nada no faro: explora (e a exploração é individual — cada uma para um lado)
+  const A = world.anthill;
+  const ang = Math.random() * 6.28, d = 150 + B.traits.curiosity * 420 + Math.random() * 160;
+  a.tx = clamp(A.x + Math.cos(ang) * d, 60, 3140);
+  a.ty = clamp(A.y + Math.sin(ang) * d, 60, 2340);
+  a.state = "move";
+  B.task = "explorando";
 }
 
 function finishGather(a, m) {
@@ -540,6 +660,9 @@ function deposit(a, m, G2) {
     floatText(a.x, a.y - 12, "+" + v + " ESS", { color: "#c77dff", life: 1 });
     tutEvent("essence");
   }
+  colony.deliveries++;
+  // entrega reforça a trilha: a colônia "lembra" que aquele caminho dá comida
+  reinforceTrail(a, K === "essence" ? "essence" : K === "amber" ? "amber" : "food");
   SFX.pickup();
   a.carry = 0; a.carryKind = null;
   // volta a coletar
@@ -565,22 +688,19 @@ function updateHealer(a, dt, foes, m) {
     return;
   }
 
-  const t = a.healTarget && !a.healTarget.dead && a.healTarget.hp < a.healTarget.maxHp - 1
-    ? a.healTarget : null;
-  if (!t) {
-    // busca a aliada mais ferida no alcance
-    let best = null, score = 0.999;
-    for (const o of allies) {
-      if (o === a || o.dead || o.dying || o.type === "queen") continue;
-      const d = dist2(a.x, a.y, o.x, o.y);
-      if (d > a.st.healRange * a.st.healRange) continue;
-      const frac = o.hp / o.maxHp;
-      if (frac < score) { score = frac; best = o; }
-    }
-    a.healTarget = best;
+  // TRIAGEM pela inteligência: a curandeira escolhe quem está pior somando
+  // urgência, distância e importância (rainha e guardas valem mais). O alvo é
+  // reavaliado a cada 0,35s — e ela troca de ferido quando aparece um pior.
+  const B = antBrain(a);
+  B.decideT -= dt;
+  if (B.decideT <= 0) {
+    B.decideT = 0.35 + Math.random() * 0.15;
+    const t0 = decideHealTarget(a, allies);
+    if (t0) a.healTarget = t0;
+    else if (a.healTarget && (a.healTarget.dead || a.healTarget.hp >= a.healTarget.maxHp - 1)) a.healTarget = null;
   }
-
-  const tgt = a.healTarget && !a.healTarget.dead && a.healTarget.hp < a.healTarget.maxHp - 1 ? a.healTarget : null;
+  const tgt = a.healTarget && !a.healTarget.dead && a.healTarget.hp < a.healTarget.maxHp - 1
+    ? a.healTarget : null;
   if (tgt) {
     const rr = a.st.range + 14;
     const d = dist(a.x, a.y, tgt.x, tgt.y);
@@ -625,17 +745,42 @@ function updateHealer(a, dt, foes, m) {
 }
 
 // -------------------------------------------------------------- combatentes -
+/**
+ * Combatente com cérebro próprio: a colônia combina o FOCO (todo mundo olha
+ * para o mesmo bicho), cada formiga recebe um SETOR do cerco e quem não tem
+ * alvo fica de sentinela no seu canto do anel do formigueiro. A personalidade
+ * decide quem é lobo solitário (caça por conta) e quem segue o grupo.
+ */
 function updateFighter(a, dt, foes, think, m) {
-  // alvo forçado (ordem de ataque)
+  const B = antBrain(a);
+  // alvo forçado (ordem de ataque do jogador)
   if (a.forcedTarget && (a.forcedTarget.dead || a.forcedTarget.dying)) a.forcedTarget = null;
 
   if (think) {
-    if (!a.forcedTarget && a.state !== "move") {
-      const base = a.st.aggro > 0 ? a.st.aggro : 260;
-      const aggro = a.state === "chase" || a.state === "attack" ? base * 1.2 : base;
-      a.target = nearestFoe(a, foes, aggro) || (a.pursue && !a.pursue.dead ? a.pursue : null);
-      if (a.target) a.state = "chase";
-      else if (a.state === "chase" || a.state === "attack") a.state = "home";
+    if (a.forcedTarget) { a.target = a.forcedTarget; a.state = "chase"; }
+    else {
+      B.decideT -= dt;
+      // a ORDEM DO JOGADOR manda: em "move" ela só chega e para
+      if (B.decideT <= 0 && a.state !== "move") {
+        B.decideT = 0.28 + Math.random() * 0.22;
+        const d = decideFighter(a, foes);
+        a.aiTask = d.kind;
+        switch (d.kind) {
+          case "attack":
+          case "march":
+            a.target = d.target;
+            a.state = "chase";
+            break;
+          case "patrol":
+            a.tx = d.x; a.ty = d.y; a.state = "move";
+            break;
+          case "home":
+            if (a.state !== "chase") { a.state = "home"; }
+            break;
+          default:
+            if (a.state === "chase") a.state = "home";
+        }
+      }
     }
   }
 
@@ -644,23 +789,33 @@ function updateFighter(a, dt, foes, think, m) {
   switch (a.state) {
     case "idle":
     case "home": {
-      const gp = a.guardPos;
-      if (gp && dist2(a.x, a.y, gp.x, gp.y) > 36 * 36) {
-        moveToward(a, gp.x, gp.y, dt);
+      const gp = a.guardPos || world.anthill;
+      const d = dist(a.x, a.y, gp.x, gp.y);
+      // sentinela: mantém o posto com folga individual (nada de sobreposição)
+      const slack = 40 + B.traits.curiosity * 60;
+      if (d > slack) {
+        const ang = a.id * 2.399 + colony.t * 0.12;
+        const orbit = d > 260 ? 0 : 26 + B.traits.curiosity * 40;
+        moveToward(a, gp.x + Math.cos(ang) * orbit, gp.y + Math.sin(ang) * orbit, dt);
       } else {
         a.state = "idle";
         a.bob += dt * 2;
-        // patrulhas lentas ao redor do posto
-        if (Math.random() < 0.004 && gp) {
-          gp.x += rand(-20, 20); gp.y += rand(-20, 20);
+        // rondas lentas: cada sentinela vigia um setor diferente do anel
+        if (Math.random() < 0.008) {
+          const ang = Math.random() * 6.28, r = 60 + Math.random() * 140;
+          a.tx = gp.x + Math.cos(ang) * r; a.ty = gp.y + Math.sin(ang) * r;
+          a.state = "move"; a.patrolT = 2.5;
         }
       }
       break;
     }
     case "move": {
-      if (moveToward(a, a.tx, a.ty, dt)) { a.state = "home"; }
-      if (!a.target) a.target = nearestFoe(a, foes, 135);
-      if (a.target) a.state = "chase";
+      const arrived = moveToward(a, a.tx, a.ty, dt);
+      a.patrolT = (a.patrolT || 0) - dt;
+      if (arrived || a.patrolT <= 0) { a.state = "home"; a.patrolT = 0; }
+      // viu inimigo no caminho? interrompe a ronda
+      if (!a.target && B.decideT <= 0.05) a.target = nearestFoe(a, foes, 150);
+      if (a.target && !a.forcedTarget) a.state = "chase";
       break;
     }
     case "chase": {
@@ -668,16 +823,27 @@ function updateFighter(a, dt, foes, think, m) {
       const rr = a.st.range + (tgt.bodyR || 12) - 4;
       const d = dist(a.x, a.y, tgt.x, tgt.y);
       a.angle = angLerp(a.angle, Math.atan2(tgt.y - a.y, tgt.x - a.x), 1 - Math.pow(0.0001, dt));
+      // SETOR DO CERCO: cada uma ataca por um ângulo próprio — o bicho fica
+      // cercado em vez de virar uma pilha de formigas no mesmo pixel
+      const slot = squadSlot(a, tgt);
       if (a.def.projSpeed) {
         // unidades à distância (cuspidora / bombeira) mantêm alcance
-        if (d > a.st.range * 0.92) moveToward(a, tgt.x, tgt.y, dt);
+        if (d > a.st.range * 0.92) moveToward(a, slot.x, slot.y, dt);
         else if (d < a.st.range * 0.55) moveToward(a, a.x + (a.x - tgt.x), a.y + (a.y - tgt.y), dt, 0.6);
         else a.bob += dt * 2;
         if (d <= a.st.range && a.atkT <= 0) spitAt(a, tgt, m);
-      } else {
-        if (d > rr) moveToward(a, tgt.x, tgt.y, dt);
-        else if (a.atkT <= 0) attackMelee(a, tgt, dt);
+      } else if (d <= rr) {
+        if (a.atkT <= 0) attackMelee(a, tgt, dt);
         else a.bob += dt * 2;
+      } else {
+        // fora de alcance: vai para o setor do cerco. Se já ESTÁ no setor
+        // (o bicho empurra, a colisão trava), morde daqui — antes a formiga
+        // ficava parada a um fio de distância do alvo sem nunca atacar.
+        const arrived = moveToward(a, slot.x, slot.y, dt);
+        if (arrived) {
+          if (a.atkT <= 0) attackMelee(a, tgt, dt);
+          else a.bob += dt * 2;
+        }
       }
       break;
     }

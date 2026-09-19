@@ -4,6 +4,7 @@
 import {
   VIEW_W, VIEW_H, WORLD_W, WORLD_H, PAL, UNITS, START, MAPS, CHAMBERS,
   MUTATIONS, RARITY, HELP_GOAL, HELP_CONTROLS, HELP_TIPS, CALM_START, MAX_MUTS, xpForLevel,
+  GAME_MODES,
 } from "./config.js";
 import { fogReset, fogUpdate, fogDraw, fogVisible, fogExplored, fogDrawMini } from "./fog.js";
 import {
@@ -27,17 +28,118 @@ import { foes, boss, clearFoes, updateFoes, updateBoss } from "./enemies.js";
 import { projectiles, orbs, updateProjectiles, updateOrbs, clearCombat } from "./combat.js";
 import {
   director, resetDirector, updateDirector, skipPeace, mapDef, waveDef, isLastMap, nextMapCalm,
+  primeDirector,
 } from "./waves.js";
 import { rollDraft, applyMutation, mutationList } from "./mutations.js";
-import { drawRun, drawTitleBg, drawTitleMotes } from "./render.js";
-import { enterTree, updateTree, drawTree, treeClick } from "./meta.js";
-import { uiBegin, uiButtons, button, iconButton, panel, bar, pointInRect } from "./ui.js";
+import { drawRun } from "./render.js";
+import { drawTitleBg, drawTitleMotes } from "./titlebg.js";
+import { enterTree, updateTree, drawTree, treeClick, TREE_BACK } from "./meta.js";
+import { colony, colonyReset, pheromoneReset, pheromoneTick } from "./ai.js";
+import { goTo, updateTransition, drawCover, drawDust, enterEased } from "./transition.js";
+import { uiBegin, uiButtons, button, iconButton, panel, bar, pointInRect, chamferPath, withAlpha } from "./ui.js";
 import { startTutorial, stopTutorial, updateTutorial, drawTutorial, tutEvent, TUT, tutorialCardRect } from "./tutorial.js";
 import { nest, nestEnter, nestExit, nestUpdate, nestDraw, nestClick, nestHover } from "./nest.js";
 import { rand, clamp, lerp, TAU, fmt } from "./utils.js";
 
 const canvas = document.getElementById("game");
 const ctx = canvas.getContext("2d");
+
+// ------------------------------------------------------- trocas de tela -----
+// Toda troca passa pela cortina (js/transition.js): nada mais de piscar de
+// uma cena para outra. `treeReturn` guarda de ONDE se entrou na árvore, para
+// o botão VOLTAR levar de volta ao lugar certo (antes ele chumbava TITLE).
+let treeReturn = "TITLE";
+
+function gotoTree(from, opts = {}) {
+  treeReturn = from || G.screen;
+  goTo("TREE", { style: "iris", durOut: 0.28, durIn: 0.42, onApply: enterTree, ...opts });
+}
+function gotoTitle(opts = {}) {
+  goTo("TITLE", { style: "fade", durOut: 0.22, durIn: 0.36, ...opts });
+}
+function gotoHelp(from) {
+  helpReturn = from || G.screen;
+  goTo("HELP", { style: "wipe", durOut: 0.2, durIn: 0.3 });
+}
+function startRun(opts = {}) {
+  goTo("RUN", { style: "swipe", durOut: 0.34, durIn: 0.5, onApply: newRun, ...opts });
+}
+
+// ------------------------------------------------------- fluxo das telas ----
+// SPLASH (só o título) → TITLE (menu) → MODE (escolha de modo) → RUN.
+// O splash existe para a abertura ter peso: a arte respira, o título entra
+// letra por letra e o convite "CLIQUE PARA JOGAR" pisca até o jogador tocar.
+let splashT = 0;
+let modeIdx = 0;
+
+function gotoMode() {
+  goTo("MODE", { style: "iris", durOut: 0.26, durIn: 0.44 });
+}
+
+function gotoTitle2() {
+  goTo("TITLE", { style: "fade", durOut: 0.24, durIn: 0.5, flash: 0.16 });
+}
+
+/** Consumido pelo loop principal enquanto o jogo está no SPLASH. */
+export function updateSplash(dt) {
+  splashT += dt;
+  const ready = splashT > 0.75;              // evita pular por clique acidental
+  const click = ready && (mouse.justDown || pressed.Enter || pressed.Space);
+  if (click) {
+    initAudio();
+    sparkle(mouse.x, mouse.y);
+    if (!pressed.Enter && !pressed.Space) SFX.uiClick();
+    gotoTitle2();
+  }
+}
+
+/** Pequeno clarão no ponto tocado (o splash responde ao dedo). */
+function sparkle(x, y) {
+  for (let i = 0; i < 14; i++) {
+    const a = (i / 14) * TAU + rand(-0.2, 0.2);
+    const sp = rand(40, 150);
+    sparkPts.push({ x, y, vx: Math.cos(a) * sp, vy: Math.sin(a) * sp, life: 0.5, max: 0.5 });
+  }
+}
+const sparkPts = [];
+
+function updateSparkle(dt) {
+  for (let i = sparkPts.length - 1; i >= 0; i--) {
+    const p = sparkPts[i];
+    p.life -= dt;
+    if (p.life <= 0) { sparkPts.splice(i, 1); continue; }
+    p.x += p.vx * dt; p.y += p.vy * dt;
+    p.vx *= 0.94; p.vy = p.vy * 0.94 + 22 * dt;
+  }
+}
+
+function drawSparkle(ctx2) {
+  for (const p of sparkPts) {
+    const a = clamp(p.life / p.max, 0, 1);
+    ctx2.globalAlpha = a;
+    ctx2.fillStyle = a > 0.6 ? "#fff6e0" : "#ffd479";
+    ctx2.fillRect(p.x - 1.5, p.y - 1.5, 3, 3);
+  }
+  ctx2.globalAlpha = 1;
+}
+
+function updateMode(dt) {
+  const n = GAME_MODES.length;
+  if (pressed.ArrowLeft || pressed.KeyA) { modeIdx = (modeIdx + n - 1) % n; SFX.uiClick(); }
+  if (pressed.ArrowRight || pressed.KeyD) { modeIdx = (modeIdx + 1) % n; SFX.uiClick(); }
+  for (let i = 0; i < n; i++) if (pressed["Digit" + (i + 1)]) modeIdx = i;
+  if (pressed.Escape || pressed.Backspace) gotoTitle2();
+  if (pressed.Enter || pressed.Space) beginRunWithMode();
+}
+
+/** Começa a expedição no modo selecionado (ou no modo pedido pelo id). */
+export function beginRunWithMode(id) {
+  const cfg = GAME_MODES.find((m) => m.id === (id || GAME_MODES[modeIdx].id)) || GAME_MODES[0];
+  initAudio();
+  SFX.win();
+  G.modeId = cfg.id;
+  startRun();
+}
 
 // ------------------------------------------------------------------ loja ----
 const SHOP = [
@@ -64,7 +166,9 @@ let shopOpen = false;
 // ------------------------------------------------------------------ run -----
 function newRun() {
   const seed = (Math.random() * 0xffffffff) >>> 0;
-  resetDirector();
+  const modeCfg = GAME_MODES.find((m) => m.id === G.modeId) || GAME_MODES[0];
+  primeDirector(modeCfg);
+  colonyReset();          // cérebro da colônia do zero (feromônios limpos)
   genWorld(seed, 0);
   fogReset();
   clearParticles();
@@ -78,6 +182,7 @@ function newRun() {
   const m = metaBonus();
   const run = {
     seed,
+    mode: modeCfg.id, modeName: modeCfg.name, modeCfg,
     status: "running",       // running | won | lost | ended
     endT: 0, payoutDone: false, payout: null,
     // bônus de árvore: estoque inicial de comida/essência
@@ -87,13 +192,14 @@ function newRun() {
     kills: 0, wave: 0, bestWaveThisRun: 0, mapsCleared: 0,
     mutations: new Set(), mutationLog: [],
     queenJustHit: 0,
-    banner: { title: "MAPA 1/" + MAPS.length + " — " + MAPS[0].name, sub: MAPS[0].sub, t: 4.4 },
+    banner: { title: "MAPA 1/" + MAPS.length + " — " + MAPS[0].name, sub: MAPS[0].sub, t: 4.6, total: 4.6, kind: "map" },
     draft: null,
     elapsed: 0,
     heartbeatT: 0,
     rebirthUsed: false,
     selectT: 0,
     bossDefeated: false,
+    cycles: 0,
     mapIdx: 0,
     transition: false,       // mostrando tela de mapa limpo
     chambers: { nursery: 0, pantry: 0, barracks: 0, fungus: 0, refinery: 0 },
@@ -158,9 +264,10 @@ function settleRun() {
   const relic = Math.round(run.essencePool * 0.1);
   const winBonus = won ? 200 : 0;
   const base = relic + waveBonus + killBonus + mapBonus + winBonus;
-  const total = Math.round(base * em);
+  const modeMul = (run.modeCfg && run.modeCfg.essenceMult) || 1;
+  const total = Math.round(base * em * modeMul);
   run.payout = {
-    relic, waveBonus, killBonus, mapBonus, winBonus, mult: em, total,
+    relic, waveBonus, killBonus, mapBonus, winBonus, mult: em, mode: run.modeName || "", modeMul, total,
   };
 
   G.save.essence += total;
@@ -183,6 +290,7 @@ function advanceMap() {
   // novo mundo, novo bioma
   genWorld((Math.random() * 0xffffffff) >>> 0, director.mapIdx);
   fogReset();
+  pheromoneReset();       // cheiro do mapa antigo não vale no bioma novo
   clearFoes();
   clearCombat();
 
@@ -214,7 +322,7 @@ function advanceMap() {
     burst(A.x, A.y, { n: 30, color: ["#ffd479", "#7fd6a0", "#fff"], spMin: 30, spMax: 160, life: 0.8, glow: true });
   }
 
-  run.banner = { title: "MAPA " + (director.mapIdx + 1) + "/" + MAPS.length + " — " + m.name, sub: m.sub, t: 4.6 };
+  run.banner = { title: "MAPA " + (director.mapIdx + 1) + "/" + MAPS.length + " — " + m.name, sub: m.sub, t: 4.8, total: 4.8, kind: "map" };
   run.transition = false;
   SFX.chime();
   floatText(A.x, A.y - 120, "A COLÔNIA MIGRA PARA NOVAS TERRAS", { color: "#ffd479", life: 2.2, scale: 2 });
@@ -268,6 +376,7 @@ function uiCapture() {
 // ----------------------------------------------------------------- update ---
 export function update(dt) {
   G.time += dt;
+  updateTransition(dt);
 
   // alterna mudo sempre (o aviso entra no HUD como texto de MUNDO: converte)
   if (pressed.KeyM) {
@@ -277,7 +386,17 @@ export function update(dt) {
   }
 
   switch (G.screen) {
-    case "TITLE": break;
+    // atalhos do menu (os mesmos rótulos dos botões)
+    case "SPLASH":
+      updateSparkle(dt);
+      updateSplash(dt);
+      break;
+    case "TITLE":
+      if (pressed.Enter) { initAudio(); gotoMode(); return; }
+      if (pressed.KeyA) { gotoTree("TITLE"); return; }
+      if (pressed.KeyH) { gotoHelp("TITLE"); return; }
+      break;
+    case "MODE": updateMode(dt); break;
     case "TREE": updateTreeScreen(dt); break;
     case "HELP": break; // estático; cliques tratados no draw
     case "RUN": updateRun(dt); break;
@@ -292,10 +411,24 @@ export function update(dt) {
   }
 }
 
+function leaveTree() {
+  const dest = treeReturn;
+  treeReturn = "TITLE";
+  goTo(dest, { style: "fade", durOut: 0.2, durIn: 0.34 });
+}
+
 function updateTreeScreen(dt) {
   updateTree(dt);
+  // VOLTAR é tratado no UPDATE, antes de qualquer coisa: não depende do
+  // desenho do quadro nem do teste de "arrastando" — era por aí que o clique
+  // se perdia e o jogador ficava preso na árvore.
+  if (mouse.justDown && pointInRect(mouse.x, mouse.y, TREE_BACK.x, TREE_BACK.y, TREE_BACK.w, TREE_BACK.h)) {
+    SFX.uiClick();
+    leaveTree();
+    return;
+  }
   if (mouse.justDown && mouse.y > 70 && !uiCapture()) treeClick();
-  if (pressed.Escape) G.screen = "TITLE";
+  if (pressed.Escape) leaveTree();
 }
 
 // --------------------------------------------------------------------- RUN --
@@ -481,7 +614,8 @@ function updateRun(dt) {
     }
   }
   // vitória: chefe do ÚLTIMO mapa eliminado
-  if (run.status === "running" && run.bossDefeated && isLastMap() && run.bossDefeated === mapDef().boss) {
+  const endless = !!(run.modeCfg && run.modeCfg.endless);
+  if (!endless && run.status === "running" && run.bossDefeated && isLastMap() && run.bossDefeated === mapDef().boss) {
     endRun(true);
     return;
   }
@@ -614,6 +748,308 @@ function pickDraft(i) {
   SFX.buy();
 }
 
+
+// ----------------------------------------------------------------- splash ----
+// Pré-menu: SÓ o título, grande, letra por letra, sobre a arte do pôr do sol.
+// Abaixo dele, "CLIQUE PARA JOGAR" pulsando. Qualquer clique/tecla avançada.
+// Cada letra do título é assada UMA vez num canvas com halo + contorno + corpo.
+// A animação (entrada, flutuação, brilho) então só posiciona esses canvases —
+// antes eram ~15 drawText por letra por quadro.
+const titleLetters = new Map();
+function titleLetterCanvas(ch) {
+  let cv = titleLetters.get(ch);
+  if (cv) return cv;
+  const S = 6, pad = 30;
+  const cw = FONT.big.cw * S, chh = FONT.big.ch * S;
+  cv = document.createElement("canvas");
+  cv.width = cw + pad * 2;
+  cv.height = chh + pad * 2;
+  const c = cv.getContext("2d");
+  c.imageSmoothingEnabled = false;
+  const put = (dx, dy, color, al) => {
+    c.globalAlpha = al;
+    drawText(c, ch, cv.width / 2 + dx, pad + dy, { font: "big", scale: S, color, align: "center", shadow: false });
+  };
+  // halo ciano (identidade da casa)
+  put(-7, 0, "#35e8ff", 0.32); put(7, 0, "#35e8ff", 0.32);
+  put(0, -7, "#35e8ff", 0.32); put(0, 7, "#35e8ff", 0.32);
+  put(-5, -5, "#2fd2ff", 0.2); put(5, 5, "#2fd2ff", 0.2);
+  // contorno escuro
+  for (const [dx, dy] of [[-3, 0], [3, 0], [0, -3], [0, 3], [-2, -2], [2, -2], [-2, 2], [2, 2]]) {
+    put(dx, dy, "#07111a", 1);
+  }
+  // corpo + brilho do topo
+  put(0, 0, "#f4fffd", 1);
+  put(0, -2, "#dfffff", 0.45);
+  titleLetters.set(ch, cv);
+  return cv;
+}
+
+function renderSplash() {
+  const t = G.time;
+  const e = enterEased();
+  drawTitleBg(ctx, t);
+  drawTitleMotes(ctx, t);
+
+  // escurecimento em vinheta: o olho vai para o título
+  const vg = ctx.createRadialGradient(VIEW_W / 2, 250, 60, VIEW_W / 2, 250, 620);
+  vg.addColorStop(0, "rgba(9,5,18,0.18)");
+  vg.addColorStop(0.65, "rgba(9,5,18,0.45)");
+  vg.addColorStop(1, "rgba(9,5,18,0.74)");
+  ctx.fillStyle = vg;
+  ctx.fillRect(0, 0, VIEW_W, VIEW_H);
+
+  // faixa escura horizontal atrás do título (dá contraste ao texto)
+  const band = ctx.createLinearGradient(0, 96, 0, 360);
+  band.addColorStop(0, "rgba(10,6,20,0)");
+  band.addColorStop(0.4, "rgba(10,6,20,0.6)");
+  band.addColorStop(0.66, "rgba(10,6,20,0.6)");
+  band.addColorStop(1, "rgba(10,6,20,0)");
+  ctx.fillStyle = band;
+  ctx.fillRect(0, 90, VIEW_W, 276);
+
+  // ---- título letra por letra -------------------------------------------------
+  // A fonte é um atlas: cada glifo tem célula (cw) maior que o avanço (adv).
+  // Para escalonar letra por letra o passo tem de ser adv*S; usar a largura da
+  // linha (que devolve a CÉLULA do último glifo) espalhava demais as letras.
+  const title = "FUMIGA";
+  const S = 6;
+  const AD = FONT.big.adv * S;                 // passo entre letras
+  const CWd = FONT.big.cw * S;                 // largura da célula
+  const CHg = FONT.big.ch * S;                 // altura da célula
+  const ink = (title.length - 1) * AD + CWd;   // largura ocupada (com a célula final)
+  const x0 = (VIEW_W - ink) / 2;
+  const yTop = 116 + Math.sin(t * 0.9) * 3;    // topo da célula (o desenho é por topo)
+
+  // respiro escuro atrás da palavra (radial: sem borda reta visível)
+  const cxp = VIEW_W / 2, cyp = yTop + CHg / 2;
+  const plate = ctx.createRadialGradient(cxp, cyp, 40, cxp, cyp, ink * 0.62);
+  plate.addColorStop(0, "rgba(9,5,18,0.58)");
+  plate.addColorStop(0.6, "rgba(9,5,18,0.34)");
+  plate.addColorStop(1, "rgba(9,5,18,0)");
+  ctx.save();
+  ctx.translate(cxp, cyp);
+  ctx.scale(1, 0.5);
+  ctx.translate(-cxp, -cyp);
+  ctx.fillStyle = plate;
+  ctx.fillRect(cxp - ink * 0.7, cyp - ink * 0.7, ink * 1.4, ink * 1.4);
+  ctx.restore();
+
+  ctx.save();
+  for (let i = 0; i < title.length; i++) {
+    const lcv = titleLetterCanvas(title[i]);
+    const pad = 30;
+    const a = clamp((e - i * 0.075) / 0.45, 0, 1);
+    const ea = 1 - Math.pow(1 - a, 3);
+    const cxg = x0 + i * AD + CWd / 2;
+    const cyg = yTop + CHg / 2 + (1 - ea) * 46 + Math.sin(t * 1.15 + i * 0.7) * 2.6;
+    const rot = Math.sin(t * 0.85 + i * 0.55) * 0.016 * ea;
+    const bounce = 1 + Math.sin(t * 1.6 + i) * 0.012;
+
+    ctx.save();
+    ctx.globalAlpha = ea;
+    ctx.translate(cxg, cyg);
+    ctx.rotate(rot);
+    ctx.scale(bounce, bounce);
+    ctx.imageSmoothingEnabled = false;
+    ctx.drawImage(lcv, -CWd / 2 - pad, -CHg / 2 - pad);
+    ctx.restore();
+  }
+  ctx.restore();
+
+  // varredura de brilho atravessando as letras (a cada ~5 s)
+  const sw = (t % 5.2) / 5.2;
+  if (sw < 0.24) {
+    const sx = x0 - 80 + (sw / 0.24) * (ink + 160);
+    ctx.save();
+    ctx.beginPath();
+    ctx.rect(x0 - 20, yTop, ink + 40, CHg);
+    ctx.clip();
+    const g2 = ctx.createLinearGradient(sx - 70, 0, sx + 70, 0);
+    g2.addColorStop(0, "rgba(255,255,255,0)");
+    g2.addColorStop(0.5, "rgba(226,252,255,0.34)");
+    g2.addColorStop(1, "rgba(255,255,255,0)");
+    ctx.fillStyle = g2;
+    ctx.fillRect(sx - 70, yTop - 10, 140, CHg + 20);
+    ctx.restore();
+  }
+
+  // subtítulo com filetes (logo abaixo da tinta do título)
+  const subA = clamp((e - 0.45) / 0.55, 0, 1);
+  const subTxt = "COLÔNIA ETERNA";
+  const subW = textWidth(subTxt, { font: "small", scale: 2 });
+  const subY = yTop + CHg - 4;
+  ctx.globalAlpha = subA;
+  drawText(ctx, subTxt, VIEW_W / 2, subY, { font: "small", scale: 2, color: "#ffd479", align: "center" });
+  ctx.fillStyle = "rgba(255,212,121,0.5)";
+  ctx.fillRect(VIEW_W / 2 - subW / 2 - 78, subY + 12, 58, 1);
+  ctx.fillRect(VIEW_W / 2 + subW / 2 + 20, subY + 12, 58, 1);
+  ctx.globalAlpha = 1;
+
+  // ---- "CLIQUE PARA JOGAR"
+  const pa = clamp((t - 1.1) / 0.6, 0, 1) * e;
+  const pulse = 0.6 + 0.4 * Math.sin(t * 2.6);
+  const ty = VIEW_H - 146 + Math.sin(t * 1.4) * 2;
+  ctx.globalAlpha = pa * (0.55 + pulse * 0.45);
+  const msg = "CLIQUE PARA JOGAR";
+  const mw = textWidth(msg, { font: "big", scale: 2 });
+  // placa fina atrás da mensagem
+  ctx.fillStyle = "rgba(10,6,20,0.55)";
+  chamferPath(ctx, VIEW_W / 2 - mw / 2 - 26, ty - 12, mw + 52, 40, 6);
+  ctx.fill();
+  ctx.strokeStyle = `rgba(255,212,121,${0.25 + pulse * 0.35})`;
+  ctx.lineWidth = 1.5;
+  ctx.stroke();
+  for (const [dx2, dy2] of [[-2, 0], [2, 0], [0, -2], [0, 2]]) {
+    drawText(ctx, msg, VIEW_W / 2 + dx2, ty + dy2, { font: "big", scale: 2, color: "#08131c", align: "center" });
+  }
+  drawText(ctx, msg, VIEW_W / 2, ty, { font: "big", scale: 2, color: pulse > 0.5 ? "#fff6e0" : "#ffd479", align: "center" });
+  // cursor piscando
+  ctx.globalAlpha = pa * (Math.sin(t * 6) > 0 ? 1 : 0.15);
+  ctx.fillStyle = "#ffd479";
+  ctx.fillRect(VIEW_W / 2 + mw / 2 + 12, ty - 2, 7, 18);
+  ctx.globalAlpha = 1;
+
+  // dica discreta de teclado
+  ctx.globalAlpha = pa * 0.55;
+  drawText(ctx, "ENTER  •  ESPAÇO", VIEW_W / 2, ty + 58, { color: "#c9b6d8", align: "center" });
+  ctx.globalAlpha = 1;
+
+  drawSparkle(ctx);
+}
+
+// ------------------------------------------------------------------ modos ----
+// Tela de escolha do modo de jogo (entre o menu e a gameplay). Três cartões
+// grandes com ícone, texto e etiquetas; o cartão escolhido ganha moldura e
+// brilho na cor do modo.
+function renderMode() {
+  const e = enterEased();
+  const t = G.time;
+  drawTitleBg(ctx, t);
+  ctx.fillStyle = "rgba(9,6,18,0.72)";
+  ctx.fillRect(0, 0, VIEW_W, VIEW_H);
+  drawTitleMotes(ctx, t);
+  ctx.fillStyle = "rgba(9,6,18,0.42)";
+  ctx.fillRect(0, 0, VIEW_W, VIEW_H);
+
+  const n = GAME_MODES.length;
+  const cw = 254, ch = 268, gap = 22;
+  const totalW = n * cw + (n - 1) * gap;
+  const x0 = (VIEW_W - totalW) / 2;
+  const cy = 120 + (1 - e) * 18;
+
+  // cabeçalho
+  ctx.globalAlpha = 0.2 + e * 0.8;
+  const hTxt = "ESCOLHA O MODO DE JOGO";
+  const hw = textWidth(hTxt, { font: "big", scale: 2 });
+  drawText(ctx, hTxt, VIEW_W / 2, 34, { font: "big", scale: 2, color: "#ffd479", align: "center" });
+  ctx.fillStyle = "rgba(255,212,121,0.35)";
+  ctx.fillRect(VIEW_W / 2 - hw / 2 - 110, 72, 74, 1);
+  ctx.fillRect(VIEW_W / 2 + hw / 2 + 36, 72, 74, 1);
+  drawText(ctx, "COMO A COLÔNIA ENFRENTA A EXPEDIÇÃO", VIEW_W / 2, 100, { color: "#c9b6d8", align: "center" });
+  ctx.globalAlpha = 1;
+
+  for (let i = 0; i < n; i++) {
+    const cfg = GAME_MODES[i];
+    const x = x0 + i * (cw + gap);
+    const y = cy;
+    const sel = i === modeIdx;
+    const hot = pointInRect(mouse.x, mouse.y, x, y, cw, ch);
+
+    // cartão
+    panel(ctx, x, y, cw, ch, {
+      fill: sel ? "#211838" : "#171129",
+      border: sel ? cfg.accent : hot ? "#4a3a6e" : "#33284e",
+      r: 8,
+      topAccent: withAlpha(cfg.accent, sel ? 1 : 0.4),
+    });
+    if (sel) {
+      const pulse = 0.4 + 0.22 * Math.sin(t * 4);
+      ctx.strokeStyle = withAlpha(cfg.accent, pulse);
+      ctx.lineWidth = 2;
+      chamferPath(ctx, x - 5, y - 5, cw + 10, ch + 10, 11);
+      ctx.stroke();
+    }
+
+    // ícone sobre um disco de luz
+    const icon = IMG[cfg.icon];
+    if (icon) {
+      const cxi = x + cw / 2, cyi = y + 50;
+      const g = ctx.createRadialGradient(cxi, cyi, 4, cxi, cyi, 46);
+      g.addColorStop(0, withAlpha(cfg.accent, sel ? 0.38 : 0.2));
+      g.addColorStop(1, withAlpha(cfg.accent, 0));
+      ctx.fillStyle = g;
+      ctx.beginPath(); ctx.arc(cxi, cyi, 46, 0, TAU); ctx.fill();
+      const isc = 3;
+      const iw = icon.width * isc, ih = icon.height * isc;
+      ctx.imageSmoothingEnabled = false;
+      ctx.globalAlpha = sel ? 1 : 0.8;
+      ctx.drawImage(icon, cxi - iw / 2, cyi - ih / 2, iw, ih);
+      ctx.globalAlpha = 1;
+    }
+
+    drawText(ctx, cfg.name, x + cw / 2, y + 84, { font: "big", scale: 1, color: sel ? "#fff6e0" : "#d8cfe8", align: "center" });
+    ctx.fillStyle = withAlpha(cfg.accent, sel ? 0.55 : 0.22);
+    ctx.fillRect(x + 14, y + 114, cw - 28, 1);
+    drawText(ctx, cfg.sub, x + cw / 2, y + 120, { color: sel ? cfg.accent : PAL.textDim, align: "center" });
+
+    const lines = wrapText(cfg.desc, cw - 30, {});
+    lines.forEach((L, li) => drawText(ctx, L, x + 15, y + 142 + li * 15, { color: "#c9b6d8" }));
+
+    // etiquetas em linhas (nunca vazam do cartão)
+    const chips = cfg.chips;
+    const cwid = chips.map((c2) => textWidth(c2, {}) + 16);
+    const rows = [];
+    let row = [], rowW = 0;
+    for (let ci = 0; ci < chips.length; ci++) {
+      const need = cwid[ci] + (row.length ? 6 : 0);
+      if (rowW + need > cw - 24 && row.length) { rows.push({ row, rowW }); row = []; rowW = 0; }
+      row.push(ci);
+      rowW += cwid[ci] + (row.length > 1 ? 6 : 0);
+    }
+    if (row.length) rows.push({ row, rowW });
+    let chy = y + ch - 20 - (rows.length - 1) * 22;
+    for (const rr of rows) {
+      let chx = x + cw / 2 - rr.rowW / 2;
+      for (const ci of rr.row) {
+        ctx.fillStyle = withAlpha(cfg.accent, sel ? 0.2 : 0.09);
+        chamferPath(ctx, chx, chy - 3, cwid[ci], 18, 3);
+        ctx.fill();
+        ctx.strokeStyle = withAlpha(cfg.accent, sel ? 0.6 : 0.28);
+        ctx.lineWidth = 1;
+        ctx.stroke();
+        drawText(ctx, chips[ci], chx + cwid[ci] / 2, chy + 2, { color: sel ? "#fff6e0" : "#b9aece", align: "center" });
+        chx += cwid[ci] + 6;
+      }
+      chy += 22;
+    }
+
+    // passagem do mouse já seleciona; clique começa a expedição
+    uiButtons().push({ x, y, w: cw, h: ch, id: "mode_" + cfg.id });
+    if (hot) {
+      modeIdx = i;
+      if (mouse.justDown) { beginRunWithMode(cfg.id); return; }
+    }
+  }
+
+  // ---- botões
+  const by = cy + ch + 20;
+  const selCfg = GAME_MODES[modeIdx];
+  if (button(ctx, {
+    x: VIEW_W / 2 - 160, y: by, w: 320, h: 46, label: "JOGAR", font: "big", scale: 1,
+    id: "modePlay", accent: selCfg.accent, hotkey: "ENTER",
+  })) {
+    beginRunWithMode(selCfg.id);
+    return;
+  }
+  if (button(ctx, { x: 60, y: by, w: 150, h: 46, label: "VOLTAR", id: "modeBack", font: "small", hotkey: "ESC" })) {
+    gotoTitle2();
+    return;
+  }
+  drawText(ctx, "SETAS: ESCOLHER  •  1-3: ATALHO  •  ENTER: JOGAR  •  ESC: VOLTAR",
+    VIEW_W / 2, VIEW_H - 24, { color: PAL.textDim, align: "center" });
+}
+
 // ------------------------------------------------------------------ render --
 let paused = false;
 
@@ -622,16 +1058,21 @@ export function render(dt) {
   uiBegin();
   switch (G.screen) {
     case "BOOT": break;
+    case "SPLASH": renderSplash(); break;
     case "TITLE": renderTitle(); break;
+    case "MODE": renderMode(); break;
     case "HELP": renderHelp(); break;
     case "TREE": {
       const r = drawTree(ctx, dt);
-      if (r === "back") G.screen = "TITLE";
+      if (r === "back") { leaveTree(); break; }   // clique no botão desenhado
       break;
     }
     case "RUN": renderRun(); break;
   }
   cursorCustom();
+  // cortina por último: cobre o quadro inteiro durante a troca de tela
+  drawCover(ctx);
+  drawDust(ctx);
 }
 
 function cursorCustom() {
@@ -652,66 +1093,145 @@ function cursorCustom() {
 
 // ------------------------------------------------------------------ título ---
 function renderTitle() {
-  drawTitleBg(ctx);
+  const e = enterEased();                    // 0..1 — animação de entrada
+  drawTitleBg(ctx, G.time);
   drawTitleMotes(ctx, G.time);
 
   // ====================================================== inspiração2 ------
-  // Logo-neon (letras claras com halo ciano e contorno escuro), silhueta do
-  // formigueiro no horizonte e um "PRESSIONE PARA COMEÇAR" discreto — o menu
-  // é a cena, os botões são o mínimo.
+  // A cena é o pôr-do-sol; o título fica numa PLACA escura própria, com bisel
+  // quente e filete ciano. Antes as letras ficavam direto sobre a colina
+  // roxa, e o contraste sumia (reclamação do menu). A placa resolve na
+  // origem: o texto nunca mais depende do que está pintado atrás.
   const tY = 62 + Math.sin(G.time * 0.8) * 3;
+  const logoW = textWidth("FUMIGA", { font: "big", scale: 4 });
+  const px = 44;
+  const py = tY - 20;                        // posição final (a placa desliza)
+  const pyAnim = py - (1 - e) * 30;          // ...mas os cliques não se movem
+  const pw = logoW + 56, ph = 200;
+  const bob = Math.sin(G.time * 0.9) * 2;
+
+  // ---- placa do título
+  ctx.save();
+  ctx.globalAlpha = 0.25 + e * 0.75;
+  ctx.translate(0, bob);
+  const plateG = ctx.createLinearGradient(0, pyAnim, 0, pyAnim + ph);
+  plateG.addColorStop(0, "rgba(16,9,26,0.95)");
+  plateG.addColorStop(0.55, "rgba(12,7,22,0.92)");
+  plateG.addColorStop(1, "rgba(8,5,16,0.86)");
+  chamferPath(ctx, px, pyAnim, pw, ph, 10);
+  ctx.fillStyle = plateG;
+  ctx.fill();
+  // bisel claro + contorno escuro (chapa de metal)
+  ctx.strokeStyle = "rgba(255,212,121,0.5)";
+  ctx.lineWidth = 2;
+  chamferPath(ctx, px + 1, pyAnim + 1, pw - 2, ph - 2, 9);
+  ctx.stroke();
+  ctx.strokeStyle = "rgba(0,0,0,0.6)";
+  ctx.lineWidth = 1;
+  chamferPath(ctx, px + 0.5, pyAnim + 0.5, pw - 1, ph - 1, 10);
+  ctx.stroke();
+  // filetes de acento: ciano em cima, brasa embaixo
+  ctx.fillStyle = "rgba(55,230,200,0.85)";
+  ctx.fillRect(px + 12, pyAnim + 3, pw - 24, 2);
+  ctx.fillStyle = "rgba(255,146,61,0.6)";
+  ctx.fillRect(px + 12, pyAnim + ph - 5, pw - 24, 2);
+  // coluna de formigas marchando pela borda de cima da placa
+  const march = pyAnim + 1;
+  for (let i = 0; i < 9; i++) {
+    const ax = px + 20 + ((G.time * 26 + i * 44) % (pw - 40));
+    drawPixelAnt(ctx, ax, march, 1, (i % 2 ? 1 : -1), "#1a0c20");
+  }
+
+  // ---- varredura de luz ocasional sobre o título
+  const sweep = (G.time % 5.4) / 5.4;
+  if (sweep < 0.16) {
+    const k = sweep / 0.16;
+    const sx = px - 60 + k * (pw + 120);
+    ctx.save();
+    chamferPath(ctx, px + 2, pyAnim + 2, pw - 4, ph - 4, 8);
+    ctx.clip();
+    const g2 = ctx.createLinearGradient(sx - 46, 0, sx + 46, 0);
+    g2.addColorStop(0, "rgba(255,255,255,0)");
+    g2.addColorStop(0.5, "rgba(210,245,255,0.16)");
+    g2.addColorStop(1, "rgba(255,255,255,0)");
+    ctx.fillStyle = g2;
+    ctx.fillRect(px, pyAnim, pw, ph);
+    ctx.restore();
+  }
+
+  // ---- LOGO: letras claras, contorno escuro e halo ciano curto
   const logo = (x, y, str, font, scale) => {
-    const off = [
-      [-4, 0], [4, 0], [0, -4], [0, 4], [-3, -3], [3, -3], [-3, 3], [3, 3],
-    ];
-    ctx.globalAlpha = 0.10;
-    for (const [dx, dy] of off) drawText(ctx, str, x + dx, y + dy, { font, scale, color: "#35e8ff" });
-    ctx.globalAlpha = 0.30;
-    for (const [dx, dy] of [[-2, 0], [2, 0], [0, -2], [0, 2]]) {
-      drawText(ctx, str, x + dx, y + dy, { font, scale, color: "#5ff4ff" });
-    }
+    const halo = [[-3, 0], [3, 0], [0, -3], [0, 3], [-2, -2], [2, -2], [-2, 2], [2, 2]];
+    ctx.globalAlpha = 0.14;
+    for (const [dx, dy] of halo) drawText(ctx, str, x + dx, y + dy, { font, scale, color: "#35e8ff" });
     ctx.globalAlpha = 1;
-    // contorno escuro separa o halo das letras
     for (const [dx, dy] of [[-1, 0], [1, 0], [0, -1], [0, 1]]) {
-      drawText(ctx, str, x + dx, y + dy, { font, scale, color: "#0a1a24" });
+      drawText(ctx, str, x + dx, y + dy, { font, scale, color: "#08131c" });
     }
-    drawText(ctx, str, x, y, { font, scale, color: "#eafffb" });
+    drawText(ctx, str, x, y, { font, scale, color: "#f2fffd" });
   };
-  logo(66, tY, "FUMIGA", "big", 4);
-  drawText(ctx, "COLÔNIA ETERNA", 70, tY + 130, { font: "small", scale: 2, color: "#08131c", shadowColor: "rgba(95,244,255,0.55)" });
-  drawText(ctx, "um roguelite de colônia de formigas", 72, tY + 166, { color: "#2a0f2e" });
+  logo(px + 22, pyAnim + 20, "FUMIGA", "big", 4);
+  // subtítulo com filete à direita (leitura firme sobre a placa)
+  const subY = pyAnim + 146;
+  drawText(ctx, "COLÔNIA ETERNA", px + 22, subY, { font: "small", scale: 2, color: "#ffd479" });
+  const subW = textWidth("COLÔNIA ETERNA", { font: "small", scale: 2 });
+  ctx.fillStyle = "rgba(255,212,121,0.45)";
+  ctx.fillRect(px + 26 + subW + 10, subY + 15, 56, 1);
+  drawText(ctx, "um roguelite de colônia de formigas", px + 24, subY + 34,
+    { color: "#c9b6d8" });
+  ctx.restore();
 
-  // menu: coluna esquerda, chips escuros (contraste na cena clara)
-  const bx = 66, bw = 268;
+  // menu: coluna esquerda, alinhada com a placa
+  const bx = px + 22, bw = 268;
   const pulse = 0.55 + 0.45 * Math.sin(G.time * 3.2);
-  drawText(ctx, "PRESSIONE PARA COMEÇAR", bx, 254, { color: "#2a0f2e" });
-  ctx.globalAlpha = 0.35 + pulse * 0.5;
+  const promptY = py + ph + 12;   // (final: o menu não se move)
+  ctx.globalAlpha = 0.35 + e * 0.65;
+  drawText(ctx, "PRESSIONE PARA COMEÇAR", bx, promptY, { color: "#ffe9c9" });
+  ctx.globalAlpha = (0.35 + pulse * 0.5) * (0.35 + e * 0.65);
   ctx.fillStyle = "#eafffb";
-  ctx.fillRect(bx + 214, 254 + 3, 8, 11);
+  ctx.fillRect(bx + 214, promptY + 3, 8, 11);
   ctx.globalAlpha = 1;
-  if (button(ctx, { x: bx, y: 272, w: bw, h: 44, label: "INICIAR EXPEDIÇÃO", font: "big", scale: 1, id: "start", accent: "#37e6c8" })) {
-    initAudio();
-    newRun();
-    return;
-  }
-  if (button(ctx, { x: bx, y: 324, w: bw, h: 40, label: "ÁRVORE DA EVOLUÇÃO", font: "big", scale: 1, id: "tree", accent: "#c77dff" })) {
-    enterTree();
-    G.screen = "TREE";
-    return;
-  }
-  if (button(ctx, { x: bx, y: 372, w: bw, h: 36, label: "COMO JOGAR", id: "help", accent: "#6db7ff" })) {
-    helpReturn = "TITLE";
-    G.screen = "HELP";
-    return;
-  }
 
-  // rodapé minimalista à esquerda (versão + progresso), como na referência
-  drawText(ctx, "v2.2", 24, VIEW_H - 20, { color: "#ffd9a0" });
+  // botões entram em cascata (cada um com um atraso próprio)
+  // a cascata mexe só na transparência (e 4px de deslize): os retângulos de
+  // clique ficam estáveis desde o primeiro quadro — nada de botão que foge
+  const stag = (i) => Math.max(0, Math.min(1, (e - i * 0.12) / 0.7));
+  const slide = (i) => (1 - stag(i)) * 4;
+  ctx.save();
+  ctx.globalAlpha = 0.15 + 0.85 * e;
+  if (button(ctx, { x: bx, y: promptY + 18 + slide(0), w: bw, h: 44, label: "JOGAR", font: "big", scale: 1, id: "start", accent: "#37e6c8", hotkey: "ENTER" })) {
+    initAudio();
+    gotoMode();
+    return;
+  }
+  if (button(ctx, { x: bx, y: promptY + 70 + slide(1), w: bw, h: 40, label: "ÁRVORE DA EVOLUÇÃO", font: "big", scale: 1, id: "tree", accent: "#c77dff", hotkey: "A" })) {
+    gotoTree("TITLE");
+    return;
+  }
+  if (button(ctx, { x: bx, y: promptY + 118 + slide(2), w: bw, h: 36, label: "COMO JOGAR", id: "help", accent: "#6db7ff", hotkey: "H" })) {
+    gotoHelp("TITLE");
+    return;
+  }
+  ctx.restore();
+
+  // rodapé minimalista à esquerda (versão + progresso)
+  drawText(ctx, "v2.3", 24, VIEW_H - 20, { color: "#ffd9a0" });
   drawText(ctx, "GELÉIA REAL: " + G.save.essence +
     "   •   VITÓRIAS " + G.save.best.wins + "/" + G.save.best.runs +
     "   •   MELHOR: MAPA " + (G.save.best.maps || 0) +
     "   •   M: SOM",
     62, VIEW_H - 20, { color: "#ffd9a0" });
+}
+
+/** Formiguinha de pixel (silhueta) usada como enfeite animado das telas. */
+function drawPixelAnt(ctx, x, y, s, d, color) {
+  ctx.fillStyle = color;
+  ctx.fillRect(x - 6 * s, y - 3 * s, 5 * s, 4 * s);       // gáster
+  ctx.fillRect(x - 1 * s, y - 3 * s, 4 * s, 4 * s);       // tórax
+  ctx.fillRect(x + 4 * s * d, y - 4 * s, 4 * s, 5 * s);   // cabeça
+  ctx.fillRect(x + 8 * s * d, y - 6 * s, 3 * s, 2 * s);   // antena
+  ctx.fillRect(x - 4 * s, y + 1 * s, 2 * s, 2 * s);       // pernas
+  ctx.fillRect(x + 1 * s, y + 1 * s, 2 * s, 2 * s);
 }
 
 // ------------------------------------------------------------------ ajuda ----
@@ -766,11 +1286,14 @@ function renderHelp() {
     yr += 6;
   }
 
-  if (button(ctx, { x: VIEW_W / 2 - 100, y: VIEW_H - 56, w: 200, h: 38, label: "VOLTAR", id: "helpBack" })) {
-    G.screen = helpReturn;
-    helpReturn = "TITLE";
+  if (button(ctx, { x: VIEW_W / 2 - 100, y: VIEW_H - 56, w: 200, h: 38, label: "VOLTAR", id: "helpBack", hotkey: "ESC" })) {
+    const dest = helpReturn; helpReturn = "TITLE";
+    goTo(dest, { style: "wipe", durOut: 0.18, durIn: 0.28 });
   }
-  if (pressed.Escape) { G.screen = helpReturn; helpReturn = "TITLE"; }
+  if (pressed.Escape) {
+    const dest = helpReturn; helpReturn = "TITLE";
+    goTo(dest, { style: "wipe", durOut: 0.18, durIn: 0.28 });
+  }
 }
 
 // -------------------------------------------------------------------- run ---
@@ -1105,18 +1628,47 @@ function drawMinimap() {
 
 // ----------------------------------------------------------------- banner ---
 function drawBanner(b) {
-  const a = clamp(b.t < 0.6 ? b.t / 0.6 : b.t > 3.2 - 0.5 ? (3.2 + 0.6 - b.t) / 0.5 + 0.2 : 1, 0, 1);
-  ctx.globalAlpha = clamp(a, 0, 1);
-  // Sem tutorial o anúncio fica logo abaixo do painel do jogador (y 8..104);
-  // com o cartão aberto ele desce para não ficar meio escondido atrás dele.
+  // Anúncio de batalha: painel chanfrado com filete de acento + letterbox
+  // cinematográfico que abre e fecha. A curva é suave (ease-out na entrada,
+  // ease-in na saída) para a leitura não "piscar" no meio da briga.
+  const total = b.total || (b.kind === "boss" ? 4.2 : 3.4);
+  const IN = 0.45, OUT = 0.55;
+  const raw = clamp(Math.min((total - b.t) / IN, b.t / OUT), 0, 1);
+  const a = 1 - Math.pow(1 - raw, 3);
+
+  // ---- letterbox (barras que abrem/fecham): profundidade cinematográfica
+  const barH = 20 * a;
+  ctx.globalAlpha = 0.5;
+  ctx.fillStyle = "#08050e";
+  ctx.fillRect(0, 0, VIEW_W, barH);
+  ctx.fillRect(0, VIEW_H - barH, VIEW_W, barH);
+  ctx.globalAlpha = 1;
+  ctx.fillStyle = b.kind === "boss" ? "rgba(255,77,90,0.85)" : "rgba(55,230,200,0.8)";
+  ctx.fillRect(0, barH, VIEW_W, 1);
+  ctx.fillRect(0, VIEW_H - barH - 1, VIEW_W, 1);
+
+  // ---- painel do anúncio
   const tut = TUT.active ? tutorialCardRect(VIEW_W) : null;
-  const y = tut ? tut.y + tut.h + 60 : 116;
-  ctx.fillStyle = "rgba(10,8,16,0.55)";
-  ctx.fillRect(0, y - 10, VIEW_W, 96);
-  drawText(ctx, b.title, VIEW_W / 2, y, { font: "big", scale: 2, color: "#ffd479", align: "center" });
-  if (b.sub) {
-    const lines = wrapText(b.sub, 560, {});
-    lines.forEach((L, li) => drawText(ctx, L, VIEW_W / 2, y + 54 + li * 18, { color: PAL.text, align: "center" }));
+  const y = (tut ? tut.y + tut.h + 34 : 116) - (1 - a) * 16;
+  const lines = b.sub ? wrapText(b.sub, 560, {}) : [];
+  const h = 78 + lines.length * 18;   // título (big x2 = 60px) + folga + sub
+  const w = 660;
+  const x = VIEW_W / 2 - w / 2;
+  const accent = b.kind === "boss" ? "#ff4d5a" : b.kind === "clear" ? "#7fd6a0" : "#ffd479";
+
+  ctx.globalAlpha = a;
+  panel(ctx, x, y - 10, w, h, { border: accent, topAccent: accent, r: 8 });
+  // faixas diagonais discretas (textura de HUD)
+  ctx.globalAlpha = a * 0.16;
+  ctx.fillStyle = accent;
+  for (let i = -1; i < w / 26 + 1; i++) ctx.fillRect(x + i * 26, y - 10, 9, h);
+  ctx.globalAlpha = a;
+  drawText(ctx, b.title, VIEW_W / 2, y + 4, { font: "big", scale: 2, color: accent, align: "center" });
+  lines.forEach((L, li) => drawText(ctx, L, VIEW_W / 2, y + 68 + li * 18, { color: PAL.text, align: "center" }));
+  if (b.kind === "boss") {
+    // aviso pulsante embaixo do painel
+    const pulse = 0.4 + 0.6 * (0.5 + 0.5 * Math.sin(G.time * 8));
+    drawText(ctx, "CUIDADO", VIEW_W / 2, y + h - 24, { color: `rgba(255,77,90,${0.5 + 0.5 * pulse})`, align: "center" });
   }
   ctx.globalAlpha = 1;
 }
@@ -1195,8 +1747,7 @@ function drawPause() {
   }
   if (button(ctx, { x: VIEW_W / 2 - 130, y: 240, w: 260, h: 42, label: "COMO JOGAR", id: "pauseHelp", accent: "#6db7ff" })) {
     paused = false;
-    helpReturn = "RUN";
-    G.screen = "HELP";
+    gotoHelp("RUN");
     return;
   }
   if (button(ctx, { x: VIEW_W / 2 - 130, y: 292, w: 260, h: 42, label: "REINICIAR EXPEDIÇÃO", id: "restart", accent: "#ffb347" })) {
@@ -1208,7 +1759,7 @@ function drawPause() {
   if (button(ctx, { x: VIEW_W / 2 - 130, y: 344, w: 260, h: 42, label: "SAIR PARA O MENU", id: "quit", accent: "#ff4d5a" })) {
     paused = false;
     settleAbandon();
-    G.screen = "TITLE";
+    gotoTitle({ durOut: 0.3, durIn: 0.5 });
     return;
   }
   drawText(ctx, "ESC: VOLTAR AO JOGO", VIEW_W / 2, 416, { color: PAL.textDim, align: "center" });
@@ -1313,12 +1864,11 @@ function drawEnd(run) {
     return;
   }
   if (button(ctx, { x: VIEW_W / 2 + 10, y: by, w: 220, h: 40, label: "ÁRVORE DA EVOLUÇÃO", id: "goTree", accent: "#c77dff" })) {
-    enterTree();
-    G.screen = "TREE";
+    gotoTree("TITLE");
     return;
   }
   if (button(ctx, { x: VIEW_W / 2 - 110, y: by + 48, w: 220, h: 32, label: "MENU PRINCIPAL", id: "menu" })) {
-    G.screen = "TITLE";
+    gotoTitle({ durOut: 0.24, durIn: 0.4 });
     return;
   }
 }
