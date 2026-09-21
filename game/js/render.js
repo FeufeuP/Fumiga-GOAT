@@ -132,12 +132,16 @@ export function drawRun(ctx, dt) {
     ctx.ellipse(s.x, s.y + 3 * z, u.bodyR * 0.88 * z, u.bodyR * 0.38 * z, 0, 0, TAU);
     ctx.fill();
     if (u.dead) continue;
-    const ally = u.faction === "ally";
-    ctx.strokeStyle = ally ? "rgba(55,230,200,0.7)" : "rgba(255,77,90,0.62)";
-    ctx.lineWidth = Math.max(1, 1.5 * z);
-    ctx.beginPath();
-    ctx.ellipse(s.x, s.y + 3 * z, (u.bodyR + 2.5) * z, (u.bodyR + 2.5) * 0.52 * z, 0, 0, TAU);
-    ctx.stroke();
+    // Anel de TIME no chão: só na inimiga (vermelho). A colônia joga limpa —
+    // as suas formigas se leem pela arte, pela barra de vida e pelo anel
+    // dourado de seleção; o vermelho fica reservado para a ameaça.
+    if (u.faction !== "ally") {
+      ctx.strokeStyle = "rgba(255,77,90,0.62)";
+      ctx.lineWidth = Math.max(1, 1.5 * z);
+      ctx.beginPath();
+      ctx.ellipse(s.x, s.y + 3 * z, (u.bodyR + 2.5) * z, (u.bodyR + 2.5) * 0.52 * z, 0, 0, TAU);
+      ctx.stroke();
+    }
     if (u.selected) {
       // anel de seleção: tracejado girando + halo (impossível perder de vista)
       const R = (u.bodyR + 6) * z;

@@ -132,8 +132,24 @@ if (chsBlock) {
   console.log("aviso  não achei o array CHS em tools/prepare_assets.sh");
 }
 
+// -------------------------------------- assado sem retoque na silhueta --------
+// O assado já desenhou, por cima de cada sprite, um contorno escuro de 1px +
+// sombra quente + rim light — o mesmo sprite copiado e deslocado 1px em 8
+// direções. Nas patas e antenas (1px de largura na arte-fonte) as cópias nunca
+// caíam na mesma célula: o contorno saía picotado, misturando violeta do rim e
+// roxo da sombra com o corpo da formiga, que parecia trocar de cor enquanto
+// andava. Hoje o assado desenha SÓ o sprite girado (nenhuma pintura por cima),
+// e é este teste que trava o retorno do contorno.
+const bakeSrc = fs.readFileSync(path.join(ROOT, "js", "assets.js"), "utf8");
+const bakeBody = bakeSrc.match(/export function bakeRot\([\s\S]*?\n\}/);
+const paint = bakeBody
+  ? (bakeBody[0].match(/globalAlpha|globalCompositeOperation|fillStyle|fillRect|silhouette|contrasted/g) || [])
+  : ["bakeRot não encontrado em js/assets.js"];
+console.log((paint.length ? "ERRO " : "ok   ") + "assado sem pintura por cima do sprite (só a arte gira)");
+if (paint.length) problems.push("bakeRot voltou a pintar sobre o sprite: " + paint.join(", "));
+
 // ------------------------------------------- escala da FORMIGA GIGANTE --------
-// A gigante é assada em 247 (pad = 5x o da soldado, escolhido na ARTE real) e
+// A gigante é assada em 415 (pad = 5x o da soldado, escolhido na ARTE real) e
 // ampliada no desenho com fator inteiro — sai 20x a soldado com blocos de
 // pixel uniformes. O layout.mjs roda com sprites falsos de 64x64, então só
 // aqui dá para conferir isso contra os PNGs de verdade.
