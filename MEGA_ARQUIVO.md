@@ -94,6 +94,18 @@ P9=B), sem tocar nas fases 2–8.
 - Bug de layout corrigido no caminho: o rótulo "SILENCIOSA FERIDA!" era desenhado
   em fonte grande por cima do próprio gaster e o HP colidia com a barra; agora o
   rótulo é pequeno, a barra vive na faixa livre e os números têm coluna própria.
+- **Spritesheets do HUD (arte de verdade, não procedural):** `tools/make_hud.py`
+  passou a gerar as folhas que o HUD usa em `game/assets/sprites/hud/` —
+  `hud_panels.png` (6 peles de painel em 9-slice de 12px), `hud_gaster.png`
+  (gaster por bioma + vazio + ferido, em tiras de 64x16 recortadas pelo HP),
+  `hud_crown.png` (coroa de fungo/seda, 4 quadros), `hud_icons.png` (24 ícones
+  de 14px: comidas, cristais de pólen, marcas de cheiro, anéis de crescimento)
+  e `hud_ant.png` (4 quadros da irmã da trilha em três estilos: normal, pequena
+  e marcha de perigo pálida). O gerador é Python puro e escreve PNG RGBA na
+  mão, sem dependências novas; entrou no `tools/prepare_assets.sh` e no
+  `MANIFEST` de `js/assets.js`. `js/hud_sprites.js` desenha a partir das folhas
+  e mantém o traço procedural como reserva caso a arte não carregue — o teste
+  prova as duas rotas (métricas do atlas conferidas contra o PNG de verdade).
 - Verificação: `node game/test/lorehud.mjs` (novo, cobre lore dos seis biomas,
   glifos, ícones, NaN, teto de cache, custo por frame e degradação sem canvas) e
   `node game/test/layout.mjs` passou a auditar o HUD dos **seis biomas** e a

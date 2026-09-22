@@ -98,6 +98,7 @@ FORCE=3 node test/sim.mjs   # simulação indo direto ao chefe do mapa 3
 | [`game/js/brain.js`](game/js/brain.js) | **Cérebro da colônia**: cada formiga decide sozinha (IA de utilidade) sob necessidades da colônia, cotas por tarefa e feromônio (estigmergia) |
 | [`game/test/`](game/test/) | Auditorias de assets, layout, árvore, travamentos e simulação |
 | [`tools/prepare_assets.sh`](tools/prepare_assets.sh) | Regenera os sprites a partir das artes-fonte |
+| [`tools/make_hud.py`](tools/make_hud.py) | Gera as folhas de sprite do HUD (painéis de quitina, gaster, coroa, ícones, irmãs da trilha) |
 | `animais/`, `arvores/`, `arbustos/`, `pedras/`, `cristais/`, `cenarios/`, `icones/` | Artes-fonte |
 
 ## 💻 Rodar localmente

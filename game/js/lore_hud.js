@@ -18,6 +18,10 @@
 // ============================================================================
 import { MAPS, WORLD_W, WORLD_H } from "./config.js";
 import { drawText } from "./font.js";
+import {
+  drawPanelSprite, drawIconSprite, drawGasterSprite, drawCrownSprite,
+  drawAntSprite, drawTrailMarkSprite, hudSpritesReady, hudSpriteDraws, ICON,
+} from "./hud_sprites.js";
 
 // ---------------------------------------------------------------- BIOME_HUD --
 // Aqui mora só o VISUAL de cada bioma (cor de borda, seiva, textura).
@@ -127,7 +131,10 @@ export function getBiomeHUD(mapId) {
 
 /** Introspecção do cache offscreen (usada pelo test/lorehud.mjs). */
 export function hudCacheStats() {
-  return { panels: panelCache.size, icons: iconCache.size };
+  // `draws` conta quantos elementos do HUD saíram da FOLHA de sprite: o
+  // test/lorehud.mjs usa isso para provar que a arte está no ar (e não só o
+  // traço procedural de reserva).
+  return { panels: panelCache.size, icons: iconCache.size, sprites: hudSpritesReady(), draws: hudSpriteDraws() };
 }
 
 // ------------------------------------------------------------------ buffers --
@@ -210,8 +217,10 @@ function bakePanel(biome, w, h) {
   return cv;
 }
 
-/** Painel de quitina/cera do bioma. `time` só move o brilho de cera. */
+/** Painel de quitina/cera do bioma. `time` só move o brilho de cera.
+ *  Usa a folha hud_panels.png (9-slice); sem ela, assa a textura procedural. */
 export function drawBiomeTexture(ctx, x, y, w, h, biome, time) {
+  if (drawPanelSprite(ctx, x, y, w, h, biome, time)) return;
   const style = getBiomeHUD(biome);
   const key = biome + "|" + (w | 0) + "|" + (h | 0);
   let cv = panelCache.get(key);
@@ -355,6 +364,8 @@ export function drawFoodIcon(ctx, x, y, size, biome, time) {
   const style = getBiomeHUD(biome);
   const kind = style.foodKind || "trevo";
   const sz = Math.max(6, size | 0);
+  const bob0 = Math.sin(time * 2.1 + phaseOf(biome)) * 0.8;
+  if (ICON[kind] !== undefined && drawIconSprite(ctx, ICON[kind], x, y + bob0, sz)) return;
   const key = kind + "|" + sz;
   let cv = iconCache.get(key);
   if (!cv) {
@@ -371,7 +382,22 @@ export function drawFoodIcon(ctx, x, y, size, biome, time) {
 
 // ------------------------------------------------ cristal de pólen (essência) --
 /** Cristal geométrico de pólen de memória, com luz interna e partícula subindo. */
-export function drawEssenceCrystal(ctx, x, y, size, color, time) {
+export function drawEssenceCrystal(ctx, x, y, size, color, time, biome) {
+  if (biome) {
+    const idx = ICON["essencia_" + biome];
+    const bob = Math.sin(time * 1.8) * 1.2;
+    if (idx !== undefined && drawIconSprite(ctx, idx, x - size / 2, y - size / 2 + bob, size * 1.6)) {
+      // partículas de pólen subindo do cristal
+      ctx.fillStyle = color;
+      ctx.globalAlpha = 0.8;
+      for (let i = 0; i < 2; i++) {
+        const py = y - size * 0.6 - ((time * 20 + i * 15) % (size * 1.2));
+        ctx.fillRect(Math.round(x) + i * 2 - 1, Math.round(py), 1, 1);
+      }
+      ctx.globalAlpha = 1;
+      return;
+    }
+  }
   ctx.save();
   ctx.translate(x, y);
   ctx.rotate(Math.sin(time * 0.8) * 0.12);
@@ -434,13 +460,26 @@ export function drawEssenceCrystal(ctx, x, y, size, color, time) {
 /** Cristal + rótulo do pólen de memória (linha do HUD). */
 export function drawEssenceHud(ctx, x, y, biome, amount, time) {
   const style = getBiomeHUD(biome);
-  drawEssenceCrystal(ctx, x + 6, y + 6, 14, style.essenceColor, time);
-  drawText(ctx, style.essenceLabel + " " + amount, x + 16, y, { color: style.essenceColor, scale: 0.85 });
+  drawEssenceCrystal(ctx, x + 7, y + 7, 10, style.essenceColor, time, biome);
+  drawText(ctx, style.essenceLabel + " " + amount, x + 16, y, { color: style.essenceColor });
 }
 
 // ---------------------------------------------------- anéis da Árvore (XP) ----
 /** Barra de XP como anel de crescimento da Árvore (LORE: "a Árvore lembrou"). */
 export function drawTreeRing(ctx, x, y, r, frac, color, time) {
+  // base da folha (anel de quitina / com seiva quando já há progresso)
+  if (drawIconSprite(ctx, frac > 0.02 ? ICON.anel_seiva : ICON.anel, x - 7, y + r - 7, 13)) {
+    if (frac > 0.02) {
+      ctx.save();
+      ctx.lineWidth = 3;
+      ctx.strokeStyle = color;
+      ctx.beginPath();
+      ctx.arc(x, y + r, r, -Math.PI / 2, -Math.PI / 2 + Math.PI * 2 * frac);
+      ctx.stroke();
+      ctx.restore();
+    }
+    return;
+  }
   ctx.save();
   ctx.lineWidth = 3;
   ctx.strokeStyle = "#241c38";
@@ -472,6 +511,7 @@ export function drawTreeRing(ctx, x, y, r, frac, color, time) {
 // ------------------------------------------------------ gaster da Silenciosa ---
 /** Vida da Rainha Silenciosa: gaster de âmbar com coroa de fungo/seda. */
 export function drawGasterBar(ctx, x, y, w, h, frac, biome, low, time) {
+  if (drawGasterSprite(ctx, x, y, w, h, frac, biome, low, time)) return;
   const style = getBiomeHUD(biome);
   const pulse = low ? 1 + Math.sin(time * 6) * 0.14 : 1 + Math.sin(time * 1.6) * 0.03;
 
@@ -590,12 +630,15 @@ export function drawPheromoneTrail(ctx, x, y, w, h, frac, biome, time, danger) {
   ctx.fillStyle = "rgba(255,255,255,0.05)";
   ctx.fillRect(x, midY - floor, w, 1);
 
-  // progresso da trilha
+  // progresso da trilha: seiva correndo pelo caminho já marcado
   const filled = Math.max(0, Math.min(1, frac)) * w;
   if (filled > 1) {
-    ctx.globalAlpha = danger ? 0.55 : 0.4;
+    ctx.globalAlpha = danger ? 0.75 : 0.55;
     ctx.fillStyle = trail;
     ctx.fillRect(x, midY - floor + 1, filled, floor * 2 - 2);
+    ctx.globalAlpha = 0.9;
+    ctx.fillStyle = danger ? "#ffd0d4" : "#ffffff";
+    ctx.fillRect(x, midY - floor + 1, filled, 1);
     ctx.globalAlpha = 1;
   }
 
@@ -604,6 +647,7 @@ export function drawPheromoneTrail(ctx, x, y, w, h, frac, biome, time, danger) {
   for (let i = 0; i < drops; i++) {
     const px = Math.round(x + (i + 0.5) * (w / drops));
     const on = (i + 0.5) / drops <= Math.max(0.04, frac);
+    if (on && drawTrailMarkSprite(ctx, px, midY + floor + 1, danger, true, 0.85)) continue;
     ctx.globalAlpha = on ? 0.75 : 0.22;
     ctx.fillStyle = on ? trail : "#4a3a6e";
     ctx.fillRect(px, midY + floor - 2, 2, 2);
@@ -614,9 +658,18 @@ export function drawPheromoneTrail(ctx, x, y, w, h, frac, biome, time, danger) {
   const ants = 4;
   for (let i = 0; i < ants; i++) {
     const prog = (time * (danger ? 0.28 : 0.16) + i / ants) % 1;
-    const ax = Math.round(x + 6 + prog * (w - 12));
+    const ax = Math.round(x + 8 + prog * (w - 16));
     const bob = Math.round(Math.sin(time * 6 + i * 1.7) * 1.2);
     const near = prog > Math.max(0.05, frac) - 0.06;
+    if (drawAntSprite(ctx, ax, midY + bob, time * 8 + i * 3, danger ? 2 : 0)) {
+      if (!near) {
+        ctx.globalAlpha = 0.45;
+        ctx.fillStyle = "#14101d";
+        ctx.fillRect(ax - 7, midY + bob - 5, 14, 10);
+        ctx.globalAlpha = 1;
+      }
+      continue;
+    }
     drawAntGlyph(ctx, ax, midY + bob, danger ? 7 : 6, near ? trail : "#8f7bb5", near ? 0.95 : 0.5, time * 9 + i);
   }
 

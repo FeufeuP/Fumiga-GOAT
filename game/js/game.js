@@ -1396,33 +1396,33 @@ function drawHUD() {
   if (run.modeDef) {
     drawText(ctx, run.modeDef.name + (era ? " • ERA " + era : ""), 20, yy, { color: run.modeDef.color, font: "small" });
     yy += 14;
-    drawText(ctx, bh.loreName, 20, yy, { color: bh.texture, scale: 0.8 });
-    yy += 10;
+    drawText(ctx, bh.loreName, 20, yy, { color: bh.border });
+    yy += 11;
   } else {
-    drawText(ctx, bh.loreName, 20, yy, { color: bh.texture, scale: 0.8 });
+    drawText(ctx, bh.loreName, 20, yy, { color: bh.border });
     yy += 14;
   }
   const hpFrac = q && q.maxHp ? clamp(q.hp / q.maxHp, 0, 1) : 0;
   const low = hpFrac < 0.32;
   // Label lore: SILENCIOSA (Rainha Silenciosa) — a drama vem do gaster
   // pulsando vermelho, não de um texto grande que invade a barra.
-  drawText(ctx, low ? "SILENCIOSA!" : "SILENCIOSA", 20, yy + 1, { color: low ? "#ff4d5a" : "#ffd479", scale: 0.85 });
+  drawText(ctx, low ? "SILENCIOSA!" : "SILENCIOSA", 20, yy + 1, { color: low ? "#ff4d5a" : "#ffd479" });
   // gaster bar orgânico com coroa fungo/seda, na faixa livre à direita do rótulo
   drawGasterBar(ctx, 124, yy + 1, 110, 12, hpFrac, biomeId, low, G.time);
-  if (q && q.maxHp) drawText(ctx, Math.ceil(q.hp) + "/" + q.maxHp, 240, yy + 1, { color: low ? "#ff8a94" : PAL.textDim, scale: 0.8 });
+  if (q && q.maxHp) drawText(ctx, Math.ceil(q.hp) + "/" + q.maxHp, 242, yy + 1, { color: low ? "#ff8a94" : PAL.textDim, scale: 0.9 });
   yy += 18;
   // XP = ANÉIS DE CRESCIMENTO DA ÁRVORE (LORE: a Árvore lembra de cada rainha)
-  drawText(ctx, "ANEL " + run.level, 20, yy, { color: "#6db7ff", scale: 0.9 });
+  drawText(ctx, "ANEL " + run.level, 20, yy, { color: "#6db7ff" });
   const xpFrac = run.xpNext > 0 ? clamp(run.xp / run.xpNext, 0, 1) : 0;
   drawTreeRing(ctx, 68, yy - 3, 8, xpFrac, "#8fd3ff", G.time);
   // comida com ícone do bioma: trevo, cogumelo, alga, semente, folha, líquen
   drawFoodIcon(ctx, 88, yy - 2, 13, biomeId, G.time);
-  drawText(ctx, bh.foodLabel + " " + fmt(run.food), 104, yy, { color: bh.foodColor, scale: 0.85 });
+  drawText(ctx, bh.foodLabel + " " + fmt(run.food), 104, yy, { color: bh.foodColor });
   // essência = cristal geométrico de pólen de memória (partículas subindo)
   drawEssenceHud(ctx, 20, yy + 16, biomeId, fmt(run.essencePool), G.time);
   {
     const used = popUsed(), cap = popCapTotal();
-    drawText(ctx, "IRMÃS " + used + "/" + cap, 298, 14, { color: used >= cap ? "#ff4d5a" : PAL.text, align: "right", scale: 0.85 });
+    drawText(ctx, "IRMÃS " + used + "/" + cap, 298, 14, { color: used >= cap ? "#ff4d5a" : PAL.text, align: "right", scale: 0.9 });
   }
 
   // ---- fileira de mutações como SEIVA Dourada (Vampire Survivors) ----
@@ -1471,7 +1471,7 @@ function drawHUD() {
     needBar("FOME", n.food, "#ffd479");
     needBar("GUERRA", n.defense, "#ff4d5a");
     needBar("CURA", n.medical, "#7fd6a0");
-    drawText(ctx, "COLETANDO " + hc.gather + " • EXPLORANDO " + hc.explore + " • [H] VER CHEIRO", 20, cy + 28, { color: bh.texture, scale: 0.8 });
+    drawText(ctx, "COLETANDO " + hc.gather + " • EXPLORANDO " + hc.explore + " • [H] VER CHEIRO", 20, cy + 28, { color: bh.border, scale: 0.85 });
     drawText(ctx, "COMIDA: " + bh.foodLabel + " | ESSÊNCIA: " + bh.essenceLabel, 20, cy + 42, { color: PAL.textDim, scale: 0.75 });
     leftStackBottom = ey + 94;
   }
@@ -1681,7 +1681,7 @@ function drawHUD() {
   }
   // Dica H no rodapé, sem encobrir os preços da fileira de formigas.
   if (!keys.KeyH && live && !shopOpen) {
-    drawText(ctx, "[H] VISÃO FEROMÔNIO • A COLÔNIA VÊ COM CHEIRO", VIEW_W/2, VIEW_H - 18, { color: bh.texture, align: "center", scale: 0.7, alpha: 0.6 });
+    drawText(ctx, "[H] VISÃO FEROMÔNIO • A COLÔNIA VÊ COM CHEIRO", VIEW_W/2, VIEW_H - 18, { color: PAL.textDim, align: "center", scale: 0.75, alpha: 0.75 });
   }
 }
 

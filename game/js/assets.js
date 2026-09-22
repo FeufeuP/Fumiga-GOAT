@@ -53,6 +53,12 @@ const MANIFEST = {
   nest: "sprites/props/nest.png",
   nest_d1: "sprites/props/nest_d1.png",
   nest_d2: "sprites/props/nest_d2.png",
+  // FASE 1 — folhas de sprite do HUD orgânico (tools/make_hud.py)
+  hud_panels: "sprites/hud/hud_panels.png",   // 6 peles de painel (9-slice 12px)
+  hud_gaster: "sprites/hud/hud_gaster.png",   // gaster da Silenciosa (6 biomas + vazio + ferido)
+  hud_crown: "sprites/hud/hud_crown.png",     // coroa de fungo/seda (4 quadros)
+  hud_icons: "sprites/hud/hud_icons.png",     // comidas, cristais, marcas, anéis (14px)
+  hud_ant: "sprites/hud/hud_ant.png",         // irmã da trilha de feromônio (4 quadros)
   // props
   tree1: "sprites/props/tree1.png",
   tree2: "sprites/props/tree2.png",

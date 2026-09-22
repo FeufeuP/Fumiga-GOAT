@@ -9,6 +9,9 @@
 //   5. Regra 5: com cache quente, o HUD não cria gradiente por célula nem
 //      aloca textura dentro do loop (orçamento de ops por frame);
 //   6. a visão de feromônio [H] continua barata com os campos reais do brain.js.
+import fs from "node:fs";
+import assert from "node:assert/strict";
+
 const problems = [];
 const expect = (cond, msg) => {
   console.log((cond ? "ok    " : "ERRO  ") + msg);
@@ -75,6 +78,7 @@ const {
   drawTreeRing, drawPheromoneTrail, drawPheromoneMini, drawPheromoneOverlay,
 } = await import("../js/lore_hud.js");
 const { MAPS } = await import("../js/config.js");
+const { IMG } = await import("../js/assets.js");
 const { FONT_CHARS, loadFonts } = await import("../js/font.js");
 const brain = await import("../js/brain.js");
 await loadFonts();
@@ -119,6 +123,36 @@ for (const [kind, def] of Object.entries(FOOD_ICONS)) {
   const paletteOk = def.rows.every((r) => [...r].every((ch) => ch === "." || def.pal[ch]));
   const hasMass = def.rows.join("").replace(/\./g, "").length >= n * 2;
   expect(square && paletteOk && hasMass, "ícone " + kind + " é grade " + n + "x" + n + " com paleta fechada e massa legível");
+}
+
+// -------------------------------------- 3b. contraste do texto do HUD ------
+// Regressão real: o rótulo de lore usava `bh.texture` (cor escura da terra)
+// sobre o painel escuro do bioma — texto praticamente invisível. A conta é a
+// WCAG: luminância relativa do texto contra o fundo do painel.
+function lum(hex) {
+  const m = hex.replace("#", "");
+  const [r, g, b] = [0, 2, 4].map((i) => parseInt(m.slice(i, i + 2), 16) / 255)
+    .map((v) => (v <= 0.03928 ? v / 12.92 : Math.pow((v + 0.055) / 1.055, 2.4)));
+  return 0.2126 * r + 0.7152 * g + 0.0722 * b;
+}
+function contrast(a, b) {
+  const la = lum(a), lb = lum(b);
+  return (Math.max(la, lb) + 0.05) / (Math.min(la, lb) + 0.05);
+}
+function rgbaToHex(rgba) {
+  const v = rgba.match(/\(([^)]+)\)/)[1].split(",");
+  return "#" + v.slice(0, 3).map((n) => Math.round(+n).toString(16).padStart(2, "0")).join("");
+}
+for (const map of MAPS) {
+  const style = BIOME_HUD[map.id];
+  const bg = rgbaToHex(style.bg);
+  const labels = {
+    "lore": style.border, "comida": style.foodColor, "essencia": style.essenceColor,
+    "gaster": style.accent, "essencia cristal": style.essenceColor,
+  };
+  const weak = Object.entries(labels).filter(([, c]) => contrast(c, bg) < 3);
+  expect(weak.length === 0, "texto do HUD de " + map.id + " tem contraste >= 3:1 com o painel" +
+    (weak.length ? " — fraco: " + weak.map(([k, c]) => k + " " + c).join(", ") : ""));
 }
 
 // --------------------------------------------- 4. render sem estouro/NaN ----
@@ -173,6 +207,67 @@ expect(bakeGradients <= 2, "bake do painel cria 1 gradiente por tamanho, e só n
 for (let i = 0; i < 40; i++) drawBiomeTexture(main, 0, 0, 120 + i, 40 + (i % 5), "gelo", 3 + i);
 const stats = hudCacheStats();
 expect(stats.panels <= 24, "cache de texturas tem teto (painéis guardados: " + stats.panels + ")");
+
+// -------------------------------- 5b. folhas de sprite do HUD (tools/make_hud.py) --
+// As métricas do atlas têm de bater com o PNG de verdade: se o gerador mudar o
+// layout e hud_sprites.js não acompanhar, o HUD desenha a fatia errada.
+const hudSprites = await import("../js/hud_sprites.js");
+const { HUD_ATLAS, ICON, HUD_ROW, GASTER_EMPTY_ROW, GASTER_HURT_ROW } = hudSprites;
+const SPRITE_DIR = new URL("../assets/sprites/hud/", import.meta.url);
+function pngSize(name) {
+  const buf = fs.readFileSync(new URL(name, SPRITE_DIR));
+  assert.equal(buf.subarray(1, 4).toString("ascii"), "PNG", name + " é PNG");
+  return { w: buf.readUInt32BE(16), h: buf.readUInt32BE(20) };
+}
+// tabela: célula, colunas e linhas de cada folha gerada por tools/make_hud.py
+const EXPECT = {
+  panels: { file: "hud_panels.png", cw: 36, ch: 36, cols: 1, rows: 6 },
+  gaster: { file: "hud_gaster.png", cw: 64, ch: 16, cols: 1, rows: 8 },
+  crown: { file: "hud_crown.png", cw: 26, ch: 12, cols: 4, rows: 1 },
+  icons: { file: "hud_icons.png", cw: 14, ch: 14, cols: 12, rows: 2 },
+  ant: { file: "hud_ant.png", cw: 14, ch: 10, cols: 4, rows: 3 },
+};
+for (const [kind, e] of Object.entries(EXPECT)) {
+  const size = pngSize(e.file);
+  expect(size.w === e.cw * e.cols && size.h === e.ch * e.rows,
+    "folha " + e.file + " é " + (e.cw * e.cols) + "x" + (e.ch * e.rows) + " (achou " + size.w + "x" + size.h + ")");
+  const a = HUD_ATLAS[kind];
+  const cellW = a.cell || a.w;                 // icons declara a célula quadrada
+  const cols = a.cols || a.frames || 1;
+  const rows = a.rows || 1;
+  expect(cellW === e.cw && cols === e.cols && rows === e.rows,
+    "métricas de " + kind + " em hud_sprites.js batem com o gerador (célula " + cellW + "px, " +
+    cols + "x" + rows + " células)");
+}
+expect(Object.keys(HUD_ROW).length === MAPS.length, "cada bioma tem sua linha no atlas do HUD (" + Object.keys(HUD_ROW).length + "/" + MAPS.length + ")");
+const maxIcon = HUD_ATLAS.icons.cols * HUD_ATLAS.icons.rows;
+expect(Object.values(ICON).every((i) => i >= 0 && i < maxIcon), "todo índice de ícone cabe na folha (" + maxIcon + " células)");
+expect(Object.values(ICON).length === new Set(Object.values(ICON)).size, "nenhum índice de ícone duplicado");
+expect(GASTER_EMPTY_ROW === 6 && GASTER_HURT_ROW === 7, "linhas vazio/ferido do gaster na posição que o HUD usa");
+
+// sem as folhas carregadas, hud_sprites devolve false e o HUD cai no procedural
+const before = hudCacheStats().draws;
+drawBiomeTexture(main, 10, 8, 320, 96, "planicie", 2);
+drawGasterBar(main, 96, 30, 122, 12, 0.7, "planicie", false, 2);
+drawFoodIcon(main, 88, 44, 13, "planicie", 2);
+expect(hudCacheStats().draws === before, "sem folhas carregadas nada é desenhado por sprite (fallback procedural)");
+
+// com as folhas de mentira (só as dimensões importam), o HUD passa a usá-las
+for (const [kind, e] of Object.entries(EXPECT)) {
+  const size = pngSize(e.file);
+  IMG[HUD_ATLAS[kind].key] = { width: size.w, height: size.h, complete: true };
+}
+expect(hudCacheStats().sprites === true, "hudSpritesReady() reconhece as cinco folhas");
+resetMain();
+drawBiomeTexture(main, 10, 8, 320, 96, "planicie", 2);
+drawGasterBar(main, 96, 30, 122, 12, 0.7, "planicie", false, 2);
+drawFoodIcon(main, 88, 44, 13, "planicie", 2);
+drawEssenceHud(main, 20, 60, "gelo", "120", 2);
+drawTreeRing(main, 68, 43, 8, 0.40, "#8fd3ff", 2);
+drawPheromoneTrail(main, 60, 40, 252, 24, 0.5, "planicie", 2, false);
+expect(mainCanvas._nan === 0, "HUD de sprite desenha sem coordenada inválida");
+expect(hudCacheStats().draws > before, "com folhas carregadas o HUD desenha por sprite (draws " + before + " → " + hudCacheStats().draws + ")");
+for (const kind of Object.keys(HUD_ATLAS)) delete IMG[HUD_ATLAS[kind].key];
 
 // ---------------------------------------------- 6. gaster pulsando abaixo de 30% --
 resetMain();

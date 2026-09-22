@@ -209,7 +209,13 @@ defender a onda, coletar essência). `T` pula, e a preferência fica salva.
   escavar, cuidar das larvas). Os bônus do grupo **CRIAÇÃO** da árvore entram aqui: escavação,
   berçário, despensa, postura da rainha, custo das câmaras.
 - `assets/` — sprites e fontes bitmap processados
-- `tools/prepare_assets.sh` — regenera os sprites a partir das fontes
+- `assets/sprites/hud/` — **folhas de sprite do HUD lore** (FASE 1), geradas por
+  `tools/make_hud.py`: painéis de quitina (9-slice de 12px), gaster da Silenciosa por bioma
+  (+ vazio/ferido), coroa de fungo/seda, 24 ícones de 14px (comidas, cristais, marcas, anéis) e
+  as quatro marchas da irmã da trilha de feromônio (normal, pequena e em modo perigo)
+- `tools/prepare_assets.sh` — regenera os sprites a partir das fontes (inclui `tools/make_hud.py`)
+- `tools/make_hud.py` — gerador das folhas de sprite do HUD (Python puro, escreve PNG RGBA
+  sem dependências). Muda a paleta, o tamanho do painel ou um ícone aqui e roda de novo
 - `test/sim.mjs` — simulação headless da expedição inteira:
   - `node test/sim.mjs` — roda uma expedição desde o começo
   - `FORCE=N node test/sim.mjs` — pula direto para o chefão do mapa `N` (1–6) com um exército
