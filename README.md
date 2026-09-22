@@ -72,7 +72,7 @@ cd game
 node test/boot.mjs && node test/docs.mjs && \
 node test/assets.mjs && node test/tree.mjs && node test/stuck.mjs && \
 node test/layout.mjs && node test/uitest.mjs && node test/attack.mjs && \
-node test/endless.mjs && node test/prophecy.mjs
+node test/endless.mjs && node test/prophecy.mjs && node test/lorehud.mjs
 
 FORCE=3 node test/sim.mjs   # simulação indo direto ao chefe do mapa 3
 ```
