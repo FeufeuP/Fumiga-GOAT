@@ -9,7 +9,7 @@ import { cam, worldToScreen, visibleWorldRect, screenToWorld } from "./camera.js
 import { allies, eggs } from "./units.js";
 import { foes, boss } from "./enemies.js";
 import { orbs, projectiles, drawProjectiles, drawOrbs } from "./combat.js";
-import { drawDecals, drawTrails, drawParts, drawGlows, drawRings, drawFloats } from "./particles.js";
+import { drawDecals, drawTrails, drawParts, drawGlows, drawRings, drawFloats, spawnPart } from "./particles.js";
 import { drawText, textWidth, lineWidth, FONT } from "./font.js";
 import { clamp, TAU, lerp } from "./utils.js";
 import { fogDraw, fogVisible } from "./fog.js";
@@ -97,6 +97,31 @@ export function drawRun(ctx, dt) {
     ctx.fillStyle = rg;
     ctx.beginPath(); ctx.arc(s.x, s.y - 8, 46 * cam.zoom, 0, TAU); ctx.fill();
     ctx.restore();
+    // FASE 2 — CRISTAL GEOMÉTRICO DE MEMÓRIA (P11): hexágono violeta com
+    // luz interna pulsando e partícula de memória subindo
+    ctx.save();
+    ctx.globalCompositeOperation = "lighter";
+    const hr = (9 + 2 * Math.sin(G.time * 2 + n.glowT)) * cam.zoom;
+    ctx.strokeStyle = `rgba(199,125,255,${0.35 + 0.4 * pulse})`;
+    ctx.lineWidth = 1.2;
+    ctx.beginPath();
+    for (let i = 0; i <= 6; i++) {
+      const ang = -Math.PI / 2 + i * Math.PI / 3;
+      const cxp = s.x + Math.cos(ang) * hr, cyp = s.y - 8 + Math.sin(ang) * hr * 1.18;
+      if (i) ctx.lineTo(cxp, cyp); else ctx.moveTo(cxp, cyp);
+    }
+    ctx.closePath();
+    ctx.stroke();
+    ctx.fillStyle = `rgba(232,220,255,${0.16 + 0.2 * pulse})`;
+    ctx.fill();
+    ctx.restore();
+    if (Math.random() < 0.05) {
+      spawnPart({
+        x: n.x + (Math.random() - 0.5) * 14, y: n.y - 8,
+        vx: 0, vy: -16, life: 1.1, size: 1.8, sizeEnd: 0.3,
+        color: Math.random() < 0.7 ? "#c77dff" : "#ffd479", glow: true, drag: 1,
+      });
+    }
     amountBar(ctx, s.x, s.y + 18, n.amount / n.max, "#c77dff");
   }
 
@@ -355,6 +380,49 @@ function drawAnt(ctx, u, w2s) {
   ctx.drawImage(frame, -w / 2, -h / 2 - size * 0.06 * z, w, h);
   ctx.restore();
   ctx.globalAlpha = 1;
+
+  // FASE 2 — FILHOS DA NÉVOA (P13): inimigos comuns redesenhados pálidos.
+  // Véu screen #e8f4ff, olhos de névoa branca, aura e rastro pálidos.
+  // Regra 8: nada humanoide — apenas fauna tocada pela Névoa.
+  if (u.faction === "enemy" && !u.dead && !flashing) {
+    const pa = alpha * (u.dying ? 0.6 : 1);
+    ctx.save();
+    ctx.globalCompositeOperation = "lighter";
+    ctx.globalAlpha = 0.12 * pa;
+    ctx.fillStyle = "#e8f4ff";
+    ctx.beginPath();
+    ctx.ellipse(dx, dy + 1 * z, (u.bodyR + 6) * z, (u.bodyR + 2) * z * 0.62, 0, 0, TAU);
+    ctx.fill();
+    ctx.restore();
+    // véu pálido: redesenha o frame em screen — clareia só onde há sprite
+    ctx.save();
+    ctx.globalCompositeOperation = "screen";
+    ctx.globalAlpha = 0.28 * pa;
+    ctx.translate(dx, dy);
+    if (lean) ctx.rotate(lean);
+    ctx.drawImage(frame, -w / 2, -h / 2 - size * 0.06 * z, w, h);
+    ctx.restore();
+    // olhos de névoa branca, perpendiculares à direção do corpo
+    ctx.save();
+    ctx.globalCompositeOperation = "lighter";
+    ctx.globalAlpha = 0.85 * pa;
+    ctx.fillStyle = "#fff";
+    const hx = dx + Math.cos(u.angle) * u.bodyR * 0.55 * z;
+    const hy = dy + Math.sin(u.angle) * u.bodyR * 0.55 * z - 2 * z;
+    const ox = Math.cos(u.angle + Math.PI / 2), oy = Math.sin(u.angle + Math.PI / 2);
+    ctx.beginPath(); ctx.arc(hx + ox * 2.2 * z, hy + oy * 2.2 * z, 1.4 * z, 0, TAU); ctx.fill();
+    ctx.beginPath(); ctx.arc(hx - ox * 2.2 * z, hy - oy * 2.2 * z, 1.4 * z, 0, TAU); ctx.fill();
+    ctx.restore();
+    // rastro pálido (#c9bce8): 8% de chance por frame enquanto se move
+    if (!u.dying && Math.abs(u.vx) + Math.abs(u.vy) > 4 && Math.random() < 0.08) {
+      spawnPart({
+        x: u.x - Math.cos(u.angle) * u.bodyR * 0.9,
+        y: u.y - Math.sin(u.angle) * u.bodyR * 0.9 + 2,
+        vx: 0, vy: -6, life: 0.5, size: 1.6, sizeEnd: 0.2,
+        color: "#c9bce8", glow: true, drag: 1,
+      });
+    }
+  }
 
   if (u.dead) return;
 

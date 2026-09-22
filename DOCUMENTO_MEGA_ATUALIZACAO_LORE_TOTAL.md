@@ -470,9 +470,9 @@ Motivos:
 
 ## 12. Progresso Atual (2026-09-22)
 
-**Implementado até agora (commit 37b3e4d):**
-- Fase 1: 100% (HUD orgânico + feromônio H)
-- Fase 2: 100% (VFX casta + inimigos pálidos + cristais)
+**Verificado no código real (branch arena/01a0c9e9-fumiga-goat):**
+- Fase 1: 100% AUDITADA (HUD orgânico + feromônio H — todos os itens do checklist conferidos em código)
+- Fase 2: 100% CONCLUÍDA NESTA SESSÃO (VFX casta médio com som + orçamento 30 partículas/frame + inimigos pálidos filhos da névoa + cristais hexagonais; teste `test/lorevfx.mjs`)
 - Fase 3: 70% (FRUIT_TREES + HUD frutos, falta lógica compra integrada state.js)
 - Fase 4: 100% (bosses fase2 + frases lore + render phase2)
 - Fase 5: 35% (cutscenes.js sistema 100%, Panel1 8/8, Panel2 3/8, Panel3 0/8 — bloqueado limite 10 imagens/turno)
@@ -480,11 +480,9 @@ Motivos:
 - Fase 7: 100% (formigueiro rename total + VFX + eras mundo)
 - Fase 8: 10% (estrutura Pálida em LORE.md e cutscenes.js def, falta implementação boss final)
 
-**Próximo passo imediato:**
-1. Gerar 5 layers restantes Panel2 + 8 layers Panel3 (13 imagens) em próximos turnos (limite 10/turno)
-2. Implementar compra lógica FRUIT_TREES em state.js
-3. Áudio ambiente bioma
-4. Pálida protótipo Fase 8
+**Próximo passo imediato (Fase 3):**
+1. Implementar compra lógica FRUIT_TREES em state.js + meta.js
+2. Depois: 5 layers restantes Panel2 + 8 layers Panel3 (Fase 5), áudio ambiente bioma (Fase 6), Pálida protótipo (Fase 8)
 
 ---
 

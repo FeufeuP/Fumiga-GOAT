@@ -366,7 +366,11 @@ function moveToward(a, tx, ty, dt, speedMult = 1) {
   // dispara arrancadas relâmpago a cada ~4s enquanto corre
   if (a.type === "scout") {
     a.dashT = (a.dashT || 2) - dt;
-    if (a.dashT <= 0) { a.dashT = (3.4 + rand(0, 1.6)) / m.dashFreq; a.dashBoost = 0.5; }
+    if (a.dashT <= 0) {
+      a.dashT = (3.4 + rand(0, 1.6)) / m.dashFreq; a.dashBoost = 0.5;
+      // FASE 2 — arrancada relâmpago da PRATA com anel lore
+      triggerAntVFX("scout", "scout", a);
+    }
     if (a.dashBoost > 0) {
       a.dashBoost -= dt;
       sp *= 1.9;
@@ -451,6 +455,8 @@ function attackMelee(a, target, dt) {
     const biteN = a.bodyR > 40 ? 14 : 4;
     burst(hx, hy, { n: biteN, color: ["#ffb347", "#ff7a3d"], spMin: 15, spMax: 70 + a.bodyR, life: 0.3, sizeMin: 1, sizeMax: 2 + a.bodyR / 60 });
   }
+  // FASE 2 — VFX médio da casta no golpe: aura + partícula + som lore
+  triggerAntVFX(a.type, "attack", a, target);
 }
 
 // ------------------------------------------------------ cérebro individual --
@@ -526,6 +532,8 @@ function applyWish(a, wish) {
         const slot = guardSlot++;
         const ang = slot * 2.399963;                 // ângulo áureo: espalha bem
         a.guardPos = { x: A.x + Math.cos(ang) * ring, y: A.y + Math.sin(ang) * ring };
+        // FASE 2 — o CEFALOTE assume o posto de porta-viva com anel lore
+        if (a.type === "tank") triggerAntVFX("tank", "guard", a);
       }
       break;
     }
@@ -789,7 +797,11 @@ function acquireResource(a) {
 function finishGather(a, m) {
   brainForget(a);              // devolve a vaga na fila da pilha
   a.pile = a.node = null;
-  if (a.carry >= a.st.carry) { a.state = "return"; }
+  if (a.carry >= a.st.carry) {
+    a.state = "return";
+    // FASE 2 — carga completa volta para o ninho com partícula lore
+    if (a.carryKind === "food") triggerAntVFX(a.type, "carry", a);
+  }
   else acquireResource(a);
 }
 
@@ -817,6 +829,8 @@ function deposit(a, m, run) {
     floatText(a.x, a.y - 12, "+" + v + " ESS", { color: "#c77dff", life: 1 });
     tutEvent("essence");
   }
+  // FASE 2 — a TECELÃ costura o ninho a cada entrega: seda lore VFX
+  if (a.type === "weaver") triggerAntVFX("weaver", "weave", a);
   SFX.pickup();
   a.carry = 0; a.carryKind = null;
   // volta a coletar
@@ -872,6 +886,7 @@ function updateHealer(a, dt, foes, m) {
       const triage = tgt.hp / tgt.maxHp < 0.3 + m.triageBonus ? 2 : 1;
       tgt.hp = Math.min(tgt.maxHp, tgt.hp + a.st.healRate * triage * m.healPower * dt);
       a.healFxT -= dt;
+      a.healLoreT = (a.healLoreT || 0) - dt;
       if (a.healFxT <= 0) {
         a.healFxT = 0.22;
         spawnPart({
@@ -879,7 +894,12 @@ function updateHealer(a, dt, foes, m) {
           vx: rand(-4, 4), vy: rand(-26, -14), life: 0.55, size: rand(1.6, 2.6),
           sizeEnd: 0.4, color: "#7fd6a0", glow: true, drag: 1,
         });
-        if (Math.random() < 0.1) SFX.healCast();
+        // FASE 2 — VFX lore da MATABELE (aura + partícula + som healCast),
+        // com cadência própria para não engolir o orçamento de partículas
+        if (a.healLoreT <= 0) {
+          a.healLoreT = 0.66;
+          triggerAntVFX("healer", "heal", a, tgt);
+        }
       }
     }
     return;
@@ -1012,6 +1032,8 @@ function spitAt(a, tgt, m) {
     arc: isBomb,
   });
   if (isBomb) { SFX.whoosh(); } else { SFX.spit(); }
+  // FASE 2 — VFX médio da casta no disparo (ACROBATA/FOGO)
+  triggerAntVFX(a.type, "attack", a, tgt);
   a.lunge = 0.22;
 }
 

@@ -1,107 +1,89 @@
 # PROGRESSO MEGA ATUALIZAÇÃO — SESSÃO ATUAL
 
 **Data:** 2026-09-22
-**Branch:** arena/01a0c8d1-fumiga-goat
+**Branch:** arena/01a0c9e9-fumiga-goat
 
-## ✅ Implementado nesta sessão
+## ✅ Fase 1 — AUDITADA E VALIDADA (100% no código real)
 
-### 1. VFX Médio por Casta (units.js + lore_vfx.js)
-- `units.js` importa `triggerAntVFX` e `spawnMemoryCrystal`
-- Gather burst dispara VFX `gather` + cristal se essência
-- Melee attack dispara VFX `attack`
-- Healer healPulse dispara VFX `healer/heal`
+Auditoria item a item da FASE 1 (HUD Orgânico Total por Bioma + Feromônio H)
+contra o checklist de `DOCUMENTO_MEGA_ATUALIZACAO_LORE_TOTAL.md`:
 
-### 2. Formigueiro Rename Total Lore (config.js + nest.js)
-- `CHAMBERS` renomeados:
-  - nursery → **BERÇO DE SEDA DA TECELÃ** vfx seda +18% choco
-  - pantry → **VENTRE DE ÂMBAR DA DESPENSA** vfx mel +15% comida
-  - barracks → **ARENA DE MANDÍBULAS DA GUERRA** vfx guerra +12% dano
-  - fungus → **JARDIM ETERNO DA CORTADEIRA** vfx fungo +1 comida/9s
-  - refinery → **CÂMARA DE MEMÓRIA DA ESSÊNCIA** vfx cristal +15% essência
-  - royal → **CÂMARA DA SILENCIOSA** lore coroa fungo/seda luz âmbar vfx coroa
-- `nest.js` VFX por câmara:
-  - Berço: seda flutuando linhas brancas com brilho
-  - Ventre: mel escorrendo + gotas caindo
-  - Jardim: esporos flutuando verde/roxo
-  - Memória: cristais hexagonais geométricos girando
-  - Silenciosa: luz âmbar radial + seda + coroa 3 picos fungo/seda
-  - Arena: faíscas guerra + aura vermelha
+- [x] `lore_hud.js`: BIOME_HUD com 6 biomas (border/accent/texture/foodLabel/essenceLabel/loreName/waveLabel)
+- [x] `drawBiomeTexture` — textura quitina/cera procedural + atlas 9-slice com cache
+- [x] `drawGasterBar` — gaster da Rainha com coroa fungo/seda, pulso <30% + veias vermelhas
+- [x] `drawPheromoneOverlay` + `drawPheromoneLegend` — tecla H, verde comida/vermelho perigo, "A COLÔNIA VÊ COM CHEIRO"
+- [x] `drawTreeRings` — XP como anéis da Árvore (chamado em game.js:1412)
+- [x] `drawTrailAnt`/`trailProgress` — onda como Trilha Feromônio com formigas andando (game.js:1487-1491)
+- [x] `drawScentMinimap` — minimapa de feromônio 10 Hz (game.js:1718)
+- [x] `drawFoodIcon`/`drawEssenceCrystal` — ícone comida por bioma + cristal com memória subindo
+- [x] `config.js`: MAPS com loreName nos 6 biomas
+- [x] Assets: `assets/ui/lore_panels.png`, `lore_icons.png`, `lore_gaster.png` presentes
+- [x] `main.js`: `loadLoreHUD()` no boot
+- [x] Testes: `test/lorehud.mjs` PASS
 
-### 3. Inimigos Pálidos Filhos da Névoa (render.js)
-- `drawAnt` para foes non-boss: overlay screen #e8f4ff alpha 0.28, olhos #fff lighter, aura pálida elipse bodyR+6 alpha 0.12, rastro #c9bce8 8% chance
-- `drawBoss` phase2: aura névoa pálida elipse 0.22 alpha + 3 orbs subindo sin(G.time) + coroa fungo/seda 3 picos #ffd479 + fox invisibleT overlay
+**Conclusão: Fase 1 totalmente finalizada. Pode avançar.**
 
-### 4. Eras Mundo Muda (world.js)
-- `genWorld` lê `G.save.era`
-- Era >0: adiciona trilhas seda, fungo extra Era>=3, portas extras a cada 2 Eras, Era>=9 trilhas moss permanentes
+## ✅ Fase 2 — IMPLEMENTADA NESTA SESSÃO (100%)
 
-### 5. Árvore Mini-Árvores Frutos (meta.js)
-- `FRUIT_TREES` 6 mini-árvores por mapa com 3 nós cada:
-  - Planície: Lições do Tamborilador
-  - Floresta: Seda da Caçadora
-  - Pântano: Bruma da Sombra
-  - Deserto: Fúria da Matriarca
-  - Outono: Coroa do Galhada
-  - Gelo: Memória do Devastador (desbloqueia ERA+1)
-- HUD frutos desenhados como círculos coloridos com brilho se comprado
+A auditoria mostrou que a Fase 2 estava PARCIAL no código (o relatório antigo
+era otimista). Itens que faltavam e foram implementados agora:
 
-### 6. Áudio Texto Animado (audio.js)
-- Novos SFX: type (typewriter), silk, honey, spore, crystal, crown, pheromone
-- Cutscenes já usam SFX.type() a cada 3 letras
+### 1. `lore_vfx.js` reescrito — som + orçamento
+- 11 castas ANT_VFX (Cortadeira, Pote-de-Mel, Prata, Bala, Arpão, Acrobata,
+  Fogo, Cefalote, Matabele, Tecelã, Dinoponera) com aura/lore/ícone
+- NOVO: orçamento de 30 partículas de VFX por frame (checklist Fase 2)
+- NOVO: som lore por casta com throttle (spore/honey/silk/healCast/whoosh/
+  pheromone/boom/slam + crystal no cristal de memória)
+- NOVO: aura da casta (disco aditivo) em todo evento
 
-### 7. HUD Orgânico + Feromônio H + Loading HQ (já existia, validado)
-- `lore_hud.js` BIOME_HUD por bioma, drawBiomeTexture, drawGasterBar, drawPheromoneOverlay
-- `game.js` KeyH overlay + barra gaster + anel XP + trilha feromônio onda
-- `cutscenes.js` HQ 8 layers parallax, texto animado, loading 3.5s
+### 2. `units.js` — hooks de disparo que faltavam
+- `attackMelee` → `triggerAntVFX(type, "attack")` em cada golpe corpo a corpo
+- `spitAt` → VFX no disparo da ACROBATA/FOGO
+- MATABELE → VFX "heal" a cada 0,66s de canalização (substitui healCast aleatório)
+- PRATA → anel lore na arrancada relâmpago (dash)
+- CEFALOTE → anel lore ao assumir posto de porta-viva (guard)
+- TECELÃ → seda lore a cada entrega no ninho (deposit)
+- CORTADEIRA → partícula lore na carga completa (finishGather)
 
-### 8. Boss Fase 2 (enemies.js já implementado)
-- <50% vida: phrase, burst, ring, mecânicas específicas por boss
+### 3. `render.js` — Inimigos Pálidos Filhos da Névoa (P13)
+- `drawAnt` para inimigos comuns (faction "enemy"):
+  - véu screen #e8f4ff alpha 0.28 sobre o sprite
+  - olhos de névoa branca (lighter) perpendiculares à direção
+  - aura pálida elipse bodyR+6 alpha 0.12
+  - rastro #c9bce8 (8% chance/frame enquanto se move)
 
-### 9. Cutscenes Noite Branca
-- Panel1: 8/8 layers completos 320x180 Dead Cells HQ (25MB total)
-- Panel2: 3/8 layers (0_sky,1_distant,2_mid) — 5 pendentes por limite 10 imagens/turno
-- Panel3: 0/8 pendente
+### 4. `render.js` — Cristais Geométricos (P11)
+- Nós de essência do mundo: hexágono violeta com luz interna pulsando
+  + partícula de memória subindo (âmbar/violeta)
+- Boss fase 2 já tinha aura névoa + coroa fungo/seda (mantido)
 
-## ⏳ Pendente (bloqueado por limite imagens)
+### 5. Teste novo
+- `test/lorevfx.mjs`: 11 castas, orçamento ≤30 partículas/frame,
+  cristal de memória, robustez do dispatch — PASS
 
-- Panel2: 3_ground, 4_foreground, 5_particles, 6_vfx, 7_vignette
-- Panel3: 8 layers completos
-- Panel2+3 total 13 imagens ainda necessárias
+## 📋 Checklist Aceitação Fase 2 (DOCUMENTO_MEGA_ATUALIZACAO_LORE_TOTAL.md)
 
-Limite de 10 imagens por turno atingido — necessário continuar em próximo turno.
+- [x] Cada casta ao usar habilidade dispara aura cor específica + partícula + som
+- [x] Gather essência spawna cristal geométrico que sobe (já existia, mantido)
+- [x] Inimigos comuns pálidos/brancos com olhos névoa branca + rastro pálido
+- [x] Cristais essência hexagonais com luz interna + partícula memória
+- [x] Performance: VFX ≤30 partículas simultâneas por frame (orçamento + teste)
+- [x] Sem humanoide nos VFX — tudo inseto/fauna (Regra 8)
+- [x] Suíte completa: 14/14 testes executáveis PASS (sem regressão)
+
+## ⏳ Pendências das demais fases (herdadas do relatório anterior)
+
+- Fase 3: lógica de compra FRUIT_TREES integrada com state.js (70%)
+- Fase 5: Panel2 falta 5 layers + Panel3 falta 8 layers (13 imagens)
+- Fase 6: áudio ambiente por bioma (90%)
+- Fase 8: Pálida protótipo boss final + profecias (10%)
 
 ## 🎮 Preview
 
-Servidor rodando em 0.0.0.0:8000 — https://8000-...e2b.app/game/
-- Testar: HUD orgânico muda por bioma, H feromônio, formigueiro VFX, inimigos pálidos, boss fase2 aura, árvore frutos, cutscenes biblioteca MEMÓRIAS
+Servidor em 0.0.0.0:8000 — `/game/`
+- Testar: inimigos pálidos com olhos de névoa e rastro; cristais hexagonais
+  pulsando no mapa; VFX de aura por casta ao atacar/curar/coletar; sons lore
 
-## 📋 Checklist Aceitação
+## Commit
 
-- [x] HUD total orgânico muda por bioma
-- [x] Parallax 8 layers sistema pronto
-- [x] Non-humanoid B+C Regra 8
-- [x] Primeira cutscene Noite Branca HQ 3 painéis (1/3 completo, 2/3 parcial)
-- [x] Boss fase 2 mecânica
-- [x] Árvore total com mini-árvores frutos
-- [x] VFX médio
-- [x] Loading HQ cutscene
-- [x] Rainha coroa fungo/seda
-- [x] Pálida marionete névoa
-- [x] Cristais geométricos
-- [x] Inimigos redesign pálidos
-- [x] Formigueiro rename total VFX
-- [x] 320x180 + HQ 3 painéis + pixel detalhado high-res reduzido
-- [x] Feromônio tecla H
-- [x] Eras mundo muda
-- [x] Audio texto animado
-- [x] MVP full código
-- [ ] Imagens Panel2+3 completas (bloqueio limite)
-
-## Próximos Passos
-
-1. Gerar 5 layers restantes Panel2 + 8 layers Panel3 (13 imagens) em próximos turnos
-2. Implementar compra lógica FRUIT_TREES (integrar com state.js)
-3. Polir árvore visual literal tronco+raízes
-4. Teste final preview cutscenes biblioteca
-5. Commit final + PR
-
+`fase 2: VFX casta médio + inimigos pálidos filhos névoa`
