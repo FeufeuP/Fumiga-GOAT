@@ -16,6 +16,9 @@ mkdir -p "$OUT/sprites/ants" "$OUT/sprites/animals" "$OUT/sprites/props" \
 # Formigueiro (sprite pixel-art procedural — ver tools/make_nest.py)
 python3 "$ROOT/tools/make_nest.py"
 
+# Folhas de sprite do HUD lore (FASE 1 — ver tools/make_hud.py)
+python3 "$ROOT/tools/make_hud.py"
+
 # ---------------------------------------------------------------- Formigas ----
 # trim transparente + redimensiona pela altura (mantém pixels nítidos)
 ant () { # ant <src> <dst> <altura_px>

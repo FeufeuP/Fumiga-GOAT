@@ -619,6 +619,13 @@ export const MAPS = [
   {
     id: "planicie", name: "PLANÍCIE DO AMANHECER",
     sub: "Um gramado amplo onde a colônia fincou suas raízes.",
+    // FASE 1 — lore do HUD orgânico: fonte única dos nomes que aparecem no
+    // painel da colônia. BIOME_HUD (lore_hud.js) traz só o visual.
+    lore: {
+      hudName: "VASO DA PLANÍCIE",
+      foodLabel: "FOLHA TENRA", foodKind: "trevo",
+      essenceLabel: "PÓLEN ÂMBAR", waveLabel: "TRILHA DO ORVALHO",
+    },
     boss: "hare",
     ground: {
       top: "#33452c", mid: "#2c3d26", bot: "#22301d",
@@ -649,6 +656,11 @@ export const MAPS = [
   {
     id: "floresta", name: "FLORESTA DE MUSGO",
     sub: "Árvores antigas guardam segredos — e predadores.",
+    lore: {
+      hudName: "CÂMARA DE MUSGO",
+      foodLabel: "COGUMELO FUNGO", foodKind: "cogumelo",
+      essenceLabel: "ESPORO VIOLETA", waveLabel: "TRILHA DE SEDA",
+    },
     boss: "fox",
     ground: {
       top: "#24382a", mid: "#1f3124", bot: "#18261c",
@@ -679,6 +691,11 @@ export const MAPS = [
   {
     id: "pantano", name: "PÂNTANO PÚTRIDO",
     sub: "Águas paradas, insetos gordos e fome velha.",
+    lore: {
+      hudName: "VENTRE PÚTRIDO",
+      foodLabel: "ALGA PODRE", foodKind: "alga",
+      essenceLabel: "BRUMA MEMÓRIA", waveLabel: "TRILHA SUBMERSA",
+    },
     boss: "grouse",
     ground: {
       top: "#213031", mid: "#1c2a2b", bot: "#152021",
@@ -710,6 +727,11 @@ export const MAPS = [
   {
     id: "deserto", name: "DESERTO CALCINADO",
     sub: "Areia, ossos e o zumbido de uma colônia rival.",
+    lore: {
+      hudName: "FORNALHA DE AREIA",
+      foodLabel: "SEMENTE SECA", foodKind: "semente",
+      essenceLabel: "ÂMBAR CALCINADO", waveLabel: "TRILHA QUEIMADA",
+    },
     boss: "matriarch",
     ground: {
       top: "#4a3a28", mid: "#41321f", bot: "#35271a",
@@ -741,6 +763,11 @@ export const MAPS = [
   {
     id: "outono", name: "BOSQUE DOURADO",
     sub: "Um outono eterno. As folhas caem; a fome não.",
+    lore: {
+      hudName: "CÂMARA DOURADA",
+      foodLabel: "FOLHA OUTONO", foodKind: "outono",
+      essenceLabel: "RESINA ÂMBAR", waveLabel: "TRILHA DE FOLHAS",
+    },
     boss: "deer",
     ground: {
       top: "#3d2f22", mid: "#352920", bot: "#2a201a",
@@ -772,6 +799,11 @@ export const MAPS = [
   {
     id: "gelo", name: "PICO CONGELADO",
     sub: "O topo do mundo, onde só a fome sobrevive.",
+    lore: {
+      hudName: "GASTER CONGELADO",
+      foodLabel: "LÍQUEN GELADO", foodKind: "gelo",
+      essenceLabel: "CRISTAL PÁLIDO", waveLabel: "TRILHA DA NÉVOA",
+    },
     boss: "boar",
     ground: {
       top: "#3a4254", mid: "#333b4c", bot: "#2a3140",

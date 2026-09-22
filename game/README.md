@@ -209,7 +209,13 @@ defender a onda, coletar essência). `T` pula, e a preferência fica salva.
   escavar, cuidar das larvas). Os bônus do grupo **CRIAÇÃO** da árvore entram aqui: escavação,
   berçário, despensa, postura da rainha, custo das câmaras.
 - `assets/` — sprites e fontes bitmap processados
-- `tools/prepare_assets.sh` — regenera os sprites a partir das fontes
+- `assets/sprites/hud/` — **folhas de sprite do HUD lore** (FASE 1), geradas por
+  `tools/make_hud.py`: painéis de quitina (9-slice de 12px), gaster da Silenciosa por bioma
+  (+ vazio/ferido), coroa de fungo/seda, 24 ícones de 14px (comidas, cristais, marcas, anéis) e
+  as quatro marchas da irmã da trilha de feromônio (normal, pequena e em modo perigo)
+- `tools/prepare_assets.sh` — regenera os sprites a partir das fontes (inclui `tools/make_hud.py`)
+- `tools/make_hud.py` — gerador das folhas de sprite do HUD (Python puro, escreve PNG RGBA
+  sem dependências). Muda a paleta, o tamanho do painel ou um ícone aqui e roda de novo
 - `test/sim.mjs` — simulação headless da expedição inteira:
   - `node test/sim.mjs` — roda uma expedição desde o começo
   - `FORCE=N node test/sim.mjs` — pula direto para o chefão do mapa `N` (1–6) com um exército
@@ -229,6 +235,13 @@ defender a onda, coletar essência). `T` pula, e a preferência fica salva.
   fichas das formigas (vida, alcance, cadência, área da bomba, armadura, esquiva, coleta) e no
   formigueiro (escavação, berçário, entrega, custo da câmara). Rode depois de mexer em
   `META_NODES`, em `metaBonus()` ou em `js/meta.js`.
+- `test/lorehud.mjs` — auditor da **FASE 1 da Mega Atualização Lore-Total** (HUD orgânico por
+  bioma): confere que todo mapa de `MAPS` tem lore de HUD completa e que os textos vêm de
+  `MAPS[].lore` (fonte única — `BIOME_HUD` guarda só o visual), que os ícones de comida são
+  pixel art de grade quadrada com paleta fechada, que todo texto usa glifos existentes na fonte,
+  que nenhum bioma gera coordenada inválida e que, **com cache quente, nenhum gradiente é
+  criado por frame** (a visão de feromônio roda em buffer reduzido offscreen). Rode depois de
+  mexer em `js/lore_hud.js`, `js/config.js` (MAPS[].lore) ou no HUD de `js/game.js`.
 - `test/stuck.mjs` — regressão dos bugfixes: nenhuma pilha/nó de recurso nasce na área do
   formigueiro, nenhuma operária fica presa no `goto` com alvo inalcançável, e a **bombeira
   explode de verdade** (área + queimadura em vários inimigos de uma vez).
@@ -250,7 +263,8 @@ Cheque tudo antes de subir (é o que o CI local usa):
 node test/boot.mjs && node test/docs.mjs && \
 node test/assets.mjs && node test/sim.mjs && node test/uitest.mjs && \
 node test/layout.mjs && node test/tree.mjs && node test/stuck.mjs && \
-node test/attack.mjs && node test/endless.mjs && node test/prophecy.mjs
+node test/attack.mjs && node test/endless.mjs && node test/prophecy.mjs && \
+node test/lorehud.mjs
 ```
 
 Para inspeção visual do layout das telas internas (gera PNG fora do repo):

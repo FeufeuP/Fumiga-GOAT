@@ -471,6 +471,28 @@ director.budget = 8;
 spawnBoss("boar", 40);
 auditFrame("RUN mapa 6 + chefe", frame(), { uiStart: "auto" });
 
+// FASE 1 — HUD ORGÂNICO EM TODOS OS BIOMAS + VISÃO FEROMÔNIO [H]
+// Cada bioma passa pelo auditor: textos do painel dentro da tela, ícone de
+// comida do bioma, trilha feromônio com irmãs andando e — segurando H — a
+// névoa de cheiro com a legenda "A COLÔNIA VÊ COM CHEIRO".
+const { keys } = await import(BASE + "input.js");
+const MAPS_F1 = (await import(BASE + "config.js")).MAPS;
+G.run.status = "running";
+G.run.payout = null;
+G.run.elapsed = 60;                 // sem a dica de controles dos primeiros segundos
+for (let i = 0; i < MAPS_F1.length; i++) {
+  genWorld(90210 + i * 131, i);
+  await wait(12);
+  director.mapIdx = i;
+  director.phase = "calm";
+  director.timer = 9;
+  director.waveInMap = 0;
+  auditFrame("RUN HUD bioma " + MAPS_F1[i].id, frame(), { uiStart: "auto" });
+  keys.KeyH = true;
+  auditFrame("RUN visão feromônio " + MAPS_F1[i].id, frame(), { uiStart: "auto" });
+  keys.KeyH = false;
+}
+
 const list = [...problems.values()];
 console.log("textos auditados: " + coverage.join(" | "));
 console.log(list.length ? "PROBLEMAS (" + list.length + "):\n - " + list.join("\n - ") : "TESTE DE LAYOUT PASSOU");

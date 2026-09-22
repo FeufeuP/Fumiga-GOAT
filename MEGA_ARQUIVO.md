@@ -60,6 +60,68 @@ transformações visuais das Eras, biblioteca completa ou o chefe Pálida.
 Os 11 arquivos de arte existentes da Noite Branca continuam sendo 11 de 24;
 o fallback não deve ser contado como arte finalizada.
 
+## Registro técnico desta entrega — FASE 1 (HUD orgânico por bioma + feromônio H)
+
+Seção nova, como a anterior: não altera nenhum dos seis textos originais.
+
+Escopo executado conforme a seção 10 da Mega Atualização (P1=C, P22=A, P18=B,
+P9=B), sem tocar nas fases 2–8.
+
+- Fonte única de lore: os textos do HUD (`hudName`, `foodLabel`, `foodKind`,
+  `essenceLabel`, `waveLabel`) passaram a viver em `MAPS[].lore`
+  (`game/js/config.js`); `BIOME_HUD` (`game/js/lore_hud.js`) guarda só o visual
+  e é preenchido a partir de `MAPS`, então não há mais duas listas divergindo.
+- HUD orgânico: painel de quitina/cera assado uma vez por tamanho em canvas
+  offscreen (semente por bioma, brilho de cera respirando), ícones de comida em
+  pixel art por bioma (trevo, cogumelo, alga, semente, folha de outono, líquen),
+  essência como cristal geométrico facetado com partículas de pólen, XP como
+  anel de crescimento da Árvore e gaster da Silenciosa com coroa de fungo/seda
+  pulsando e veias vermelhas abaixo de 30%.
+- Onda virou **TRILHA FEROMÔNIO**: marcas de cheiro no chão com irmãs
+  caminhando pela trilha em calmaria; em invasão a mesma trilha queima vermelha
+  e a horda marcha por ela.
+- Mini-mapa virou **mapa da trilha de cheiro**: camada de comida/perigo
+  amostrada em buffer reduzido (1 px por 3 px) a cada 0,25 s por cima do terreno.
+- `[H]` visão de feromônio: a névoa verde/vermelha é amostrada num buffer de 1 px
+  por 16 px e ampliada por nearest neighbor com dither — antes era um gradiente
+  radial por célula na tela. Legenda com glifos da fonte do jogo e a frase
+  "A COLÔNIA VÊ COM CHEIRO".
+- Otimização (Regra 5): nenhum gradiente é criado dentro do loop de renderização
+  do HUD; texturas, ícones, dither e névoa ficam em buffers reutilizados com
+  teto de cache. Medido pelo `test/lorehud.mjs`: 0 gradientes/frame com cache
+  quente (antes: ~700 gradientes radiais por frame) e 0,17 ms por frame na visão
+  de feromônio com a câmera em movimento.
+- Bug de layout corrigido no caminho: o rótulo "SILENCIOSA FERIDA!" era desenhado
+  em fonte grande por cima do próprio gaster e o HP colidia com a barra; agora o
+  rótulo é pequeno, a barra vive na faixa livre e os números têm coluna própria.
+- **Spritesheets do HUD (arte de verdade, não procedural):** `tools/make_hud.py`
+  passou a gerar as folhas que o HUD usa em `game/assets/sprites/hud/` —
+  `hud_panels.png` (6 peles de painel em 9-slice de 12px), `hud_gaster.png`
+  (gaster por bioma + vazio + ferido, em tiras de 64x16 recortadas pelo HP),
+  `hud_crown.png` (coroa de fungo/seda, 4 quadros), `hud_icons.png` (24 ícones
+  de 14px: comidas, cristais de pólen, marcas de cheiro, anéis de crescimento)
+  e `hud_ant.png` (4 quadros da irmã da trilha em três estilos: normal, pequena
+  e marcha de perigo pálida). O gerador é Python puro e escreve PNG RGBA na
+  mão, sem dependências novas; entrou no `tools/prepare_assets.sh` e no
+  `MANIFEST` de `js/assets.js`. `js/hud_sprites.js` desenha a partir das folhas
+  e mantém o traço procedural como reserva caso a arte não carregue — o teste
+  prova as duas rotas (métricas do atlas conferidas contra o PNG de verdade).
+- Verificação: `node game/test/lorehud.mjs` (novo, cobre lore dos seis biomas,
+  glifos, ícones, NaN, teto de cache, custo por frame e degradação sem canvas) e
+  `node game/test/layout.mjs` passou a auditar o HUD dos **seis biomas** e a
+  visão de feromônio em cada um (33 cenários de texto, sem colisão ou texto
+  encoberto). A bateria completa segue verde.
+- Inspeção em jogo: como não há navegador disponível nesta sessão, o jogo foi
+  rodado de ponta a ponta num backend Canvas 2D nativo (Skia, software) com DOM
+  mínimo — menu → campanha → introdução → expedição → invasão → chefe — e cada
+  bioma impresso em PNG para conferência visual; pior caso medido de 6,3 ms por
+  frame (p95 8,0 ms) durante invasão com chefe.
+
+**Fora do escopo desta entrega (fases 2–8):** VFX de casta, árvore genealógica
+com frutos, arenas de chefe, cutscenes HQ, inimigos da Névoa, câmaras do
+formigueiro, a Pálida, e a arte das camadas 2 e 3 da Noite Branca — tudo segue
+pendente, com validação do usuário antes de avançar.
+
 ## Índice dos conteúdos integrais
 
 1. [Regras de trabalho](#fonte-regras-de-trabalho) — `REGRAS_DE_TRABALHO.md`

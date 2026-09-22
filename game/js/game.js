@@ -39,7 +39,10 @@ import {
 } from "./render.js";
 import { enterTree, updateTree, drawTree, treeClick } from "./meta.js";
 import { colony, foodTrailAt, dangerAt } from "./brain.js";
-import { BIOME_HUD, drawBiomeTexture, drawGasterBar, drawPheromoneOverlay } from "./lore_hud.js";
+import {
+  BIOME_HUD, drawBiomeTexture, drawGasterBar, drawPheromoneOverlay,
+  drawFoodIcon, drawEssenceHud, drawTreeRing, drawPheromoneTrail, drawPheromoneMini,
+} from "./lore_hud.js";
 import { startCutscene, updateCutscene, drawCutscene, handleCutsceneInput, isCutsceneActive, startLoadingCutscene, getCutsceneDefs } from "./cutscenes.js";
 import { uiBegin, uiButtons, button, iconButton, panel, bar, pointInRect, dialogBox } from "./ui.js";
 import { startTutorial, stopTutorial, updateTutorial, drawTutorial, tutEvent, TUT, tutorialCardRect } from "./tutorial.js";
@@ -679,7 +682,8 @@ function updateRun(dt) {
     const A2 = world.anthill;
     ring(A2.x, A2.y, { r0: 24, r1: 190, life: 0.7, color: "#6db7ff", width: 4 });
     levelUpBurst(A2.x, A2.y - 20);
-    floatText(A2.x, A2.y - 150, "NÍVEL " + run.level + "! A COLÔNIA FICOU MAIS FORTE", {
+    // LORE: cada nível é um anel novo na Árvore da Evolução — a memória cresce
+    floatText(A2.x, A2.y - 150, "A ÁRVORE LEMBROU: NÍVEL " + run.level, {
       color: "#6db7ff", life: 2.2, scale: 2,
     });
   }
@@ -1363,7 +1367,7 @@ function drawHUD() {
 
   // --- FEROMÔNIO OVERLAY H ---
   if (keys.KeyH && live) {
-    drawPheromoneOverlay(ctx, cam, VIEW_W, VIEW_H, worldToScreen, foodTrailAt, dangerAt, G.time);
+    drawPheromoneOverlay(ctx, cam, VIEW_W, VIEW_H, foodTrailAt, dangerAt, G.time);
   }
 
   // --------------------------------------- painel orgânico da colônia (quitina/cera por bioma) ----
@@ -1372,9 +1376,9 @@ function drawHUD() {
   // fundo com textura biome
   drawBiomeTexture(ctx, 10, 8, pw, ph, biomeId, G.time);
   panel(ctx, 10, 8, pw, ph, { border: bh.border, accentLine: bh.accent, fill: "rgba(0,0,0,0)" });
-  // brilho topo quitina
+  // brilho topo quitina respirando (HUD vivo, não plástico)
   ctx.fillStyle = bh.border;
-  ctx.globalAlpha = 0.22;
+  ctx.globalAlpha = 0.16 + 0.1 * (0.5 + 0.5 * Math.sin(G.time * 1.6));
   ctx.fillRect(10, 8, pw, 3);
   ctx.globalAlpha = 1;
 
@@ -1392,35 +1396,33 @@ function drawHUD() {
   if (run.modeDef) {
     drawText(ctx, run.modeDef.name + (era ? " • ERA " + era : ""), 20, yy, { color: run.modeDef.color, font: "small" });
     yy += 14;
-    drawText(ctx, bh.loreName, 20, yy, { color: bh.texture, scale: 0.8 });
-    yy += 10;
+    drawText(ctx, bh.loreName, 20, yy, { color: bh.border });
+    yy += 11;
   } else {
-    drawText(ctx, bh.loreName, 20, yy, { color: bh.texture, scale: 0.8 });
+    drawText(ctx, bh.loreName, 20, yy, { color: bh.border });
     yy += 14;
   }
   const hpFrac = q && q.maxHp ? clamp(q.hp / q.maxHp, 0, 1) : 0;
   const low = hpFrac < 0.32;
-  // Label lore: SILENCIOSA (Rainha Silenciosa)
-  drawText(ctx, low ? "SILENCIOSA FERIDA!" : "SILENCIOSA", 20, yy, { color: low ? "#ff4d5a" : "#ffd479", font: low ? "big" : "small" });
-  // gaster bar orgânico com coroa fungo/seda
-  drawGasterBar(ctx, 96, yy + 1, 122, 12, hpFrac, biomeId, low, G.time);
-  if (q && q.maxHp) drawText(ctx, Math.ceil(q.hp) + "/" + q.maxHp, 298, yy, { color: low ? "#ff8a94" : PAL.textDim, align: "right", scale: 0.85 });
+  // Label lore: SILENCIOSA (Rainha Silenciosa) — a drama vem do gaster
+  // pulsando vermelho, não de um texto grande que invade a barra.
+  drawText(ctx, low ? "SILENCIOSA!" : "SILENCIOSA", 20, yy + 1, { color: low ? "#ff4d5a" : "#ffd479" });
+  // gaster bar orgânico com coroa fungo/seda, na faixa livre à direita do rótulo
+  drawGasterBar(ctx, 124, yy + 1, 110, 12, hpFrac, biomeId, low, G.time);
+  if (q && q.maxHp) drawText(ctx, Math.ceil(q.hp) + "/" + q.maxHp, 242, yy + 1, { color: low ? "#ff8a94" : PAL.textDim, scale: 0.9 });
   yy += 18;
-  // XP como ANÉIS DA ÁRVORE
-  drawText(ctx, "ANEL " + run.level, 20, yy, { color: "#6db7ff", scale: 0.9 });
+  // XP = ANÉIS DE CRESCIMENTO DA ÁRVORE (LORE: a Árvore lembra de cada rainha)
+  drawText(ctx, "ANEL " + run.level, 20, yy, { color: "#6db7ff" });
   const xpFrac = run.xpNext > 0 ? clamp(run.xp / run.xpNext, 0, 1) : 0;
-  // anel visual
-  ctx.strokeStyle = "#241c38"; ctx.lineWidth = 3;
-  ctx.beginPath(); ctx.arc(68, yy+6, 8, 0, Math.PI*2); ctx.stroke();
-  ctx.strokeStyle = "#8fd3ff"; ctx.lineWidth = 2.5;
-  ctx.beginPath(); ctx.arc(68, yy+6, 8, -Math.PI/2, -Math.PI/2 + Math.PI*2*xpFrac); ctx.stroke();
-  // comida por bioma
-  drawText(ctx, bh.foodLabel + " " + fmt(run.food), 88, yy, { color: bh.foodColor, scale: 0.85 });
-  // essência cristal geométrico
-  drawText(ctx, bh.essenceLabel + " " + fmt(run.essencePool), 20, yy + 18, { color: bh.essenceColor, scale: 0.85 });
+  drawTreeRing(ctx, 68, yy - 3, 8, xpFrac, "#8fd3ff", G.time);
+  // comida com ícone do bioma: trevo, cogumelo, alga, semente, folha, líquen
+  drawFoodIcon(ctx, 88, yy - 2, 13, biomeId, G.time);
+  drawText(ctx, bh.foodLabel + " " + fmt(run.food), 104, yy, { color: bh.foodColor });
+  // essência = cristal geométrico de pólen de memória (partículas subindo)
+  drawEssenceHud(ctx, 20, yy + 16, biomeId, fmt(run.essencePool), G.time);
   {
     const used = popUsed(), cap = popCapTotal();
-    drawText(ctx, "IRMÃS " + used + "/" + cap, 298, 14, { color: used >= cap ? "#ff4d5a" : PAL.text, align: "right", scale: 0.85 });
+    drawText(ctx, "IRMÃS " + used + "/" + cap, 298, 14, { color: used >= cap ? "#ff4d5a" : PAL.text, align: "right", scale: 0.9 });
   }
 
   // ---- fileira de mutações como SEIVA Dourada (Vampire Survivors) ----
@@ -1469,7 +1471,7 @@ function drawHUD() {
     needBar("FOME", n.food, "#ffd479");
     needBar("GUERRA", n.defense, "#ff4d5a");
     needBar("CURA", n.medical, "#7fd6a0");
-    drawText(ctx, "COLETANDO " + hc.gather + " • EXPLORANDO " + hc.explore + " • [H] VER CHEIRO", 20, cy + 28, { color: bh.texture, scale: 0.8 });
+    drawText(ctx, "COLETANDO " + hc.gather + " • EXPLORANDO " + hc.explore + " • [H] VER CHEIRO", 20, cy + 28, { color: bh.border, scale: 0.85 });
     drawText(ctx, "COMIDA: " + bh.foodLabel + " | ESSÊNCIA: " + bh.essenceLabel, 20, cy + 42, { color: PAL.textDim, scale: 0.75 });
     leftStackBottom = ey + 94;
   }
@@ -1482,21 +1484,8 @@ function drawHUD() {
     if (director.phase === "calm") {
       const rest = calmFrac();
       const frac = 1 - rest;
-      // trilha feromônio visual: pontinhos que se aproximam
-      const trailY = 42;
-      for (let i = 0; i < 10; i++) {
-        const prog = (frac + i*0.12) % 1;
-        const tx = cx0 + 20 + prog * (cw - 40);
-        const alpha = 0.3 + prog * 0.7;
-        ctx.globalAlpha = alpha;
-        ctx.fillStyle = rest < 0.25 ? "#ff4d5a" : bh.foodColor;
-        ctx.beginPath();
-        ctx.arc(tx, trailY, 2 + prog*1.5, 0, Math.PI*2);
-        ctx.fill();
-      }
-      ctx.globalAlpha = 1;
       // anel contagem
-      const rcx = cx0 + 27, rcy = 38, rr = 15;
+      const rcx = cx0 + 27, rcy = 40, rr = 15;
       ctx.lineWidth = 4;
       ctx.strokeStyle = "rgba(36,28,56,0.9)";
       ctx.beginPath(); ctx.arc(rcx, rcy, rr, 0, Math.PI*2); ctx.stroke();
@@ -1505,9 +1494,11 @@ function drawHUD() {
         ctx.beginPath(); ctx.arc(rcx, rcy, rr, -Math.PI / 2, -Math.PI / 2 + Math.PI*2 * frac); ctx.stroke();
       }
       if (!run.draft) drawText(ctx, Math.max(0, Math.ceil(director.timer)), rcx, rcy - 8, { color: rest < 0.25 ? "#ff8a94" : PAL.text, align: "center" });
-      drawText(ctx, run.endless ? "SOBREVIVÊNCIA • " + bh.waveLabel : bh.waveLabel, cx0 + 52, 14, { font: "small", color: bh.border, scale: 0.85 });
+      drawText(ctx, run.endless ? "SOBREVIVÊNCIA • " + bh.waveLabel : bh.waveLabel, cx0 + 52, 12, { font: "small", color: bh.border, scale: 0.85 });
       const cycTag = run.endless ? (director.cycle ? " • CICLO " + (director.cycle + 1) : " • INF") : "";
-      drawText(ctx, run.draft ? "ESCOLHA UMA MEMÓRIA" : ("ONDA " + (director.waveInMap + 1) + "/" + m.waves.length + cycTag), cx0 + 52, 40, { color: PAL.textDim, scale: 0.85 });
+      drawText(ctx, run.draft ? "ESCOLHA UMA MEMÓRIA" : ("ONDA " + (director.waveInMap + 1) + "/" + m.waves.length + cycTag), cx0 + 52, 26, { color: PAL.textDim, scale: 0.85 });
+      // TRILHA FEROMÔNIO: irmãs marcando o cheiro enquanto a calmaria corre
+      drawPheromoneTrail(ctx, cx0 + 52, 40, cw - 68, 24, frac, biomeId, G.time, rest < 0.25);
     } else if (director.phase === "mapClear") {
       drawText(ctx, "MAPA LIMPO! " + bh.loreName, VIEW_W / 2, 18, { font: "small", color: bh.accent, align: "center" });
       drawText(ctx, m.name, VIEW_W / 2, 40, { color: PAL.textDim, align: "center" });
@@ -1516,16 +1507,10 @@ function drawHUD() {
       let aliveF = 0;
       for (const f of foes) if (!f.dead) aliveF++;
       drawText(ctx, "RESTAM " + aliveF + (director.budget > 0 ? "+" : ""), cx0 + cw - 16, 22, { color: "#ff8a94", align: "right", scale: 0.85 });
-      // barra como trilha feromônio perigosa
-      ctx.fillStyle = "rgba(20,10,16,0.9)";
-      ctx.fillRect(cx0+16, 38, cw-32, 10);
-      const grad = ctx.createLinearGradient(cx0+16, 38, cx0+cw-16, 38);
-      grad.addColorStop(0, "#ff4d5a");
-      grad.addColorStop(1, "#a32e46");
-      ctx.fillStyle = grad;
-      ctx.fillRect(cx0+16, 38, (cw-32)*waveProgress(), 10);
+      // TRILHA FEROMÔNIO em chamas: a horda marcha pelo cheiro da colônia
+      drawPheromoneTrail(ctx, cx0 + 16, 36, cw - 32, 20, waveProgress(), biomeId, G.time, true);
       const wDef2 = waveDef();
-      drawText(ctx, wDef2 && wDef2.title ? wDef2.title : m.name, cx0 + 16, 50, { color: PAL.textDim, scale: 0.8 });
+      drawText(ctx, wDef2 && wDef2.title ? wDef2.title : m.name, cx0 + 16, 58, { color: PAL.textDim, scale: 0.8 });
     }
   } else {
     drawText(ctx, run.status === "won" || (run.payout && run.payout.winBonus > 0) ? "VITÓRIA DA COLÔNIA!" : "A COLÔNIA CAIU • " + bh.loreName,
@@ -1696,7 +1681,7 @@ function drawHUD() {
   }
   // Dica H no rodapé, sem encobrir os preços da fileira de formigas.
   if (!keys.KeyH && live && !shopOpen) {
-    drawText(ctx, "[H] VISÃO FEROMÔNIO • A COLÔNIA VÊ COM CHEIRO", VIEW_W/2, VIEW_H - 18, { color: bh.texture, align: "center", scale: 0.7, alpha: 0.6 });
+    drawText(ctx, "[H] VISÃO FEROMÔNIO • A COLÔNIA VÊ COM CHEIRO", VIEW_W/2, VIEW_H - 18, { color: PAL.textDim, align: "center", scale: 0.75, alpha: 0.75 });
   }
 }
 
@@ -1711,15 +1696,18 @@ function drawMinimap() {
   const biomeId = m ? m.id : "planicie";
   const bh = BIOME_HUD[biomeId] || BIOME_HUD.planicie;
   const mw = MINI.w, mh = MINI.h;
-  const mx = VIEW_W - mw - 10, my = 10;
+  // desce o minimapa: sobra linha para o rótulo do bioma não encostar na borda
+  const mx = VIEW_W - mw - 10, my = 22;
   uiButtons().push({ x: mx - 3, y: my - 3, w: mw + 6, h: mh + 6, id: "minimap" });
   drawBiomeTexture(ctx, mx - 5, my - 5, mw + 10, mh + 10, biomeId, G.time*0.2);
   panel(ctx, mx - 5, my - 5, mw + 10, mh + 10, { fill: "rgba(0,0,0,0)", border: bh.minimapBorder, r: 3 });
   if (world.mini) ctx.drawImage(world.mini, mx, my);
+  // MURAL DA TRILHA: o cheiro da colônia por cima do terreno (não é satélite)
+  drawPheromoneMini(ctx, mx, my, mw, mh, foodTrailAt, dangerAt, G.time);
   ctx.strokeStyle = bh.minimapBorder; ctx.lineWidth = 1.2;
   ctx.strokeRect(mx - 0.5, my - 0.5, mw + 1, mh + 1);
-  // label bioma no minimapa
-  drawText(ctx, bh.loreName, mx + mw/2, my - 10, { color: bh.border, align: "center", scale: 0.7 });
+  // label bioma no minimapa (MAPA DA TRILHA: o cheiro da colônia)
+  drawText(ctx, bh.loreName, mx + mw/2, my - 12, { color: bh.border, align: "center", scale: 0.7 });
 
   const sx = mw / WORLD_W, sy = mh / WORLD_H;
   for (const a of allies) {
