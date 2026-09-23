@@ -10,9 +10,11 @@
 const gradProxy = { addColorStop() {} };
 const FONT_META = {
   // cw/ch = célula do atlas; ink = altura real da tinta e o recuo do topo
-  // (medidos no atlas: a célula tem folga, o texto não encosta no rodapé)
-  "assets/font/font_big.png": { cw: 22, ch: 30, ink: 20, inkY: 5 },
-  "assets/font/font_small.png": { cw: 13, ch: 16, ink: 11, inkY: 3 },
+  // (medidos no atlas: a célula tem folga, o texto não encosta no rodapé).
+  // inkY = topo da tinta da maiúscula simples; ink = topo até o pé do "_",
+  // a faixa que o texto ocupa de verdade no pior caso.
+  "assets/font/font_big.png": { cw: 22, ch: 30, ink: 21, inkY: 4 },
+  "assets/font/font_small.png": { cw: 13, ch: 16, ink: 11, inkY: 2 },
 };
 // As URLs reais levam base do shell (PC ou ../ no mobile) + ?v= anti-cache
 // (assetUrl em js/assets.js): normaliza antes de procurar no FONT_META.

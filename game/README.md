@@ -240,7 +240,12 @@ defender a onda, coletar essência). `T` pula, e a preferência fica salva.
   escavar, cuidar das larvas). Os bônus do grupo **CRIAÇÃO** da árvore entram aqui: escavação,
   berçário, despensa, postura da rainha, custo das câmaras.
 - `assets/` — sprites e fontes bitmap processados
-- `tools/prepare_assets.sh` — regenera os sprites a partir das fontes
+- `tools/prepare_assets.sh` — regenera os sprites a partir das fontes. O bloco "Fonte" monta os
+  atlas de texto (célula 22x30 e 13x16, grade de 12 colunas) em pixel art de 1 bit: o glifo nasce
+  em 8x com antialias, é reduzido por média de área (`-filter box`) e vira 1 bit no limiar de 50%.
+  Desenhar o glifo direto em 1x deixa o antialias do renderizador dentro da célula e o contorno
+  come os traços finos de C, S e G; pointsize maior que 21 (big) / 11 (small) estoura a célula.
+  Depois de rodar, confira `js/assets.js` (`ASSET_V`) e `js/font.js` (ordem de `CHARS`).
 - TITLE: quatro PNGs com +128 px pintados por lado, desenhados em escala 1:1.
   Céu e cenário principal preservam o centro original; vegetação frontal e
   montanhas foram refeitas com aprovação visual. Principal e frente possuem

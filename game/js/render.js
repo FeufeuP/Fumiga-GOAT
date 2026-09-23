@@ -1554,7 +1554,9 @@ export function drawModeSelect(ctx, time) {
   ctx.fillRect(0, 0, VIEW_W, VIEW_H);
 
   // título da tela
-  drawText(ctx, "SELECIONE O MODO", VIEW_W/2, 32, { font: "big", scale: 2, color: "#ffd479", align: "center" });
+  // 28 (e não 32): com o atlas de texto restaurado a faixa de tinta do título
+  // grande ficou 1px mais alta; o subtítulo em 78 encostava nele.
+  drawText(ctx, "SELECIONE O MODO", VIEW_W/2, 28, { font: "big", scale: 2, color: "#ffd479", align: "center" });
   drawText(ctx, "Cada modo é uma colônia diferente para comandar", VIEW_W/2, 78, { color: "#9a8fc0", align: "center" });
 
   // linha
@@ -1618,11 +1620,11 @@ export function drawModeCards(ctx, modes, hoverIdx, time, scrollOffset = 0) {
     drawText(ctx, m.name, x + cardW/2, iconY + 76, { font: "big", scale: 0.9, color: "#efe9ff", align: "center" });
 
     // dificuldade
-    drawText(ctx, m.diff, x + cardW/2, iconY + 96, { color: m.color, align: "center", scale: 0.85 });
+    drawText(ctx, m.diff, x + cardW/2, iconY + 100, { color: m.color, align: "center", scale: 0.85 });
 
     // descrição quebrada
     const descLines = m.desc.split("\n");
-    let dy = iconY + 120;
+    let dy = iconY + 124;
     for (const line of descLines) {
       drawText(ctx, line, x + cardW/2, dy, { color: "#9a8fc0", align: "center", scale: 0.85 });
       dy += 14;

@@ -237,89 +237,75 @@ icn "$I3/Skill_icon7.png"  sk_bomb.png
 # O atlas só é regenerado se a DejaVu Sans Mono Bold estiver disponível;
 # caso contrário preserva os arquivos já existentes em game/assets/font.
 if convert -list font 2>/dev/null | grep -qi "DejaVu-Sans-Mono-Bold"; then
-# Atlas bitmap gerado com DejaVu Sans Mono Bold SEM antialiasing (estilo pixel).
-# Célula fixa 22x30, grade 12 colunas. A ordem é a mesma de FONT.CHARS em font.js.
-# Os últimos glifos são usados nos textos do jogo (— travessão, • marcador,
-# ▶ seta do botão de invocar onda, [ ] atalhos do draft, ✓ nível comprado na
-# árvore). Ficam no FIM para não deslocar nenhum índice.
+# Atlas bitmap em pixel art puro. O glifo nasce GRANDE (8x a célula) com
+# antialias, depois é reduzido por média de área (filtro box) e vira 1 bit no
+# limiar de 50%: cada pixel final é a média do bloco 8x8 correspondente, então
+# não existe "meio pixel" inventado. Desenhar o label em 1x direto (sem a
+# redução por média) deixava o antialias do próprio renderizador dentro da
+# célula — C, S e G saíam com furos e traços fracos, ilegíveis no HUD.
+# Célula fixa 22x30 (big) / 13x16 (small), grade 12 colunas. A ordem é a mesma
+# de FONT.CHARS em font.js. Os últimos glifos são usados nos textos do jogo
+# (— travessão, • marcador, ▶ seta do botão de invocar onda, [ ] atalhos do
+# draft, ✓ nível comprado na árvore). Ficam no FIM para não deslocar índice
+# algum — texto com esses caracteres antes caía no fallback "?".
 CHS=(A B C D E F G H I J K L M N O P Q R S T U V W X Y Z \
      Á À Â Ã É Ê Í Ó Ô Õ Ú Ç \
      0 1 2 3 4 5 6 7 8 9 \
      '?' '!' '.' ',' ':' ';' '+' '-' '*' '/' '%' '(' ')' '<' '>' '=' '#' '_' ' ' \
      '—' '•' '▶' '[' ']' '✓' '♿' '∞' 'Ñ')
-FDIR=$(mktemp -d)
-convert -size 22x30 xc:none "$FDIR/blank.png"
-i=0
-while [ $i -lt ${#CHS[@]} ]; do
-  ch="${CHS[$i]}"
-  f="$FDIR/$(printf '%03d' $i).png"
-  if [ "$ch" = " " ]; then
-    cp "$FDIR/blank.png" "$f"
-  else
-    # caption: (não label:) — o label: do IM6 ignora -stroke e saía sem contorno
-    convert -background none -fill white -stroke black -strokewidth 3 \
-      -font DejaVu-Sans-Mono-Bold -pointsize 42 -gravity north \
-      -size 44x60 "caption:$ch" +repage -scale 50% "$f"
-  fi
-  i=$((i+1))
-done
-# monta linhas de 12 e depois empilha
-rows=$(( (${#CHS[@]} + 11) / 12 ))
-r=0
-while [ $r -lt $rows ]; do
-  files=""
-  c=0
-  while [ $c -lt 12 ]; do
-    idx=$(( r*12 + c ))
-    if [ $idx -lt ${#CHS[@]} ]; then
-      files="$files $FDIR/$(printf '%03d' $idx).png"
-    else
-      files="$files $FDIR/blank.png"
-    fi
-    c=$((c+1))
-  done
-  convert $files +append "$FDIR/row$r.png"
-  r=$((r+1))
-done
-convert $(for r in $(seq 0 $((rows-1))); do echo "$FDIR/row$r.png"; done) -append "$OUT/font/font_big.png"
-echo "  font font_big.png ($(identify -format '%wx%h' "$OUT/font/font_big.png"))"
-rm -rf "$FDIR"
 
-# Versão pequena (HUD / corpo de texto): 2x com contorno, célula 13x16
-FDIR=$(mktemp -d)
-convert -size 13x16 xc:none "$FDIR/blank.png"
-i=0
-while [ $i -lt ${#CHS[@]} ]; do
-  ch="${CHS[$i]}"
-  f="$FDIR/$(printf '%03d' $i).png"
-  if [ "$ch" = " " ]; then
-    cp "$FDIR/blank.png" "$f"
-  else
-    convert -background none -fill white -stroke black -strokewidth 1.5 \
-      -font DejaVu-Sans-Mono-Bold -pointsize 22 -gravity north \
-      -size 26x32 "caption:$ch" +repage -scale 50% "$f"
-  fi
-  i=$((i+1))
-done
-r=0
-while [ $r -lt $rows ]; do
-  files=""
-  c=0
-  while [ $c -lt 12 ]; do
-    idx=$(( r*12 + c ))
-    if [ $idx -lt ${#CHS[@]} ]; then
-      files="$files $FDIR/$(printf '%03d' $idx).png"
+# font_atlas <cw> <ch> <pointsize_base> <arquivo>
+# pointsize_base é o do desenho em 1x (21 no big, 11 no small). Subir esse
+# número engorda o traço E faz o glifo crescer dentro da célula — foi assim que
+# a fonte "chunky" saiu da célula e ficou ilegível.
+font_atlas () {
+  local cw=$1 ch=$2 pt=$3 name=$4 ss=8
+  local mpt pct D r c i idx gl f files rows
+  mpt=$(awk "BEGIN{printf \"%d\", $pt*$ss}")
+  pct=$(awk "BEGIN{printf \"%.4f\", 100/$ss}")
+  D=$(mktemp -d)
+  convert -size "${cw}x${ch}" xc:none "$D/blank.png"
+  i=0
+  while [ $i -lt ${#CHS[@]} ]; do
+    gl="${CHS[$i]}"
+    f="$D/$(printf '%03d' $i).png"
+    if [ "$gl" = " " ]; then
+      cp "$D/blank.png" "$f"
     else
-      files="$files $FDIR/blank.png"
+      convert -background none -fill white \
+        -font DejaVu-Sans-Mono-Bold -pointsize "$mpt" \
+        "label:$gl" +repage \
+        -filter box -resize "${pct}%" \
+        -channel RGBA -threshold 50% +channel \
+        -gravity north -extent "${cw}x${ch}" \
+        "$f"
     fi
-    c=$((c+1))
+    i=$((i+1))
   done
-  convert $files +append "$FDIR/row$r.png"
-  r=$((r+1))
-done
-convert $(for r in $(seq 0 $((rows-1))); do echo "$FDIR/row$r.png"; done) -append "$OUT/font/font_small.png"
-echo "  font font_small.png ($(identify -format '%wx%h' "$OUT/font/font_small.png"))"
-rm -rf "$FDIR"
+  rows=$(( (${#CHS[@]} + 11) / 12 ))
+  r=0
+  while [ $r -lt $rows ]; do
+    files=""
+    c=0
+    while [ $c -lt 12 ]; do
+      idx=$(( r*12 + c ))
+      if [ $idx -lt ${#CHS[@]} ]; then
+        files="$files $D/$(printf '%03d' $idx).png"
+      else
+        files="$files $D/blank.png"
+      fi
+      c=$((c+1))
+    done
+    convert $files +append "$D/row$r.png"
+    r=$((r+1))
+  done
+  convert $(for r in $(seq 0 $((rows-1))); do echo "$D/row$r.png"; done) -append "$OUT/font/$name"
+  rm -rf "$D"
+  echo "  font $name ($(identify -format '%wx%h' "$OUT/font/$name"))"
+}
+
+font_atlas 22 30 21 font_big.png
+font_atlas 13 16 11 font_small.png
 
 else
   echo "  font DejaVu indisponível — mantendo atlas existente"

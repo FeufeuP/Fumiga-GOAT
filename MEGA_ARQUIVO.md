@@ -1945,6 +1945,61 @@ TREE (árvore evolução), HELP (como jogar), OPTIONS (5 abas com sliders visuai
 
 <a id="registro-de-integridade"></a>
 
+## Registro — fonte legível de volta: atlas em pixel art 1 bit (2026-09-23)
+
+**Pedido do usuário:** "a fonte ficou horrível, ainda está ilegível; volte com a
+fonte anterior e apenas adicione mais qualidade e pixels a ela".
+
+**Causa raiz (dois defeitos somados, nenhum deles de gosto):**
+
+1. `game/js/font.js` — `tinted()` usava `globalCompositeOperation = "multiply"`
+   (introduzido junto com a fonte "chunky"). O preenchimento final é opaco, então
+   o alfa do resultado vira 1 na célula INTEIRA: toda linha de texto saía como
+   uma barra sólida da cor do texto. Confirmado em Chromium/Skia real, não só em
+   teste headless — o defeito valia para todos os 152 `drawText` do jogo.
+2. `tools/prepare_assets.sh` — a geração "chunky" desenhava o `caption:` em 1x com
+   contorno e pontosize dobrado, e o antialias do próprio renderizador ficava
+   dentro da célula (~12% de cobertura de tinta nos pontos fracos de C, S e G) e
+   o glifo crescia até 22px em célula de 22px, encostando na célula vizinha.
+   O resultado era ilegível mesmo com o tingimento correto.
+
+**Correção:** `source-in` de volta no tingimento (preserva o alfa, sombra e
+cache intactos) + atlas gerado como pixel art de 1 bit por redução por média:
+glifo em 8x com antialias → filtro `box` (média do bloco 8x8) → limiar de 50%.
+Cada pixel final é a média do bloco, sem "meio pixel" inventado. Métricas
+idênticas ao desenho 1x original (pointsize 21 no big, 11 no small).
+
+**Antes/depois medido nos atlas (tinta por glifo, excluindo pixel solto):**
+
+| Atlas | antes: tinta fraca | depois: tinta fraca | topo maiúscula | pé do `_` |
+| --- | --- | --- | --- | --- |
+| big 22x30 | média 86 (36% do glifo) | 90 (100%) | 4 | 25 (2px de folga) |
+| small 13x16 | média 25 (66% do glifo) | 27 (100%) | 2 | 13 (2px de folga) |
+
+- `game/assets/font/font_big.png` (2823 B) e `font_small.png` (1440 B): MENORES
+  que os arquivos "chunky" (23.548 B / 12.107 B), porque 1 bit comprime melhor.
+- `ASSET_V` agora aceita sufixo de mesmo dia: `"20260923b"`, para invalidar o
+  cache do atlas chunky sem colidir com o bump anterior do mesmo dia.
+- `game/test/layout.mjs`: `FONT_META` remede com a faixa real de tinta
+  (`big`: inkY 4, ink 21; `small`: inkY 2, ink 11). O teste passou a acusar o real
+  encosto do título do MODE, corrigido em `game/js/render.js` (título 32 → 28,
+  dificuldade 96 → 100, descrição 120 → 124, mesmos 2/4px de respiro das outras
+  linhas do card).
+- Ordem dos glifos, células e `adv` inalterados: nenhuma chamada de `drawText`
+  mudou de código, então o atlas novo cai em todas as telas, PC e mobile.
+
+**Validação:** 13/13 testes documentados aprovados (`endless.mjs` apresentou
+falha intermitente na primeira rodada e passou em duas execuções seguidas tanto
+no branch quanto no HEAD original — flakiness pré-existente, não regressão).
+Inspeção visual por Skia (mesmo backend 2D do Chrome) nas telas TÍTULO, COMO
+JOGAR, OPÇÕES, ÁRVORE, MODE, INTRO, HUD da RUN, pausa, fonte grande + alto
+contraste e camada mobile, comparadas lado a lado com o HEAD anterior: a barra
+sólida desapareceu e o texto ficou legível em 1:1 e em zoom nearest.
+**Limite desta verificação:** o CDN do Chromium está bloqueado neste ambiente
+(`cdn.playwright.dev` recusa a conexão), então a bateria em navegador real não
+rodou aqui; a inspeção usou Skia/Canvas2D nativo + a suíte headless do repo.
+A aprovação estética final é do usuário no preview.
+
 ## Registro de integridade
 
 Os tamanhos e hashes abaixo correspondem aos bytes dos arquivos de origem no
