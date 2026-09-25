@@ -221,6 +221,21 @@ function drawFruit(ctx, fruit, i) {
   const p = fruitPoints[i], r = clamp(60 * zoom, 12, 30);
   if (p.x + r < TREE_VIEW.x || p.x - r > TREE_VIEW.x + viewWidth() || p.y + r < TREE_VIEW.y || p.y - r > TREE_VIEW.y + TREE_VIEW.h) return;
   const unlocked = isFruitUnlocked(fruit.map), hot = hoverFruit === fruit;
+  const art = IMG["fruto_" + fruit.map];
+  if (art && art.width) {
+    // Maçã dourada corrompida pelo mundo (arte pintada no estilo da árvore).
+    const s = r * 2.6 / Math.max(art.width, art.height), w = art.width * s, h = art.height * s;
+    ctx.save();
+    if (hot) { ctx.shadowColor = "#fff0c7"; ctx.shadowBlur = 14; }
+    ctx.globalAlpha = unlocked ? 1 : .5;
+    ctx.imageSmoothingEnabled = true;
+    ctx.drawImage(art, Math.round(p.x - w / 2), Math.round(p.y - h / 2), w, h);
+    ctx.restore(); ctx.imageSmoothingEnabled = false;
+    const bx = p.x + r * .9, by = p.y + r * .75;
+    ctx.fillStyle = unlocked ? "#ffd479" : "#35303e"; ctx.strokeStyle = hot ? "#fff0c7" : "#19131d"; ctx.lineWidth = 2;
+    ctx.beginPath(); ctx.arc(bx, by, 9, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
+    drawText(ctx, String(i + 1), bx, by - 7, { align: "center", scale: .7, color: unlocked ? "#19131d" : "#ebe4f3" });
+  } else {
   // Fruto em âmbar facetado, com caule/folha pixelados e número do mundo.
   ctx.fillStyle = unlocked ? "#a6ae70" : "#817988";
   ctx.fillRect(Math.round(p.x - 2), Math.round(p.y - r - 7), 4, 9);
@@ -229,6 +244,7 @@ function drawFruit(ctx, fruit, i) {
   ctx.strokeStyle = hot ? "#fff0c7" : unlocked ? "#ffd479" : "#a69aa9";
   ctx.lineWidth = hot ? 3 : 2; nodePath(ctx, p.x, p.y, r, 2); ctx.fill(); ctx.stroke();
   drawText(ctx, String(i + 1), p.x, p.y - 9, { align: "center", scale: .85, color: unlocked ? "#19131d" : "#ebe4f3" });
+  }
   if (zoom >= .32 && (focusedStage === i + 1 || hot)) {
     const label = fruit.pending ? "FRUTO FUTURO" : unlocked ? "ABRIR FRUTO" : "FRUTO BLOQUEADO";
     drawText(ctx, label, clamp(p.x, TREE_VIEW.x + 66, TREE_VIEW.x + viewWidth() - 66), p.y - r - 25, { align: "center", scale: .60, color: unlocked ? fruit.color : PAL.textDim, maxWidth: 132 });
@@ -334,15 +350,38 @@ function miniPosition(n) {
   const i = visibleFruitNodes().findIndex(x => x.id === n.id), { x: col, y: row } = fruitGridSlot(i);
   return { x: 112 + col * 190, y: MINI_TOP + 26 + row * 72 };
 }
+function sanctuaryBackdrop(ctx, f) {
+  const bg = IMG["santuario_" + f.map];
+  if (!bg || !bg.width) return backdrop(ctx);
+  ctx.imageSmoothingEnabled = true;
+  ctx.drawImage(bg, 0, 0, VIEW_W, VIEW_H);
+  ctx.imageSmoothingEnabled = false;
+  // Véu escuro no centro: mantém nós e textos legíveis sobre a clareira.
+  const g = ctx.createRadialGradient(VIEW_W / 2, VIEW_H * .6, 60, VIEW_W / 2, VIEW_H * .6, VIEW_W * .62);
+  g.addColorStop(0, "#0d091480"); g.addColorStop(1, "#0d091418");
+  ctx.fillStyle = g; ctx.fillRect(0, 0, VIEW_W, VIEW_H);
+}
+function drawMiniApple(ctx, f) {
+  const art = IMG["fruto_" + f.map];
+  if (art && art.width) {
+    const unlocked = isFruitUnlocked(f.map), t = (typeof performance !== "undefined" ? performance.now() : 0) / 1000;
+    ctx.save(); ctx.globalAlpha = unlocked ? .9 : .45; ctx.imageSmoothingEnabled = true;
+    const h = 84, w = h * art.width / art.height;
+    ctx.drawImage(art, 560 - w / 2, 18 + Math.sin(t * 1.6) * 2, w, h);
+    ctx.restore(); ctx.imageSmoothingEnabled = false;
+  }
+}
 function drawFruitMini(ctx) {
-  backdrop(ctx); layoutRec.layer = "ui";
-  const f = activeFruit, unlocked = isFruitUnlocked(f.map), stage = FRUIT_TREES.indexOf(f) + 1;
+  const f = activeFruit;
+  sanctuaryBackdrop(ctx, f); layoutRec.layer = "ui";
+  const unlocked = isFruitUnlocked(f.map), stage = FRUIT_TREES.indexOf(f) + 1;
   panel(ctx, 12, 10, 590, 104, { border: f.color });
-  drawText(ctx, f.name, 26, 20, { font: "big", color: f.color, maxWidth: 560 });
+  drawMiniApple(ctx, f);
+  drawText(ctx, f.name, 26, 20, { font: "big", color: f.color, maxWidth: 480 });
   drawText(ctx, unlocked ? "FRUTO CONQUISTADO • PODERES GLOBAIS" : "PRÉVIA BLOQUEADA • " + (f.pending ? "PÁLIDA: FUTURO" : "DERROTE " + f.bossName),
-    26, 59, { scale: .8, color: unlocked ? PAL.text : PAL.textDim, maxWidth: 560 });
+    26, 59, { scale: .8, color: unlocked ? PAL.text : PAL.textDim, maxWidth: 480 });
   drawText(ctx, "GALHO " + stage + " • ESSÊNCIA " + G.save.essence + " • " + f.newNodes.filter(n => metaLevel(n.id) > 0).length + "/10 NOVAS",
-    26, 87, { scale: .68, color: "#ffd479", maxWidth: 560 });
+    26, 87, { scale: .68, color: "#ffd479", maxWidth: 480 });
   if (button(ctx, { x: 624, y: 14, w: 320, h: 44, compact: true, label: "VOLTAR À ÁRVORE", id: "treeMiniBack" })) {
     activeFruit = selectedNode = null; return null;
   }

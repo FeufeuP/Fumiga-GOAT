@@ -5,6 +5,16 @@
 const MANIFEST = {
   // Árvore ancestral aprovada: recorte RGBA, a saturação é restaurada em cache.
   tree_ancestral: "ui/tree_ancestral.png",
+  // Frutos da árvore: maçãs douradas corrompidas por mundo + santuário (fundo da tela do fruto).
+  // Fase 1: mapas 1-4. Mapas sem arte caem no desenho procedural antigo.
+  fruto_planicie: "ui/frutos/fruto_1_planicie.png",
+  fruto_floresta: "ui/frutos/fruto_2_floresta.png",
+  fruto_pantano: "ui/frutos/fruto_3_pantano.png",
+  fruto_deserto: "ui/frutos/fruto_4_deserto.png",
+  santuario_planicie: "ui/santuarios/santuario_1_planicie.jpg",
+  santuario_floresta: "ui/santuarios/santuario_2_floresta.jpg",
+  santuario_pantano: "ui/santuarios/santuario_3_pantano.jpg",
+  santuario_deserto: "ui/santuarios/santuario_4_deserto.jpg",
   // névoa — manto de fog branca dos inimigos (spritesheet 6x48x48)
   fog_mantle: "sprites/fx/fog_mantle.png",
   // formigas
@@ -159,7 +169,7 @@ const WROT = {};         // silhuetas brancas rotacionadas (hit flash)
 // ANTIGA nos mesmos nomes de arquivo (foi assim que o rework dos inimigos da
 // Fase 2 "não apareceu" para quem já tinha jogado antes dele).
 // ---------------------------------------------------------------------------
-export const ASSET_V = "20260924-tree-ancestral";
+export const ASSET_V = "20260925-frutos-f1";
 
 /**
  * URL final de um asset do jogo: base certa para a página atual + anti-cache.

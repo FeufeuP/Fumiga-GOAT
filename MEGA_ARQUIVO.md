@@ -2817,3 +2817,11 @@ Escolhas (ask_user): itens 1–7, cutscenes intactas, merge só com CI verde.
 - CI pronto em `tools/ci/testes.yml`: o push de `.github/workflows/` foi recusado porque o app
   do agente não tem a permissão `workflows`, e quem ativa é o dono. Mapa operacional em `AGENTS.md`.
 
+
+## 2026-09-25 — Frutos como maçãs douradas corrompidas + santuários (FASE 1: mundos 1-4)
+
+- **Mudança:** os frutos 1-4 da Árvore agora são maçãs douradas pintadas (variações de `Imagens inspiração/`), cada uma corrompida pelo seu mundo: Planície (grama, flores, pelo de lebre), Floresta (musgo, cogumelos, seda de aranha), Pântano (lodo pútrido, bolhas ciano, juncos), Deserto (casca rachada, brasas, âmbar, areia).
+- A tela do fruto usa um **santuário** (variação da clareira de raízes) do mesmo mundo como fundo, com véu escuro radial para legibilidade e a maçã flutuando no cabeçalho.
+- Arquivos: `game/assets/ui/frutos/*.png` (160 px, RGBA), `game/assets/ui/santuarios/*.jpg` (960×540); fontes em `arte_fonte/` (webp). `meta.js`: `drawFruit` usa a arte quando existe (bloqueado = 50% opacidade + selo com número), `sanctuaryBackdrop`/`drawMiniApple`. `ASSET_V` = `20260925-frutos-f1`.
+- Frutos/santuários 5, 6 e 7 continuam no desenho antigo (fallback automático) até a FASE 2 ser aprovada.
+- **Testes:** `npm test` 25/25 verdes; `npm run inspect` sem erros de JS, 404 ou glifos; capturas das 4 telas de fruto conferidas.
