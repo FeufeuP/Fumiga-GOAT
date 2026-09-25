@@ -29,6 +29,54 @@ repetições, datas, branches, checklists e notas históricas foram preservados.
 > Divergências permanecem visíveis, sem apagar conteúdo. O que efetivamente
 > funciona deve ser confirmado por testes e inspeção no preview.
 
+## Maçãs douradas e santuários por mapa — infraestrutura pronta, arte pendente (2026-09-24)
+
+**Pedido:** todos os frutos virarem **maçãs douradas estilizadas com base no mapa
+que representam**, no mesmo estilo artístico da Árvore Ancestral, e a tela aberta
+ao clicar em cada fruto receber o **santuário do bioma**. Criação dividida em duas
+fases: frutos 1–4 (Planície, Floresta, Pântano, Deserto) e frutos 5–7 (Outono,
+Gelo, Topo). As imagens devem ser variações do fruto e do santuário de referência
+enviados pelo usuário, adaptadas para cada mapa.
+
+**Decisão confirmada (Regra 1):** a tela do fruto recebe **fundo de santuário em
+tela inteira + molduras temáticas** do bioma (reaproveitando o kit de madeira viva
+do `lore_hud.js`), e não apenas um painel decorado.
+
+**Implementado nesta etapa — somente código, nenhuma arte nova no repositório:**
+
+- `game/js/fruit_art.js` (novo): tema por mapa (`FRUIT_THEMES`, incluindo o sétimo
+  fruto no tema neutro da colônia); `drawApple()` desenha a maçã com halo do
+  bioma, sombra de contato no galho e uma versão **dessaturada assada uma vez**
+  para o fruto bloqueado; `drawShrine()` cobre o canvas com o santuário, véu
+  vertical e banho de cor do bioma (texto e cartões continuam legíveis);
+  `drawShrinePanel()` veste os painéis com a madeira viva do bioma.
+- `game/js/assets.js`: `FRUIT_ART_FILES` com os 14 PNGs opcionais, `hasArt()` e
+  `loadFruitArt()`. O jogo lê `game/assets/ui/frutos/manifest.json` e **só pede o
+  que existe** — sem manifesto ou sem PNG não há 404 no console nem falha na
+  inspeção "nenhum asset faltando".
+- `game/js/meta.js`: `drawFruit()` usa a maçã quando há PNG e **mantém a numeração
+  1..7** (guias, testes e mobile referenciam os frutos por número);
+  `drawFruitMini()` troca o crepúsculo genérico pelo santuário do mapa, mostra a
+  própria maçã no alto do painel direito e veste cabeçalho/detalhe com a madeira
+  do bioma. O painel de detalhe só muda **dentro** da tela do fruto; a árvore
+  continua com o painel procedural de sempre.
+- `tools/make_fruit_manifest.py`: regenera o manifesto a cada lote de arte
+  (`python3 tools/make_fruit_manifest.py`).
+- **Fallback integral:** sem os PNGs o jogo volta exatamente ao desenho anterior
+  (gema âmbar facetada na árvore, crepúsculo na miniárvore). Boot, saves, compras,
+  gates e mobile não mudam.
+
+**Pendente:** as referências do fruto e do santuário serão **reenviadas pelo
+usuário** nesta conversa. A geração acontece depois, em duas fases (1–4 e 5–7).
+Neste commit **nenhuma** arte de maçã/santuário está no repositório; o manifesto
+está vazio e o fallback é o que aparece no jogo.
+
+**Verificação desta etapa:** `npm test` **25/25**; `npm run test:quick` **22/22**;
+`npm run inspect:tree` em PC e mobile — sem erros JS, sem 404, 137 detalhes em
+fonte normal/grande sem colisão, 78 compras por botão persistidas e 60 FPS. O
+mesmo percurso foi repetido com PNGs temporários para exercitar o caminho com
+arte presente (removidos depois; não são arte final).
+
 ## Preparação para PR — árvore concluída, maçãs e santuários pendentes (2026-09-24)
 
 **Escopo enviado para revisão:** a Árvore Ancestral ao Crepúsculo descrita abaixo,

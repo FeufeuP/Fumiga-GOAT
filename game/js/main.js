@@ -4,7 +4,7 @@
 // ============================================================================
 import { VIEW_W, VIEW_H, PAL, GIANT_SCALE, ANT_SIZES, GATHERER_SIZE } from "./config.js";
 import { G, loadSave } from "./state.js";
-import { loadAll, bakeRot, dupSprite, setRotDrawScale, LOAD } from "./assets.js";
+import { loadAll, loadFruitArt, bakeRot, dupSprite, setRotDrawScale, LOAD } from "./assets.js";
 import { loadFonts, drawText } from "./font.js";
 import { initAudio } from "./audio.js";
 import { endTick } from "./input.js";
@@ -193,6 +193,9 @@ async function bootAll() {
   await loadFonts();
   await loadAll((p) => { progress = p * 0.9; lastProgressAt = performance.now(); });
   await loadLoreHUD();
+  // Maçãs douradas e santuários por bioma: opcionais, nunca travam o boot.
+  // Sem o PNG o fruto continua com o desenho procedural anterior.
+  await loadFruitArt();
   phase = "ASSANDO PIXELS";
   await nextFrame();
   // DINOPONERA: a colosso é a FORMIGA-BALA tingida de violeta profundo,

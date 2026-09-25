@@ -148,9 +148,39 @@ const MANIFEST = {
   parallax_foreground: "parallax/menu/layer1_foreground_vines.png",
 };
 
+// ---------------------------------------------------------------------------
+// ARTE OPCIONAL DOS FRUTOS (maçãs douradas + santuários por bioma)
+// ---------------------------------------------------------------------------
+// Diferente do MANIFEST acima: esses PNGs NUNCA derrubam o boot. Eles entram
+// aos poucos (Fase 1: frutos 1-4; Fase 2: frutos 5-7) e, enquanto um arquivo
+// não existe, o jogo segue com o desenho procedural anterior. Uma tentativa
+// única por imagem: ausência responde rápido (404) e não segura o carregamento.
+export const FRUIT_ART_FILES = {
+  maca_planicie: "ui/frutos/maca_planicie.png",
+  maca_floresta: "ui/frutos/maca_floresta.png",
+  maca_pantano: "ui/frutos/maca_pantano.png",
+  maca_deserto: "ui/frutos/maca_deserto.png",
+  maca_outono: "ui/frutos/maca_outono.png",
+  maca_gelo: "ui/frutos/maca_gelo.png",
+  maca_topo: "ui/frutos/maca_topo.png",
+  santuario_planicie: "ui/frutos/santuario_planicie.png",
+  santuario_floresta: "ui/frutos/santuario_floresta.png",
+  santuario_pantano: "ui/frutos/santuario_pantano.png",
+  santuario_deserto: "ui/frutos/santuario_deserto.png",
+  santuario_outono: "ui/frutos/santuario_outono.png",
+  santuario_gelo: "ui/frutos/santuario_gelo.png",
+  santuario_topo: "ui/frutos/santuario_topo.png",
+};
+
 export const IMG = {};   // key -> HTMLImageElement (sprites crus)
 const ROT = {};          // key -> { frames:[canvas], w, h } (24 rotações)
 const WROT = {};         // silhuetas brancas rotacionadas (hit flash)
+
+/** Uma arte opcional já foi carregada e está pronta para desenhar? */
+export function hasArt(key) {
+  const img = IMG[key];
+  return !!img && !!img.width;
+}
 
 // ---------------------------------------------------------------------------
 // Versão dos assets servidos. BUMP OBRIGATÓRIO toda vez que qualquer PNG em
@@ -159,7 +189,7 @@ const WROT = {};         // silhuetas brancas rotacionadas (hit flash)
 // ANTIGA nos mesmos nomes de arquivo (foi assim que o rework dos inimigos da
 // Fase 2 "não apareceu" para quem já tinha jogado antes dele).
 // ---------------------------------------------------------------------------
-export const ASSET_V = "20260924-tree-ancestral";
+export const ASSET_V = "20260924-frutos-maca";
 
 /**
  * URL final de um asset do jogo: base certa para a página atual + anti-cache.
@@ -261,6 +291,35 @@ export async function loadAll(onProgress) {
     throw new Error("Falha ao carregar " + failed[0] +
       (failed.length > 1 ? " (+" + (failed.length - 1) + " outros)" : ""));
   }
+}
+
+// Lista do que EXISTE de verdade, gerada por `tools/make_fruit_manifest.py`.
+// Sem ela o navegador pediria 14 PNGs inexistentes e encheria o console de 404
+// (e a inspeção "nenhum asset faltando" falharia por arte ainda não gerada).
+const FRUIT_MANIFEST = "ui/frutos/manifest.json";
+
+/**
+ * Carrega as artes opcionais dos frutos (maçãs + santuários). Nunca lança:
+ * sem manifesto ou sem PNG, o jogo segue com o desenho procedural anterior.
+ * Devolve quantas artes entraram, para o boot/diagnóstico registrarem.
+ */
+export async function loadFruitArt() {
+  let keys = [];
+  if (typeof fetch !== "function") return 0;
+  try {
+    const res = await fetch(assetUrl(FRUIT_MANIFEST));
+    if (!res || !res.ok) return 0;
+    const data = await res.json();
+    keys = (data && data.arquivos ? data.arquivos : []).filter((k) => FRUIT_ART_FILES[k]);
+  } catch (e) { return 0; }
+  let loaded = 0;
+  await Promise.all(keys.map(async (k) => {
+    try {
+      const img = await loadImage(assetUrl(FRUIT_ART_FILES[k]));
+      if (img && img.width) { IMG[k] = img; loaded++; }
+    } catch (e) { /* listado mas ausente: cai no procedural */ }
+  }));
+  return loaded;
 }
 
 // --------------------------------------------------------------- rotações ---

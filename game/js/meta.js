@@ -13,6 +13,7 @@ import {
   TREE_NODE_RADII, fruitCenter, fruitGridSlot,
 } from "./tree_layout.js";
 import { treeArtCanvas, treeGrowth } from "./tree_art.js";
+import { drawApple, drawShrine, drawShrinePanel, shrineStyle, fruitTheme } from "./fruit_art.js";
 
 export const TREE_VIEW = { x: 184, y: 100, w: 764, h: 386 };
 const DETAIL = { x: 608, y: 100, w: 340, h: 386 };
@@ -221,17 +222,29 @@ function drawFruit(ctx, fruit, i) {
   const p = fruitPoints[i], r = clamp(60 * zoom, 12, 30);
   if (p.x + r < TREE_VIEW.x || p.x - r > TREE_VIEW.x + viewWidth() || p.y + r < TREE_VIEW.y || p.y - r > TREE_VIEW.y + TREE_VIEW.h) return;
   const unlocked = isFruitUnlocked(fruit.map), hot = hoverFruit === fruit;
-  // Fruto em âmbar facetado, com caule/folha pixelados e número do mundo.
-  ctx.fillStyle = unlocked ? "#a6ae70" : "#817988";
-  ctx.fillRect(Math.round(p.x - 2), Math.round(p.y - r - 7), 4, 9);
-  ctx.fillRect(Math.round(p.x + 2), Math.round(p.y - r - 7), 9, 4);
-  ctx.fillStyle = unlocked ? fruit.color : "#35303e";
-  ctx.strokeStyle = hot ? "#fff0c7" : unlocked ? "#ffd479" : "#a69aa9";
-  ctx.lineWidth = hot ? 3 : 2; nodePath(ctx, p.x, p.y, r, 2); ctx.fill(); ctx.stroke();
-  drawText(ctx, String(i + 1), p.x, p.y - 9, { align: "center", scale: .85, color: unlocked ? "#19131d" : "#ebe4f3" });
+  // Maçã dourada do bioma (arte) — sem o PNG, volta à gema âmbar facetada.
+  const size = Math.round(clamp(146 * zoom, 22, 74));
+  const apple = drawApple(ctx, fruit.map, p.x, p.y, size, { locked: !unlocked, hot, time: time() });
+  if (!apple) {
+    ctx.fillStyle = unlocked ? "#a6ae70" : "#817988";
+    ctx.fillRect(Math.round(p.x - 2), Math.round(p.y - r - 7), 4, 9);
+    ctx.fillRect(Math.round(p.x + 2), Math.round(p.y - r - 7), 9, 4);
+    ctx.fillStyle = unlocked ? fruit.color : "#35303e";
+    ctx.strokeStyle = hot ? "#fff0c7" : unlocked ? "#ffd479" : "#a69aa9";
+    ctx.lineWidth = hot ? 3 : 2; nodePath(ctx, p.x, p.y, r, 2); ctx.fill(); ctx.stroke();
+  }
+  // Número do mundo: os guias, os testes e o mobile referenciam os frutos por
+  // 1..7, então a maçã nunca esconde a numeração — placa escura por baixo.
+  const digit = String(i + 1);
+  if (apple) {
+    const dw = textWidth(digit, { scale: .85 }) + 8, dh = Math.ceil(18 * .85 * fontScale()) + 3;
+    ctx.fillStyle = hot ? "#2a1f36f2" : "#17121fe8";
+    ctx.fillRect(Math.round(p.x - dw / 2), Math.round(p.y - dh / 2), dw, dh);
+  }
+  drawText(ctx, digit, p.x, p.y - 9, { align: "center", scale: .85, color: hot ? "#fff0c7" : unlocked ? (apple ? "#ffe9b8" : "#19131d") : "#ebe4f3" });
   if (zoom >= .32 && (focusedStage === i + 1 || hot)) {
     const label = fruit.pending ? "FRUTO FUTURO" : unlocked ? "ABRIR FRUTO" : "FRUTO BLOQUEADO";
-    drawText(ctx, label, clamp(p.x, TREE_VIEW.x + 66, TREE_VIEW.x + viewWidth() - 66), p.y - r - 25, { align: "center", scale: .60, color: unlocked ? fruit.color : PAL.textDim, maxWidth: 132 });
+    drawText(ctx, label, clamp(p.x, TREE_VIEW.x + 66, TREE_VIEW.x + viewWidth() - 66), p.y - (apple ? size / 2 : r) - 25, { align: "center", scale: .60, color: unlocked ? fruit.color : PAL.textDim, maxWidth: 132 });
   }
 }
 
@@ -300,7 +313,10 @@ function drawTreeHUD(ctx, growth) {
 function drawNodeTip(ctx, n) {
   const { x, w } = DETAIL, y = activeFruit ? MINI_TOP : DETAIL.y, h = 486 - y;
   const chk = metaCanBuy(n.id), lvl = metaLevel(n.id), col = n._fruit?.color || META_BRANCHES[n.br].color;
-  panel(ctx, x, y, w, h, { border: col });
+  // Dentro da tela do fruto o painel veste a madeira viva do bioma; fora dela,
+  // o painel procedural de sempre (a árvore não muda de tema por galho).
+  if (activeFruit) drawShrinePanel(ctx, x, y, w, h, activeFruit.map, { border: col });
+  else panel(ctx, x, y, w, h, { border: col });
   const blocks = [
     [n.name, col, .93],
     [(n._fruit ? (legacyView ? "LEGADO • " : "GLOBAL • ") : "GALHO " + n.stage + " • " + META_BRANCHES[n.br].name + " • ") + lvl + "/" + n.cost.length, PAL.textDim, .72],
@@ -335,13 +351,17 @@ function miniPosition(n) {
   return { x: 112 + col * 190, y: MINI_TOP + 26 + row * 72 };
 }
 function drawFruitMini(ctx) {
-  backdrop(ctx); layoutRec.layer = "ui";
+  // Fundo: o santuário do bioma entra no lugar do crepúsculo genérico. Sem o
+  // PNG do mapa, o crepúsculo procedural de antes continua exatamente igual.
+  if (!drawShrine(ctx, activeFruit.map)) backdrop(ctx);
+  layoutRec.layer = "ui";
   const f = activeFruit, unlocked = isFruitUnlocked(f.map), stage = FRUIT_TREES.indexOf(f) + 1;
-  panel(ctx, 12, 10, 590, 104, { border: f.color });
+  const theme = fruitTheme(f.map);
+  drawShrinePanel(ctx, 12, 10, 590, 104, f.map, { border: f.color });
   drawText(ctx, f.name, 26, 20, { font: "big", color: f.color, maxWidth: 560 });
   drawText(ctx, unlocked ? "FRUTO CONQUISTADO • PODERES GLOBAIS" : "PRÉVIA BLOQUEADA • " + (f.pending ? "PÁLIDA: FUTURO" : "DERROTE " + f.bossName),
     26, 59, { scale: .8, color: unlocked ? PAL.text : PAL.textDim, maxWidth: 560 });
-  drawText(ctx, "GALHO " + stage + " • ESSÊNCIA " + G.save.essence + " • " + f.newNodes.filter(n => metaLevel(n.id) > 0).length + "/10 NOVAS",
+  drawText(ctx, "GALHO " + stage + " • " + theme.shrine + " • ESSÊNCIA " + G.save.essence + " • " + f.newNodes.filter(n => metaLevel(n.id) > 0).length + "/10 NOVAS",
     26, 87, { scale: .68, color: "#ffd479", maxWidth: 560 });
   if (button(ctx, { x: 624, y: 14, w: 320, h: 44, compact: true, label: "VOLTAR À ÁRVORE", id: "treeMiniBack" })) {
     activeFruit = selectedNode = null; return null;
@@ -374,12 +394,16 @@ function drawFruitMini(ctx) {
   }
   if (selectedNode) drawNodeTip(ctx, selectedNode);
   else {
-    panel(ctx, DETAIL.x, MINI_TOP, DETAIL.w, 486 - MINI_TOP, { border: f.color });
+    drawShrinePanel(ctx, DETAIL.x, MINI_TOP, DETAIL.w, 486 - MINI_TOP, f.map, { border: f.color });
+    // A própria maçã do mapa, no alto do painel: liga o santuário ao fruto.
+    const top = MINI_TOP + 18;
+    const apple = drawApple(ctx, f.map, DETAIL.x + DETAIL.w / 2, top + 34, 68, { locked: !unlocked, time: time() });
     const text = f.pending
       ? "A copa abre após o Pico, mas este fruto aguarda o sétimo mundo e a derrota da Pálida. Nenhuma vitória no Devastador permite comprar seus poderes."
       : unlocked ? "Este fruto guarda dez poderes globais. Escolha um caminho, leia os efeitos e confirme em EVOLUIR. Compras anteriores continuam em LEGADO."
         : "Derrote " + f.bossName + " na campanha para conquistar este fruto. Abrir o galho não libera seu fruto: você pode ler, mas ainda não comprar.";
-    wrapText(text, 312, { scale: .87 }).forEach((line, i) => drawText(ctx, line, DETAIL.x + 14, MINI_TOP + 18 + i * Math.ceil(19 * .87 * fontScale()),
+    const y0 = top + (apple ? 78 : 0);
+    wrapText(text, 312, { scale: .87 }).forEach((line, i) => drawText(ctx, line, DETAIL.x + 14, y0 + i * Math.ceil(19 * .87 * fontScale()),
       { scale: .87, color: PAL.text }));
   }
   drawText(ctx, "SELECIONAR NÃO GASTA ESSÊNCIA • EVOLUIR CONFIRMA A COMPRA", 480, VIEW_H - 29,
