@@ -4,7 +4,8 @@ import { PAL, META_BRANCHES, META_STAGES, VIEW_W, VIEW_H, FRUIT_TREES } from "./
 import { G, metaLevel, metaCanBuy, metaBuy, isFruitUnlocked, isTreeStageUnlocked, treeStageRequirement } from "./state.js";
 import { drawText, textWidth, wrapText, fontScale, layoutRec } from "./font.js";
 import { IMG } from "./assets.js";
-import { panel, button, pointInRect, isTouchUI } from "./ui.js";
+import { panel, button, publishHit, pointInRect, isTouchUI, dialogBox } from "./ui.js";
+import { drawWoodBanner, drawKitIcon } from "./lore_hud.js";
 import { mouse } from "./input.js";
 import { SFX } from "./audio.js";
 import { clamp, TAU } from "./utils.js";
@@ -217,18 +218,50 @@ function drawNode(ctx, n) {
     drawText(ctx, label, p.x, py + 1, { align: "center", scale, color: lvl >= max ? "#ffd479" : unlocked ? PAL.text : PAL.textDim });
   }
 }
+// Maçã dourada do mundo: sprite de arte (Fase 1) com a corrente+cadeado do
+// bioma por cima enquanto bloqueada. O corpo da fruta ocupa ~60% da altura do
+// sprite (caule/folhas em cima), então o topo é compensado para o corpo cair
+// no ponto do galho. Sem sprite (mapas da Fase 2 antes da arte) cai no âmbar
+// facetado procedural antigo.
+function drawFruitSprite(ctx, fruit, p, r, unlocked, hot) {
+  const apple = IMG["apple_" + fruit.map];
+  if (!apple) return false;
+  const S = Math.max(20, Math.round(r * 2.9)), top = Math.round(p.y - S * .60);
+  if (hot) {
+    ctx.save();
+    ctx.strokeStyle = "#fff0c7"; ctx.lineWidth = 2; ctx.globalAlpha = .8;
+    ctx.beginPath(); ctx.arc(Math.round(p.x), Math.round(p.y), r + 4, 0, TAU); ctx.stroke();
+    ctx.restore();
+  }
+  ctx.imageSmoothingEnabled = false;
+  ctx.drawImage(apple, Math.round(p.x - S / 2), top, S, S);
+  const lock = !unlocked && IMG["lock_" + fruit.map];
+  if (lock) {
+    const L = Math.round(r * 3.1);
+    ctx.drawImage(lock, Math.round(p.x - L / 2), Math.round(p.y - L * .55), L, L);
+  }
+  return true;
+}
 function drawFruit(ctx, fruit, i) {
   const p = fruitPoints[i], r = clamp(60 * zoom, 12, 30);
   if (p.x + r < TREE_VIEW.x || p.x - r > TREE_VIEW.x + viewWidth() || p.y + r < TREE_VIEW.y || p.y - r > TREE_VIEW.y + TREE_VIEW.h) return;
   const unlocked = isFruitUnlocked(fruit.map), hot = hoverFruit === fruit;
-  // Fruto em âmbar facetado, com caule/folha pixelados e número do mundo.
-  ctx.fillStyle = unlocked ? "#a6ae70" : "#817988";
-  ctx.fillRect(Math.round(p.x - 2), Math.round(p.y - r - 7), 4, 9);
-  ctx.fillRect(Math.round(p.x + 2), Math.round(p.y - r - 7), 9, 4);
-  ctx.fillStyle = unlocked ? fruit.color : "#35303e";
-  ctx.strokeStyle = hot ? "#fff0c7" : unlocked ? "#ffd479" : "#a69aa9";
-  ctx.lineWidth = hot ? 3 : 2; nodePath(ctx, p.x, p.y, r, 2); ctx.fill(); ctx.stroke();
-  drawText(ctx, String(i + 1), p.x, p.y - 9, { align: "center", scale: .85, color: unlocked ? "#19131d" : "#ebe4f3" });
+  if (!drawFruitSprite(ctx, fruit, p, r, unlocked, hot)) {
+    // Fallback procedural (mesmo desenho antigo) para mapas sem arte ainda.
+    ctx.fillStyle = unlocked ? "#a6ae70" : "#817988";
+    ctx.fillRect(Math.round(p.x - 2), Math.round(p.y - r - 7), 4, 9);
+    ctx.fillRect(Math.round(p.x + 2), Math.round(p.y - r - 7), 9, 4);
+    ctx.fillStyle = unlocked ? fruit.color : "#35303e";
+    ctx.strokeStyle = hot ? "#fff0c7" : unlocked ? "#ffd479" : "#a69aa9";
+    ctx.lineWidth = hot ? 3 : 2; nodePath(ctx, p.x, p.y, r, 2); ctx.fill(); ctx.stroke();
+  }
+  // Selo de cera âmbar com o número do mundo (legível mesmo no zoom mínimo).
+  const sr = Math.max(6, Math.round(r * .40));
+  const sx = Math.round(p.x + r * .74), sy = Math.round(p.y + r * .62);
+  ctx.fillStyle = unlocked ? "#ffd479" : "#6b6270";
+  ctx.beginPath(); ctx.arc(sx, sy, sr, 0, TAU); ctx.fill();
+  ctx.strokeStyle = "#19131d"; ctx.lineWidth = 2; ctx.stroke();
+  drawText(ctx, String(i + 1), sx, sy - Math.round(sr * .8), { align: "center", scale: Math.max(.5, sr / 12), color: unlocked ? "#19131d" : "#ebe4f3" });
   if (zoom >= .32 && (focusedStage === i + 1 || hot)) {
     const label = fruit.pending ? "FRUTO FUTURO" : unlocked ? "ABRIR FRUTO" : "FRUTO BLOQUEADO";
     drawText(ctx, label, clamp(p.x, TREE_VIEW.x + 66, TREE_VIEW.x + viewWidth() - 66), p.y - r - 25, { align: "center", scale: .60, color: unlocked ? fruit.color : PAL.textDim, maxWidth: 132 });
@@ -300,7 +333,8 @@ function drawTreeHUD(ctx, growth) {
 function drawNodeTip(ctx, n) {
   const { x, w } = DETAIL, y = activeFruit ? MINI_TOP : DETAIL.y, h = 486 - y;
   const chk = metaCanBuy(n.id), lvl = metaLevel(n.id), col = n._fruit?.color || META_BRANCHES[n.br].color;
-  panel(ctx, x, y, w, h, { border: col });
+  // No santuário, a caixa de leitura usa a tábua/caixa de texto do próprio mundo.
+  dialogBox(ctx, x, y, w, h, { border: col, biome: activeFruit ? activeFruit.map : undefined });
   const blocks = [
     [n.name, col, .93],
     [(n._fruit ? (legacyView ? "LEGADO • " : "GLOBAL • ") : "GALHO " + n.stage + " • " + META_BRANCHES[n.br].name + " • ") + lvl + "/" + n.cost.length, PAL.textDim, .72],
@@ -334,10 +368,39 @@ function miniPosition(n) {
   const i = visibleFruitNodes().findIndex(x => x.id === n.id), { x: col, y: row } = fruitGridSlot(i);
   return { x: 112 + col * 190, y: MINI_TOP + 26 + row * 72 };
 }
+// Santuário do fruto: a cena do mundo (960x540, mesma resolução da tela) vira
+// o fundo vivo da tela de poderes, com véu de legibilidade e vinheta. Sem a
+// arte (Fase 2 ainda não preparada / testes headless) volta ao backdrop antigo.
+function sanctuaryBackdrop(ctx, map) {
+  const img = IMG["santuario_" + map];
+  if (!img) { backdrop(ctx); return; }
+  ctx.imageSmoothingEnabled = false;
+  ctx.drawImage(img, 0, 0, VIEW_W, VIEW_H);
+  ctx.fillStyle = "rgba(12,8,18,0.40)"; ctx.fillRect(0, 0, VIEW_W, VIEW_H);
+  const g = ctx.createLinearGradient(0, 0, 0, VIEW_H);
+  g.addColorStop(0, "rgba(10,7,16,0.55)"); g.addColorStop(.35, "rgba(10,7,16,0)");
+  g.addColorStop(.72, "rgba(10,7,16,0)"); g.addColorStop(1, "rgba(10,7,16,0.62)");
+  ctx.fillStyle = g; ctx.fillRect(0, 0, VIEW_W, VIEW_H);
+}
+// Tábua suspensa de um poder: retângulo estático (hitbox = desenho, sempre).
+function plaqueRect(n) {
+  const p = miniPosition(n);
+  return { x: p.x - 88, y: p.y - 27, w: 176, h: 54 };
+}
+function drawPlaque(ctx, rect, biome, accent, state) {
+  // cordas já vêm desenhadas antes; aqui a tábua de madeira do bioma
+  if (!drawWoodBanner(ctx, rect.x, rect.y, rect.w, rect.h, biome)) {
+    panel(ctx, rect.x, rect.y, rect.w, rect.h, { border: accent });
+  }
+  if (state) {
+    ctx.strokeStyle = accent; ctx.lineWidth = 2;
+    ctx.strokeRect(rect.x + 2.5, rect.y + 2.5, rect.w - 5, rect.h - 5);
+  }
+}
 function drawFruitMini(ctx) {
-  backdrop(ctx); layoutRec.layer = "ui";
   const f = activeFruit, unlocked = isFruitUnlocked(f.map), stage = FRUIT_TREES.indexOf(f) + 1;
-  panel(ctx, 12, 10, 590, 104, { border: f.color });
+  sanctuaryBackdrop(ctx, f.map); layoutRec.layer = "ui";
+  if (!drawWoodBanner(ctx, 12, 10, 590, 104, f.map)) panel(ctx, 12, 10, 590, 104, { border: f.color });
   drawText(ctx, f.name, 26, 20, { font: "big", color: f.color, maxWidth: 560 });
   drawText(ctx, unlocked ? "FRUTO CONQUISTADO • PODERES GLOBAIS" : "PRÉVIA BLOQUEADA • " + (f.pending ? "PÁLIDA: FUTURO" : "DERROTE " + f.bossName),
     26, 59, { scale: .8, color: unlocked ? PAL.text : PAL.textDim, maxWidth: 560 });
@@ -355,31 +418,74 @@ function drawFruitMini(ctx) {
   drawText(ctx, legacyView ? "COMPRAS ANTIGAS PRESERVADAS • EFEITOS LOCAIS" : "TRÊS CAMINHOS • UM ÁPICE • SELECIONE PARA LER", 26, 130,
     { scale: .78, color: PAL.textDim, maxWidth: 910 });
   const list = visibleFruitNodes();
-  for (const n of list) {
-    const p = miniPosition(n);
-    for (const id of n.requires) {
-      const req = list.find(x => x.id === id); if (!req) continue;
-      const q = miniPosition(req);
-      ctx.strokeStyle = metaLevel(n.id) ? "#ffd479" : "#64546e"; ctx.lineWidth = 3;
-      ctx.beginPath(); ctx.moveTo(q.x, q.y + 27); ctx.lineTo(p.x, p.y - 27); ctx.stroke();
+  const rects = list.map(plaqueRect);
+  // Viga de madeira no topo da clareira: dela pendem as tábuas de poder.
+  const beamY = MINI_TOP - 14;
+  if (!drawWoodBanner(ctx, 20, beamY, 566, 22, f.map)) {
+    ctx.fillStyle = "#3b2f24"; ctx.fillRect(20, beamY, 566, 22);
+  }
+  // Cordas de suspensão (estáticas: desenho e hitbox coincidem sempre).
+  ctx.strokeStyle = "#7a6a52"; ctx.lineWidth = 2;
+  for (let i = 0; i < rects.length; i++) {
+    const r = rects[i], slot = fruitGridSlot(i);
+    let aboveY = beamY + 22, ax = r.x;
+    if (slot.y > 0) {
+      for (let j = i - 1; j >= 0; j--) {
+        const s = fruitGridSlot(j);
+        if (s.y === slot.y - 1 && s.x === slot.x) { aboveY = rects[j].y + rects[j].h; ax = rects[j].x; break; }
+      }
+    }
+    for (const dx of [26, r.w - 26]) {
+      ctx.beginPath();
+      ctx.moveTo(ax + dx, aboveY);
+      ctx.lineTo(r.x + dx, r.y + 2);
+      ctx.stroke();
     }
   }
-  for (const n of list) {
-    const p = miniPosition(n), owned = metaLevel(n.id) > 0;
-    if (button(ctx, { x: p.x - 88, y: p.y - 27, w: 176, h: 54, compact: true, label: "", id: "fruitNode_" + n.id, accent: owned ? "#ffd479" : f.color })) selectedNode = { ...n, _fruit: f };
-    if (selectedNode?.id === n.id) { ctx.strokeStyle = f.color; ctx.lineWidth = 2; ctx.strokeRect(p.x - 85, p.y - 24, 170, 48); }
+  // Fios de requisito entre tábuas (por baixo delas).
+  for (let i = 0; i < list.length; i++) {
+    for (const id of list[i].requires) {
+      const j = list.findIndex(x => x.id === id); if (j < 0) continue;
+      ctx.strokeStyle = metaLevel(list[i].id) ? "#ffd479" : "#64546e"; ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.moveTo(rects[j].x + rects[j].w / 2, rects[j].y + rects[j].h);
+      ctx.lineTo(rects[i].x + rects[i].w / 2, rects[i].y);
+      ctx.stroke();
+    }
+  }
+  for (let i = 0; i < list.length; i++) {
+    const n = list[i], r = rects[i], owned = metaLevel(n.id) > 0;
+    const hit = publishHit({ x: r.x, y: r.y, w: r.w, h: r.h, compact: true, id: "fruitNode_" + n.id });
+    if (hit.clicked) selectedNode = { ...n, _fruit: f };
+    const sel = selectedNode?.id === n.id;
+    drawPlaque(ctx, r, f.map, sel ? f.color : hit.hot ? "#fff0c7" : null, sel || hit.hot);
+    if (owned) drawKitIcon(ctx, 0, r.x + r.w - 20, r.y + 6, 14);
+    const p = miniPosition(n);
     const lines = wrapText(n.name, 156, { scale: .65 }), step = Math.ceil(16 * .65 * fontScale());
-    lines.forEach((line, i) => drawText(ctx, line, p.x, p.y - lines.length * step / 2 + i * step,
+    lines.forEach((line, k) => drawText(ctx, line, p.x, p.y - lines.length * step / 2 + k * step,
       { align: "center", scale: .65, color: owned ? "#ffd479" : unlocked ? PAL.text : PAL.textDim }));
   }
   if (selectedNode) drawNodeTip(ctx, selectedNode);
   else {
-    panel(ctx, DETAIL.x, MINI_TOP, DETAIL.w, 486 - MINI_TOP, { border: f.color });
+    dialogBox(ctx, DETAIL.x, MINI_TOP, DETAIL.w, 486 - MINI_TOP, { border: f.color, biome: f.map });
+    // A maçã do mundo em destaque no santuário (presa, com sua corrente).
+    const apple = IMG["apple_" + f.map], lock = !unlocked && IMG["lock_" + f.map];
+    let textY = MINI_TOP + 18;
+    if (apple) {
+      const S = 132, cx0 = DETAIL.x + DETAIL.w / 2, cy0 = MINI_TOP + 96;
+      ctx.imageSmoothingEnabled = false;
+      ctx.drawImage(apple, Math.round(cx0 - S / 2), Math.round(cy0 - S * .60), S, S);
+      if (lock) {
+        const L = 142;
+        ctx.drawImage(lock, Math.round(cx0 - L / 2), Math.round(cy0 - L * .55), L, L);
+      }
+      textY = MINI_TOP + 186;
+    }
     const text = f.pending
       ? "A copa abre após o Pico, mas este fruto aguarda o sétimo mundo e a derrota da Pálida. Nenhuma vitória no Devastador permite comprar seus poderes."
       : unlocked ? "Este fruto guarda dez poderes globais. Escolha um caminho, leia os efeitos e confirme em EVOLUIR. Compras anteriores continuam em LEGADO."
         : "Derrote " + f.bossName + " na campanha para conquistar este fruto. Abrir o galho não libera seu fruto: você pode ler, mas ainda não comprar.";
-    wrapText(text, 312, { scale: .87 }).forEach((line, i) => drawText(ctx, line, DETAIL.x + 14, MINI_TOP + 18 + i * Math.ceil(19 * .87 * fontScale()),
+    wrapText(text, 312, { scale: .87 }).forEach((line, i) => drawText(ctx, line, DETAIL.x + 14, textY + i * Math.ceil(19 * .87 * fontScale()),
       { scale: .87, color: PAL.text }));
   }
   drawText(ctx, "SELECIONAR NÃO GASTA ESSÊNCIA • EVOLUIR CONFIRMA A COMPRA", 480, VIEW_H - 29,

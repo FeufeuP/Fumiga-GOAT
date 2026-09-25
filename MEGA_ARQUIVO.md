@@ -2817,3 +2817,57 @@ Escolhas (ask_user): itens 1–7, cutscenes intactas, merge só com CI verde.
 - CI pronto em `tools/ci/testes.yml`: o push de `.github/workflows/` foi recusado porque o app
   do agente não tem a permissão `workflows`, e quem ativa é o dono. Mapa operacional em `AGENTS.md`.
 
+## Registro — Frutos dourados e santuários, Fase 1 (2026-09-25, branch arena/01a0d68b)
+
+Pedido: todos os frutos da Árvore viram maçãs douradas estilizadas por mapa, no mesmo
+estilo artístico da árvore ancestral, "corrompidas pelo mundo" que representam; a tela
+aberta ao clicar em cada fruto vira um santuário do mapa; maçãs bloqueadas ganham
+corrente com cadeado; criação separada em fases (1: frutos+santuários 1-4; 2: 5-7 após
+confirmação; 3: caixas de texto novas + HUDs personalizados por mundo).
+
+Pesquisa de inspiração (Regra 2): Blasphemous (pixel art "purista", relíquias corrompidas
+e cadeados como oferenda), Hollow Knight (interface ornamentada pelo mundo, menu styles
+por região), Dead Cells (HUD tintado por bioma), Moonlighter/Stardew (dioramas pixel art),
+pack de cadeados pixel da karsiori (legibilidade em tamanho pequeno).
+
+Decisões (ask_user, Regra 1): (A) aprovação de estilo travada no Fruto 1 e Santuário 1
+com `offer_options`, demais seguem o estilo aprovado e são conferidos no check-in de cada
+fase; (B) corrente+cadeado como overlay por mundo (7 variantes com característica do
+bioma, não assadas na maçã); (C) santuário = cena cheia do mapa + tábuas de poder
+penduradas por cordas numa viga de madeira; (D) Fase 3 = restyle orgânico completo
+(caixas de texto + texturas/ícones/gaster do HUD por mundo).
+
+Arte (Regra 6/10): variações das duas referências de "Imagens inspiração" (maçã dourada
+com galho torcido; clareira emoldurada por raízes). Maçãs 1-4: Planície (veios de Névoa
+leitosos, orvalho, trevos), Floresta (musgo, seda de tecelã, esporos violeta, cogumelo),
+Pântano (algas teal, gotejos de brejo, wisps), Deserto (casca rachada, resina âmbar,
+areia). Cadeados 1-4: bronze com pátina/orvalho; musgo+seda com chapéu de cogumelo;
+ferrugem pingando com chama teal; arenito calcinado com brasa. Santuários 1-4: clareiras
+moldadas por raízes com centro escuro livre para a interface. Pipeline novo
+`tools/prepare_fruit_art.py`: chroma-key de fundo magenta por canais (min(R,B)-G, o
+flood-fill do Pillow não tolera o ruído do fundo gerado), erosão de 1px de franja,
+recorte de margens, redução única com LANCZOS (128px frutas/cadeados; 960x540 santuários
+quantizados em P/192 cores — PNG ~200 KiB cada, ~2x menor que RGB).
+
+Código: `assets.js` (12 entradas novas no MANIFEST + `ASSET_V`); `meta.js` (`drawFruitSprite`
+com selo de cera numerado e fallback procedural para mapas sem arte ainda;
+`sanctuaryBackdrop` com véu/vinheta de legibilidade; cabeçalho e tábuas em
+`drawWoodBanner` do bioma; cordas estáticas da viga às tábuas — desenho e hitbox sempre
+coincidem; fios de requisito entre tábuas; `publishHit` em vez de `button` nas tábuas;
+painel de leitura e dica de nó em `dialogBox` com a caixa de texto do próprio mundo;
+maçã em destaque no painel, com a corrente quando presa); `ui.js` (`publishHit`, hitbox
+sem desenho que publica a área de toque como `button`); mobile herdado automaticamente
+(mesmos módulos; sem input novo).
+
+Validação (Regras 3/4): `npm test` 25/25; `npm run inspect` PC+mobile sem erro JS/404/
+glifo, 60 fps; `npm run inspect:tree` PC+mobile (137 detalhes normal/grande, 78 compras
+por botão persistidas, gestos). Bug achado e corrigido na inspeção: `drawKitIcon` chamado
+sem `ctx` quebrava o frame do santuário apenas após possuir um nó (teste de compra
+falhou em `f_p_2`); corrigido e revalidado. Capturas conferidas: árvore com maçãs 1-4
+presas por corrente+cadeado e selo numerado; 5-7 em fallback procedural até a Fase 2;
+santuário da Planície bloqueado e com poder selecionado.
+
+Limitações/pendências: Fase 2 (maçãs/santuários/cadeados 5-7) aguarda confirmação desta
+entrega; Fase 3 (caixas de texto + HUDs por mundo no estilo novo) vem depois da Fase 2;
+as caixas de texto atuais permanecem as do atlas lore vigente até lá; boot mobile baixa
+~1,99 MB com os santuários incluídos (aceito: telas centrais da meta, paletizados).

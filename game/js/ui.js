@@ -370,6 +370,20 @@ export function iconButton(ctx, opt) {
   return { clicked, hot };
 }
 
+/** Hitbox sem desenho: para placas/áreas com arte própria (santuários dos
+ *  frutos). Mesma semântica de clique/toque do button(): publica a hitbox no
+ *  frame (o toque não vaza para o mundo) e devolve { clicked, hot }. */
+export function publishHit(opt) {
+  const { x, y, w, h } = clampToView(opt);
+  const hr = opt.compact ? { x, y, w, h } : hitRect(x, y, w, h);
+  const hot = pointInRect(mouse.x, mouse.y, hr.x, hr.y, hr.w, hr.h);
+  const dis = !!opt.disabled;
+  const clicked = hot && mouse.justDown && !dis;
+  if (!hr.hidden) buttons.push({ x: hr.x, y: hr.y, w: hr.w, h: hr.h, id: opt.id, disabled: dis });
+  if (clicked) SFX.uiClick();
+  return { clicked, hot };
+}
+
 /** Barra de vida / progresso refinada — estilo Dead Cells */
 export function bar(ctx, x, y, w, h, frac, opt = {}) {
   frac = Math.max(0, Math.min(1, frac));

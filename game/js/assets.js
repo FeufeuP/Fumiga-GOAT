@@ -5,6 +5,21 @@
 const MANIFEST = {
   // Árvore ancestral aprovada: recorte RGBA, a saturação é restaurada em cache.
   tree_ancestral: "ui/tree_ancestral.png",
+  // Frutos dourados dos mundos (Fase 1: 1-4) + correntes/cadeados de bloqueio
+  // e santuários (cena de fundo da tela do fruto). Preparados fora do jogo por
+  // tools/prepare_fruit_art.py; o fallback procedural cobre mapas da Fase 2.
+  apple_planicie: "ui/fruits/apple_planicie.png",
+  apple_floresta: "ui/fruits/apple_floresta.png",
+  apple_pantano: "ui/fruits/apple_pantano.png",
+  apple_deserto: "ui/fruits/apple_deserto.png",
+  lock_planicie: "ui/fruits/lock_planicie.png",
+  lock_floresta: "ui/fruits/lock_floresta.png",
+  lock_pantano: "ui/fruits/lock_pantano.png",
+  lock_deserto: "ui/fruits/lock_deserto.png",
+  santuario_planicie: "ui/sanctuaries/santuario_planicie.png",
+  santuario_floresta: "ui/sanctuaries/santuario_floresta.png",
+  santuario_pantano: "ui/sanctuaries/santuario_pantano.png",
+  santuario_deserto: "ui/sanctuaries/santuario_deserto.png",
   // névoa — manto de fog branca dos inimigos (spritesheet 6x48x48)
   fog_mantle: "sprites/fx/fog_mantle.png",
   // formigas
@@ -159,7 +174,7 @@ const WROT = {};         // silhuetas brancas rotacionadas (hit flash)
 // ANTIGA nos mesmos nomes de arquivo (foi assim que o rework dos inimigos da
 // Fase 2 "não apareceu" para quem já tinha jogado antes dele).
 // ---------------------------------------------------------------------------
-export const ASSET_V = "20260924-tree-ancestral";
+export const ASSET_V = "20260925-fruits-phase1";
 
 /**
  * URL final de um asset do jogo: base certa para a página atual + anti-cache.
