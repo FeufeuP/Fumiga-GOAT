@@ -39,3 +39,8 @@ arvore-layout.png
 # originais das camadas do TITLE guardados por tools/fix_title_parallax.py
 # (o script é re-executável a partir deles; o git também guarda a versão anterior)
 game/assets/parallax/menu/_orig/
+
+# originais de arte aprovados (alta resolução) + folhas de revisão
+# Fora do Git pela mesma razão das camadas _orig/ do TITLE: pesados e
+# reproduzíveis — o que o JOGO carrega está em game/assets/ui/.
+art-source/
