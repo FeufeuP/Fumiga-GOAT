@@ -29,6 +29,82 @@ repetições, datas, branches, checklists e notas históricas foram preservados.
 > Divergências permanecem visíveis, sem apagar conteúdo. O que efetivamente
 > funciona deve ser confirmado por testes e inspeção no preview.
 
+## Entrega — Sete maçãs douradas e sete santuários de bioma (2026-09-25)
+
+**Status: as 17 artes foram geradas, escolhidas pelo usuário (2 opções por imagem, Regra 6) e
+processadas para o jogo. A INTEGRAÇÃO na interface ainda NÃO foi feita.** Este registro
+**substitui a pendência** "sete maçãs douradas estilizadas por mapa e as respectivas telas com a
+direção Santuário do bioma" descrita em *Preparação para PR — árvore concluída, maçãs e santuários
+pendentes (2026-09-24)*: a arte existe agora; o código que a exibe continua pendente e está
+listado nos próximos passos abaixo.
+
+### Direção confirmada pelo usuário
+
+- Ordem canônica de progressão, igual a `META_STAGES` em `config.js`: **Planície, Floresta,
+  Pântano, Deserto, Outono, Pico Congelado (Montanha), A Pálida**.
+- **Todas as maçãs são douradas, exceto a Pálida**: corpo branco-osso, aura branca, rachaduras
+  roxo-violeta profundas e fumaça saindo de dentro do fruto (escolha "branca").
+- **Todo santuário** tem espaço central livre para alocar todas as melhorias, árvores/vegetação em
+  volta e um buraco no fundo mostrando o horizonte do bioma.
+- Resposta personalizada nas perguntas da Regra 1: a maçã fica **suspensa em névoa** no centro da
+  clareira e **as melhorias viram flores do bioma** plantadas nesse espaço central.
+- O ninho da Pálida entra no **horizonte como CASTELO pálido** (correção do usuário: "o ninho dela
+  é um castelo"), **bem ao fundo e coberto por várias camadas de fumaça** — só as torres mais altas
+  aparecem acima da bruma (segunda correção do usuário).
+- Escopo confirmado: **estrito** — 7 maçãs + 7 santuários + correntes/cadeados.
+
+### Características por mundo (arte aprovada)
+
+| # | Mundo | Maçã (base dourada comum) | Santuário |
+|---|-------|---------------------------|-----------|
+| 1 | Planície | trigo, capim, flores silvestres, gotas de orvalho | clareira de grama com horizonte de trigal no amanhecer |
+| 2 | Floresta | musgo, trepadeira, flores e mini árvore de musgo enraizada no fruto | musgos, cogumelos brilhantes, cipós e luz de dossel ao fundo |
+| 3 | Pântano | cogumelos (marrom e turquesa), líquido verde de veneno escorrendo, mini árvore de pântano | poças verdes, lama borbulhando, névoa tóxica e árvores afogadas |
+| 4 | Deserto | cactos, areia, mini palmeira, trigo branqueado, calor | areia, cactos, cristais âmbar e horizonte de dunas com sol branco |
+| 5 | Outono | xarope de bordo escorrendo, folhas de outono, mini árvore de outono | bosque cobre/âmbar, folhas caindo, seiva doce de bordo |
+| 6 | Montanha (Gelo) | maçã congelada, neve, mini árvore ROSA em flor, gelo pendurado | neve, gelo, árvores rosa cobertas de neve, picos no horizonte |
+| 7 | A Pálida | corpo BRANCO (não dourado), aura branca, rachaduras roxas, fumaça saindo de dentro | tudo branqueado, fumaça, rachaduras roxas e o CASTELO pálido afogado em bruma no horizonte |
+
+### Correntes e cadeados (santuários seguem a mesma característica geral das maçãs)
+
+- `correntes_cadeados.png`: cadeado fechado com corrente — estado de nó bloqueado / selo do fruto.
+- `correntes_deserto.png`: variação do cadeado para o Deserto Calcinado (sand-blasted, cristais,
+  areia acumulada nos elos).
+- `correntes_tranca.png`: barreira de corrente atravessando a tela com três cadeados — selo do
+  santuário da Pálida, que não abre na versão atual (o fruto 7 segue `pending`).
+
+### Arte e arquivos
+
+- Originais aprovados em **`art-source/`** (fora do Git, mesma decisão das camadas `_orig/` do
+  TITLE): `macas/`, `santuarios/`, `comuns/` e a folha de revisão
+  `art-source/_revisao/folha-aprovada.png`.
+- **`tools/prepare_fruit_art.py`** (Pillow, somente ferramenta de arte — o jogo continua JS puro):
+  remove o fundo violeta `#1d1127`, recorta as margens vazias, redimensiona e reduz a paleta.
+- Saída carregada pelo jogo em `game/assets/ui/`:
+  - `maca_<mundo>.png` **320×320 RGBA** (1,2 MB somando as sete) — tamanho em que a maçã é
+    desenhada no nó da Árvore;
+  - `santuario_<mundo>.png` **960×540 RGB** — 1:1 com o canvas do jogo, **carregado sob demanda**
+    na tela do santuário, nunca no boot (Regra 5);
+  - `correntes_cadeados.png` 256×256, `correntes_deserto.png` 256×256, `correntes_tranca.png`
+    192×192, todos RGBA.
+- Peso medido dos santuários: ~5,1 MB no total (o detalhe fino da pixel art é o custo). A redução
+  de paleta foi testada antes da decisão: 256→128 cores economiza cerca de 3% (fundo ruidoso), então
+  a fidelidade à arte aprovada ficou; o corte de peso vem do tamanho certo para cada uso.
+
+### Próximos passos (ainda NÃO implementados) — detalhados em `PROXIMOS_PASSOS_DA_ARVORE.md`
+
+O documento **`PROXIMOS_PASSOS_DA_ARVORE.md`** (raiz do repositório, 2026-09-25) é o contrato de
+execução desta integração: inventário da arte, arquivos/símbolos a tocar, especificação da tela do
+santuário, testes, armadilhas e checklist de aceite. Um chat novo deve lê-lo inteiro antes de
+codificar. Resumo dos três blocos:
+
+1. Tela do santuário do fruto: fundo do bioma, maçã suspensa em névoa, as 13 melhorias como flores
+   plantadas na clareira, correntes/cadeado nos estados bloqueado/aberto.
+2. Maçã dourada no nó do fruto da Árvore (`tree_layout.js`, `meta.js`, `assets.js`), com o `IMG`
+   das maçãs no boot e os santuários carregados por `loadImage` sob demanda.
+3. `ASSET_V` elevado (novos PNGs), mobile sem duplicar lógica (Regra 9), `npm test` + `npm run
+   inspect` verdes e este registro completado com as evidências.
+
 ## Preparação para PR — árvore concluída, maçãs e santuários pendentes (2026-09-24)
 
 **Escopo enviado para revisão:** a Árvore Ancestral ao Crepúsculo descrita abaixo,
