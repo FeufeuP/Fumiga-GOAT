@@ -5,6 +5,22 @@
 const MANIFEST = {
   // Árvore ancestral aprovada: recorte RGBA, a saturação é restaurada em cache.
   tree_ancestral: "ui/tree_ancestral.png",
+  // Maçãs dos sete mundos (douradas; a Pálida é branca) — 320×320, no boot:
+  // a Árvore desenha os frutos na copa (+~1,2 MB aceitos, 2026-09-25).
+  maca_planicie: "ui/maca_planicie.png",
+  maca_floresta: "ui/maca_floresta.png",
+  maca_pantano: "ui/maca_pantano.png",
+  maca_deserto: "ui/maca_deserto.png",
+  maca_outono: "ui/maca_outono.png",
+  maca_gelo: "ui/maca_gelo.png",
+  maca_palida: "ui/maca_palida.png",
+  // Correntes e cadeados: selo de fruto bloqueado (o Deserto tem variante
+  // do bioma) e a tranca com três cadeados, selo do fruto 7 (Pálida, futuro).
+  correntes_cadeados: "ui/correntes_cadeados.png",
+  correntes_deserto: "ui/correntes_deserto.png",
+  correntes_tranca: "ui/correntes_tranca.png",
+  // Os santuarios_<mundo>.png (960×540, ~5,1 MB) NÃO entram aqui: são
+  // carregados sob demanda na tela do santuário (entrega B do handoff).
   // névoa — manto de fog branca dos inimigos (spritesheet 6x48x48)
   fog_mantle: "sprites/fx/fog_mantle.png",
   // formigas
@@ -159,7 +175,7 @@ const WROT = {};         // silhuetas brancas rotacionadas (hit flash)
 // ANTIGA nos mesmos nomes de arquivo (foi assim que o rework dos inimigos da
 // Fase 2 "não apareceu" para quem já tinha jogado antes dele).
 // ---------------------------------------------------------------------------
-export const ASSET_V = "20260924-tree-ancestral";
+export const ASSET_V = "20260925-macas-santuarios";
 
 /**
  * URL final de um asset do jogo: base certa para a página atual + anti-cache.

@@ -28,6 +28,11 @@ const FRUIT_SLOTS = [[92, 382], [708, 324], [99, 259], [675, 203], [190, 132], [
 const FRUIT_POSITIONS = FRUIT_SLOTS.map(p => at(...p));
 export function fruitCenter(i) { return FRUIT_POSITIONS[i]; }
 
+// Nome de asset do fruto: o mundo 7 é "topo" em config.js e "palida" nas
+// artes aprovadas (maca_palida, santuario_palida). Mapeamento único, usado
+// pelo jogo e pelos testes — nunca mais espalhar "topo"→"palida" à mão.
+export function fruitAssetName(fruit) { return fruit.map === "topo" ? "palida" : fruit.map; }
+
 // Regiões orgânicas da cor (coordenadas da imagem, não da interface).
 // Raízes/tronco baixo pertencem ao galho inicial; a copa pertence ao sétimo.
 export const TREE_COLOR_REGIONS = [

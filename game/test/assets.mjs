@@ -33,7 +33,8 @@ globalThis.Image = class {
 };
 
 const { loadAll, IMG, dupSprite } = await import("../js/assets.js");
-const { MAPS, UNITS, ENEMIES, MUTATIONS, META_NODES, CHAMBERS, GIANT_SCALE } = await import("../js/config.js");
+const { MAPS, UNITS, ENEMIES, MUTATIONS, META_NODES, CHAMBERS, GIANT_SCALE, FRUIT_TREES } = await import("../js/config.js");
+const { fruitAssetName } = await import("../js/tree_layout.js");
 const { genWorld, world } = await import("../js/world.js");
 const { bossAnimSheets } = await import("../js/render.js");
 const { FONT_CHARS, FONT } = await import("../js/font.js");
@@ -65,6 +66,10 @@ check("ícones de mutação", MUTATIONS.map((m) => "i_" + m.icon));
 check("ícones da árvore", META_NODES.map((n) => "i_" + n.icon));
 check("ícones das câmaras", Object.values(CHAMBERS).map((c) => "i_" + c.icon));
 check("formigueiro", ["nest", "nest_d1", "nest_d2"]);
+// Maçãs e correntes/cadeados entram no boot (a Árvore desenha os frutos na
+// copa); os santuarios_* ficam de fora de propósito (sob demanda, entrega B).
+check("maçãs dos mundos (boot)", FRUIT_TREES.map(f => "maca_" + fruitAssetName(f)));
+check("correntes e cadeados (boot)", ["correntes_cadeados", "correntes_deserto", "correntes_tranca"]);
 
 // ------------------------------------------------ props gerados no mundo ----
 const perBiome = MAPS.map(() => new Set());

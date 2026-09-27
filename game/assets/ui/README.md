@@ -65,3 +65,24 @@ pixel. `tree_art.js` assa uma versão acromática e restaura saturação por reg
 os níveis comprados (incluindo os frutos obtíveis). Mescla suave entre regiões; cache
 reconstruído somente quando níveis mudam. A imagem aprovada volta integralmente em
 100%; fonte grande, alto contraste e efeitos reduzidos não alteram compras/progresso.
+
+## Maçãs dos mundos e correntes/cadeados (2026-09-25, integração em 2026-09-27)
+
+- `maca_<mundo>.png` — **320×320 RGBA**, 7 arquivos (~1,2 MB): as maçãs douradas dos seis
+  mundos e a Pálida branca (`maca_palida`; o mundo 7 é `topo` em config.js e `palida`
+  nas artes — mapeamento único em `fruitAssetName()`, `js/tree_layout.js`). Carregadas no
+  boot (`MANIFEST` de `js/assets.js`) e desenhadas nos nós da copa por `drawFruit()` em
+  `js/meta.js` (bloqueado = acinzentada + cadeado; Pálida = branca + `correntes_tranca`).
+- `correntes_cadeados.png` / `correntes_deserto.png` — **256×256 RGBA**: cadeado + corrente;
+  selo do fruto bloqueado (o Deserto tem variante do bioma).
+- `correntes_tranca.png` — **192×192 RGBA**: corrente com três cadeados; selo do fruto 7
+  (Pálida, estado futuro).
+- `santuario_<mundo>.png` — **960×540 RGB**, 7 arquivos (~5,1 MB): fundos da tela do
+  Santuário, **fora do boot de propósito** — serão carregados sob demanda na entrega B.
+- **Fundo:** todos os PNGs acima têm o fundo violeta removido (alfa 0). A remoção original
+  do preparo de 2026-09-25 só limparia `maca_planicie`; em 2026-09-27 o fundo restante
+  (opaco ou semitransparente nos outros 9) foi limpo por crescimento de região a partir das
+  bordas (critério “verde ≤ vermelho e azul”), sem tocar os pixels da arte.
+- Originais de alta resolução: `art-source/macas/`, `art-source/santuarios/`,
+  `art-source/comuns/` (fora do Git, como `_orig/` da TITLE). Pipeline:
+  `python3 tools/prepare_fruit_art.py all`.

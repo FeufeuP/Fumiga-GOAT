@@ -2,8 +2,10 @@
 
 **Criado em:** 25 de setembro de 2026
 **Autor da entrega anterior:** sessão `arena/01a0d9d6-fumiga-goat` (arte gerada e aprovada)
-**Status:** **arte pronta e aprovada; código NÃO integrado.** Este documento é o contrato de
-execução para o próximo chat: leia-o inteiro antes de escrever qualquer linha de código.
+**Status:** **entrega A implementada e verificada (2026-09-27 — maçãs nos nós da Árvore;
+decisões, correção do fundo dos PNGs e evidências na seção de 2026-09-27 do
+`MEGA_ARQUIVO.md`). Entregas B e C PENDENTES.** Este documento continua sendo o contrato de
+execução de B e C: leia-o inteiro antes de escrever qualquer linha de código.
 
 ---
 
@@ -97,7 +99,15 @@ python3 tools/prepare_fruit_art.py maca art-source/macas/02-floresta.png saida.p
 Três entregas, na ordem: **(A)** maçã no nó do fruto da Árvore, **(B)** tela do Santuário com as
 melhorias como flores, **(C)** correntes/cadeados nos estados. Depois: testes, mobile, docs, PR.
 
-### A. Maçã dourada no nó do fruto (Árvore)
+> **Atualização (2026-09-27):** a entrega **A** foi implementada, verificada e mergeada em
+> `main` (evidências na seção de 2026-09-27 do `MEGA_ARQUIVO.md`). Divergências em relação
+> ao texto de A abaixo, por decisão do usuário: o fruto **não exibe número** (a trajetória
+> 1→7 se lê pelo caminho dos galhos); o quadro da maçã é **150 px** no zoom 1; e o fundo
+> violeta dos 7 PNGs que chegaram com fundo opaco/residual foi limpo por crescimento de
+> região (só o alfa do fundo mudou). O texto de A fica como referência de contexto; o
+> trabalho restante é **B** e **C**.
+
+### A. Maçã dourada no nó do fruto (Árvore) — ✅ implementado em 2026-09-27
 
 Hoje `drawFruit()` em `game/js/meta.js` (~linha 224) desenha um **polígono procedural** (âmbar
 facetado + número do mundo). Trocar por `IMG["maca_" + fruit.map]`, mantendo **tudo** o que já
