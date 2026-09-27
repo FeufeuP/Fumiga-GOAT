@@ -29,10 +29,83 @@ repetições, datas, branches, checklists e notas históricas foram preservados.
 > Divergências permanecem visíveis, sem apagar conteúdo. O que efetivamente
 > funciona deve ser confirmado por testes e inspeção no preview.
 
+## Entrega — Maçãs douradas nos nós da Árvore (entrega A, 2026-09-27)
+
+**Status: implementado e verificado.** Este registro **substitui parcialmente** o status da
+entrega de 2026-09-25 (“A INTEGRAÇÃO na interface ainda NÃO foi feita”): a **entrega A** do
+contrato `PROXIMOS_PASSOS_DA_ARVORE.md` (maçã no nó do fruto da Árvore) está pronta. As
+entregas **B** (tela do Santuário com flores) e **C** (cadeados nas flores) seguem
+pendentes — o handoff continua sendo o contrato delas.
+
+### Decisões do usuário (perguntas da Regra 1, 2026-09-27)
+
+1. **Tamanho:** quadro de **150 px** no zoom 100% (maçã ~90 px); o raio de clique acompanha
+   o quadro (mínimo 22 px de toque); a coordenada do fruto não muda.
+2. **Cadeado:** sim — fruto bloqueado = maçã **acinzentada + `correntes_cadeados`** pequeno
+   sobre ela (o Deserto usa `correntes_deserto`, variante do bioma).
+3. **Pálida:** maçã branca com `correntes_tranca` (corrente + 3 cadeados) atravessando o
+   fruto; estado futuro, nenhuma mudança de comportamento.
+4. **Número do mundo: RETIRADO dos frutos** (decisão do usuário, que sobrepõe a nota
+   “nunca esconder o número” do contrato): a trajetória 1→7 é percebida de forma orgânica
+   pelo caminho dos galhos; os números seguem na lista de patamares do HUD esquerdo. O
+   rodapé passou de “FRUTOS NUMERADOS ABREM HABILIDADES” para “FRUTOS ABREM HABILIDADES”.
+
+### O que mudou
+
+- `game/js/assets.js`: `MANIFEST` ganhou as 7 `maca_*` e as 3 `correntes_*` (boot,
+  +~1,5 MB); `ASSET_V` → `"20260925-macas-santuarios"`. Os `santuario_*` continuam FORA do
+  boot (sob demanda, entrega B).
+- `game/js/tree_layout.js`: `fruitAssetName(fruit)` — mapeamento único do mundo 7
+  (`topo` → `palida`), usado pelo jogo e pelo teste de assets.
+- `game/js/meta.js`: `drawFruit()` substituiu o polígono procedural pela arte 320×320
+  (`imageSmoothingEnabled = false`), com aro de estado (âmbar = aberto, cinza = fechado,
+  amarela = hover), rótulos inalterados (`ABRIR FRUTO` / `FRUTO BLOQUEADO` / `FRUTO FUTURO`),
+  versão acromática assada uma vez por fruto (mesmo critério do `tree_art.js`) e `pickAt()`
+  com raio = quadro (mín. 22 px). Sem número no fruto.
+- `game/test/assets.mjs`: dois checks novos (maçãs dos mundos no boot; correntes/cadeados no
+  boot) — o teste acusaria se algum dos 10 PNGs saísse do `MANIFEST`.
+- `game/assets/ui/README.md`: seção documentando os novos PNGs.
+
+### Correção de asset (fundo violeta dos PNGs preparados)
+
+Sete arquivos chegaram com o fundo violeta **opaco ou residual** (`maca_floresta`,
+`maca_outono`, `maca_gelo`, `maca_palida`, `correntes_cadeados`, `correntes_deserto`,
+`correntes_tranca` — a remoção do preparo de 2026-09-25 só limparia totalmente
+`maca_planicie`; `maca_pantano` e `maca_deserto` tinham ainda resíduo semitransparente
+visível em jogo). O fundo foi removido por **crescimento de região a partir das bordas**
+(BFS; critério “violeta de fundo = canal verde ≤ vermelho E azul”; distância por passo ≤ 40;
+guarda ≤ 130): só o fundo conectado à moldura vira transparente. A arte interna —
+incluindo as rachaduras roxas da Pálida e os elos escuros das correntes — foi preservada.
+Nenhum pixel da arte foi redimensionado, recortado ou borrado; mudou apenas o alfa do
+fundo. Os originais aprovados seguem fora do Git (`art-source/`, gitignorado), como manda
+o contrato.
+
+### Verificação
+
+- `npm run test:quick` e `npm test`: **25/25** (incluindo os 2 checks novos de assets).
+- `npm run inspect`: 30 cenas PC/mobile, sem erros JS, 404 ou glifos.
+- `npm run inspect:tree`: PC e mobile — seleção real pelos 7 frutos, arte cinza/cor,
+  7 galhos, gates, compras, saves, arrasto/pinça, Renascimento — 60 FPS.
+- `npm run inspect:layout`: **108 estados limpos** (fonte normal e grande, PC e mobile).
+- `node game/test/mobile.mjs`: boot → expedição só com toque, saves isolados, OK.
+- Capturas dos estados (bloqueado/aberto/Pálida) conferidas em zoom, PC e mobile.
+- Preview no ar: `npm run serve` (0.0.0.0:8000).
+
+### Limitações e próximos passos
+
+- Cadeado e tranca em escala pequena saem um pouco “pontilhados” (pixel art fina da
+  corrente perde elos ao redimensionar); legíveis nos tamanhos de uso (~54 px e ~165 px).
+  Aceito para a entrega A.
+- **Entrega B** (tela do Santuário: fundo 1:1, maçã em névoa, 13 flores, `loadSantuario`
+  sob demanda) e **C** (cadeados nas flores do Santuário) — ver
+  `PROXIMOS_PASSOS_DA_ARVORE.md` (seções 2.B, 2.C e 4).
+
 ## Entrega — Sete maçãs douradas e sete santuários de bioma (2026-09-25)
 
 **Status: as 17 artes foram geradas, escolhidas pelo usuário (2 opções por imagem, Regra 6) e
-processadas para o jogo. A INTEGRAÇÃO na interface ainda NÃO foi feita.** Este registro
+processadas para o jogo. A INTEGRAÇÃO da entrega A (maçãs nos nós da Árvore) foi feita em
+2026-09-27 — ver a seção acima; as entregas B (Santuário) e C (cadeados nas flores) ainda NÃO
+foram feitas.** Este registro
 **substitui a pendência** "sete maçãs douradas estilizadas por mapa e as respectivas telas com a
 direção Santuário do bioma" descrita em *Preparação para PR — árvore concluída, maçãs e santuários
 pendentes (2026-09-24)*: a arte existe agora; o código que a exibe continua pendente e está

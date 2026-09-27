@@ -10,7 +10,7 @@ import { SFX } from "./audio.js";
 import { clamp, TAU } from "./utils.js";
 import {
   TREE_ART, TREE_NODES, TREE_BY_ID, TREE_ALL, TREE_STAGE_NODES, TREE_STAGE_BOUNDS,
-  TREE_NODE_RADII, fruitCenter, fruitGridSlot,
+  TREE_NODE_RADII, fruitCenter, fruitGridSlot, fruitAssetName,
 } from "./tree_layout.js";
 import { treeArtCanvas, treeGrowth } from "./tree_art.js";
 
@@ -83,7 +83,7 @@ function pickAt(x, y) {
   }
   for (let i = 0; i < 7; i++) {
     const p = fruitPoints[i], d = Math.hypot(x - p.x, y - p.y);
-    if (d < Math.max(22, 60 * zoom) && d < nearest) {
+    if (d < Math.max(22, FRUIT_FRAME / 2 * zoom) && d < nearest) {
       nearest = d; hoverFruit = FRUIT_TREES[i]; hoverNode = null;
     }
   }
@@ -217,21 +217,69 @@ function drawNode(ctx, n) {
     drawText(ctx, label, p.x, py + 1, { align: "center", scale, color: lvl >= max ? "#ffd479" : unlocked ? PAL.text : PAL.textDim });
   }
 }
+// Maçãs dos frutos (entrega A do handoff, 2026-09-27): a arte aprovada
+// 320×320 substitui o polígono procedural. Quadro de 150 px no zoom 1
+// (decisão do usuário); o raio de clique acompanha o quadro — a
+// coordenada do fruto NUNCA muda (validada pelo treemap.mjs).
+// Sem número no fruto: a trajetória 1→7 se lê pelo caminho dos galhos
+// (decisão do usuário, 2026-09-27 — o número segue na lista de patamares).
+const FRUIT_FRAME = 150;
+const FRUIT_GRAY = new Map();
+
+/** Versão acromática da maçã, assada UMA vez e cacheada — mesmo critério do
+ *  `tree_art.js`: sem cor = mundo ainda não conquistado. Só muda o RGB dos
+ *  pixels opacos; o alfa (e a silhueta) ficam intocados. */
+function fruitGray(key) {
+  let g = FRUIT_GRAY.get(key);
+  if (!g) {
+    const src = IMG[key];
+    g = document.createElement("canvas");
+    g.width = src.width; g.height = src.height;
+    const c = g.getContext("2d");
+    c.imageSmoothingEnabled = false;
+    c.drawImage(src, 0, 0);
+    const d = c.getImageData(0, 0, g.width, g.height);
+    const px = d.data;
+    for (let i = 0; i < px.length; i += 4) {
+      if (!px[i + 3]) continue;
+      const l = Math.round(px[i] * .2126 + px[i + 1] * .7152 + px[i + 2] * .0722);
+      px[i] = px[i + 1] = px[i + 2] = l;
+    }
+    c.putImageData(d, 0, 0);
+    FRUIT_GRAY.set(key, g);
+  }
+  return g;
+}
+
 function drawFruit(ctx, fruit, i) {
-  const p = fruitPoints[i], r = clamp(60 * zoom, 12, 30);
+  const p = fruitPoints[i], s = FRUIT_FRAME * zoom;
+  const r = s / 2 + 8; // aro + margem, para o corte fora da tela
   if (p.x + r < TREE_VIEW.x || p.x - r > TREE_VIEW.x + viewWidth() || p.y + r < TREE_VIEW.y || p.y - r > TREE_VIEW.y + TREE_VIEW.h) return;
   const unlocked = isFruitUnlocked(fruit.map), hot = hoverFruit === fruit;
-  // Fruto em âmbar facetado, com caule/folha pixelados e número do mundo.
-  ctx.fillStyle = unlocked ? "#a6ae70" : "#817988";
-  ctx.fillRect(Math.round(p.x - 2), Math.round(p.y - r - 7), 4, 9);
-  ctx.fillRect(Math.round(p.x + 2), Math.round(p.y - r - 7), 9, 4);
-  ctx.fillStyle = unlocked ? fruit.color : "#35303e";
-  ctx.strokeStyle = hot ? "#fff0c7" : unlocked ? "#ffd479" : "#a69aa9";
-  ctx.lineWidth = hot ? 3 : 2; nodePath(ctx, p.x, p.y, r, 2); ctx.fill(); ctx.stroke();
-  drawText(ctx, String(i + 1), p.x, p.y - 9, { align: "center", scale: .85, color: unlocked ? "#19131d" : "#ebe4f3" });
+  const locked = !unlocked && !fruit.pending;
+  const key = "maca_" + fruitAssetName(fruit);
+  const img = IMG[key];
+  if (img) {
+    ctx.imageSmoothingEnabled = false;
+    ctx.drawImage(locked ? fruitGray(key) : img, Math.round(p.x - s / 2), Math.round(p.y - s / 2), s, s);
+    if (locked) {
+      // Cadeado sobre o fruto bloqueado (decisão do usuário); o Deserto usa a
+      // variante do bioma, como manda a regra "cadeados seguem as maçãs".
+      const k = IMG[fruit.map === "deserto" ? "correntes_deserto" : "correntes_cadeados"];
+      if (k) { const ls = 54 * zoom; ctx.drawImage(k, Math.round(p.x - ls / 2), Math.round(p.y - ls / 2), ls, ls); }
+    } else if (fruit.pending) {
+      // Selo do mundo 7: corrente com três cadeados atravessando a Pálida —
+      // fruto futuro, não abre nesta versão (fruits.mjs/fruit-powers.mjs guardam).
+      const t = IMG["correntes_tranca"];
+      if (t) { const ts = s * 1.1; ctx.drawImage(t, Math.round(p.x - ts / 2), Math.round(p.y - ts / 2), ts, ts); }
+    }
+    ctx.strokeStyle = hot ? "#fff0c7" : unlocked ? "#ffd479" : "#a69aa9";
+    ctx.lineWidth = hot ? 2.5 : 1.5;
+    ctx.beginPath(); ctx.arc(p.x, p.y, s / 2 + 4 * zoom, 0, TAU); ctx.stroke();
+  }
   if (zoom >= .32 && (focusedStage === i + 1 || hot)) {
     const label = fruit.pending ? "FRUTO FUTURO" : unlocked ? "ABRIR FRUTO" : "FRUTO BLOQUEADO";
-    drawText(ctx, label, clamp(p.x, TREE_VIEW.x + 66, TREE_VIEW.x + viewWidth() - 66), p.y - r - 25, { align: "center", scale: .60, color: unlocked ? fruit.color : PAL.textDim, maxWidth: 132 });
+    drawText(ctx, label, clamp(p.x, TREE_VIEW.x + 66, TREE_VIEW.x + viewWidth() - 66), p.y - s / 2 - 14, { align: "center", scale: .60, color: unlocked ? fruit.color : PAL.textDim, maxWidth: 132 });
   }
 }
 
@@ -292,7 +340,7 @@ function drawTreeHUD(ctx, growth) {
   if (button(ctx, { x: 366, y: 492, w: 44, h: 44, compact: true, label: "+", id: "treeZoomIn" })) zoomAt(1.25);
   const note = focusedStage ? (treeStageRequirement(focusedStage) || "GALHO " + focusedStage + " • SELECIONE PARA LER") : metaLevel("raiz") ? "DA RAIZ À COPA • ESCOLHA UM GALHO" : "COMECE PELA RAIZ ANCESTRAL";
   drawText(ctx, note, 426, 496, { scale: .67, color: "#ddc9a6", maxWidth: 504 });
-  drawText(ctx, "FRUTOS NUMERADOS ABREM HABILIDADES • ZOOM " + Math.round(zoom * 100) + "%", 426, 517,
+  drawText(ctx, "FRUTOS ABREM HABILIDADES • ZOOM " + Math.round(zoom * 100) + "%", 426, 517,
     { scale: .55, color: PAL.textDim, maxWidth: 504 });
   return null;
 }
