@@ -49,8 +49,10 @@ export const TREE_STAGE_BOUNDS = TREE_STAGE_NODES.map((nodes, i) => {
   // A raiz é o elo entre gerações, não deve afastar a câmera do primeiro galho.
   const points = [...nodes.filter(n => n.id !== "raiz"), fruitCenter(i)];
   const xs = points.map(n => n.x), ys = points.map(n => n.y);
-  return { minX: Math.min(...xs) - 120, maxX: Math.max(...xs) + 120,
-    minY: Math.min(...ys) - 160, maxY: Math.max(...ys) + 160 };
+  // margens ampliadas em 2026-09-28: o quadro do fruto passou a 450 px
+  // (metade = 225) e o foco do estágio precisa enxergar a maçã inteira.
+  return { minX: Math.min(...xs) - 250, maxX: Math.max(...xs) + 250,
+    minY: Math.min(...ys) - 250, maxY: Math.max(...ys) + 250 };
 });
 
 // Miniárvores mantêm coordenadas de grade LOCAIS e todos os IDs antigos.
