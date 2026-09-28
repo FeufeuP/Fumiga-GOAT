@@ -2,15 +2,14 @@
 
 **Criado em:** 25 de setembro de 2026
 **Autor da entrega anterior:** sessão `arena/01a0d9d6-fumiga-goat` (arte gerada e aprovada)
-**Status:** **entrega A implementada e verificada (2026-09-27 — maçãs nos nós da Árvore).
-Ajustes de 2026-09-28 aplicados: sprites de maçã/corrente consertados (fundo violeta e
-partes apagadas), maçãs 3x e normalizadas para o MESMO tamanho (960×960, quadro 450), e
-cadeado do Deserto como padrão de todos os frutos bloqueados (só a Pálida fica com a
-tranca) — evidências na seção de 2026-09-28 do `MEGA_ARQUIVO.md` e no pipeline
-`tools/repair_fruit_sprites.py`. Entregas B e C PENDENTES.** Este documento continua sendo
-o contrato de execução de B e C: leia-o inteiro antes de escrever qualquer linha de código.
-Na entrega B, as flores bloqueadas usam `correntes_deserto` (o cadeado padrão); o
-`correntes_cadeados` está aposentado no desenho (só resta no MANIFEST/teste).
+**Status:** entregas **A e B implementadas, com revisão visual solicitada em 2026-09-28**. A
+entrega B exibe as 13 flores juntas (NOVAS + LEGADO), sem cadeados/placas sobre elas. O jardim
+começa acromático; cada nível comprado daquele fruto restaura a cor gradualmente no fundo, maçã,
+flores e caminhos, usando a mesma curva da Árvore original. Arte, progresso, PC/mobile e compras
+foram verificados; detalhes em **“Entrega B — Santuário com flores por bioma”** de
+`MEGA_ARQUIVO.md`. A Pálida continua futura/selada. O cadeado do fruto na Árvore permanece; a
+tranca opcional sobre o galho do mundo 7 não foi adicionada. Este arquivo mantém o contrato e o
+histórico da integração.
 
 ---
 
@@ -101,16 +100,18 @@ python3 tools/prepare_fruit_art.py maca art-source/macas/02-floresta.png saida.p
 
 ## 2. O que FALTA (o trabalho do próximo chat)
 
-Três entregas, na ordem: **(A)** maçã no nó do fruto da Árvore, **(B)** tela do Santuário com as
-melhorias como flores, **(C)** correntes/cadeados nos estados. Depois: testes, mobile, docs, PR.
+**A** (maçã nos nós) e **B** (Santuário) estão implementadas. Após a revisão visual, não há
+cadeados desenhados sobre flores: o estado e os pré-requisitos permanecem funcionais no painel;
+o cadeado do fruto bloqueado e o selo da Pálida continuam. Não foi adicionada a tranca opcional
+do galho 7. Resta validação contínua; PR só quando o usuário solicitar salvar no GitHub.
 
 > **Atualização (2026-09-27):** a entrega **A** foi implementada, verificada e mergeada em
 > `main` (evidências na seção de 2026-09-27 do `MEGA_ARQUIVO.md`). Divergências em relação
 > ao texto de A abaixo, por decisão do usuário: o fruto **não exibe número** (a trajetória
 > 1→7 se lê pelo caminho dos galhos); o quadro da maçã é **150 px** no zoom 1; e o fundo
 > violeta dos 7 PNGs que chegaram com fundo opaco/residual foi limpo por crescimento de
-> região (só o alfa do fundo mudou). O texto de A fica como referência de contexto; o
-> trabalho restante é **B** e **C**.
+> região (só o alfa do fundo mudou). Naquela data, o trabalho restante era B/C; veja o status
+> atual no topo e a revisão concluída na seção B abaixo.
 
 ### A. Maçã dourada no nó do fruto (Árvore) — ✅ implementado em 2026-09-27
 
@@ -128,56 +129,40 @@ funciona: o número do mundo, o halo de hover, o rótulo (`ABRIR FRUTO` / `FRUTO
   **não mudam** (o `treemap.mjs` valida que sobem na ordem dos mundos). Se a maçã precisar de mais
   espaço que o círculo atual, aumente **apenas o desenho e o raio de clique**, nunca a coordenada.
 
-### B. Tela do Santuário (substitui a “miniárvore” do fruto)
+### B. Tela do Santuário (jardim da miniárvore) — ✅ implementada e revisada (2026-09-28)
 
-`drawFruitMini()` em `game/js/meta.js` (~linha 350) hoje desenha 10 retângulos-botão em grade, com
-abas NOVAS/LEGADO e painel de detalhe. A nova tela mantém **todo o comportamento** (selecionar só
-inspeciona; **EVOLUIR** confirma a compra; `metaCanBuy`, `metaBuy`, `metaLevel`, `isFruitUnlocked`
-e os 13 IDs/custos/saves intactos) e troca a apresentação:
+`drawFruitMini()` em `game/js/meta.js` mantém o comportamento original de compra (`metaCanBuy`,
+`metaBuy`, `metaLevel`, gates, custos e saves) e agora apresenta o jardim com a mecânica de cor
+da Árvore ancestral:
 
-1. **Fundo:** `santuario_<map>` desenhado em `ctx.drawImage(img, 0, 0, 960, 540)` **sem escala**
-   (`imageSmoothingEnabled = false`), cobrindo a tela inteira; a arte já tem a clareira escura no
-   centro — é ali que tudo acontece.
-2. **Maçã suspensa em névoa** no centro-alto da clareira (~x 480, y ~250, 120–160 px): leve
-   bob vertical (`sin`) + névoa animada em código; com `reducedFX`/`particles === false`
-   (`reduced()` em `meta.js`) fica **estática**. Branca e com fumaça no mundo `palida`.
-3. **As 13 melhorias viram FLORES do bioma**, plantadas na clareira (decisão do usuário):
-   - posições novas em `game/js/tree_layout.js` (ex.: `SANTUARIO_SLOTS`, grade **3 colunas × 5
-     linhas** dentro da clareira, de baixo para cima), em coordenadas **de tela** (960×540), já que
-     o santuário é 1:1 com o canvas;
-   - **linhas de pré-requisito** ligando as flores (`n.requires`), como no desenho atual;
-   - as **3 legadas** (`fruit.legacyNodes`) e as **10 novas** (`fruit.newNodes`) continuam
-     separadas pelas abas NOVAS/LEGADO — a aba só troca quais flores aparecem;
-   - **estados da flor** (leitura à primeira vista):
-     | Estado | Desenho |
-     |--------|---------|
-     | bloqueada por pré-requisito | botão/fechada, cinza-esverdeada, com `correntes_cadeados` (ou `correntes_deserto` no Deserto) em escala pequena |
-     | disponível (compra ok) | botão/broto colorido com o **custo** embaixo (`n.cost[lvl]`), cor `fruit.color` |
-     | comprada (nível ≥ 1) | **flor aberta** + contorno âmbar (`#ffd479`), `lvl/max` visível |
-     | nível máximo | flor cheia + aura dourada pulsante |
-   - **alvos de toque ≥ 44 px lógicos** por flor (`isTouchUI()`), separação mínima de ~8 px para
-     não errar o toque; o rótulo do nome pode aparecer só na flor **selecionada/hover** para não
-     poluir a clareira.
-4. **Cabeçalho e rodapé:** manter os textos de hoje (nome do fruto, `FRUTO CONQUISTADO` /
-   `PRÉVIA BLOQUEADA • DERROTE <CHEFE>`, contagem `n/10 NOVAS`, essência) — **apenas reposicionados**
-   para não cobrir a clareira. Manter `VOLTAR À ÁRVORE`, abas NOVAS/LEGADO e o painel de detalhe
-   (`drawNodeTip`) com **EVOLUIR/FECHAR**, e a linha
-   `SELECIONAR NÃO GASTA ESSÊNCIA • EVOLUIR CONFIRMA A COMPRA`.
-5. **Santuário da Pálida:** `fruit.pending === true` → tela **selada**: fundo
-   `santuario_palida`, maçã branca, `correntes_tranca` atravessando a clareira e o texto que já
-   existe (“A copa abre após o Pico, mas este fruto aguarda o sétimo mundo…”). **Nenhuma flor
-   comprável**: o fruto 7 continua futuro e `fruit-powers.mjs` protege isso.
-6. **Diagnóstico:** `treeNodePosition(id)` em `meta.js` é usado pelos testes/inspeção para clicar no
-   lugar certo. A nova tela **precisa continuar respondendo** com a posição de cada flor (agora
-   coords do santuário) — atualize junto ou o `inspect:tree` clica no vazio.
+1. **Cinza → cor:** cada jardim começa acromático. A proporção é calculada apenas pelos níveis
+   comprados entre os nós daquele fruto; a saturação usa `sqrt(progresso)`, igual à curva da
+   Árvore. Fundo do bioma, maçã, flores e caminhos recuperam a paleta original até 100%. As
+   conversões são assadas em canvas reutilizável só quando o fruto/progresso muda, sem
+   `Canvas.filter`, dependência nova ou processamento por frame.
+2. **As 13 melhorias juntas:** as 10 novas e 3 legadas ficam visíveis ao mesmo tempo, em uma única
+   clareira, com caminhos de pré-requisito. Cada posição é mantida por `treeNodePosition(id)` e
+   `fruitFlowerPos(fi, ni)`; os alvos invisíveis de 44 px continuam clicáveis. Não há abas NOVAS /
+   LEGADO.
+3. **Flores sem bloqueios visuais:** removidos cadeados/correntes sobre as pétalas, placas
+   quadradas, aros e números desenhados em cima da arte. Broto/flor continuam indicando níveis;
+   seleção mostra o motivo de bloqueio e o estado de `EVOLUIR` no painel, sem compra acidental.
+4. **Detalhe sem esconder o jardim:** ao selecionar, o painel permanece sobreposto conforme o
+   fluxo aprovado, mas fica à direita (x=738) e sem escurecer a cena inteira; as 13 flores e a
+   maçã ficam desobstruídas. `EVOLUIR` ainda confirma a compra e `FECHAR` volta ao jardim.
+5. **Progresso legível:** o cabeçalho mostra os níveis comprados/possíveis e `COR %`; preço só
+   aparece no detalhe selecionado. As cores e os estados de disponibilidade não mudam as regras
+   de gates nem os saves.
+6. **Pálida:** continua futura e selada, com `santuario_palida`, maçã branca e `correntes_tranca`;
+   não expõe flores, IDs de compra ou botão para seus poderes.
 
-### C. Correntes e cadeados nos estados
+### C. Correntes e cadeados nos estados — ✅ decisão visual atualizada (2026-09-28)
 
-- Árvore (galho/fruto bloqueado): `correntes_cadeados` no nó do fruto (item A).
-- Santuário: cadeado sobre a flor bloqueada; **Deserto** usa `correntes_deserto`.
-- Pálida: `correntes_tranca` (item B.5).
-- Opcional (só se sobrar orçamento de arte e o usuário pedir): tranca na **Árvore** quando o galho
-  do mundo 7 estiver fechado.
+- Árvore: `correntes_deserto` ainda sela o fruto bloqueado; `correntes_tranca` acompanha a Pálida.
+- Jardim de flores: **não desenhar** cadeados/correntes sobre as flores (decisão do usuário nesta
+  revisão). Cor, caminhos e painel dão feedback sem encobrir as pétalas.
+- Pálida: `correntes_tranca` continua atravessando o santuário selado (não há flores nesse fruto).
+- Opcional: tranca sobre o galho do mundo 7 na Árvore — não adicionada.
 
 ---
 
@@ -185,14 +170,15 @@ e os 13 IDs/custos/saves intactos) e troca a apresentação:
 
 | Arquivo | O que fazer | Cuidados |
 |---------|-------------|----------|
-| `game/js/assets.js` | 1) `MANIFEST`: adicionar `maca_planicie … maca_palida` (**boot**). 2) **NÃO** colocar os santuários no `MANIFEST` (5,1 MB): criar `loadSantuario(map)` que usa `loadImage(assetUrl("assets/ui/santuario_"+map+".png") + (a ? "&r="+a : ""))` com `LOAD_CFG.attempts` — **copie o padrão do `loadLoreHUD()` em `lore_hud.js`** — e cacheia em um `Map`, disparando **uma vez** por mundo. 3) `ASSET_V` → `"20260925-macas-santuarios"` (BUMP OBRIGATÓRIO: novos PNGs + cache antigo do navegador). | `loadImage` nunca pendura (prazo + retry). O render é síncrono: desenhe um **placeholder** (painel escuro `#17121f` + nome do mundo) enquanto a promessa não resolve — **nunca** trave o frame. |
-| `game/js/meta.js` | `drawFruit()` → maçã; `drawFruitMini()` → santuário; manter `updateTree`, `treeClick`, `drawNodeTip`, `treeNodePosition`, abas, EVOLUIR/FECHAR e acessibilidade (`reduced()`). | O painel de detalhe calcula altura com `fontScale()`; com FONTE GRANDE a clareira tem menos espaço — valide com `npm run inspect:layout`. |
-| `game/js/tree_layout.js` | Novo `SANTUARIO_SLOTS` (13 posições de flor em 960×540, grade 3×5) + `fruitFlowerPos(fi, ni)`. **Não** alterar `FRUIT_SLOTS`, `fruitCenter`, `TREE_FRUITS` nem os IDs. | O `treemap.mjs` valida a arte da árvore: se mexer em `fruitCenter`, ele quebra. |
+| `game/js/assets.js` | `MANIFEST` mantém as maçãs/correntes do boot; os santuários continuam FORA do `MANIFEST` (~5,1 MB), carregados por `loadSantuario(map)` com `LOAD_CFG.attempts`, promessa cacheada por mapa e retry; `ASSET_V = "20260928-santuarios-flores"`. | `loadImage` nunca pendura. O render desenha placeholder enquanto a promessa resolve — nunca trava o frame. |
+| `game/js/meta.js` | `drawFruit()` → maçã; `drawFruitMini()` → jardim cinza→cor com as 13 flores visíveis juntas; manter `updateTree`, `treeClick`, `drawNodeTip`, `treeNodePosition`, EVOLUIR/FECHAR e acessibilidade (`reduced()`). | `fruitGardenGrowth()` mede níveis comprados por fruto; detalhe lateral sem escurecer/cobrir as flores. Validar fonte grande. |
+| `game/js/color_restore.js` | Canvas reutilizável que transforma acromático→cor original quando muda a saturação; pixel data preservado a 100%. | Sem `Canvas.filter`, alocação por frame ou dependência de runtime. |
+| `game/js/tree_layout.js` | `SANTUARIO_SLOTS` (13 posições em 960×540) + `fruitFlowerPos(fi, ni)`, novas e legadas juntas. **Não** alterar `FRUIT_SLOTS`, `fruitCenter`, `TREE_FRUITS` nem os IDs. | `treemap.mjs` verifica separação mínima dos 13 alvos. |
 | `game/js/config.js` | Nada de custos/IDs/nós. Se quiser metadado visual, adicionar campo **novo** (ex.: `META_STAGES[i].santuario = "santuario_planicie"`). | `tree-progression.mjs` e `fruit-powers.mjs` protegem preços, gates e os 70 poderes — qualquer mudança de valor derruba os dois. |
 | `game/js/state.js` | Nada. `isFruitUnlocked(map)`, `metaLevel`, `metaCanBuy`, `metaBuy` já cobrem o fluxo. | Saves antigos têm de continuar válidos (PC `fumiga_goat_save_v1`, mobile `…_mobile_save_v1`). |
 | `game/mobile/touch.js` | **Só se** houver input novo. Arrasto/pinça já servem à câmera da Árvore. Botão novo ⇒ array de botões + `descTouch`/`HELP_CONTROLS_TOUCH` (Regra 9). | Nunca duplicar jogabilidade em `game/mobile/`. |
 | `game/js/font.js` | Textos novos **só com glifos do `FONT_CHARS`** (maiúsculas PT + `• — ✓ ▶ [ ]`). Nada de setas/emoji/símbolos novos. | `test/assets.mjs` varre TODO literal de `js/**` e acusa caractere sem glifo (`?` em jogo). Prefira palavras já usadas (`FLOR`, `SELADA`, `BROTO`). |
-| `game/test/*.mjs` | 1) `assets.mjs`: `check("maçãs dos mundos", FRUIT_TREES.map(f => "maca_" + f.map))` e o mesmo para `correntes_*`. 2) `treemap.mjs`/`fruits.mjs`: se criar slots novos, validar que as 13 flores cabem na clareira (assert simples de limites). | O `boot.mjs` confere `LOAD.done === LOAD.total` — chave nova no `MANIFEST` entra na fila automaticamente, sem ajuste. |
+| `game/test/*.mjs` | `assets.mjs` confere lazy-load/cache/retry; `treemap.mjs` valida os 13 slots juntos; `tree-browser.mjs` testa cinza/50%/100%, 13 alvos, compra, Pálida e saves em PC/mobile. | `boot.mjs` mantém `LOAD.done === LOAD.total`; santuários fora da fila do boot. |
 
 ### Testes que precisam continuar verdes (a bateria que o CI/CI-local exige)
 
@@ -212,28 +198,20 @@ Capturas ficam em `/tmp/fumiga-inspect/*.png` — **abra com `read_file`** (Regr
 ## 4. Sequência de execução sugerida (siga na ordem)
 
 1. `bash tools/setup-dev.sh && npm run test:quick` — base verde.
-2. **Pesquisar (Regra 2)** as telas de santuário/hub de melhorias em indies (referências já usadas
-   nesta entrega: Forja de *Dead Cells*, Espelho da Noite de *Hades*, altares de *Blasphemous*,
-   clareiras de *Hollow Knight*/*Ori*) e **perguntar (Regra 1)** 3–4 opções objetivas ao usuário
-   sobre: (a) posição/tamanho da maçã suspensa; (b) desenho das flores (broto → botão → flor);
-   (c) cadeado só na flor bloqueada ou também no fruto da Árvore; (d) legibilidade do custo.
-3. **A** (maçã no nó da Árvore) + `ASSET_V` + `MANIFEST` → rode `npm run test:quick` e
-   `node game/test/inspect.mjs --pc --telas=TREE` e **mostre a captura** (Regra 10).
-4. **B** (tela do santuário + `SANTUARIO_SLOTS` + flores + carregamento sob demanda).
-5. **C** (cadeados/correntes nos estados).
-6. Testes completos: `npm test`, `npm run inspect`, `npm run inspect:tree`, `npm run inspect:layout`,
-   `node game/test/mobile.mjs`.
-7. **Preview** (Regra 7): `npm run serve` via `start_process` (0.0.0.0:8000, sem cache) e jogue:
-   Árvore → abrir cada um dos 7 frutos → comprar 1 melhoria de cada estado.
-8. **Check-in (Regra 3)** com tabela item/status/onde, citando capturas.
-9. **Documentar (Regra 12)**: atualizar a seção de 2026-09-25 no `MEGA_ARQUIVO.md` (marcar o que
-   passou de “não implementado” para implementado, com números) **e** a seção de status no topo
-   deste arquivo. Rodar `node game/test/docs.mjs` (os 6 documentos originais precisam seguir
-   byte a byte; se editar um deles, sincronize o bloco e o SHA-256).
-10. **Salvar (Regra 11)**: `git push origin <branch-da-sessão>` → `gh pr create --base main --fill`
-    → `gh pr merge --merge` **no mesmo fluxo** (o merge só vale com `npm test` e `npm run inspect`
-    verdes; o CI em GitHub Actions ainda não está ligado — o app do agente não pode criar arquivos
-    em `.github/workflows/`). **Nunca** deletar o branch da sessão, nunca trocar de branch.
+2. **Pesquisar (Regra 2) e perguntar (Regra 1): concluídos em 2026-09-28.** A revisão visual
+   confirmou restauração cinza→cor pelo progresso comprado, as 13 flores juntas, sem bloqueios
+   sobre elas; preço e confirmação explícita continuam no painel lateral.
+3. **A:** já implementada na sessão anterior. **B:** Santuário com carregamento sob demanda,
+   13 flores juntas, restauração progressiva da cor e Pálida selada; revisão sem cadeados sobre as
+   flores concluída em 2026-09-28.
+4. Testes completos concluídos: `npm test`, `npm run inspect`, `npm run inspect:tree`,
+   `npm run inspect:layout` e `node game/test/mobile.mjs` — resultados na nova seção do MEGA.
+5. **Preview** (Regra 7): manter `npm run serve` via `start_process` (0.0.0.0:8000, sem cache) e
+   validar a árvore/santuários PC + mobile; capturas em `/tmp/fumiga-tree/`.
+6. **Check-in (Regra 3)** e documentação atualizados neste arquivo e em `MEGA_ARQUIVO.md`;
+   validar novamente com `node game/test/docs.mjs`.
+7. **Salvar no GitHub (Regra 11): somente se o usuário solicitar.** Nesse caso, push do branch da
+   sessão, CREATE PR e MERGE PR juntos, após testes verdes. Nunca trocar/deletar o branch da sessão.
 
 ---
 
@@ -253,18 +231,17 @@ Capturas ficam em `/tmp/fumiga-inspect/*.png` — **abra com `read_file`** (Regr
 
 ## 6. Definição de pronto (checklist de aceite)
 
-- [ ] Maçã dourada (e a Pálida branca) desenhada nos 7 nós de fruto da Árvore, com estados
-      bloqueado/aberto/futuro legíveis e clique/toque funcionando.
-- [ ] Santuário abre pelo fruto: fundo do bioma 1:1, maçã suspensa em névoa, **13 flores** na
-      clareira (3 legadas + 10 novas), pré-requisitos ligados, custos legíveis.
-- [ ] Comprar/Evoluir idêntico ao de hoje (mesmos custos, mesmos efeitos, saves antigos ok).
-- [ ] Correntes/cadeados nos estados bloqueados; `correntes_tranca` selando a Pálida.
-- [ ] `santuario_*` carregado **sob demanda** (nenhum byte extra no boot) e `ASSET_V` elevado.
-- [ ] `npm test` verde, `npm run inspect` sem erros/404/glifos, `inspect:tree` e `inspect:layout`
-      aprovados, `node game/test/mobile.mjs` verde.
-- [ ] Capturas mostradas ao usuário (Regra 10) e preview no ar (Regra 7).
-- [ ] `MEGA_ARQUIVO.md` + este arquivo atualizados; `node game/test/docs.mjs` íntegro.
-- [ ] PR aberto **e** mergeado na `main` (Regra 11).
+- [x] Maçã dourada (e a Pálida branca) nos 7 nós da Árvore, estados legíveis e clique/toque.
+- [x] Santuário com fundo 1:1, maçã suspensa em névoa, 13 flores juntas, pré-requisitos e custos no painel.
+- [x] Jardim cinza a 0%, recupera a cor do fruto conforme os níveis comprados (PC + mobile).
+- [x] Flores sem cadeados, placas ou aros; painel lateral não escurece nem cobre as pétalas.
+- [x] Comprar/Evoluir preserva custos, efeitos e saves antigos.
+- [x] Cadeado do fruto bloqueado e `correntes_tranca` da Pálida; sem cadeados sobre as flores.
+- [x] `santuario_*` carregado sob demanda, fora do boot; `ASSET_V` atualizado.
+- [x] `npm test`, `npm run inspect`, `inspect:tree`, `inspect:layout` e `node game/test/mobile.mjs` verdes.
+- [x] Capturas mostradas ao usuário e preview no ar.
+- [x] `MEGA_ARQUIVO.md` e este arquivo atualizados; `node game/test/docs.mjs` íntegro.
+- [ ] PR aberto e mergeado na `main` — não solicitado nesta tarefa.
 
 ---
 
@@ -279,3 +256,9 @@ Capturas ficam em `/tmp/fumiga-inspect/*.png` — **abra com `read_file`** (Regr
 5. Centro do santuário: **maçã suspensa em névoa**; melhorias **transformadas em flores** do bioma.
 6. Ninho da Pálida: é um **CASTELO**, no **horizonte/fundo**, coberto por **muita fumaça**
    (só as torres mais altas aparecem acima da bruma).
+7. Revisão visual do jardim (2026-09-28): começa totalmente cinza e recupera a cor gradualmente
+   pela quantidade de níveis comprados daquele fruto, com a curva da Árvore original.
+8. Remover tudo que cubra as pétalas: sem cadeado/corrente, placa, aro ou número sobre a flor;
+   hitbox continua invisível e funcional.
+9. As 10 flores novas e 3 legadas ficam juntas, sem abas. O detalhe selecionado fica à direita,
+   sem escurecer o jardim ou cobrir as flores.

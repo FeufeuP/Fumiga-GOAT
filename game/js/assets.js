@@ -19,8 +19,8 @@ const MANIFEST = {
   correntes_cadeados: "ui/correntes_cadeados.png",
   correntes_deserto: "ui/correntes_deserto.png",
   correntes_tranca: "ui/correntes_tranca.png",
-  // Os santuarios_<mundo>.png (960×540, ~5,1 MB) NÃO entram aqui: são
-  // carregados sob demanda na tela do santuário (entrega B do handoff).
+  // Os santuario_<mundo>.png (960×540, ~5,1 MB) NÃO entram aqui: loadSantuario()
+  // os carrega sob demanda ao abrir o fruto, com retry e cache por bioma.
   // névoa — manto de fog branca dos inimigos (spritesheet 6x48x48)
   fog_mantle: "sprites/fx/fog_mantle.png",
   // formigas
@@ -175,7 +175,7 @@ const WROT = {};         // silhuetas brancas rotacionadas (hit flash)
 // ANTIGA nos mesmos nomes de arquivo (foi assim que o rework dos inimigos da
 // Fase 2 "não apareceu" para quem já tinha jogado antes dele).
 // ---------------------------------------------------------------------------
-export const ASSET_V = "20260928-macas-3x-correntes";
+export const ASSET_V = "20260928-santuarios-flores";
 
 /**
  * URL final de um asset do jogo: base certa para a página atual + anti-cache.
@@ -239,6 +239,30 @@ export function loadImage(url) {
     if (typeof setTimeout === "function") timer = setTimeout(() => finish(false), LOAD_CFG.timeoutMs);
     img.src = url;
   });
+}
+
+// Santuários grandes: só são pedidos quando o jogador abre o fruto. A promessa
+// também fica no cache para duas aberturas concorrentes não duplicarem a rede.
+const SANTUARIO_MAPS = ["planicie", "floresta", "pantano", "deserto", "outono", "gelo", "palida"];
+const SANTUARIO_CACHE = new Map();
+export function loadSantuario(map) {
+  const canonical = map === "topo" ? "palida" : map;
+  if (!SANTUARIO_MAPS.includes(canonical)) return Promise.reject(new Error("Santuário inválido: " + map));
+  if (SANTUARIO_CACHE.has(canonical)) return SANTUARIO_CACHE.get(canonical);
+  const loading = (async () => {
+    let img = null;
+    for (let a = 0; a < LOAD_CFG.attempts && !img; a++) {
+      try {
+        img = await loadImage(assetUrl("assets/ui/santuario_" + canonical + ".png") + (a ? "&r=" + a : ""));
+      } catch (e) { img = null; }
+    }
+    if (!img) throw new Error("Santuário não carregou: " + canonical);
+    return img;
+  })();
+  SANTUARIO_CACHE.set(canonical, loading);
+  // Uma falha final libera o cache para uma nova tentativa ao reabrir o fruto.
+  loading.then(() => {}, () => { if (SANTUARIO_CACHE.get(canonical) === loading) SANTUARIO_CACHE.delete(canonical); });
+  return loading;
 }
 
 export async function loadAll(onProgress) {

@@ -87,13 +87,105 @@ repetições, datas, branches, checklists e notas históricas foram preservados.
 - As correntes são **reconstruções** (não restauros pixel a pixel) — mesma composição e
   paleta, formas sólidas e legíveis nos tamanhos de uso (162 px e 495 px).
 
+## Entrega B — Santuário com flores por bioma (2026-09-28; revisão visual)
+
+**Status: implementado e verificado.** O Santuário mantém IDs, custos, níveis, pré-requisitos,
+efeitos, gates e saves. Após a primeira entrega, o usuário pediu o jardim com a mecânica de
+restauração de cor da Árvore original e as 13 melhorias visíveis juntas. As escolhas atuais
+substituem as abas e cadeados sobre as flores descritos na versão inicial de B. A Pálida continua
+futura/selada; a tranca opcional no galho do mundo 7 não foi adicionada.
+
+### Direção visual atual confirmada pelo usuário
+
+1. **Cinza → cor:** o jardim começa inteiramente acromático. Cada nível comprado entre as melhorias
+daquele fruto restaura a cor do fundo, da maçã, das flores e dos caminhos. A saturação segue a
+curva `sqrt(progresso)` da Árvore ancestral, e com 100% os pixels originais da arte são
+reconstruídos exatamente.
+2. **13 flores juntas:** as 10 melhorias novas e 3 legadas aparecem no mesmo jardim, sem abas
+NOVAS/LEGADO, mantendo os IDs e pré-requisitos.
+3. **Pétalas desobstruídas:** não desenhar cadeados/correntes, placas, aros ou números sobre as
+flores. Os alvos de 44 px seguem invisíveis e funcionais. O estado bloqueado aparece ao inspecionar
+na informação de pré-requisito e no botão `EVOLUIR` desativado.
+4. **Detalhe lateral:** o painel segue aparecendo após selecionar, sem escurecer a tela toda e sem
+cobrir flores ou maçã; `EVOLUIR` confirma e `FECHAR` volta ao jardim.
+5. **Preço:** só no painel de detalhe após selecionar. Seleção continua sem gastar essência.
+6. **Pálida:** mantém fundo e maçã branca sob `correntes_tranca`, nenhuma flor/compra, e continua
+futura.
+
+### O que mudou
+
+- `game/js/assets.js`: `loadSantuario(map)` carrega apenas o PNG do fruto aberto, tenta novamente
+  conforme `LOAD_CFG.attempts`, usa `ASSET_V = "20260928-santuarios-flores"` e compartilha a
+  promessa/imagem em `Map`. A falha final libera uma tentativa posterior ao reabrir. Nenhum dos
+  sete fundos (~5,1 MB) entrou no `MANIFEST` ou no boot; há placeholder síncrono enquanto carrega.
+- `game/js/tree_layout.js`: `SANTUARIO_SLOTS` e `fruitFlowerPos(fi, ni)` expõem as 13 posições
+  novas+legadas juntas em coordenadas 960×540, com 44 px de hitbox invisível e pelo menos 52 px
+  entre centros. `FRUIT_SLOTS`, `fruitCenter` e os pontos da Árvore não mudaram.
+- `game/js/color_restore.js`: canvas/buffers reutilizáveis convertem fundo e maçã do cinza para
+  seus pixels originais. Cada vista recalcula apenas quando muda imagem/saturação, sem
+  `Canvas.filter`, processamento por frame ou dependência de runtime.
+- `game/js/meta.js`: `fruitGardenGrowth()` mede os níveis do fruto; a curva usa `sqrt(levels/total)`
+  como a Árvore. `drawFruitMini()` colore também flores, névoa e caminhos; mostra 13 de uma vez,
+  sem lock/painel/aro/números sobre as pétalas. O detalhe lateral mantém EVOLUIR/FECHAR sem
+  escurecer a cena nem cobrir as flores. Cabeçalho indica COR% e níveis; Pálida fica selada.
+- `game/js/ui.js`: `hitArea()` registra alvos desenhados à mão para auditoria e input invisível,
+  sem adicionar painéis/gradientes por flor. PC e mobile compartilham os módulos/posições.
+- `game/test/assets.mjs`, `treemap.mjs`, `tree-browser.mjs` e `tree-art-browser.mjs`: conferem
+  lazy-load, retry, geometria das 13 flores juntas, acromático/50%/100% (fundo e maçã), gates,
+  seleção, compra explícita, Pálida, saves e navegação PC/mobile.
+- `game/assets/ui/README.md`: inventário e documentação da integração atualizados. Nenhuma arte
+  nova foi gerada; os 7 santuários aprovados que já existiam são desenhados 1:1.
+
+### Inspirações pesquisadas e adaptação
+
+- [Glyph Warden — árvore visual de melhorias](https://meapps.itch.io/glyph-warden/devlog/1607468/the-upgrade-room-is-now-a-real-skill-tree): referência direta para a diferença entre nós disponíveis e adquiridos; aqui o estado de compra também recupera cor na arte.
+- [Kosmische Hegemonie — árvore visual por conexões](https://anshinteractivestudio.itch.io/kosmische-hegemonie/devlog/1466934/skill-tree-ui-complete-v11): inspiração para deixar os caminhos legíveis sem cadeados sobre as flores.
+- [Dead Cells — notas oficiais da Forja](https://deadcells.com/patchnotes/7): aproveitada a leitura
+  clara de progressão permanente e investimento entre tentativas; no FUMIGA a compra segue sendo
+  confirmada por `EVOLUIR`, sem copiar o sistema de qualidade/loot.
+- [Hades — notas oficiais do Mirror of Night](https://www.supergiantgames.com/blog/6/): referência
+  para agrupar melhorias persistentes e aumentar a clareza visual das escolhas; os preços, efeitos
+  e comportamento do FUMIGA permaneceram os existentes.
+- [Hollow Knight — menu de charms ligado ao banco](https://gamers.wiki/en/games/hollow-knight/guides/hollow-knight-charm-system-guide-best-builds-and-notch-locations):
+  inspiração para uma tela de preparação contextual, adaptada aqui à clareira natural e às flores,
+  sem adicionar recurso/equipamento novo.
+
+### Verificação (2026-09-28)
+
+- Base antes de implementar: `npm run test:quick` **22/22**.
+- `npm run test:quick`: **22/22**; `npm test`: **25/25** após a revisão visual.
+- `npm run inspect:tree`: PC e mobile — **127 posições** auditadas em fonte normal/grande;
+  13 flores juntas, sem abas/cadeados sobre elas; cinza/50%/cor original testados com pixels
+  reais no fundo e na maçã; compra explícita, 78 compras, gates e saves preservados; 7 fundos
+  sob demanda e 60 FPS.
+- `npm run inspect:layout`: **108 estados limpos** PC/mobile, fonte normal/grande, sem sobreposição
+  ou texto fora de tela.
+- `npm run inspect`: **30 cenas** PC/mobile, sem erro JS, 404 ou glifo faltando; boot medido em
+  1,38 MB PC / 1,87 MB mobile, santuários ainda fora do boot.
+- `npm test` inclui mobile ponta a ponta. `node game/test/docs.mjs`: seis documentos originais,
+  **109.554 bytes** intactos.
+- Capturas inspecionadas: `/tmp/fumiga-tree/pc-santuario.png`,
+  `/tmp/fumiga-tree/pc-santuario-flor.png`, `pc-santuario-cor.png`,
+  `pc-santuario-palida.png` e variantes mobile — antes/depois da cor e detalhe lateral.
+
+### Limites e próximos passos
+
+- A arte de flor é construída em Canvas com formas pixeladas (o escopo aprovado não previa sprites
+  separados). A variação de espécie vem do tema/cor do fruto; os custos permanecem no painel
+  selecionado, por decisão do usuário.
+- As flores não recebem cadeados; o cadeado do fruto na Árvore e o selo da Pálida permanecem.
+  A tranca opcional sobre o galho 7 continua fora do escopo.
+- Preview ao vivo iniciado após as verificações: `npm run serve` em `0.0.0.0:8000`.
+- Nenhum preço, poder, ID ou save precisou de migração; PR somente se solicitado pelo usuário.
+
 ## Entrega — Maçãs douradas nos nós da Árvore (entrega A, 2026-09-27)
 
 **Status: implementado e verificado.** Este registro **substitui parcialmente** o status da
 entrega de 2026-09-25 (“A INTEGRAÇÃO na interface ainda NÃO foi feita”): a **entrega A** do
 contrato `PROXIMOS_PASSOS_DA_ARVORE.md` (maçã no nó do fruto da Árvore) está pronta. As
-entregas **B** (tela do Santuário com flores) e **C** (cadeados nas flores) seguem
-pendentes — o handoff continua sendo o contrato delas.
+entregas **B** (tela do Santuário com flores) e **C** (cadeados nas flores) ainda estavam
+pendentes **naquela data**. O status foi substituído pela seção “Entrega B — Santuário com flores
+por bioma (2026-09-28)” acima; o handoff segue como contrato e histórico.
 
 ### Decisões do usuário (perguntas da Regra 1, 2026-09-27)
 

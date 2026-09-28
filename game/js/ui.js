@@ -293,6 +293,20 @@ export function button(ctx, opt) {
   return clicked;
 }
 
+/** Área interativa sem moldura de botão — para alvos desenhados à mão no canvas. */
+export function hitArea(opt) {
+  const { x, y, w, h } = clampToView(opt);
+  const hr = opt.compact ? { x, y, w, h } : hitRect(x, y, w, h);
+  const hot = pointInRect(mouse.x, mouse.y, hr.x, hr.y, hr.w, hr.h);
+  const dis = !!opt.disabled;
+  const clicked = opt.tap
+    ? hot && mouse.justUp && !dis && Math.hypot(mouse.x - mouse.clickX, mouse.y - mouse.clickY) <= (opt.tapSlop || 14)
+    : hot && mouse.justDown && !dis;
+  if (!dis) buttons.push({ x: hr.x, y: hr.y, w: hr.w, h: hr.h, id: opt.id, disabled: dis });
+  if (clicked) SFX.uiClick();
+  return clicked;
+}
+
 /** Mistura dois "#rrggbb" (t = 0 -> a, t = 1 -> b). */
 function mix(a, b, t) {
   if (t <= 0.001) return a;

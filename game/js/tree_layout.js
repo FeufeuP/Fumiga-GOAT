@@ -55,6 +55,23 @@ export const TREE_STAGE_BOUNDS = TREE_STAGE_NODES.map((nodes, i) => {
     minY: Math.min(...ys) - 250, maxY: Math.max(...ys) + 250 };
 });
 
+// Flores dos Santuários (coords de tela 960×540). As 10 melhorias novas e as
+// 3 legadas ficam juntas em cinco fileiras; nenhuma pétala recebe placa/cadeado.
+// A distância mínima de 52 px permite hitbox invisível de 44 px + 8 px de respiro.
+export const SANTUARIO_SLOTS = [
+  { x: 300, y: 286 }, { x: 660, y: 286 },
+  { x: 260, y: 338 }, { x: 380, y: 338 }, { x: 700, y: 338 },
+  { x: 260, y: 390 }, { x: 480, y: 390 }, { x: 700, y: 390 },
+  { x: 350, y: 442 }, { x: 610, y: 442 },
+  { x: 260, y: 494 }, { x: 480, y: 494 }, { x: 700, y: 494 },
+];
+export function fruitFlowerPos(fi, ni) {
+  const fruit = FRUIT_TREES[fi], node = fruit?.nodes[ni];
+  if (!fruit || !node || fruit.pending) return null;
+  const local = node.global ? fruit.newNodes.indexOf(node) : 10 + fruit.legacyNodes.indexOf(node);
+  return SANTUARIO_SLOTS[local] || null;
+}
+
 // Miniárvores mantêm coordenadas de grade LOCAIS e todos os IDs antigos.
 export function fruitGridSlot(i) { return { x: i === 9 ? 1 : i % 3, y: Math.floor(i / 3) }; }
 export function fruitNodePos(fi, ni) {
