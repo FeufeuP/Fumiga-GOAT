@@ -29,6 +29,64 @@ repetições, datas, branches, checklists e notas históricas foram preservados.
 > Divergências permanecem visíveis, sem apagar conteúdo. O que efetivamente
 > funciona deve ser confirmado por testes e inspeção no preview.
 
+## Entrega — Correntes reconstruídas e maçãs 3x normalizadas (2026-09-28)
+
+**Status: implementado e verificado.** Ajustes sobre a entrega A, a pedido do usuário:
+
+1. **Sprites de corrente e maçã consertados.** Os únicos artefatos disponíveis são os
+   preparados em `game/assets/ui/` (os originais de `art-source/` — gitignorados — não
+   estão mais acessíveis). Problemas confirmados: `maca_planicie` ainda tinha o **fundo
+   violeta opaco** (66% do quadro), manchas de fundo presas entre detalhes em `maca_gelo`
+   e `maca_pantano`, e os **três sprites de corrente estavam fragmentados** (elos viraram
+   ruído semitransparente; cadeado com furos). Correção no pipeline
+   **`tools/repair_fruit_sprites.py`** (novo):
+   - **fundo:** estimativa da cor de fundo por mediana dos violetas escuros + crescimento
+     de região a partir da moldura, com guarda de cor (`violet_bg_like`, dist ≤ 34 da
+     cor estimada) — sombras escuras da arte sobrevivem; segundo passe remove bolsões de
+     fundo presos entre detalhes;
+   - **restauro:** pixels de arte apagados (alfa 0 com RGB acromático claro) encostados em
+     arte voltam a opacos — critério conservador para não virar ruído (a Pálida restaurou
+     58 pixels; as demais, 0);
+   - **correntes:** os três sprites foram **reconstruídos** em pixel art sólida (supersampling
+     4x, paleta cobre/âmbar já usada no jogo): `correntes_deserto` = cadeado fechado com a
+     corrente passando por trás (320×320); `correntes_tranca` = corrente de ponta a ponta com
+     **três cadeados** pendurados (512×512); `correntes_cadeados` = variante bronze
+     (320×320, **aposentada no desenho** — ver decisão 2 abaixo).
+2. **Cadeado padrão (decisão do usuário):** o sprite `correntes_deserto` passa a ser o
+   **cadeado de todos os frutos bloqueados** (inclusive o Deserto); só a **Pálida** fica com
+   a `correntes_tranca`. `correntes_cadeados` sai do desenho (segue no `MANIFEST` e no
+   teste de assets; a entrega B poderá reusá-lo ou aposentá-lo de vez).
+3. **Maçãs 3x e do mesmo tamanho (decisão do usuário).** Todos os 7 sprites passaram a
+   **960×960** (3x dos 320) com o **corpo da maçã medido por erosão + maior varredura
+   horizontal** e **normalizado para 475–476 px em todas** (a variação anterior era de
+   122–205 px — detalhes como trigo, broto e goteiras espremiam o corpo). O alvo cai para
+   o valor em que **toda a arte cabe sem cortar** (a fita de xarope do outono limita a 476).
+   Em jogo: `FRUIT_FRAME` 150 → **450** no zoom 1 (quadro 3x; corpo ≈ 3x o tamanho atual),
+   cadeado 54 → 162 (proporcional), e as margens do foco de estágio (`TREE_STAGE_BOUNDS`)
+   passaram de 120/160 para 250 para enxergar a maçã inteira. As coordenadas dos frutos
+   **não mudaram** (`treemap.mjs` verde).
+4. **Cache:** `ASSET_V` → `"20260928-macas-3x-correntes"` (PNGs novos + cache antigo).
+
+### Verificação (2026-09-28)
+
+- `npm run test:quick` 22/22 e `npm test` **25/25**.
+- `npm run inspect`: 30 cenas PC/mobile — sem erros JS, 404 ou glifos — 60 FPS.
+- `npm run inspect:layout`: **108 estados limpos** (fonte normal e grande) com as maçãs 3x.
+- `npm run inspect:tree`: PC e mobile — 137 detalhes sem colisão, 78 compras, gestos,
+  save e Renascimento — 60 FPS.
+- `node game/test/mobile.mjs`: boot → expedição só com toque, OK.
+- Capturas fechadas de cada fruto conferidas (maçã cinza + cadeado cobre no bloqueio;
+  tranca de três cadeados sobre a Pálida; corpos medidos iguais).
+- Preview: `npm run serve` (0.0.0.0:8000) com os assets novos.
+
+### Limites
+
+- Sem `art-source/`, a restauração é a partir dos preparados: o que era pura cor de fundo
+  não se distingue de arte apagada da mesma cor; o critério escolhido é conservador
+  (prefere deixar uma sombra violeta a apagar arte).
+- As correntes são **reconstruções** (não restauros pixel a pixel) — mesma composição e
+  paleta, formas sólidas e legíveis nos tamanhos de uso (162 px e 495 px).
+
 ## Entrega — Maçãs douradas nos nós da Árvore (entrega A, 2026-09-27)
 
 **Status: implementado e verificado.** Este registro **substitui parcialmente** o status da

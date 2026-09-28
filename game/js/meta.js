@@ -218,12 +218,14 @@ function drawNode(ctx, n) {
   }
 }
 // Maçãs dos frutos (entrega A do handoff, 2026-09-27): a arte aprovada
-// 320×320 substitui o polígono procedural. Quadro de 150 px no zoom 1
-// (decisão do usuário); o raio de clique acompanha o quadro — a
-// coordenada do fruto NUNCA muda (validada pelo treemap.mjs).
-// Sem número no fruto: a trajetória 1→7 se lê pelo caminho dos galhos
-// (decisão do usuário, 2026-09-27 — o número segue na lista de patamares).
-const FRUIT_FRAME = 150;
+// substitui o polígono procedural. Quadro de 450 px no zoom 1 — 3x dos
+// 150 iniciais (decisão do usuário, 2026-09-28), com o corpo de TODAS as
+// maçãs normalizado para o mesmo tamanho (tools/repair_fruit_sprites.py);
+// o raio de clique acompanha o quadro — a coordenada do fruto NUNCA muda
+// (validada pelo treemap.mjs). Sem número no fruto: a trajetória 1→7 se
+// lê pelo caminho dos galhos (decisão do usuário, 2026-09-27 — o número
+// segue na lista de patamares).
+const FRUIT_FRAME = 450;
 const FRUIT_GRAY = new Map();
 
 /** Versão acromática da maçã, assada UMA vez e cacheada — mesmo critério do
@@ -263,10 +265,11 @@ function drawFruit(ctx, fruit, i) {
     ctx.imageSmoothingEnabled = false;
     ctx.drawImage(locked ? fruitGray(key) : img, Math.round(p.x - s / 2), Math.round(p.y - s / 2), s, s);
     if (locked) {
-      // Cadeado sobre o fruto bloqueado (decisão do usuário); o Deserto usa a
-      // variante do bioma, como manda a regra "cadeados seguem as maçãs".
-      const k = IMG[fruit.map === "deserto" ? "correntes_deserto" : "correntes_cadeados"];
-      if (k) { const ls = 54 * zoom; ctx.drawImage(k, Math.round(p.x - ls / 2), Math.round(p.y - ls / 2), ls, ls); }
+      // Cadeado sobre o fruto bloqueado: o sprite do Deserto é o PADRÃO de
+      // todos os frutos (decisão do usuário, 2026-09-28) — só a Pálida fica
+      // com a tranca diferente. Tamanho 3x junto com o quadro da maçã.
+      const k = IMG["correntes_deserto"];
+      if (k) { const ls = 162 * zoom; ctx.drawImage(k, Math.round(p.x - ls / 2), Math.round(p.y - ls / 2), ls, ls); }
     } else if (fruit.pending) {
       // Selo do mundo 7: corrente com três cadeados atravessando a Pálida —
       // fruto futuro, não abre nesta versão (fruits.mjs/fruit-powers.mjs guardam).

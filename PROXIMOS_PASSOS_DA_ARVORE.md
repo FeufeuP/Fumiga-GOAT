@@ -2,10 +2,15 @@
 
 **Criado em:** 25 de setembro de 2026
 **Autor da entrega anterior:** sessão `arena/01a0d9d6-fumiga-goat` (arte gerada e aprovada)
-**Status:** **entrega A implementada e verificada (2026-09-27 — maçãs nos nós da Árvore;
-decisões, correção do fundo dos PNGs e evidências na seção de 2026-09-27 do
-`MEGA_ARQUIVO.md`). Entregas B e C PENDENTES.** Este documento continua sendo o contrato de
-execução de B e C: leia-o inteiro antes de escrever qualquer linha de código.
+**Status:** **entrega A implementada e verificada (2026-09-27 — maçãs nos nós da Árvore).
+Ajustes de 2026-09-28 aplicados: sprites de maçã/corrente consertados (fundo violeta e
+partes apagadas), maçãs 3x e normalizadas para o MESMO tamanho (960×960, quadro 450), e
+cadeado do Deserto como padrão de todos os frutos bloqueados (só a Pálida fica com a
+tranca) — evidências na seção de 2026-09-28 do `MEGA_ARQUIVO.md` e no pipeline
+`tools/repair_fruit_sprites.py`. Entregas B e C PENDENTES.** Este documento continua sendo
+o contrato de execução de B e C: leia-o inteiro antes de escrever qualquer linha de código.
+Na entrega B, as flores bloqueadas usam `correntes_deserto` (o cadeado padrão); o
+`correntes_cadeados` está aposentado no desenho (só resta no MANIFEST/teste).
 
 ---
 
