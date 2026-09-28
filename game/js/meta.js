@@ -17,6 +17,10 @@ import { createColorRestorer } from "./color_restore.js";
 
 export const TREE_VIEW = { x: 184, y: 100, w: 764, h: 386 };
 const DETAIL = { x: 608, y: 100, w: 340, h: 386 };
+// Painel de detalhe DENTRO do santuário (mais estreito que o da árvore).
+// Constante única: o desenho (drawNodeTip) e o clique das flores compartilham
+// o retângulo, senão um toque no EVOLUIR/FECHAR atravessaria para uma flor.
+const FRUIT_DETAIL = { x: 738, y: 116, w: 210, h: 382 };
 const MINI_TOP = 162, MIN_ZOOM = .10, MAX_ZOOM = 1.25;
 const ART_W = TREE_ART.width * TREE_ART.scale, ART_H = TREE_ART.height * TREE_ART.scale;
 const reduced = () => !!G.save.accessibility?.reducedParticles || G.save.settings?.particles === false;
@@ -256,7 +260,7 @@ function fruitGray(key) {
 
 function drawFruit(ctx, fruit, i) {
   const p = fruitPoints[i], s = FRUIT_FRAME * zoom;
-  const r = s / 2 + 8; // aro + margem, para o corte fora da tela
+  const r = s / 2 + 8; // sombra/brilho + margem, para o corte fora da tela
   if (p.x + r < TREE_VIEW.x || p.x - r > TREE_VIEW.x + viewWidth() || p.y + r < TREE_VIEW.y || p.y - r > TREE_VIEW.y + TREE_VIEW.h) return;
   const unlocked = isFruitUnlocked(fruit.map), hot = hoverFruit === fruit;
   const locked = !unlocked && !fruit.pending;
@@ -264,6 +268,26 @@ function drawFruit(ctx, fruit, i) {
   const img = IMG[key];
   if (img) {
     ctx.imageSmoothingEnabled = false;
+    // Sem aro: a maçã assenta no galho com sombra de contato suave, como as
+    // frutas da ilustração — orgânica, parte da árvore e não um botão.
+    const under = ctx.createRadialGradient(p.x, p.y + s * .30, s * .04, p.x, p.y + s * .30, s * .42);
+    under.addColorStop(0, "rgba(12,7,18,.55)");
+    under.addColorStop(1, "rgba(12,7,18,0)");
+    ctx.fillStyle = under;
+    ctx.beginPath(); ctx.ellipse(p.x, p.y + s * .30, s * .48, s * .22, 0, 0, TAU); ctx.fill();
+    // O hover é uma luz que nasce da silhueta do fruto — nunca um círculo
+    // desenhado em volta. Some suave nas bordas, invadindo a madeira.
+    if (hot) {
+      const glow = ctx.createRadialGradient(p.x, p.y, s * .08, p.x, p.y, s * .58);
+      glow.addColorStop(0, "rgba(255,240,199,.34)");
+      glow.addColorStop(.55, "rgba(255,212,121,.12)");
+      glow.addColorStop(1, "rgba(255,212,121,0)");
+      ctx.save();
+      ctx.globalCompositeOperation = "lighter";
+      ctx.fillStyle = glow;
+      ctx.beginPath(); ctx.arc(p.x, p.y, s * .58, 0, TAU); ctx.fill();
+      ctx.restore();
+    }
     ctx.drawImage(locked ? fruitGray(key) : img, Math.round(p.x - s / 2), Math.round(p.y - s / 2), s, s);
     if (locked) {
       // Cadeado sobre o fruto bloqueado: o sprite do Deserto é o PADRÃO de
@@ -277,9 +301,6 @@ function drawFruit(ctx, fruit, i) {
       const t = IMG["correntes_tranca"];
       if (t) { const ts = s * 1.1; ctx.drawImage(t, Math.round(p.x - ts / 2), Math.round(p.y - ts / 2), ts, ts); }
     }
-    ctx.strokeStyle = hot ? "#fff0c7" : unlocked ? "#ffd479" : "#a69aa9";
-    ctx.lineWidth = hot ? 2.5 : 1.5;
-    ctx.beginPath(); ctx.arc(p.x, p.y, s / 2 + 4 * zoom, 0, TAU); ctx.stroke();
   }
   if (zoom >= .32 && (focusedStage === i + 1 || hot)) {
     const label = fruit.pending ? "FRUTO FUTURO" : unlocked ? "ABRIR FRUTO" : "FRUTO BLOQUEADO";
@@ -351,7 +372,7 @@ function drawTreeHUD(ctx, growth) {
 
 function drawNodeTip(ctx, n) {
   const largeText = fontScale() > 1.01;
-  const detail = activeFruit ? { x: 738, y: 116, w: 210, h: 382 } :
+  const detail = activeFruit ? FRUIT_DETAIL :
     { x: DETAIL.x, y: DETAIL.y, w: DETAIL.w, h: 386 };
   const { x, y, w, h } = detail;
   const chk = metaCanBuy(n.id), lvl = metaLevel(n.id), col = n._fruit?.color || META_BRANCHES[n.br].color;
@@ -499,7 +520,12 @@ function drawFlowerArt(ctx, n, p, fruit, saturation) {
   ctx.fillRect(cx - 3, cy - 3, 6, 6);
 }
 function drawSanctuaryFlowers(ctx, fruit, list, saturation) {
-  const fi = FRUIT_TREES.indexOf(fruit), interactive = !selectedNode;
+  const fi = FRUIT_TREES.indexOf(fruit);
+  // Com o painel aberto as OUTRAS flores continuam ativas: tocar em outra flor
+  // troca o painel na hora. Só o toque dentro do painel (EVOLUIR/FECHAR) não
+  // atravessa para uma flor escondida atrás dele.
+  const pressInPanel = !!selectedNode &&
+    pointInRect(mouse.x, mouse.y, FRUIT_DETAIL.x, FRUIT_DETAIL.y, FRUIT_DETAIL.w, FRUIT_DETAIL.h);
   // Caminhos sob as flores: o cinza também recupera a cor do bioma com as compras.
   for (const n of list) {
     const p = flowerPosition(n);
@@ -516,7 +542,12 @@ function drawSanctuaryFlowers(ctx, fruit, list, saturation) {
   for (const n of list) {
     const p = fruitFlowerPos(fi, activeFruit.nodes.indexOf(n)) || flowerPosition(n);
     const hit = { x: p.x - 22, y: p.y - 22, w: 44, h: 44 };
-    if (interactive && hitArea({ ...hit, id: "fruitNode_" + n.id, compact: true })) selectedNode = { ...n, _fruit: fruit };
+    if (!pressInPanel && hitArea({ ...hit, id: "fruitNode_" + n.id, compact: true })) selectedNode = { ...n, _fruit: fruit };
+    // Moldura mostra qual flor o painel aberto está lendo.
+    if (selectedNode?.id === n.id) {
+      ctx.strokeStyle = "#fff0c7"; ctx.lineWidth = 2;
+      ctx.strokeRect(hit.x + 2.5, hit.y + 2.5, hit.w - 5, hit.h - 5);
+    }
     drawFlowerArt(ctx, n, p, fruit, saturation);
   }
 }
