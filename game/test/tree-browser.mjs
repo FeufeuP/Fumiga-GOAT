@@ -82,6 +82,12 @@ try {
           assert(modal.includes('treeBuy')&&modal.includes('treeClose'),'inspecionar abre painel Evoluir/Fechar');
           assert.equal(await page.evaluate(()=>Object.keys(FUMIGA.G.save.nodes).length),0,'selecionar flor não compra');
           await page.screenshot({path:out+'/'+(mobile?'mobile':'pc')+'-santuario-flor.png'});
+          // Com o painel aberto, tocar em OUTRA flor troca a leitura na hora.
+          await click(cards[1].id);
+          const trocada=await page.evaluate(async()=>(await M('meta.js')).treeViewState().selected);
+          assert.equal(trocada,cards[1].id.slice('fruitNode_'.length),'clicar em outra flor troca o painel');
+          assert.equal(await page.evaluate(()=>Object.keys(FUMIGA.G.save.nodes).length),0,'trocar de flor não compra');
+          await page.screenshot({path:out+'/'+(mobile?'mobile':'pc')+'-santuario-flor-trocada.png'});
           await click('treeClose');
           await click(cards[0].id); await click('treeBuy');
           const grown=await page.evaluate(async()=>(await M('meta.js')).fruitGardenGrowth('planicie'));
