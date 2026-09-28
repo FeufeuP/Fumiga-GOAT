@@ -5,6 +5,7 @@
 // Regressão que motivou este teste: os cactos do DESERTO CALCINADO existiam em
 // assets/sprites/props/ e eram citados por config.js/world.js, mas faltavam no
 // MANIFEST — o mapa 4 quebrava no render (IMG[p.img] === undefined).
+import assert from "node:assert/strict";
 const grad = { addColorStop() {} };
 function makeCtx() {
   return new Proxy({ canvas: { width: 960, height: 540 } }, {
@@ -32,7 +33,7 @@ globalThis.Image = class {
   set src(v) { if (this.onload) setTimeout(() => this.onload(), 0); }
 };
 
-const { loadAll, IMG, dupSprite } = await import("../js/assets.js");
+const { loadAll, IMG, dupSprite, loadSantuario, ASSET_V } = await import("../js/assets.js");
 const { MAPS, UNITS, ENEMIES, MUTATIONS, META_NODES, CHAMBERS, GIANT_SCALE, FRUIT_TREES } = await import("../js/config.js");
 const { fruitAssetName } = await import("../js/tree_layout.js");
 const { genWorld, world } = await import("../js/world.js");
@@ -182,5 +183,38 @@ for (const [k, f] of Object.entries(FONT)) {
 console.log((atlasBad.length ? "ERRO " : "ok   ") + "atlas com células para todos os glifos");
 if (atlasBad.length) problems.push("atlas pequeno/envelhecido: " + atlasBad.join(", ") + " — rode tools/prepare_assets.sh");
 
-console.log(problems.length ? "PROBLEMAS: " + problems.join(" | ") : "TESTE DE ASSETS PASSOU");
+// Os sete fundos existem em 960×540, mas nenhum entra no boot: carregamento
+// por fruto, promessa compartilhada/cache por bioma e retry com a versão do asset.
+const sanctuaryMaps = ["planicie", "floresta", "pantano", "deserto", "outono", "gelo", "palida"];
+for (const map of sanctuaryMaps) {
+  const png = fs.readFileSync(path.join(ROOT, "assets/ui/santuario_" + map + ".png"));
+  assert.equal(png.readUInt32BE(16), 960, "santuario_" + map + " largura 960");
+  assert.equal(png.readUInt32BE(20), 540, "santuario_" + map + " altura 540");
+}
+assert.equal(Object.keys(IMG).some(k => k.startsWith("santuario_")), false, "santuários fora do MANIFEST/boot");
+const sanctuaryRequests = [];
+let failGeloOnce = true;
+globalThis.Image = class {
+  constructor() { this.width = 960; this.height = 540; }
+  set src(url) {
+    sanctuaryRequests.push(url);
+    const fail = url.includes("santuario_gelo.png") && failGeloOnce;
+    if (fail) failGeloOnce = false;
+    queueMicrotask(() => (fail ? this.onerror : this.onload)?.());
+  }
+};
+const firstSanctuary = loadSantuario("planicie");
+assert.equal(loadSantuario("planicie"), firstSanctuary, "chamadas concorrentes compartilham promessa");
+assert.equal((await firstSanctuary).width, 960);
+for (const map of sanctuaryMaps.slice(1, 6)) await loadSantuario(map);
+const paleSanctuary = loadSantuario("palida");
+assert.equal(loadSantuario("topo"), paleSanctuary, "topo e Pálida compartilham o mesmo asset");
+await paleSanctuary;
+assert.equal(sanctuaryRequests.length, 8, "sete biomas, um retry no Gelo");
+assert.equal(sanctuaryRequests.filter(url => url.includes("santuario_gelo.png")).length, 2);
+assert(sanctuaryRequests.some(url => url.includes("santuario_gelo.png") && url.includes("&r=1")), "retry cache-busting");
+assert(sanctuaryRequests.every(url => url.includes("v=" + ASSET_V)), "versão de cache incluída");
+assert.equal(loadSantuario("planicie"), firstSanctuary, "imagem já carregada não pede de novo");
+assert.equal(Object.keys(IMG).some(k => k.startsWith("santuario_")), false, "arte sob demanda não infla o boot");
+console.log(problems.length ? "PROBLEMAS: " + problems.join(" | ") : "TESTE DE ASSETS PASSOU — 7 santuários 960×540, lazy-load, cache e retry");
 process.exit(problems.length ? 2 : 0);

@@ -29,20 +29,78 @@ try {
       const b=await page.evaluate(async id=>(await M('ui.js')).uiButtons().find(b=>b.id===id),id);
       assert.ok(b,'botão '+id);await tap(b.x+b.w/2,b.y+b.h/2);
     }
+    // Os santuários não são carregados no boot: cada fundo chega só ao abrir seu fruto.
+    const bootSanctuaries=await page.evaluate(()=>performance.getEntriesByType('resource').filter(e=>e.name.includes('santuario_')).length);
+    assert.equal(bootSanctuaries,0,'nenhum PNG de santuário no boot');
+    await page.evaluate(async()=>{const {G}=await M('state.js');G.save.clearedMaps={planicie:true};G.save.essence=9999;});
     // Entrada real pelos frutos da copa: sem usar foco debug para abrir o menu.
     const maps=await page.evaluate(async()=>(await M('config.js')).FRUIT_TREES.map(f=>f.map));
     for(const map of maps){
       const p=await page.evaluate(async map=>(await M('meta.js')).treeFruitPosition(map),map);
       await tap(p.x,p.y);
+      const asset=map==='topo'?'palida':map;
+      await page.waitForFunction(name=>performance.getEntriesByType('resource').some(e=>e.name.includes('santuario_'+name+'.png')),asset);
+      await page.waitForTimeout(60);
       const cards=await page.evaluate(async()=>(await M('ui.js')).uiButtons().filter(b=>b.id.startsWith('fruitNode_')));
-      assert.equal(cards.length,10,map+' abre miniárvore própria');
-      assert.ok(cards.every(b=>b.w>=44 && b.h>=44),'áreas de toque 44px');
-      if(map!=='topo'){await click('fruitLegacy');assert.equal(await page.evaluate(async()=>(await M('ui.js')).uiButtons().filter(b=>b.id.startsWith('fruitNode_')).length),3);await click('fruitNew');}
+      if(map==='topo'){
+        assert.equal(cards.length,0,'Pálida selada não mostra flores');
+        assert.equal(await page.evaluate(async()=>(await M('meta.js')).treeNodePosition('v_a1')),null,'poder futuro não tem posição de compra');
+        await page.screenshot({path:out+'/'+(mobile?'mobile':'pc')+'-santuario-palida.png'});
+      }else{
+        assert.equal(cards.length,13,map+' mostra as 13 flores novas e legadas juntas');
+        assert.ok(cards.every(b=>b.w>=44 && b.h>=44),'alvos invisíveis das flores com 44px lógicos');
+        assert.equal(await page.evaluate(async()=>(await M('ui.js')).uiButtons().some(b=>b.id==='fruitNew'||b.id==='fruitLegacy')),false,'jardim sem abas');
+        if(map==='planicie'){
+          const growth=await page.evaluate(async()=>(await M('meta.js')).fruitGardenGrowth('planicie'));
+          assert.deepEqual(growth,{levels:0,total:growth.total,progress:0,restoredPercent:0,saturation:0});
+          assert.ok(growth.total>0,'o jardim mede os níveis possíveis do fruto');
+          const color=await page.evaluate(async()=>{
+            const {loadSantuario,IMG}=await M('assets.js'),{createColorRestorer}=await M('color_restore.js');
+            const background=await loadSantuario('planicie');
+            function inspect(image){
+              const painter=createColorRestorer();
+              function chroma(canvas){const data=canvas.getContext('2d').getImageData(0,0,canvas.width,canvas.height).data;let max=0;
+                for(let k=0;k<data.length;k+=4)if(data[k+3])max=Math.max(max,Math.max(data[k],data[k+1],data[k+2])-Math.min(data[k],data[k+1],data[k+2]));return max;}
+              const gray=painter(image,0),grayChroma=chroma(gray),mid=painter(image,.5),midChroma=chroma(mid),full=painter(image,1);
+              const c=full.getContext('2d').getImageData(0,0,full.width,full.height).data;
+              const source=document.createElement('canvas');source.width=image.width;source.height=image.height;
+              const sc=source.getContext('2d');sc.drawImage(image,0,0);const d=sc.getImageData(0,0,image.width,image.height).data;
+              let difference=0;for(let k=0;k<c.length;k+=4)for(let ch=0;ch<3;ch++)difference=Math.max(difference,Math.abs(c[k+ch]-d[k+ch]));
+              return {grayChroma,midChroma,difference,bakes:painter.info().bakes};
+            }
+            return {background:inspect(background),apple:inspect(IMG.maca_planicie)};
+          });
+          for(const art of Object.values(color)){
+            assert.equal(art.grayChroma,0,'arte começa realmente acromática');
+            assert.ok(art.midChroma>0,'compra restaura cor intermediária');
+            assert.equal(art.difference,0,'100% recupera os pixels originais');
+            assert.equal(art.bakes,3,'baking só muda ao alterar saturação');
+          }
+          await page.screenshot({path:out+'/'+(mobile?'mobile':'pc')+'-santuario.png'});
+          await click(cards[0].id);
+          const modal=await page.evaluate(async()=>(await M('ui.js')).uiButtons().map(b=>b.id));
+          assert(modal.includes('treeBuy')&&modal.includes('treeClose'),'inspecionar abre painel Evoluir/Fechar');
+          assert.equal(await page.evaluate(()=>Object.keys(FUMIGA.G.save.nodes).length),0,'selecionar flor não compra');
+          await page.screenshot({path:out+'/'+(mobile?'mobile':'pc')+'-santuario-flor.png'});
+          await click('treeClose');
+          await click(cards[0].id); await click('treeBuy');
+          const grown=await page.evaluate(async()=>(await M('meta.js')).fruitGardenGrowth('planicie'));
+          assert.equal(grown.levels,1,'a compra real avança o jardim');
+          assert.equal(grown.progress,1/grown.total,'o avanço usa os níveis comprados daquele fruto');
+          assert.equal(grown.saturation,Math.sqrt(grown.progress),'curva de cor acompanha a Árvore original');
+          await page.screenshot({path:out+'/'+(mobile?'mobile':'pc')+'-santuario-cor.png'});
+          await click('treeClose');
+        }
+      }
       await click('treeMiniBack');
     }
+    const sanctuaryFiles=await page.evaluate(()=>performance.getEntriesByType('resource').map(e=>e.name).filter(n=>n.includes('santuario_')));
+    assert.equal(sanctuaryFiles.length,7,'um request sob demanda por mundo');
+    assert.equal(new Set(sanctuaryFiles.map(n=>n.split('/').at(-1).split('?')[0])).size,7,'sete arquivos diferentes');
     for(const big of [false,true]) {
       await page.evaluate(async big=>{const {G}=await M('state.js');G.save.accessibility.bigFont=big;G.save.nodes={};G.save.clearedMaps={};G.save.essence=9999;},big);
       for(const id of ids) {
+        if(id.startsWith('v_a')) continue; // poderes da Pálida seguem futuros e sem flores
         await pick(id);
         const audit=await page.evaluate(()=>FUMIGA.auditarLayout());
         assert.deepEqual(audit.issues,[],`${mobile?'mobile':'PC'} fonte ${big} ${id}`);
@@ -75,7 +133,7 @@ try {
       assert.equal(await page.evaluate(async()=>(await M('input.js')).keys.KeyH),false,'desligar olfato');
     }
     assert.deepEqual(errors,[]);
-    console.log((mobile?'MOBILE':'PC')+': 137 detalhes normal/grande sem colisão, sem compra acidental; 78 compras por botão persistiram');
+    console.log((mobile?'MOBILE':'PC')+': 127 posições de flor/nó normal/grande sem colisão, 7 fundos sob demanda, compra/saves preservados');
     await context.close();
   }
 } finally { await browser.close();await server.close(); }

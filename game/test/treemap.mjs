@@ -6,7 +6,8 @@ import { tmpdir } from "node:os";
 import { fileURLToPath } from "node:url";
 import { execFileSync } from "node:child_process";
 import { META_STAGES } from "../js/config.js";
-import { TREE_ART, TREE_NODES, TREE_NODE_RADII, fruitCenter } from "../js/tree_layout.js";
+import { TREE_ART, TREE_NODES, TREE_NODE_RADII, SANTUARIO_SLOTS, fruitFlowerPos, fruitCenter } from "../js/tree_layout.js";
+import { FRUIT_TREES } from "../js/config.js";
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const args = ["-size", "960x800", "xc:#181226", path.join(root, "assets/ui/tree_ancestral.png"),
@@ -28,7 +29,23 @@ for (let i = 0; i < 7; i++) {
   text(Math.round(x - 5), Math.round(y - 9), String(i + 1), "#181226", 14);
   if (i) assert(p.y < fruitCenter(i - 1).y, "os frutos sobem na ordem dos mundos");
 }
-text(32, 770, "49 melhorias principais • 7 frutos • compras, cores e câmera verificadas no navegador", "#ac9abb", 12);
+assert.equal(SANTUARIO_SLOTS.length, 13, "treze flores têm slots no Santuário");
+assert.equal(new Set(SANTUARIO_SLOTS.map(p => `${p.x},${p.y}`)).size, 13, "slots distintos");
+for (const [fi, fruit] of FRUIT_TREES.entries()) {
+  if (fruit.pending) {
+    assert.equal(fruit.nodes.length, 10, "poderes futuros seguem no save, mas não têm flores expostas");
+    assert.equal(fruitFlowerPos(fi, 0), null, "Pálida selada não desenha flores compráveis");
+    continue;
+  }
+  const positions = fruit.nodes.map(node => fruitFlowerPos(fi, fruit.nodes.indexOf(node)));
+  assert.equal(positions.length, 13, fruit.map + " mostra novas e legadas no mesmo jardim");
+  assert(positions.every(p => p && p.x >= 240 && p.x <= 720 && p.y >= 260 && p.y <= 505), fruit.map + " dentro da clareira");
+  for (let i = 0; i < positions.length; i++) for (let j = i + 1; j < positions.length; j++) {
+    assert(Math.hypot(positions[i].x - positions[j].x, positions[i].y - positions[j].y) >= 52,
+      fruit.map + " mantém 44px de alvo e 8px de separação entre as 13 flores");
+  }
+}
+text(32, 770, "49 melhorias principais • 7 frutos • 13 flores por santuário • compras, cores e câmera verificadas", "#ac9abb", 12);
 const out = process.env.TREEMAP_OUT || path.join(tmpdir(), "arvore-layout.png");
 execFileSync("convert", [...args, out]);
 console.log(`GEOMETRIA OK — ${TREE_NODES.length} nós e sete frutos ascendentes, ${out}`);

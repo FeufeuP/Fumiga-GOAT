@@ -113,10 +113,15 @@ try {
         await tap(p.x, p.y); assert((await view()).fruit, "fruto do galho " + i + " abriu");
         await audit("fruto " + i + " fonte " + big);
         if (i === 7) {
-          await click("fruitNode_v_a1");
-          const buy = await page.evaluate(async () => (await M("ui.js")).uiButtons().find(b => b.id === "treeBuy"));
-          assert(buy.disabled, "Pálida continua futura");
-          await audit("Pálida futura " + big);
+          const sealed = await page.evaluate(async () => ({
+            flowers: (await M("ui.js")).uiButtons().filter(b => b.id.startsWith("fruitNode_")).length,
+            pos: (await M("meta.js")).treeNodePosition("v_a1"),
+            lockLoaded: !!(await M("assets.js")).IMG.correntes_tranca,
+          }));
+          assert.equal(sealed.flowers, 0, "Santuário da Pálida não expõe flores");
+          assert.equal(sealed.pos, null, "poder futuro sem coordenada comprável");
+          assert(sealed.lockLoaded, "tranca visual carregada");
+          await audit("Pálida selada " + big);
         }
         await click("treeMiniBack");
         assert.equal((await view()).focusedStage, old.focusedStage);

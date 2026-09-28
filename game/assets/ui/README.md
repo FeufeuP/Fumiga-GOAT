@@ -82,10 +82,18 @@ reconstruído somente quando níveis mudam. A imagem aprovada volta integralment
 - `correntes_tranca.png` — **512×512 RGBA**: corrente de ponta a ponta com três cadeados;
   selo do fruto 7 (Pálida, estado futuro).
 - `correntes_cadeados.png` — **320×320 RGBA**: variante bronze; **aposentada no desenho**
-  desde 2026-09-28 (permanece no `MANIFEST`/teste de assets; a entrega B pode reusá-la ou
-  removê-la).
+  desde 2026-09-28 (permanece no `MANIFEST`/teste de assets). A revisão visual do Santuário
+  removeu cadeados/correntes sobre as flores; `correntes_deserto` segue usado nos frutos
+  bloqueados da Árvore.
 - `santuario_<mundo>.png` — **960×540 RGB**, 7 arquivos (~5,1 MB): fundos da tela do
-  Santuário, **fora do boot de propósito** — serão carregados sob demanda na entrega B.
+  Santuário, fora do boot de propósito. `loadSantuario()` em `js/assets.js` busca apenas o
+  bioma aberto, com timeout/retry e promessa cacheada por mapa; `drawFruitMini()` exibe um
+  placeholder enquanto carrega e renderiza o fundo 1:1 quando disponível.
+- **Integração B e revisão visual (2026-09-28):** `tree_layout.js` define 13 slots em
+  coordenadas 960×540; `meta.js` mostra flores novas e legadas juntas, liga pré-requisitos e
+  restaura progressivamente a cor do fundo/maçã/jardim a partir do cinza conforme níveis comprados.
+  Sem cadeados ou placas sobre as pétalas; hitboxes invisíveis e detalhe lateral preservam
+  seleção/EVOLUIR sem cobrir as flores. A Pálida usa arte branca e `correntes_tranca`, sem compra.
 - **Fundo/restauro (2026-09-28):** `tools/repair_fruit_sprites.py` limpa o fundo violeta
   residual (incluindo `maca_planicie`, que ainda tinha 66% de fundo opaco, e bolsões entre
   detalhes), restaura fragmentos de arte apagados e reconstrói as correntes (pixel art
