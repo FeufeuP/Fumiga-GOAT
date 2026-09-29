@@ -39,6 +39,20 @@ A versão **aberta** foi **cancelada** a pedido do usuário. O sprite **não** e
 desenhado em nenhum lugar; a remoção das correntes feita antes, no mesmo dia, continua valendo no
 jogo. `npm run test:quick`: 22/22.
 
+## Entrega — Arte do cadeado aberto (2026-09-29)
+
+**Status: só a arte foi salva, sem integração no jogo.** O usuário voltou a pedir a versão aberta
+(sobrepõe o cancelamento registrado acima) e, entre as opções da Regra 1, escolheu a pose
+**“haste escancarada (90°)”**. Inspirado nos ícones 8-bit de *open padlock* (referências pesquisadas:
+sets pixel art de lock/unlock retrô). O sprite usa **100% da arte original** do
+`cadeado fechado.png`, sem redesenho: o corpo é copiado intacto e a haste é recortada, rotacionada
+90° no sentido horário (nearest-neighbor — rotação exata, sem jaggies) e repousada com a perna
+dobradiça sobre a faixa de cobre, à direita. Salvo em `game/assets/ui/cadeado aberto.png`
+(512×512 RGBA, fundo transparente, 0 pixels brancos opacos). Reproducível com
+`python3 tools/make_cadeado_aberto.py` (Pillow só como ferramenta de arte). No mesmo dia foi
+limpo o fundo branco residual do `cadeado fechado.png` (interior do arco + 22 pontos claros na
+silhueta). Assim como o fechado, **não** está no `MANIFEST` e não é desenhado em nenhum lugar.
+
 ## Entrega — Correntes e cadeados removidos da Árvore (2026-09-29)
 
 **Status: implementado e verificado.** Pedido do usuário: *“Exclua todas as correntes/cadeados da
