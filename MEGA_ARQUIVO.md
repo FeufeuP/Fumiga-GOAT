@@ -29,6 +29,16 @@ repetições, datas, branches, checklists e notas históricas foram preservados.
 > Divergências permanecem visíveis, sem apagar conteúdo. O que efetivamente
 > funciona deve ser confirmado por testes e inspeção no preview.
 
+## Entrega — Arte do cadeado fechado (2026-09-29)
+
+**Status: só a arte foi salva, sem integração no jogo.** O usuário escolheu 1 de 2 opções de um
+cadeado padrão para os mundos (menos a Pálida), visto de frente: ferro negro com detalhes e
+rachaduras laranja-ferrugem foscas. Salvo em `game/assets/ui/cadeado fechado.png` (512×512 RGBA,
+fundo transparente, ~147 KB); o original de 1024 px está em `art-source/comuns/` (gitignorado).
+A versão **aberta** foi **cancelada** a pedido do usuário. O sprite **não** está no `MANIFEST` e não é
+desenhado em nenhum lugar; a remoção das correntes feita antes, no mesmo dia, continua valendo no
+jogo. `npm run test:quick`: 22/22.
+
 ## Entrega — Correntes e cadeados removidos da Árvore (2026-09-29)
 
 **Status: implementado e verificado.** Pedido do usuário: *“Exclua todas as correntes/cadeados da
