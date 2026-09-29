@@ -35,6 +35,14 @@ repetições, datas, branches, checklists e notas históricas foram preservados.
 cadeado padrão para os mundos (menos a Pálida), visto de frente: ferro negro com detalhes e
 rachaduras laranja-ferrugem foscas. Salvo em `game/assets/ui/cadeado fechado.png` (512×512 RGBA,
 fundo transparente, ~147 KB); o original de 1024 px está em `art-source/comuns/` (gitignorado).
+
+> **Desfecho (2026-09-29, no mesmo dia):** a pedido do usuário, o arquivo
+> `game/assets/ui/cadeado fechado.png` foi **apagado do repositório** (`git rm`), sem nenhuma
+> alteração de código — ele nunca entrou no `MANIFEST` nem era desenhado em lugar nenhum. A
+> pasta `game/assets/ui/` volta a ter **20 PNGs**. O original de 1024 px segue fora do Git, em
+> `art-source/comuns/` (gitignorado): é lá que a arte pode ser redescoberta se algum dia for
+> preciso reusá-la. A regra continua a mesma do bloco do fruto bloqueado — **nenhum cadeado ou
+> corrente é desenhado no jogo**.
 A versão **aberta** foi **cancelada** a pedido do usuário. O sprite **não** está no `MANIFEST` e não é
 desenhado em nenhum lugar; a remoção das correntes feita antes, no mesmo dia, continua valendo no
 jogo. `npm run test:quick`: 22/22.

@@ -91,6 +91,10 @@ reconstruído somente quando níveis mudam. A imagem aprovada volta integralment
   (512×512, selo da Pálida) e `correntes_cadeados.png` (320×320, bronze aposentado) foram
   **apagados do repositório** e saíram do `MANIFEST`/boot — o santuário da Pálida ficou só com o
   painel de aviso em `drawSanctuarySeal()`. A pasta passou de 23 para 20 PNGs.
+- **`cadeado fechado.png` apagado (2026-09-29, decisão do usuário):** o cadeado 512×512 criado no
+  mesmo dia como arte padrão dos mundos foi **removido do repositório** por `git rm` — nunca esteve
+  no `MANIFEST` nem foi desenhado. A pasta continua com **20 PNGs**; o original de 1024 px permanece
+  fora do Git, em `art-source/comuns/`.
 - **Fundo/restauro (2026-09-28):** `tools/repair_fruit_sprites.py` limpa o fundo violeta
   residual (incluindo `maca_planicie`, que ainda tinha 66% de fundo opaco, e bolsões entre
   detalhes) e restaura fragmentos de arte apagados. O critério de fundo é a cor estimada por
