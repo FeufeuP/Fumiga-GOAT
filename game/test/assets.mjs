@@ -67,10 +67,16 @@ check("ícones de mutação", MUTATIONS.map((m) => "i_" + m.icon));
 check("ícones da árvore", META_NODES.map((n) => "i_" + n.icon));
 check("ícones das câmaras", Object.values(CHAMBERS).map((c) => "i_" + c.icon));
 check("formigueiro", ["nest", "nest_d1", "nest_d2"]);
-// Maçãs e correntes/cadeados entram no boot (a Árvore desenha os frutos na
-// copa); os santuarios_* ficam de fora de propósito (sob demanda, entrega B).
+// Maçãs entram no boot (a Árvore desenha os frutos na copa); os santuarios_*
+// ficam de fora de propósito (sob demanda, entrega B). Correntes/cadeados
+// saíram do repositório e do boot em 2026-09-29 (decisão do usuário): este
+// teste impede que voltem por descuido.
 check("maçãs dos mundos (boot)", FRUIT_TREES.map(f => "maca_" + fruitAssetName(f)));
-check("correntes e cadeados (boot)", ["correntes_cadeados", "correntes_deserto", "correntes_tranca"]);
+assert.equal(Object.keys(IMG).filter(k => k.startsWith("correntes")).length, 0,
+  "nenhuma corrente/cadeado no boot");
+for (const file of ["correntes_cadeados.png", "correntes_deserto.png", "correntes_tranca.png"]) {
+  assert(!fs.existsSync(path.join(ROOT, "assets", "ui", file)), "fora do repositório: " + file);
+}
 
 // ------------------------------------------------ props gerados no mundo ----
 const perBiome = MAPS.map(() => new Set());

@@ -5,7 +5,7 @@ Usage:
   python3 tools/prepare_fruit_art.py all
   python3 tools/prepare_fruit_art.py maca       art-source/macas/01-planicie.png
   python3 tools/prepare_fruit_art.py santuario  art-source/santuarios/01-planicie.png
-  python3 tools/prepare_fruit_art.py sprite     art-source/comuns/correntes-cadeados.png
+  python3 tools/prepare_fruit_art.py sprite     ORIGINAL.png SAIDA.png
 
 Contract (Regra 5 + Regra 6): the approved high-resolution original is the source
 of truth and stays in art-source/. The game loads a smaller, palette-limited copy
@@ -14,7 +14,7 @@ so nothing is scaled or blurred at draw time:
   maca        320x320  RGBA   fundo violeta removido, recorte sem margem vazia
   santuario  960x540  RGB    1:1 com o canvas do jogo (nada de escala no render)
                              carregado sob demanda na tela do santuário
-  sprite     auto     RGBA   recorte + 256 cores, para correntes/cadeados
+  sprite     auto     RGBA   recorte + 256 cores (ícones/overlays pequenos)
 
 Pillow is art tooling only, never a game dependency. Only the prepared PNGs are
 loaded by the game (see MANIFEST in game/js/assets.js).
@@ -29,11 +29,9 @@ ROOT = Path(__file__).resolve().parent.parent
 KEY = (29, 17, 39)
 MACAS_DIR = ROOT / "art-source" / "macas"
 SANTUARIOS_DIR = ROOT / "art-source" / "santuarios"
-COMUNS_DIR = ROOT / "art-source" / "comuns"
 OUT_DIR = ROOT / "game" / "assets" / "ui"
 # Nomes canônicos por mundo (mesma ordem de META_STAGES em config.js).
 MUNDOS = ["planicie", "floresta", "pantano", "deserto", "outono", "gelo", "palida"]
-COMUNS = ["correntes-cadeados", "correntes-deserto", "correntes-tranca"]
 
 
 def key_background(image, tolerance=5):
@@ -115,12 +113,6 @@ def prepare_all():
     for mundo in MUNDOS:
         prepare_maca(source_of(MACAS_DIR, mundo), OUT_DIR / f"maca_{mundo}.png")
         prepare_santuario(source_of(SANTUARIOS_DIR, mundo), OUT_DIR / f"santuario_{mundo}.png")
-    for comum in COMUNS:
-        source = COMUNS_DIR / f"{comum}.png"
-        if source.exists():
-            name = comum.replace("-", "_")
-            prepare_sprite(source, OUT_DIR / f"{name}.png",
-                           colors=128, height=192 if "tranca" in comum else 256)
 
 
 if __name__ == "__main__":

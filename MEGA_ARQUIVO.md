@@ -29,6 +29,73 @@ repetições, datas, branches, checklists e notas históricas foram preservados.
 > Divergências permanecem visíveis, sem apagar conteúdo. O que efetivamente
 > funciona deve ser confirmado por testes e inspeção no preview.
 
+## Entrega — Correntes e cadeados removidos da Árvore (2026-09-29)
+
+**Status: implementado e verificado.** Pedido do usuário: *“Exclua todas as correntes/cadeados da
+árvore.”* As opções da Regra 1 foram confirmadas antes da implementação:
+
+1. **Escopo:** copa (fruto bloqueado **e** fruto futuro) **+** a corrente do santuário da Pálida.
+2. **Assets:** os três PNGs foram **apagados do repositório** (não ficam como arquivo morto).
+3. **Estado bloqueado:** continua como já era — maçã acinzentada (`fruitGray`), rótulo
+   `FRUTO BLOQUEADO` / `FRUTO FUTURO` e painel com o pré-requisito. Nada novo é desenhado sobre a
+   arte.
+4. **Texto da Pálida:** o painel *“A COPA ABRE APÓS O PICO…”* permanece — só a corrente saiu.
+
+### O que mudou
+
+- **`game/js/meta.js` — `drawFruit()`:** saíram o `correntes_deserto` (162 px × zoom) sobre o fruto
+  bloqueado e o `correntes_tranca` (1,1× o quadro) sobre a Pálida. Fica só a maçã: `fruitGray(key)`
+  no bloqueio, `maca_palida` na Pálida futura, com o halo de hover e o rótulo intactos.
+- **`game/js/meta.js` — `drawSanctuarySeal()`:** saiu a corrente 580×580 desenhada em (190, 90)
+  sobre o santuário da Pálida; o painel de aviso continua explicando o futuro do fruto.
+- **`game/js/assets.js`:** os três sprites saíram do `MANIFEST` (deixam de ser baixados em qualquer
+  tela) e `ASSET_V` → `"20260929-sem-correntes"`. O boot ficou ~67 KB mais leve.
+- **`game/assets/ui/`:** `correntes_cadeados.png`, `correntes_deserto.png` e
+  `correntes_tranca.png` foram **removidos** (`git rm`). Não existe mais nenhum sprite de
+  corrente/cadeado no jogo. O total de PNGs da pasta caiu de 23 para 20.
+- **`game/test/assets.mjs`:** o antigo `check("correntes e cadeados (boot)")` virou uma asserção de
+  ausência — nada com prefixo `correntes` pode entrar no boot nem existir em `assets/ui/`
+  (impede a volta do tema por descuido).
+- **`game/test/tree-art-browser.mjs`:** a checagem da Pálida selada deixou de exigir
+  `IMG.correntes_tranca` e passou a exigir **lista vazia** de sprites de corrente.
+- **`tools/repair_fruit_sprites.py`:** o modo `correntes` (reconstrução procedural dos três
+  sprites) foi removido, junto com o helper `RDraw`, as paletas e o desenho de elos/cadeados que só
+  ele usava; o script agora só normaliza maçãs (`python3 tools/repair_fruit_sprites.py macas`).
+- **`tools/prepare_fruit_art.py`:** `COMUNS`/`COMUNS_DIR` e o preparo dos comuns saíram do `all`; o
+  modo genérico `sprite` continua para ícones/overlays pequenos.
+- **Docs:** `game/assets/ui/README.md` e `PROXIMOS_PASSOS_DA_ARVORE.md` atualizados. O histórico
+  de 2026-09-25/27/28 (maçãs 3x, cadeado padrão, reconstrução das correntes) fica preservado nos
+  registros abaixo; esta entrega **substitui** a decisão de “cadeado padrão de todos os frutos”.
+
+### Decisão visual
+
+A pesquisa da Regra 2 (Hades, Slay the Spire, Dead Cells, Hollow Knight) mostra que nós bloqueados
+são lidos por **estado** — silhueta dessaturada, caminho apagado, texto — e não por um cadeado
+colado sobre a arte; as referências de UX reforçam que “acinzentado + rótulo” é a convenção legível
+e que o cadeado sobre a arte é ambíguo. Com isso, a Árvore ganhou leitura mais limpa: as sete maçãs
+aparecem inteiras (a Pálida branca inclusive), e o bloqueio se lê pelo cinza + rótulo + painel.
+
+### Verificação (2026-09-29)
+
+- `npm run test:quick` **22/22** e `npm test` **25/25**.
+- `npm run inspect`: 30 cenas PC/mobile — nenhum erro de JS, 404 ou glifo faltando; 60 FPS.
+- `npm run inspect:tree` (`tree-browser.mjs` + `tree-art-browser.mjs`): PC e mobile —
+  127 posições de flor/nó sem colisão, 7 fundos sob demanda, compras/saves preservados.
+- `npm run inspect:layout`: **108 estados limpos** (fonte normal e grande).
+- `node game/test/mobile.mjs`: boot → expedição só com toque, OK.
+- Capturas comparativas antes×depois (commit anterior em worktree temporário, já removido) em
+  `/tmp/fumiga-sem-correntes` (fora do Git): copa sem cadeado, Pálida sem tranca, santuário selado
+  e jardim de flores limpos.
+- `node game/test/docs.mjs`: consolidação íntegra (os seis documentos originais intactos).
+
+### Limites
+
+- Sem o cadeado, o bloqueio do fruto depende de cor (cinza) + rótulo + painel; os testes
+  `fruits.mjs`, `fruit-powers.mjs` e `tree-progression.mjs` continuam garantindo que gates, custos,
+  efeitos e saves não mudaram.
+- A Pálida segue futura/selada **por lógica** (`pending: true`), não por símbolo visual.
+- Não há tranca sobre o galho do mundo 7 (a ideia opcional foi cancelada junto com o tema).
+
 ## Entrega — Correntes reconstruídas e maçãs 3x normalizadas (2026-09-28)
 
 **Status: implementado e verificado.** Ajustes sobre a entrega A, a pedido do usuário:

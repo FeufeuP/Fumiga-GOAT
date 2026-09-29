@@ -288,19 +288,11 @@ function drawFruit(ctx, fruit, i) {
       ctx.beginPath(); ctx.arc(p.x, p.y, s * .58, 0, TAU); ctx.fill();
       ctx.restore();
     }
+    // Sem cadeado, sem corrente e sem aro (decisão do usuário, 2026-09-29):
+    // fruto bloqueado é a maçã acinzentada com o rótulo FRUTO BLOQUEADO e o
+    // painel dizendo o pré-requisito; a Pálida (futura) é a maçã branca com o
+    // rótulo FRUTO FUTURO. A arte nunca é coberta por símbolo algum.
     ctx.drawImage(locked ? fruitGray(key) : img, Math.round(p.x - s / 2), Math.round(p.y - s / 2), s, s);
-    if (locked) {
-      // Cadeado sobre o fruto bloqueado: o sprite do Deserto é o PADRÃO de
-      // todos os frutos (decisão do usuário, 2026-09-28) — só a Pálida fica
-      // com a tranca diferente. Tamanho 3x junto com o quadro da maçã.
-      const k = IMG["correntes_deserto"];
-      if (k) { const ls = 162 * zoom; ctx.drawImage(k, Math.round(p.x - ls / 2), Math.round(p.y - ls / 2), ls, ls); }
-    } else if (fruit.pending) {
-      // Selo do mundo 7: corrente com três cadeados atravessando a Pálida —
-      // fruto futuro, não abre nesta versão (fruits.mjs/fruit-powers.mjs guardam).
-      const t = IMG["correntes_tranca"];
-      if (t) { const ts = s * 1.1; ctx.drawImage(t, Math.round(p.x - ts / 2), Math.round(p.y - ts / 2), ts, ts); }
-    }
   }
   if (zoom >= .32 && (focusedStage === i + 1 || hot)) {
     const label = fruit.pending ? "FRUTO FUTURO" : unlocked ? "ABRIR FRUTO" : "FRUTO BLOQUEADO";
@@ -483,13 +475,9 @@ function drawSanctuaryApple(ctx, fruit, saturation) {
   }
 }
 function drawSanctuarySeal(ctx) {
-  const lock = IMG.correntes_tranca;
-  if (lock) {
-    ctx.save(); ctx.imageSmoothingEnabled = false;
-    ctx.globalAlpha = .94;
-    ctx.drawImage(lock, 190, 90, 580, 580);
-    ctx.restore();
-  }
+  // Sem corrente atravessando a tela (decisão do usuário, 2026-09-29): o
+  // santuário da Pálida é a arte do bioma + a maçã branca + este aviso, que
+  // continua explicando por que o fruto não abre nesta versão.
   panel(ctx, 112, 419, 736, 76, { border: "#d9b8ff", fill: "#17121feF", noise: false });
   const lines = wrapText("A COPA ABRE APÓS O PICO, MAS ESTE FRUTO AGUARDA O SÉTIMO MUNDO E A DERROTA DA PÁLIDA. NENHUMA VITÓRIA NO DEVASTADOR PERMITE COMPRAR SEUS PODERES.", 700, { scale: .64 });
   lines.forEach((line, i) => drawText(ctx, line, 480, 433 + i * Math.ceil(16 * .64 * fontScale()),

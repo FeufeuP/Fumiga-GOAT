@@ -2,14 +2,15 @@
 
 **Criado em:** 25 de setembro de 2026
 **Autor da entrega anterior:** sessão `arena/01a0d9d6-fumiga-goat` (arte gerada e aprovada)
-**Status:** entregas **A e B implementadas, com revisão visual solicitada em 2026-09-28**. A
-entrega B exibe as 13 flores juntas (NOVAS + LEGADO), sem cadeados/placas sobre elas. O jardim
-começa acromático; cada nível comprado daquele fruto restaura a cor gradualmente no fundo, maçã,
-flores e caminhos, usando a mesma curva da Árvore original. Arte, progresso, PC/mobile e compras
-foram verificados; detalhes em **“Entrega B — Santuário com flores por bioma”** de
-`MEGA_ARQUIVO.md`. A Pálida continua futura/selada. O cadeado do fruto na Árvore permanece; a
-tranca opcional sobre o galho do mundo 7 não foi adicionada. Este arquivo mantém o contrato e o
-histórico da integração.
+**Status:** entregas **A e B implementadas e verificadas**; em **2026-09-29 todas as correntes e
+cadeados foram excluídos da Árvore** (frutos bloqueados, fruto futuro e santuário da Pálida), com
+os três PNGs apagados do repositório e do boot — detalhes em **“Correntes e cadeados removidos da
+Árvore”** no `MEGA_ARQUIVO.md`. A entrega B exibe as 13 flores juntas (NOVAS + LEGADO), sem
+cadeados/placas sobre elas. O jardim começa acromático; cada nível comprado daquele fruto restaura
+a cor gradualmente no fundo, maçã, flores e caminhos, usando a mesma curva da Árvore original.
+Arte, progresso, PC/mobile e compras foram verificados. A Pálida continua futura/selada **por
+lógica** (`pending: true`), sem símbolo visual. Este arquivo mantém o contrato e o histórico da
+integração.
 
 ---
 
@@ -54,14 +55,12 @@ santuário tem: **clareira central escura e vazia** (palco das melhorias), **veg
 | 6 | `gelo` (Montanha) | **maçã congelada**, neve, **mini árvore ROSA** em flor | neve, gelo, árvores rosa com neve, picos no horizonte |
 | 7 | `palida` | **corpo BRANCO**, aura branca, **rachaduras roxas**, **fumaça saindo de dentro** | tudo branqueado + **CASTELO pálido** no horizonte, enterrado em bruma |
 
-**Correntes e cadeados** (a regra “correntes, cadeados e santuários seguem as mesmas características
-gerais das maçãs”):
-
-| Arquivo | 200×— | Significado |
-|---------|-------|-------------|
-| `correntes_cadeados.png` | 256×256 | cadeado fechado + corrente: **nó/galho bloqueado** |
-| `correntes_deserto.png` | 256×256 | variante do cadeado para o **Deserto** (sand-blasted, cristais, areia nos elos) |
-| `correntes_tranca.png` | 192×192 | corrente atravessando a tela com 3 cadeados: **selo do santuário da Pálida** (não abre nesta versão) |
+**Correntes e cadeados — tema excluído em 2026-09-29 (decisão do usuário).** Os três sprites
+(`correntes_cadeados.png`, `correntes_deserto.png`, `correntes_tranca.png`) existiram até essa data,
+carregados no boot, e foram **apagados do repositório**: a Árvore não desenha mais cadeado sobre o
+fruto bloqueado, tranca sobre a Pálida, nem corrente sobre o santuário da Pálida. O estado continua
+legível pela maçã acinzentada (`fruitGray`), pelo rótulo (`FRUTO BLOQUEADO` / `FRUTO FUTURO`) e pelo
+painel de pré-requisito — nenhuma arte é coberta por símbolo.
 
 ### 1.2 Arquivos (onde estão e o que o jogo carrega)
 
@@ -70,9 +69,9 @@ gerais das maçãs”):
   **`art-source/` está no `.gitignore`** (61 MB → 16 MB após compactar): é a mesma decisão das
   camadas `game/assets/parallax/menu/_orig/`. **Não commitar; não apagar.**
 - **Preparados que o jogo carrega** (commitados, em `game/assets/ui/`):
-  - `maca_<map>.png` — **320×320 RGBA**, 7 arquivos, ~1,2 MB no total → entram no boot;
+  - `maca_<map>.png` — **960×960 RGBA** (corpo normalizado para 475–476 px), 7 arquivos → boot;
   - `santuario_<map>.png` — **960×540 RGB**, 7 arquivos, ~5,1 MB → **carregar sob demanda**;
-  - `correntes_cadeados.png`, `correntes_deserto.png`, `correntes_tranca.png` — RGBA pequenos.
+  - correntes/cadeados — **não existem mais** (apagados em 2026-09-29).
   - `<map>` ∈ `planicie, floresta, pantano, deserto, outono, gelo, palida` (ordem de `META_STAGES`).
 - **Pipeline:** `tools/prepare_fruit_art.py` (Pillow só como ferramenta de arte; o jogo segue JS puro).
 
@@ -92,8 +91,8 @@ python3 tools/prepare_fruit_art.py maca art-source/macas/02-floresta.png saida.p
 |---------|----------------------------|
 | `npm run test:quick` | **22/22** |
 | `node game/test/docs.mjs` | 6 documentos íntegros, **109.554 bytes** preservados |
-| PNGs em `game/assets/ui/` | 23 (6 originais + 17 novos) |
-| Peso do boot com as maçãs | +~1,2 MB (aceito) |
+| PNGs em `game/assets/ui/` | 20 (desde 2026-09-29: −3 correntes/cadeados) |
+| Peso do boot com as maçãs | +~1,2 MB (aceito); −~67 KB desde 2026-09-29 |
 | Peso dos santuários | ~5,1 MB **somente sob demanda** |
 
 ---
@@ -102,8 +101,9 @@ python3 tools/prepare_fruit_art.py maca art-source/macas/02-floresta.png saida.p
 
 **A** (maçã nos nós) e **B** (Santuário) estão implementadas. Após a revisão visual, não há
 cadeados desenhados sobre flores: o estado e os pré-requisitos permanecem funcionais no painel;
-o cadeado do fruto bloqueado e o selo da Pálida continuam. Não foi adicionada a tranca opcional
-do galho 7. Resta validação contínua; PR só quando o usuário solicitar salvar no GitHub.
+e, desde **2026-09-29**, também os frutos bloqueados e o fruto futuro ficaram sem cadeado/tranca —
+os três PNGs saíram do repositório e do boot. Resta validação contínua; PR só quando o usuário
+solicitar salvar no GitHub.
 
 > **Atualização (2026-09-27):** a entrega **A** foi implementada, verificada e mergeada em
 > `main` (evidências na seção de 2026-09-27 do `MEGA_ARQUIVO.md`). Divergências em relação
@@ -120,11 +120,12 @@ facetado + número do mundo). Trocar por `IMG["maca_" + fruit.map]`, mantendo **
 funciona: o número do mundo, o halo de hover, o rótulo (`ABRIR FRUTO` / `FRUTO BLOQUEADO` /
 `FRUTO FUTURO`) e o *hit-test* de `pickAt()` (raio mínimo 22 px de toque — Regra 9).
 
-- Fruto **bloqueado**: desenhar a maçã **dessaturada/acinzentada** (mesmo tratamento acromático do
-  `tree_art.js`, que já assa uma versão sem cor) e, se cupo no espaço, o `correntes_cadeados`
-  pequeno sobre o fruto. Nunca esconder o número do mundo.
-- Fruto da **Pálida**: permanece `pending` (intocável nesta versão) — mostrar a maçã **branca**
-  (`maca_palida`) com a aura e a fumaça já presentes na arte, selada por `correntes_tranca`.
+- Fruto **bloqueado**: maçã **dessaturada/acinzentada** (`fruitGray`, o mesmo tratamento acromático
+  do `tree_art.js`). **Atualizado em 2026-09-29:** o cadeado sobre o fruto foi **removido** — a
+  versão implementada deste item é só a maçã cinza + rótulo/painel.
+- Fruto da **Pálida**: permanece `pending` (intocável nesta versão) — maçã **branca**
+  (`maca_palida`) com a aura e a fumaça já presentes na arte. **Atualizado em 2026-09-29:** a
+  tranca `correntes_tranca` foi **removida**.
 - Ancoragem: `FRUIT_SLOTS` / `fruitCenter(i)` em `game/js/tree_layout.js` — as posições dos frutos
   **não mudam** (o `treemap.mjs` valida que sobem na ordem dos mundos). Se a maçã precisar de mais
   espaço que o círculo atual, aumente **apenas o desenho e o raio de clique**, nunca a coordenada.
@@ -153,16 +154,22 @@ da Árvore ancestral:
 5. **Progresso legível:** o cabeçalho mostra os níveis comprados/possíveis e `COR %`; preço só
    aparece no detalhe selecionado. As cores e os estados de disponibilidade não mudam as regras
    de gates nem os saves.
-6. **Pálida:** continua futura e selada, com `santuario_palida`, maçã branca e `correntes_tranca`;
-   não expõe flores, IDs de compra ou botão para seus poderes.
+6. **Pálida:** continua futura e selada, com `santuario_palida` e maçã branca (sem corrente desde
+   2026-09-29); não expõe flores, IDs de compra ou botão para seus poderes.
 
-### C. Correntes e cadeados nos estados — ✅ decisão visual atualizada (2026-09-28)
+### C. Correntes e cadeados nos estados — ✅ tema excluído (2026-09-29)
 
-- Árvore: `correntes_deserto` ainda sela o fruto bloqueado; `correntes_tranca` acompanha a Pálida.
-- Jardim de flores: **não desenhar** cadeados/correntes sobre as flores (decisão do usuário nesta
-  revisão). Cor, caminhos e painel dão feedback sem encobrir as pétalas.
-- Pálida: `correntes_tranca` continua atravessando o santuário selado (não há flores nesse fruto).
-- Opcional: tranca sobre o galho do mundo 7 na Árvore — não adicionada.
+- **Decisão do usuário (2026-09-29): “exclua todas as correntes/cadeados da Árvore.”** Escopo
+  confirmado: copa (fruto bloqueado e fruto futuro) **e** santuário da Pálida; assets **apagados**
+  do repositório; bloqueio comunicado como já era (maçã cinza + rótulo + painel); o aviso textual
+  da Pálida permanece.
+- Árvore: nenhum cadeado sobre fruto bloqueado (`drawFruit()` desenha só a maçã de `fruitGray`) e
+  nenhuma tranca sobre a Pálida.
+- Santuário da Pálida: `drawSanctuarySeal()` ficou só com o painel de aviso; a corrente 580×580
+  saiu. Jardim de flores: continua sem qualquer bloqueio sobre as pétalas (revisão de 2026-09-28).
+- `game/assets/ui/correntes_*.png` **removidos**; `MANIFEST` sem correntes; `ASSET_V` →
+  `"20260929-sem-correntes"`; `tools/repair_fruit_sprites.py` perdeu o modo `correntes`.
+- Opcional: tranca sobre o galho do mundo 7 na Árvore — **cancelada** junto com o tema.
 
 ---
 
@@ -170,8 +177,8 @@ da Árvore ancestral:
 
 | Arquivo | O que fazer | Cuidados |
 |---------|-------------|----------|
-| `game/js/assets.js` | `MANIFEST` mantém as maçãs/correntes do boot; os santuários continuam FORA do `MANIFEST` (~5,1 MB), carregados por `loadSantuario(map)` com `LOAD_CFG.attempts`, promessa cacheada por mapa e retry; `ASSET_V = "20260928-santuarios-flores"`. | `loadImage` nunca pendura. O render desenha placeholder enquanto a promessa resolve — nunca trava o frame. |
-| `game/js/meta.js` | `drawFruit()` → maçã; `drawFruitMini()` → jardim cinza→cor com as 13 flores visíveis juntas; manter `updateTree`, `treeClick`, `drawNodeTip`, `treeNodePosition`, EVOLUIR/FECHAR e acessibilidade (`reduced()`). | `fruitGardenGrowth()` mede níveis comprados por fruto; detalhe lateral sem escurecer/cobrir as flores. Validar fonte grande. |
+| `game/js/assets.js` | `MANIFEST` mantém **apenas as maçãs** no boot (sem correntes desde 2026-09-29); os santuários continuam FORA do `MANIFEST` (~5,1 MB), carregados por `loadSantuario(map)` com `LOAD_CFG.attempts`, promessa cacheada por mapa e retry; `ASSET_V = "20260929-sem-correntes"`. | `loadImage` nunca pendura. O render desenha placeholder enquanto a promessa resolve — nunca trava o frame. |
+| `game/js/meta.js` | `drawFruit()` → maçã (cinza no bloqueio, branca na Pálida) **sem nenhum cadeado**; `drawSanctuarySeal()` → só o painel de aviso da Pálida; `drawFruitMini()` → jardim cinza→cor com as 13 flores visíveis juntas; manter `updateTree`, `treeClick`, `drawNodeTip`, `treeNodePosition`, EVOLUIR/FECHAR e acessibilidade (`reduced()`). | `fruitGardenGrowth()` mede níveis comprados por fruto; detalhe lateral sem escurecer/cobrir as flores. Validar fonte grande. |
 | `game/js/color_restore.js` | Canvas reutilizável que transforma acromático→cor original quando muda a saturação; pixel data preservado a 100%. | Sem `Canvas.filter`, alocação por frame ou dependência de runtime. |
 | `game/js/tree_layout.js` | `SANTUARIO_SLOTS` (13 posições em 960×540) + `fruitFlowerPos(fi, ni)`, novas e legadas juntas. **Não** alterar `FRUIT_SLOTS`, `fruitCenter`, `TREE_FRUITS` nem os IDs. | `treemap.mjs` verifica separação mínima dos 13 alvos. |
 | `game/js/config.js` | Nada de custos/IDs/nós. Se quiser metadado visual, adicionar campo **novo** (ex.: `META_STAGES[i].santuario = "santuario_planicie"`). | `tree-progression.mjs` e `fruit-powers.mjs` protegem preços, gates e os 70 poderes — qualquer mudança de valor derruba os dois. |
@@ -236,7 +243,8 @@ Capturas ficam em `/tmp/fumiga-inspect/*.png` — **abra com `read_file`** (Regr
 - [x] Jardim cinza a 0%, recupera a cor do fruto conforme os níveis comprados (PC + mobile).
 - [x] Flores sem cadeados, placas ou aros; painel lateral não escurece nem cobre as pétalas.
 - [x] Comprar/Evoluir preserva custos, efeitos e saves antigos.
-- [x] Cadeado do fruto bloqueado e `correntes_tranca` da Pálida; sem cadeados sobre as flores.
+- [x] Sem correntes/cadeados em tela nenhuma (fruto bloqueado, fruto futuro e santuário da Pálida);
+      os 3 PNGs foram apagados do repositório e do boot (2026-09-29).
 - [x] `santuario_*` carregado sob demanda, fora do boot; `ASSET_V` atualizado.
 - [x] `npm test`, `npm run inspect`, `inspect:tree`, `inspect:layout` e `node game/test/mobile.mjs` verdes.
 - [x] Capturas mostradas ao usuário e preview no ar.
@@ -262,3 +270,6 @@ Capturas ficam em `/tmp/fumiga-inspect/*.png` — **abra com `read_file`** (Regr
    hitbox continua invisível e funcional.
 9. As 10 flores novas e 3 legadas ficam juntas, sem abas. O detalhe selecionado fica à direita,
    sem escurecer o jardim ou cobrir as flores.
+10. **Excluir todas as correntes/cadeados da Árvore (2026-09-29):** copa + santuário da Pálida,
+    assets **apagados** (não é arquivo morto), bloqueio comunicado como já era (maçã acinzentada +
+    rótulo + painel de pré-requisito) e o aviso textual da Pálida preservado.

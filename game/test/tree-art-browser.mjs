@@ -116,11 +116,11 @@ try {
           const sealed = await page.evaluate(async () => ({
             flowers: (await M("ui.js")).uiButtons().filter(b => b.id.startsWith("fruitNode_")).length,
             pos: (await M("meta.js")).treeNodePosition("v_a1"),
-            lockLoaded: !!(await M("assets.js")).IMG.correntes_tranca,
+            lockArt: Object.keys((await M("assets.js")).IMG).filter(k => k.startsWith("correntes")),
           }));
           assert.equal(sealed.flowers, 0, "Santuário da Pálida não expõe flores");
           assert.equal(sealed.pos, null, "poder futuro sem coordenada comprável");
-          assert(sealed.lockLoaded, "tranca visual carregada");
+          assert.deepEqual(sealed.lockArt, [], "sem correntes/cadeados na Árvore");
           await audit("Pálida selada " + big);
         }
         await click("treeMiniBack");
