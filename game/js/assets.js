@@ -14,11 +14,10 @@ const MANIFEST = {
   maca_outono: "ui/maca_outono.png",
   maca_gelo: "ui/maca_gelo.png",
   maca_palida: "ui/maca_palida.png",
-  // Correntes e cadeados: selo de fruto bloqueado (o Deserto tem variante
-  // do bioma) e a tranca com três cadeados, selo do fruto 7 (Pálida, futuro).
-  correntes_cadeados: "ui/correntes_cadeados.png",
-  correntes_deserto: "ui/correntes_deserto.png",
-  correntes_tranca: "ui/correntes_tranca.png",
+  // Sem correntes/cadeados: a Árvore não desenha mais cadeado sobre o fruto
+  // bloqueado nem tranca sobre a Pálida (decisão do usuário, 2026-09-29) — os
+  // três PNGs saíram do repositório e do boot. O estado bloqueado se lê pela
+  // maçã acinzentada + rótulo/painel, sem símbolo sobre a arte.
   // Os santuario_<mundo>.png (960×540, ~5,1 MB) NÃO entram aqui: loadSantuario()
   // os carrega sob demanda ao abrir o fruto, com retry e cache por bioma.
   // névoa — manto de fog branca dos inimigos (spritesheet 6x48x48)
@@ -175,7 +174,7 @@ const WROT = {};         // silhuetas brancas rotacionadas (hit flash)
 // ANTIGA nos mesmos nomes de arquivo (foi assim que o rework dos inimigos da
 // Fase 2 "não apareceu" para quem já tinha jogado antes dele).
 // ---------------------------------------------------------------------------
-export const ASSET_V = "20260928-santuarios-flores";
+export const ASSET_V = "20260929-sem-correntes";
 
 /**
  * URL final de um asset do jogo: base certa para a página atual + anti-cache.
