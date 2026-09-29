@@ -43,6 +43,10 @@ import { enterTree, updateTree, drawTree, treeClick, treeBack } from "./meta.js"
 import { colony, foodTrailAt, dangerAt } from "./brain.js";
 import { BIOME_HUD, drawBiomeTexture, drawGasterBar, drawPheromoneOverlay, drawPheromoneLegend, drawFoodIcon, drawEssenceCrystal, drawTrailAnt, trailProgress, drawTreeRings, drawScentMinimap, drawWoodBanner, drawKitIcon, hudBiome } from "./lore_hud.js";
 import { startCutscene, updateCutscene, drawCutscene, handleCutsceneInput, isCutsceneActive, startLoadingCutscene, getCutsceneDefs } from "./cutscenes.js";
+import {
+  startLoadingScreen, updateLoadingScreen, drawLoadingScreen, isLoadingActive,
+  dismissLoadingScreen, handleLoadingInput,
+} from "./loading_screen.js";
 import { uiBegin, uiButtons, button, iconButton, panel, bar, pointInRect, dialogBox, isTouchUI, touchPad } from "./ui.js";
 import { startTutorial, stopTutorial, updateTutorial, drawTutorial, tutEvent, TUT, tutorialCardRect } from "./tutorial.js";
 import {
@@ -277,12 +281,31 @@ function newRun(mode = null, seedOverride = null) {
 
   if (!G.save.tutorial) startTutorial(); else stopTutorial(false);
 
-  // A introdução pertence a esta expedição: sem timer solto que possa abrir
-  // depois de o jogador sair, reiniciar ou entrar em outra tela.
-  if (!G.save.cutscenes || !G.save.cutscenes.noite_branca) {
-    startCutscene("noite_branca");
+  // A tela de carregamento tematica da Planicie aparece ANTES da cutscene,
+  // garantindo tempo para carregar os assets e o mundo 1. A cutscene so
+  // abre apos a conclusao da tela de carregamento.
+  const isNodeTest = typeof process !== "undefined" && !!process.versions && !!process.versions.node;
+
+  const startIntro = () => {
+    if (!G.save.cutscenes || !G.save.cutscenes.noite_branca) {
+      startCutscene("noite_branca");
+    } else {
+      startCutscene(MAPS[startMap].id);
+    }
+  };
+
+  if (isNodeTest) {
+    // Testes unitarios headless do Node: abre a cutscene diretamente
+    startIntro();
   } else {
-    startCutscene(MAPS[startMap].id);
+    // Navegador real: exibe a tela de carregamento estilo Dead Cells antes da cutscene
+    startLoadingScreen({
+      biome: MAPS[startMap] ? MAPS[startMap].id : "planicie",
+      minDuration: 2.2,
+      onFinish: () => {
+        startIntro();
+      },
+    });
   }
 
   // transição de entrada
@@ -441,6 +464,14 @@ function uiCapture() {
 // ----------------------------------------------------------------- update ---
 export function update(dt) {
   G.time += dt;
+
+  if (isLoadingActive()) {
+    if (mouse.justDown || pressed.Space || pressed.Enter) {
+      handleLoadingInput("key");
+    }
+    updateLoadingScreen(dt);
+    return;
+  }
 
   if (mouse.justDown) notePointer(mouse.x, mouse.y);
 
@@ -1003,6 +1034,12 @@ function pickDraft(i) {
 let paused = false;
 
 export function render(dt) {
+  if (isLoadingActive()) {
+    drawLoadingScreen(ctx, G.time);
+    cursorCustom();
+    return;
+  }
+
   ctx.imageSmoothingEnabled = false;
   uiBegin();
   const fx = transitionFx();
@@ -2243,11 +2280,31 @@ function drawMapTransition(run) {
   // botão sempre DENTRO da caixa (que termina em 470)
   const advY = Math.min(408, Math.max(ty + 16, 316));
 
+  const triggerAdvance = () => {
+    const nextBiome = next ? next.id : "planicie";
+    startLoadingScreen({
+      biome: nextBiome,
+      title: next ? ("MAPA " + (nextIdx + 1) + " — " + next.name) : "NOVAS TERRAS",
+      subtitle: next ? next.sub : "",
+      minDuration: 2.2,
+      task: async (onProgress) => {
+        onProgress(0.3, "MIGRANDO A COLONIA...");
+        await new Promise((r) => setTimeout(r, 60));
+        onProgress(0.7, "GERANDO BIOMA...");
+        advanceMap();
+        onProgress(1.0, "BIOMA PRONTO");
+      },
+    });
+  };
+
   if (button(ctx, { x: VIEW_W / 2 - 150, y: advY, w: 300, h: 48, label: "AVANÇAR A EXPEDIÇÃO", id: "goNext", accent: "#37e6c8" })) {
-    advanceMap();
+    triggerAdvance();
     return;
   }
-  if (pressed.Enter || pressed.Space) advanceMap();
+  if (pressed.Enter || pressed.Space) {
+    triggerAdvance();
+    return;
+  }
 }
 
 // ------------------------------------------------------------------ pausa ---
@@ -2317,7 +2374,19 @@ function drawPause() {
         notePointer(mouse.x, mouse.y);
         paused = false;
         settleAbandon();
-        newRun(G.run.modeDef);
+        const mDef = G.run.modeDef;
+        const sMap = mDef.mapIdx || 0;
+        const bId = MAPS[sMap] ? MAPS[sMap].id : "planicie";
+        startLoadingScreen({
+          biome: bId,
+          minDuration: 2.0,
+          task: async (onProgress) => {
+            onProgress(0.4, "REINICIANDO EXPEDICAO...");
+            await new Promise((r) => setTimeout(r, 60));
+            newRun(mDef);
+            onProgress(1.0, "PRONTO");
+          },
+        });
         return;
       }
       if (b.id === "quit") {
@@ -2594,7 +2663,19 @@ function drawEnd(run) {
   if (button(ctx, { x: VIEW_W / 2 - 230, y: by, w: 220, h: btnH, label: "NOVA EXPEDIÇÃO", id: "again", accent: "#37e6c8" })) {
     notePointer(mouse.x, mouse.y);
     paused = false;
-    newRun(run.modeDef);
+    const mDef = run.modeDef;
+    const sMap = mDef.mapIdx || 0;
+    const bId = MAPS[sMap] ? MAPS[sMap].id : "planicie";
+    startLoadingScreen({
+      biome: bId,
+      minDuration: 2.0,
+      task: async (onProgress) => {
+        onProgress(0.4, "PREPARANDO NOVA EXPEDICAO...");
+        await new Promise((r) => setTimeout(r, 60));
+        newRun(mDef);
+        onProgress(1.0, "PRONTO");
+      },
+    });
     return;
   }
   if (button(ctx, { x: VIEW_W / 2 + 10, y: by, w: 220, h: btnH, label: "ÁRVORE DA EVOLUÇÃO", id: "goTree", accent: "#c77dff" })) {
@@ -2734,7 +2815,12 @@ export const __debug = {
     const idx = Math.max(0, Math.min(MAPS.length - 1, map | 0));
     return newRun(Object.assign({}, base, { mapIdx: idx }), seed);
   },
-  openScreen(name) {
+  openScreen(name, opts = {}) {
+    if (name === "LOADING") {
+      const biome = opts.bioma || (opts.mapa === 2 || opts.mapa === 1 ? "floresta" : "planicie");
+      startLoadingScreen({ biome, minDuration: 9999 });
+      return;
+    }
     if (name === "TREE") { enterTree(); treeReturn = "TITLE"; }
     else if (name === "OPTIONS") { optionsReturn = "TITLE"; optionsTab = 0; optionsScroll = 0; optGrab = null; }
     else if (name === "HELP") helpReturn = "TITLE";

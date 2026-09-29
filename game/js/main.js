@@ -11,6 +11,7 @@ import { endTick } from "./input.js";
 import { boot, update, render, setLastDt } from "./game.js";
 import { loadLoreHUD } from "./lore_hud.js";
 import { bakeBossSheets } from "./render.js";
+import { preloadLoadingScreens } from "./loading_screen.js";
 
 const canvas = document.getElementById("game");
 const ctx = canvas.getContext("2d");
@@ -208,6 +209,7 @@ async function bootAll() {
   boot();
   ready = true;
   G.screen = "PRETITLE";
+  preloadLoadingScreens();
   if (DEBUG_URL) await installDebugMode();
 }
 
