@@ -34,7 +34,7 @@ import { counts as particleCount } from "./particles.js";
 import { director } from "./waves.js";
 import { world } from "./world.js";
 
-const SCREENS = ["PRETITLE", "TITLE", "MODE", "TREE", "OPTIONS", "HELP", "PROPHECY", "MEMORY", "RUN", "NINHO"];
+const SCREENS = ["PRETITLE", "TITLE", "MODE", "TREE", "OPTIONS", "HELP", "PROPHECY", "MEMORY", "RUN", "NINHO", "LOADING"];
 
 // --------------------------------------------------------------- medições ---
 const fps = { frames: 0, acc: 0, value: 0, worst: 0, worstAcc: 0, workMs: 0, workAcc: 0 };
@@ -54,6 +54,7 @@ function readParams() {
     invencivel: has("invencivel"),
     essencia: p.has("essencia") ? Math.max(0, num(p.get("essencia"), 0)) : null,
     velocidade: p.has("velocidade") ? num(p.get("velocidade"), 1) : null,
+    bioma: p.get("bioma") || (p.get("mapa") === "2" ? "floresta" : null),
     cutscene: has("cutscene"),
     limpo: has("limpo"),
     hud: p.get("hud") !== "0",
@@ -76,7 +77,7 @@ function go(tela, opts = {}) {
     return G.screen;
   }
   if (!SCREENS.includes(tela)) throw new Error("tela desconhecida: " + tela + " (use " + SCREENS.join(", ") + ")");
-  __debug.openScreen(tela);
+  __debug.openScreen(tela, opts);
   return G.screen;
 }
 
@@ -252,7 +253,7 @@ export function installDebug() {
   };
 
   if (opt.tela) {
-    try { go(opt.tela, { mapa: opt.mapa, modo: opt.modo, seed: opt.seed }); }
+    try { go(opt.tela, { mapa: opt.mapa, modo: opt.modo, seed: opt.seed, bioma: opt.bioma }); }
     catch (e) { errors.push(String(e.message)); console.warn("[debug]", e.message); }
   }
   console.info("[FUMIGA debug] ativo — save isolado \"_debug\". Digite FUMIGA.ajuda()");

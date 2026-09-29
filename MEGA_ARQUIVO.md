@@ -3193,3 +3193,38 @@ Escolhas (ask_user): itens 1–7, cutscenes intactas, merge só com CI verde.
 - CI pronto em `tools/ci/testes.yml`: o push de `.github/workflows/` foi recusado porque o app
   do agente não tem a permissão `workflows`, e quem ativa é o dono. Mapa operacional em `AGENTS.md`.
 
+## Registro — Tela de Carregamento Temática estilo Dead Cells (2026-09-29)
+
+Pedido: Adicionar uma tela de carregamento temática estilo Dead Cells ao jogo, para locais com carregamento de assets ou mecânicas pesadas de uma vez, adicionando uma tela por vez com validação e salvando a imagem escolhida no workspace para preservação.
+Escolha do usuário: Primeira tela focada na transição de bioma (Degrau 1: Planície do Amanhecer).
+
+- Arte tematica aprovada: Gerada com `offer_options` e selecionada pelo usuário (opção 2 de 2). Salva no workspace em `game/assets/loading/loading_planicie_raw.png` (resolução original bruta 3168×1344) e versão otimizada nítida em `game/assets/loading/loading_planicie.png` (806 KB, 1280×544 pixel-crisp).
+- Módulo `game/js/loading_screen.js`:
+  - Carregamento sob demanda com cache assíncrono idempotente e retry resiliente (`loadLoadingImage`).
+  - Pré-carregamento antecipado em background (`preloadLoadingScreens`) iniciado logo no boot (`main.js`), garantindo que a arte já esteja em cache na memória quando a tela for acionada.
+  - Sincronização estrita de carregamento: a tela aguarda a imagem estar 100% carregada antes de declarar prontidão ou permitir avanço (`imageLoaded`), eliminando qualquer engasgo visual.
+  - Design Dead Cells: iluminação volumétrica, névoa e esporos flutuantes com variação de cor/pulso, vinheta radial profunda, placa superior ornamentada com losangos ciano/âmbar, caixa inferior translúcida com citações de lore e dicas de sobrevivência, e barra com gradiente ciano-ametista e runa bioluminescente giratória.
+  - Suporte a tarefas pesadas assíncronas com indicador de progresso, tempo mínimo para leitura e avanço via tecla (Espaço/Enter) ou toque no mobile.
+- Integrações no jogo (`game/js/game.js` e `game/js/debug.js`):
+  - Ordem de abertura revisada conforme validação: a tela de carregamento da Planície agora abre ANTES da cutscene (`newRun`), proporcionando o tempo necessário para carregar o Mundo 1 e os assets pesados; ao concluir, transiciona naturalmente para a cutscene (Noite Branca / Degrau 1).
+  - Integração no avanço de biomas (`drawMapTransition` -> `advanceMap`), reinício de expedição no menu de pausa e pós-partida, e cena debug dedicada (`?debug&tela=LOADING`).
+- Validação (Regras 3, 4, 9):
+  - 25 de 25 testes passaram na bateria completa (`npm test`), incluindo `mobile.mjs`, `assets.mjs` e `layout.mjs`.
+  - Inspeção Playwright em Chromium headless (PC 1280×720 e Mobile 844×390): 60 FPS, 0 erros no console, 0 requisições 404, acentuação revisada sem glifos faltantes.
+
+## Registro — Tela de Carregamento Mundo 2: Floresta de Musgo (2026-09-29)
+
+Pedido: Criação da tela de carregamento temática estilo Dead Cells para o Mundo 2 (Floresta de Musgo / Degrau II), com a silhueta imponente do boss (a Caçadora Astuta / Raposa) ao fundo, pixel art refinado e limpo sem textos/barras falsas inseridos na imagem.
+
+- Arte tematica aprovada: Gerada com `offer_options` e selecionada pelo usuário (opção 1 de 2). Silhueta monumental da Caçadora Astuta espreitando entre as árvores antigas com olhos âmbar brilhando na névoa esmeralda, raízes cobertas de musgo e formigas em marcha.
+  - Salva permanentemente no workspace em `game/assets/loading/loading_floresta_raw.png` (resolução original bruta 1408×768) e versão otimizada em `game/assets/loading/loading_floresta.png` (1.7 MB, 1280×698 pixel-crisp).
+- Atualizações em `game/js/loading_screen.js`:
+  - Entrada tematica completa para `floresta` em `BIOME_LORE`: acento esmeralda `#7fd6a0`, subtítulo, citações de lore poético e dicas práticas sobre tecelãs, seda e a caçadora.
+  - Pré-carregamento estendido para incluir `floresta` em background (`preloadLoadingScreens(["planicie", "floresta"])`).
+- Atualizações em `game/js/debug.js` e `game/js/game.js`:
+  - Suporte a seleção de bioma via URL debug: `?debug&tela=LOADING&bioma=floresta` ou `&mapa=2`.
+- Validação (Regras 3, 4, 9):
+  - 25 de 25 testes headless aprovados no `npm test`.
+  - Inspeção visual Playwright em PC (1280×720) e Mobile (844×390): 60 FPS, sem erros no console, sem requisições 404, layout de texto impecável.
+
+
