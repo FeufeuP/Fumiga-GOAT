@@ -44,6 +44,10 @@ FLORES_VARIACOES = {
 # antes da 1ª compra; originais "<mundo>_<flor>_0_morto.png").
 FLORES_ESTAGIOS = ["1_broto", "2_meio", "3_flor", "0_morto"]
 FLORES_ALTURAS = [0.74, 0.85, 0.95, 0.80]
+# Espécies luminescentes cujo original traz um halo de brilho (gradiente escuro
+# azulado/violeta) sobre o fundo: a inundação também apaga esse halo quando ele
+# está ligado ao fundo. Opt-in por slug para não corroer flores escuras legítimas.
+FLORES_HALO = {"lanterna"}
 
 
 def key_background(image, tolerance=5):
@@ -131,6 +135,7 @@ def clean_flower_bg(image, flor, est):
 
     tol2 = 25 * 25
     is_botao3 = (flor == "botao" and est == "3_flor")
+    has_halo = flor in FLORES_HALO
     seen = bytearray(w * h)
     q = collections.deque()
     for x in range(w):
@@ -150,6 +155,10 @@ def clean_flower_bg(image, flor, est):
         if not match and is_botao3:
             if b > g + 12 and r > g + 5 and max(r, g, b) <= 118 and (r + g + b) > 52:
                 match = True
+        if not match and has_halo:
+            # Halo: escuro, azulado/violeta (nunca verde-dominante) e pouco saturado.
+            if max(r, g, b) < 96 and b >= g and (b - g) < 64:
+                match = True
         if match:
             px[x, y] = (0, 0, 0, 0)
             for dx, dy in ((1, 0), (-1, 0), (0, 1), (0, -1)):
@@ -165,6 +174,8 @@ def clean_flower_bg(image, flor, est):
                 dr = r - br; dg = g - bg_g; db = b - bb
                 if dr * dr + dg * dg + db * db <= pocket_tol2:
                     px[x, y] = (0, 0, 0, 0)
+                elif has_halo and max(r, g, b) < 96 and b >= g and (b - g) < 64:
+                    px[x, y] = (0, 0, 0, 0)  # bolsão de halo preso entre caule e bulbos
     return image
 
 
