@@ -183,6 +183,22 @@ Ao final de cada tarefa, apresentar um **checklist de conferência** com este fo
   tamanho/SHA-256 no MEGA ARQUIVO; validar com `node game/test/docs.mjs`.
 - A atualização documental faz parte da entrega, não fica para uma sessão futura.
 
+## Regra 13 — Salvar as imagens selecionadas no Arena 💾
+
+> **Toda imagem selecionada/aprovada pelo usuário deve permanecer salva no workspace do Arena, para nunca ser perdida.**
+
+- Os originais de alta resolução (ex.: `art-source/flores/`) continuam **fora do Git** por decisão do
+  projeto (`.gitignore`), mas devem **sempre** existir no workspace persistente do Arena.
+- Além da pasta de trabalho, manter um **espelho de segurança** em `~/art-source-backup/`
+  (fora do repositório, dentro do workspace do Arena), sincronizado a cada nova arte aprovada.
+- Vale para todo asset gerado: sprites, prévias e mockups — incluindo as versões que o usuário
+  escolheu entre as opções (Regra 6) e as artes refeitas depois de ajustes.
+- Motivo: o ambiente onde a arte é gerada pode não ser o mesmo de uma sessão futura; sem o arquivo
+  original, qualquer ajuste posterior exigiria refazer a arte do zero (como ocorreu com os
+  originais do Santuário da Planície).
+
+---
+
 ## 🔄 Resumo do fluxo obrigatório a cada pedido
 
 ```text
@@ -197,6 +213,7 @@ Ao final de cada tarefa, apresentar um **checklist de conferência** com este fo
 9. PREVIEW    → abrir o jogo no preview ao vivo (Regra 7)
 10. DOCUMENTAR → atualizar MEGA_ARQUIVO com mudanças, verificações e pendências (Regra 12)
 11. SALVAR    → “salvar no GitHub” = CREATE PR + MERGE PR juntos (Regra 11)
+12. PRESERVAR → imagens selecionadas sempre salvas no workspace do Arena + espelho de segurança (Regra 13)
 ```
 
 > Estas regras valem para **qualquer** alteração: features, correções, balanceamento,

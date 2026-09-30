@@ -39,6 +39,7 @@ OUT_DIR = ROOT / "game" / "assets" / "ui"
 MUNDOS = ["planicie", "floresta", "pantano", "deserto", "outono", "gelo", "palida"]
 FLORES_VARIACOES = {
     "planicie": ["margarida", "botao", "trevo"],
+    "floresta": ["sino", "cogumelo", "espiral"],
 }
 # Colunas da folha: broto, meio aberto, florescida e broto MORTO (visto em cinza
 # antes da 1ª compra; originais "<mundo>_<flor>_0_morto.png").

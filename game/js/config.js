@@ -580,9 +580,9 @@ export const FRUIT_TREES = [
     { id: "f_p_3", name: "Orvalho Coletado", desc: "PLANÍCIE: +10% comida coletada na Planície (bioma)", cost: [50, 75, 100], requires: ["f_p_2"], fruit: "fruit_planicie", map: "planicie", br: "C", tier: 1, icon: "food" },
   ]},
   { id: "fruit_floresta", map: "floresta", name: "SEDA DA CAÇADORA", color: "#6db7ff", nodes: [
-    { id: "f_f_1", name: "Faro Aguçado", desc: "FLORESTA: +12% alcance de visão das batedoras", cost: [30], requires: [], fruit: "fruit_floresta", map: "floresta", br: "G", tier: 0, icon: "sk_slash" },
-    { id: "f_f_2", name: "Seda Invisível", desc: "FLORESTA: Tecelã +20% velocidade (mecânica única)", cost: [45], requires: ["f_f_1"], fruit: "fruit_floresta", map: "floresta", br: "H", tier: 0, icon: "spider" },
-    { id: "f_f_3", name: "Musgo Cura", desc: "FLORESTA: Matabele cura +10% (Kurandeira)", cost: [60], requires: ["f_f_2"], fruit: "fruit_floresta", map: "floresta", br: "H", tier: 1, icon: "heal" },
+    { id: "f_f_1", name: "Faro Aguçado", desc: "FLORESTA: +12% alcance de visão das batedoras", cost: [35, 50, 75], requires: [], fruit: "fruit_floresta", map: "floresta", br: "G", tier: 0, icon: "sk_slash" },
+    { id: "f_f_2", name: "Seda Invisível", desc: "FLORESTA: Tecelã +20% velocidade (mecânica única)", cost: [50, 75, 105], requires: ["f_f_1"], fruit: "fruit_floresta", map: "floresta", br: "H", tier: 0, icon: "spider" },
+    { id: "f_f_3", name: "Musgo Cura", desc: "FLORESTA: Matabele cura +10% (Kurandeira)", cost: [70, 100, 140], requires: ["f_f_2"], fruit: "fruit_floresta", map: "floresta", br: "H", tier: 1, icon: "heal" },
   ]},
   { id: "fruit_pantano", map: "pantano", name: "BRUMA DA SOMBRA", color: "#37e6c8", nodes: [
     { id: "f_pa_1", name: "Asas de Névoa", desc: "PÂNTANO: Prata +15% velocidade (arrancada)", cost: [35], requires: [], fruit: "fruit_pantano", map: "pantano", br: "C", tier: 0, icon: "bolt" },

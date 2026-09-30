@@ -103,7 +103,7 @@ for(const f of FRUIT_TREES) {
     assert.equal(unlockFruitForBoss(f.map,f.boss,'campanha'),false,'não duplica recompensa');
     assert.equal(metaBuy(f.newNodes[9].id),false,'ápice exige três caminhos');
     for(const n of f.newNodes){
-      assert.equal(n.cost.length, f.map === 'planicie' ? 3 : 1);
+      assert.equal(n.cost.length, ['planicie', 'floresta'].includes(f.map) ? 3 : 1);
       for(let lv = 0; lv < n.cost.length; lv++) {
         const before = G.save.essence;
         assert.equal(metaBuy(n.id), true);

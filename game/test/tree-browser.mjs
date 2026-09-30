@@ -130,6 +130,38 @@ try {
           await click('treeClose');
           await page.screenshot({path:out+'/'+(mobile?'mobile':'pc')+'-santuario-estagios.png'});
         }
+        if(map==='floresta'){
+          // Folha flores_floresta.png (boot): 3 variações x 4 estágios, cinza sem compras.
+          await page.waitForFunction(()=>performance.getEntriesByType('resource').some(e=>e.name.includes('flores_floresta.png')),'floresta');
+          const info=await page.evaluate(async () => {
+            const { flowerVariant, flowerStage } = await M('meta.js');
+            const { FRUIT_TREES } = await M('config.js');
+            const f = FRUIT_TREES.find(x => x.map === 'floresta');
+            const variants = new Set(f.nodes.map((n, i) => flowerVariant({ ...n, _nodeIdx: i })));
+            const growth = (await M('meta.js')).fruitGardenGrowth('floresta');
+            return { variants: [...variants].sort(), morto: flowerStage(0, 3), niveis: f.nodes.map(n => n.cost.length), levels: growth.levels };
+          });
+          assert.deepEqual(info.variants, [0, 1, 2], '3 variações temáticas na Floresta');
+          assert.deepEqual(info.morto, { stage: 3, gray: true, name: 'BROTO MORTO' }, '0 compras = broto morto cinza');
+          assert.ok(info.niveis.every(l => l === 3), 'as 13 melhorias da Floresta têm 3 níveis de compra');
+          assert.equal(info.levels, 0, 'jardim da Floresta começa sem compras (só mortos)');
+          await page.screenshot({path:out+'/'+(mobile?'mobile':'pc')+'-santuario-floresta-mortos.png'});
+          // Sem compras: só brotos mortos em cinza. Comprando: broto, meio e florescida.
+          await page.evaluate(async()=>{const {G}=await M('state.js');G.save.clearedMaps.floresta=true;G.save.essence=9999;});
+          const id0=cards[0].id.slice('fruitNode_'.length),id1=cards[1].id.slice('fruitNode_'.length),id2=cards[2].id.slice('fruitNode_'.length);
+          await click(cards[0].id); await click('treeBuy'); await click('treeBuy'); await click('treeBuy');
+          assert.equal(await page.evaluate(id=>FUMIGA.G.save.nodes[id],id0),3,'flor 1 florescida após 3 compras');
+          await click('treeClose');
+          await click(cards[1].id); await click('treeBuy'); await click('treeBuy');
+          assert.equal(await page.evaluate(id=>FUMIGA.G.save.nodes[id],id1),2,'flor 2 meio aberta após 2 compras');
+          await click('treeClose');
+          await click(cards[2].id); await click('treeBuy');
+          assert.equal(await page.evaluate(id=>FUMIGA.G.save.nodes[id],id2),1,'flor 3 em broto após 1 compra');
+          await click('treeClose');
+          const grown=await page.evaluate(async()=>(await M('meta.js')).fruitGardenGrowth('floresta'));
+          assert.equal(grown.levels,6,'seis níveis comprados contam no jardim da Floresta');
+          await page.screenshot({path:out+'/'+(mobile?'mobile':'pc')+'-santuario-floresta-estagios.png'});
+        }
       }
       await click('treeMiniBack');
     }

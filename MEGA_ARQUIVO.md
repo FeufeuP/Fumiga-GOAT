@@ -84,6 +84,104 @@ São exatamente os dois passos do job `navegador` do workflow mais o job `headle
   Planície, níveis 2–3 sem poder próprio, 4 PNGs `loading_*_raw.png` órfãos e `KeyB`/`KeyG` lidos
   depois dos `return` de draft/transição/pausa.
 
+## MANUAL — Fábrica de flores dos Santuários (método aprovado, 2026-09-30, v2)
+
+**Para chats novos: leia esta seção + [`DOCUMENTO_FLORES_DOS_SANTUARIOS.md`](DOCUMENTO_FLORES_DOS_SANTUARIOS.md)
++ [`REGRAS_DE_TRABALHO.md`](REGRAS_DE_TRABALHO.md) antes de gerar qualquer imagem de flor.**
+Este manual é o estilo de trabalho **oficial**, aprovado pelo usuário na entrega da Floresta
+(abaixo) — **substitui** a cadência anterior de "uma variação por vez": agora a cadência é
+**9 sprites vivos → ⛔ → 3 brotos mortos → ⛔ → integração**.
+
+### Regras invioláveis
+
+1. Cada santuário: **exatamente 3 espécies** com **4 estágios** cada = **12 sprites** (broto, meio aberto,
+   florescida, broto morto — ordem fixa das colunas: `1_broto, 2_meio, 3_flor, 0_morto`).
+2. **Cadência em duas levas com ⛔ confirmações explícitas:** Leva 1 (9 vivos numa rodada) → PARADA →
+   Leva 2 (3 mortos) → PARADA → só então código. Silêncio nunca é aprovação.
+3. **O broto morto deriva do broto vivo** (`1_broto`), nunca da flor adulta (rejeitada na Floresta).
+4. **Preços só entram no código com confirmação prévia** — propor 2 pacotes fechados (espelho da
+   Planície × premium do mundo) e deixar o usuário escolher.
+5. **Regra 13:** todo sprite selecionado fica salvo no Arena (`art-source/flores/`) **e** no espelho
+   `~/art-source-backup/flores/` — sincronizar a cada escolha/refação/normalização.
+
+### Passo a passo (resumo operacional)
+
+1. **Etapa 0:** pesquisar inspirações indie (Regra 2, citar links) → `ask_user` com as 3 espécies
+   (2 conjuntos prontos + personalizado), ordem das linhas, visual do morto e escopo → ⛔ PARADA 0.
+2. **Leva 1:** florescida de cada espécie com **2 opções** (máx. 3 gerações-com-opções por resposta) →
+   usuário escolhe → **derivar** meio aberto e broto de cada escolhida (sem novas opções) → prévia
+   lado a lado (layout 768×576 com coluna do morto pendente) + prévia 48 px (`present_file`) →
+   ⛔ **PARADA 1**.
+3. **Leva 2:** 3 mortos derivando dos `1_broto`, 2 opções cada → prévia de 12 células + **tira dos
+   mortos em cinza** → conferir fundos `#1d1127` (seção 4.1 do documento: inundação pelas bordas +
+   checagem de contornos com aborto) → ⛔ **PARADA 2**.
+4. **Etapa 3 (integração):** normalizar originais pendentes + espelho → `FLORES_VARIACOES` +
+   `prepare_fruit_art.py flores <mundo> game/assets/ui/flores_<mundo>.png` (768×576 RGBA) → conferir a
+   folha achatada → `ask_user` de preços (2 pacotes) → `MANIFEST` + `ASSET_V` (`assets.js`), custos
+   legados (`config.js`), `FLOWER_STEPS` (`fruit_skills.js`) → testes: `fruit-powers.mjs`,
+   `assets.mjs`, `tree-browser.mjs` (espelhar o bloco da Floresta) → `npm run test:quick`,
+   `npm test`, `node game/test/tree-browser.mjs` (PC e mobile, ler as capturas **sem compras = só
+   mortos cinza** e **com compras = estágios coloridos**) → docs (`MEGA_ARQUIVO.md`,
+   `game/assets/ui/README.md`, `PROXIMOS_PASSOS_DA_ARVORE.md`) + `node game/test/docs.mjs` →
+   preview `npm run serve` (Regra 7) → check-in (Regra 3).
+5. **Um santuário por entrega.** Seguem pendentes: Pântano, Deserto, Outono, Gelo, Pálida —
+   sugestões de tema na seção 7 do documento. Prontos: Planície (referência 1) e Floresta
+   (referência 2, seção 10b do documento, com as lições registradas).
+
+---
+
+## Entrega — Flores do Santuário da Floresta de Musgo (3 espécies × 4 estágios) (2026-09-30)
+
+**Status: implementado e verificado (PC e mobile).** Primeiro santuário criado seguindo o
+[`DOCUMENTO_FLORES_DOS_SANTUARIOS.md`](DOCUMENTO_FLORES_DOS_SANTUARIOS.md), com **cadência
+excepcional decidida pelo usuário**: as 3 variações foram geradas numa mesma rodada (substituindo,
+desta vez, a regra de uma variação por vez), os 3 brotos mortos numa rodada seguinte, e a integração
+na Etapa 4, após a aprovação dos 12 sprites. *(Atualização do mesmo dia, aprovada pelo usuário: essa
+cadência deixou de ser exceção e virou o **modelo oficial** — ver "MANUAL — Fábrica de flores" acima,
+que substitui a regra de uma variação por vez.)*
+
+### Decisões confirmadas (Etapa 0 — Regras 1 e 2)
+
+- **Inspiração (Regra 2):** a flora luminosa de Greenpath (*Hollow Knight*), a bioluminescência de
+  *Ori and the Blind Forest* e do bioma de cogumelos de *Terraria*, e os packs indie *Mystic Flora*
+  e *Pixel Crops & Plants* (itch.io) — flores brilhantes de floresta com estágios de crescimento.
+- **Espécies (Conjunto A — Dossel Encantado):** Sino-do-Dossel (azul `#7fd6ff`, linha 0),
+  Cogumelo-Flor Violeta (`#c26be0`, linha 1) e Espiral-de-Ouro (`#ffd479`, linha 2), bases com musgo
+  e samambaia; ordem frio→quente na folha. A florescida de cada espécie foi escolhida pelo usuário
+  entre 2 opções (Regra 6); meio aberto e broto derivam dela (mesma planta nos 4 estágios).
+- **Broto morto:** apodrecido com mofo, derivado do **broto vivo** (não da flor adulta — correção
+  pedida pelo usuário após a 1ª leva); caule torto, cabeça caída, sem orvalho nem brilho, legível
+  em cinza. Cada morto também escolhido entre 2 opções.
+- **Preços (opção B — Mundo 2 premium, ~+15%):** legadas `[35,50,75]`, `[50,75,105]`, `[70,100,140]`;
+  globais `[c0, c0+35, c0+70]` — confirmados pelo usuário antes de gravar no código.
+
+### Implementação
+
+- `game/assets/ui/flores_floresta.png`: **768×576 RGBA**, 188 KB, 12 células preenchidas, gerada por
+  `python3 tools/prepare_fruit_art.py flores floresta …` (espécies em `FLORES_VARIACOES`).
+- Integração (`Etapa 4` do documento): `flores_floresta` no `MANIFEST` e
+  `ASSET_V = "20260930-flores-floresta"` (`js/assets.js`); 3 níveis nas 3 legadas (`js/config.js`)
+  e nas 10 globais via `FLOWER_STEPS` (`js/fruit_skills.js` — o `map === 'planicie'` virou tabela
+  por mundo).
+- Testes: `fruit-powers.mjs` (3 níveis também na Floresta), `assets.mjs` (dimensões e RGBA das duas
+  folhas de flores), `tree-browser.mjs` (bloco Floresta: folha no boot, 3 variações, 13×3 níveis,
+  mortos em cinza sem compras, compras levando a broto/meio/florescida, jardim contando 6 níveis).
+- **Verificação:** `npm run test:quick` (22) e `npm test` (25) verdes; `node game/test/tree-browser.mjs`
+  verde em PC e mobile. Capturas lidas: `*-santuario-floresta-mortos.png` (só brotos mortos em cinza,
+  0/39 melhorias, cor 0%) e `*-santuario-floresta-estagios.png` (6/39, cor 15%, sino azul florescido,
+  espiral dourada meio aberta e botão de cogumelo coloridos).
+- **Originais preservados (Regra 13, nova):** 12 PNGs ≥1024² em `art-source/flores/floresta_*.png`
+  (fora do Git) + espelho `~/art-source-backup/flores/`. Fundos normalizados para `#1d1127` por
+  inundação a partir das bordas com verificação de contornos (na Espiral florescida, perda de 1,6%
+  do AA externo — aceita).
+- **Regra 13 nova:** imagens selecionadas sempre salvas no workspace do Arena (+ espelho de
+  segurança) — registrada em `REGRAS_DE_TRABALHO.md` e neste bloco espelhado;
+  `node game/test/docs.mjs` íntegro.
+- Sem commit/push nesta entrega (aguardando pedido de "salvar no GitHub", Regra 11).
+
+Próximos santuários na mesma régua: Pântano, Deserto, Outono, Gelo e Pálida (um por entrega,
+cada um com pesquisa, perguntas e confirmações próprias).
+
 ## Entrega — Documento de criação das flores dos próximos Santuários (2026-09-30)
 
 **Status: documento criado (sem mudança de código ou de arte).** Pedido do usuário: um documento que dite
@@ -1590,6 +1688,22 @@ Ao final de cada tarefa, apresentar um **checklist de conferência** com este fo
   tamanho/SHA-256 no MEGA ARQUIVO; validar com `node game/test/docs.mjs`.
 - A atualização documental faz parte da entrega, não fica para uma sessão futura.
 
+## Regra 13 — Salvar as imagens selecionadas no Arena 💾
+
+> **Toda imagem selecionada/aprovada pelo usuário deve permanecer salva no workspace do Arena, para nunca ser perdida.**
+
+- Os originais de alta resolução (ex.: `art-source/flores/`) continuam **fora do Git** por decisão do
+  projeto (`.gitignore`), mas devem **sempre** existir no workspace persistente do Arena.
+- Além da pasta de trabalho, manter um **espelho de segurança** em `~/art-source-backup/`
+  (fora do repositório, dentro do workspace do Arena), sincronizado a cada nova arte aprovada.
+- Vale para todo asset gerado: sprites, prévias e mockups — incluindo as versões que o usuário
+  escolheu entre as opções (Regra 6) e as artes refeitas depois de ajustes.
+- Motivo: o ambiente onde a arte é gerada pode não ser o mesmo de uma sessão futura; sem o arquivo
+  original, qualquer ajuste posterior exigiria refazer a arte do zero (como ocorreu com os
+  originais do Santuário da Planície).
+
+---
+
 ## 🔄 Resumo do fluxo obrigatório a cada pedido
 
 ```text
@@ -1604,6 +1718,7 @@ Ao final de cada tarefa, apresentar um **checklist de conferência** com este fo
 9. PREVIEW    → abrir o jogo no preview ao vivo (Regra 7)
 10. DOCUMENTAR → atualizar MEGA_ARQUIVO com mudanças, verificações e pendências (Regra 12)
 11. SALVAR    → “salvar no GitHub” = CREATE PR + MERGE PR juntos (Regra 11)
+12. PRESERVAR → imagens selecionadas sempre salvas no workspace do Arena + espelho de segurança (Regra 13)
 ```
 
 > Estas regras valem para **qualquer** alteração: features, correções, balanceamento,
@@ -3250,7 +3365,7 @@ parte dos blocos originais.
 
 | Arquivo original | Bytes preservados | SHA-256 |
 |---|---:|---|
-| `REGRAS_DE_TRABALHO.md` | 13591 | `fbdc8bb8384e97ac26f13bc889f350c9952de20c3d39dcf01c2241f4ea5bf303` |
+| `REGRAS_DE_TRABALHO.md` | 14687 | `3ac6e7446c74fbaf226af91d12c17e95325f69f14283f32d484fa1a613d687db` |
 | `LORE.md` | 15056 | `42075fe4334601f1a74834388c0155342b2a8a6c21e51afa6020e34a5260f493` |
 | `DOCUMENTO_MEGA_ATUALIZACAO_LORE_TOTAL.md` | 30473 | `c642dd06d14e527bba6566458afa5293f697b0a3b981ef6301f6fafdfb9e856e` |
 | `DOCUMENTO_DECISOES_MEGA_ATUALIZACAO.md` | 8179 | `2b05240cd9fef9fb33d8a08768164f60202437c886c1c5b83f250ee9cbb58637` |
