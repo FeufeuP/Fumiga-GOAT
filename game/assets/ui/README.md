@@ -112,3 +112,11 @@ reconstruído somente quando níveis mudam. A imagem aprovada volta integralment
   (originais em `art-source/flores/<mundo>_<flor>_<estagio>.png`, incluindo `*_0_morto.png`; célula sem
   original é copiada da folha atual) e assado uma única vez em `flowerSheet()` (`js/meta.js`) em células
   48×48 com contorno escuro de 1px.
+- **Flores do Santuário da Floresta (`flores_floresta.png`, 2026-09-30):** mesma folha 4×3
+  (**768×576 RGBA**, células de 192×192, ~188 KB) com as 3 espécies do bioma de musgo
+  (*Sino-do-Dossel* azul, linha 0; *Cogumelo-Flor Violeta*, linha 1; *Espiral-de-Ouro* dourada,
+  linha 2) nos mesmos 4 estágios da Planície — broto, meio aberto, florescida e broto morto
+  (apodrecido com mofo, exibido em cinza com 0 compras). Preparado por
+  `python3 tools/prepare_fruit_art.py flores floresta game/assets/ui/flores_floresta.png`;
+  originais em `art-source/flores/floresta_<especie>_<estagio>.png` (fora do Git) com espelho de
+  segurança em `~/art-source-backup/flores/` (Regra 13).

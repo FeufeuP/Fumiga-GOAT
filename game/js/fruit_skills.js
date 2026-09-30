@@ -1,5 +1,9 @@
 // 70 habilidades NOVAS. Os 18 nós anteriores são preservados como legado.
-// IDs estáveis e custos de nível único; três caminhos se unem em um ápice.
+// IDs estáveis e custos de nível único (exceto mundos com santuário de flores:
+// passos de preço por mundo em FLOWER_STEPS); três caminhos se unem em um ápice.
+// Santuários com folha de flores própria ganham 3 níveis de compra por nó.
+// Passos aprovados: planície +30/+60 (2026-09-29), floresta +35/+70 (2026-09-30).
+const FLOWER_STEPS = { planicie: [0, 30, 60], floresta: [0, 35, 70] };
 export const FRUIT_SKILLS = {
   planicie: [
     ['p1','Corrida do Amanhecer','Nos primeiros 20s da expedição, irmãs se movem 35% mais rápido.','bolt'],
@@ -88,9 +92,10 @@ export const FRUIT_SKILLS = {
 };
 export const NEW_FRUIT_NODES = Object.entries(FRUIT_SKILLS).flatMap(([map, rows], mi) => rows.map(([key,name,desc,icon], i) => {
   const c0 = 60 + mi*15 + Math.floor(i/3)*45 + (i===9?120:0);
+  const steps = FLOWER_STEPS[map];
   return {
     id:'v_'+key, key, name:name.toUpperCase(), desc:'GLOBAL: '+desc, map, fruit:'fruit_'+map,
-    cost: map === 'planicie' ? [c0, c0 + 30, c0 + 60] : [c0],
+    cost: steps ? steps.map(s => c0 + s) : [c0],
     requires:i<3?[]:(i===9?[6,7,8]:[i-3]).map(j=>'v_'+rows[j][0]),
     tier:i===9?2:i>=3?1:0, br:['G','C','H'][i%3], icon, global:true,
   };
