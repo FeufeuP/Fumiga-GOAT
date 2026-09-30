@@ -369,9 +369,12 @@ function drawNodeTip(ctx, n) {
   const { x, y, w, h } = detail;
   const chk = metaCanBuy(n.id), lvl = metaLevel(n.id), col = n._fruit?.color || META_BRANCHES[n.br].color;
   panel(ctx, x, y, w, h, { border: col });
+  const stageLabel = n._fruit && n.cost.length >= 3
+    ? " • " + (lvl === 0 ? "BROTO CINZA" : lvl === 1 ? "BROTO" : lvl < n.cost.length ? "MEIO ABERTO" : "FLORESCIDA")
+    : "";
   const blocks = [
     [n.name, col, .93],
-    [(n._fruit ? (n.global ? "GLOBAL • " : "LEGADO • ") : "GALHO " + n.stage + " • " + META_BRANCHES[n.br].name + " • ") + lvl + "/" + n.cost.length, PAL.textDim, .72],
+    [(n._fruit ? (n.global ? "GLOBAL • " : "LEGADO • ") : "GALHO " + n.stage + " • " + META_BRANCHES[n.br].name + " • ") + lvl + "/" + n.cost.length + stageLabel, PAL.textDim, .72],
     [n.desc, PAL.text, .80],
     [lvl < n.cost.length ? "CUSTO: " + n.cost[lvl] + " ESSÊNCIA" : "NÍVEL MÁXIMO", "#ffd479", .76],
   ];
@@ -483,8 +486,86 @@ function drawSanctuarySeal(ctx) {
   lines.forEach((line, i) => drawText(ctx, line, 480, 433 + i * Math.ceil(16 * .64 * fontScale()),
     { align: "center", scale: .64, color: "#eee5f3" }));
 }
+const FLOWER_CELL = 48;
+const FLOWER_SHEETS = new Map();
+
+export function flowerVariant(n) {
+  if (typeof n?._nodeIdx === "number") return n._nodeIdx % 3;
+  const m = /(\d+)$/.exec(n?.id || "");
+  return m ? (Number(m[1]) - 1) % 3 : 0;
+}
+
+export function flowerStage(level, max = 3) {
+  if (level <= 0) return { stage: 0, gray: true, name: "BROTO" };
+  if (level >= max) return { stage: 2, gray: false, name: "FLORESCIDA" };
+  if (level === 1) return { stage: 0, gray: false, name: "BROTO" };
+  return { stage: 1, gray: false, name: "BROTO MEIO ABERTO" };
+}
+
+function flowerSheet(key) {
+  let cached = FLOWER_SHEETS.get(key);
+  const src = IMG[key];
+  if (cached && cached.src === src) return cached;
+  if (!src || typeof document === "undefined" || !src.width) return null;
+  const w = FLOWER_CELL * 3, h = FLOWER_CELL * 3;
+  const color = document.createElement("canvas");
+  color.width = w; color.height = h;
+  const cc = color.getContext("2d", { willReadFrequently: true });
+  if (!cc) return null;
+  cc.imageSmoothingEnabled = true;
+  cc.drawImage(src, 0, 0, w, h);
+  const d = cc.getImageData(0, 0, w, h);
+  if (!d || d.data.length !== w * h * 4 || typeof cc.putImageData !== "function") {
+    cached = { src, color: src, gray: src, cell: Math.floor(src.width / 3) || FLOWER_CELL };
+    FLOWER_SHEETS.set(key, cached);
+    return cached;
+  }
+  const px = d.data;
+  for (let i = 0; i < px.length; i += 4) {
+    px[i + 3] = px[i + 3] >= 110 ? 255 : 0;
+  }
+  const copy = new Uint8ClampedArray(px);
+  for (let row = 0; row < 3; row++) {
+    for (let col = 0; col < 3; col++) {
+      const x0 = col * FLOWER_CELL, y0 = row * FLOWER_CELL;
+      for (let y = y0 + 1; y < y0 + FLOWER_CELL - 1; y++) {
+        for (let x = x0 + 1; x < x0 + FLOWER_CELL - 1; x++) {
+          const k = (y * w + x) * 4;
+          if (copy[k + 3]) continue;
+          if (copy[k - 4 + 3] || copy[k + 4 + 3] || copy[k - w * 4 + 3] || copy[k + w * 4 + 3]) {
+            px[k] = 18; px[k + 1] = 11; px[k + 2] = 24; px[k + 3] = 255;
+          }
+        }
+      }
+    }
+  }
+  cc.putImageData(d, 0, 0);
+  const gray = document.createElement("canvas");
+  gray.width = w; gray.height = h;
+  const gc = gray.getContext("2d");
+  for (let i = 0; i < px.length; i += 4) {
+    if (!px[i + 3]) continue;
+    const l = Math.round(px[i] * .2126 + px[i + 1] * .7152 + px[i + 2] * .0722);
+    px[i] = px[i + 1] = px[i + 2] = l;
+  }
+  gc.putImageData(d, 0, 0);
+  cached = { src, color, gray, cell: FLOWER_CELL };
+  FLOWER_SHEETS.set(key, cached);
+  return cached;
+}
+
 function drawFlowerArt(ctx, n, p, fruit, saturation) {
   const level = metaLevel(n.id), max = n.cost.length, full = level >= max;
+  const sheet = flowerSheet("flores_" + fruitAssetName(fruit));
+  if (sheet) {
+    const { stage, gray } = flowerStage(level, max);
+    const variant = flowerVariant(n);
+    const c = sheet.cell, img = gray ? sheet.gray : sheet.color;
+    ctx.imageSmoothingEnabled = false;
+    ctx.drawImage(img, stage * c, variant * c, c, c,
+      Math.round(p.x - FLOWER_CELL / 2), Math.round(p.y - FLOWER_CELL / 2 - 2), FLOWER_CELL, FLOWER_CELL);
+    return;
+  }
   const cx = p.x, cy = p.y - 3;
   ctx.fillStyle = gardenColor("#79a96b", saturation);
   ctx.fillRect(cx - 2, cy + 4, 4, 16);
@@ -530,7 +611,7 @@ function drawSanctuaryFlowers(ctx, fruit, list, saturation) {
   for (const n of list) {
     const p = fruitFlowerPos(fi, activeFruit.nodes.indexOf(n)) || flowerPosition(n);
     const hit = { x: p.x - 22, y: p.y - 22, w: 44, h: 44 };
-    if (!pressInPanel && hitArea({ ...hit, id: "fruitNode_" + n.id, compact: true })) selectedNode = { ...n, _fruit: fruit };
+    if (hitArea({ ...hit, id: "fruitNode_" + n.id, compact: true }) && !pressInPanel) selectedNode = { ...n, _fruit: fruit };
     // Moldura mostra qual flor o painel aberto está lendo.
     if (selectedNode?.id === n.id) {
       ctx.strokeStyle = "#fff0c7"; ctx.lineWidth = 2;

@@ -575,9 +575,9 @@ export const META_NODES = [
 // Bônus escolhido: C) Mecânica única por fruto + feedback rico por bioma.
 export const FRUIT_TREES = [
   { id: "fruit_planicie", map: "planicie", name: "LIÇÕES DO TAMBORILADOR", color: "#7fd6a0", nodes: [
-    { id: "f_p_1", name: "Pulo Aprendido", desc: "PLANÍCIE: +8% velocidade fora do ninho — as irmãs correram com a lebre", cost: [20], requires: [], fruit: "fruit_planicie", map: "planicie", br: "C", tier: 0, icon: "bolt" },
-    { id: "f_p_2", name: "Tambor Resistente", desc: "PLANÍCIE: -15% dano do THUMP do Tamborilador (mecânica única)", cost: [35], requires: ["f_p_1"], fruit: "fruit_planicie", map: "planicie", br: "G", tier: 0, icon: "shield" },
-    { id: "f_p_3", name: "Orvalho Coletado", desc: "PLANÍCIE: +10% comida coletada na Planície (bioma)", cost: [50], requires: ["f_p_2"], fruit: "fruit_planicie", map: "planicie", br: "C", tier: 1, icon: "food" },
+    { id: "f_p_1", name: "Pulo Aprendido", desc: "PLANÍCIE: +8% velocidade fora do ninho — as irmãs correram com a lebre", cost: [20, 30, 45], requires: [], fruit: "fruit_planicie", map: "planicie", br: "C", tier: 0, icon: "bolt" },
+    { id: "f_p_2", name: "Tambor Resistente", desc: "PLANÍCIE: -15% dano do THUMP do Tamborilador (mecânica única)", cost: [35, 50, 70], requires: ["f_p_1"], fruit: "fruit_planicie", map: "planicie", br: "G", tier: 0, icon: "shield" },
+    { id: "f_p_3", name: "Orvalho Coletado", desc: "PLANÍCIE: +10% comida coletada na Planície (bioma)", cost: [50, 75, 100], requires: ["f_p_2"], fruit: "fruit_planicie", map: "planicie", br: "C", tier: 1, icon: "food" },
   ]},
   { id: "fruit_floresta", map: "floresta", name: "SEDA DA CAÇADORA", color: "#6db7ff", nodes: [
     { id: "f_f_1", name: "Faro Aguçado", desc: "FLORESTA: +12% alcance de visão das batedoras", cost: [30], requires: [], fruit: "fruit_floresta", map: "floresta", br: "G", tier: 0, icon: "sk_slash" },

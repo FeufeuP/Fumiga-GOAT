@@ -29,6 +29,54 @@ repetições, datas, branches, checklists e notas históricas foram preservados.
 > Divergências permanecem visíveis, sem apagar conteúdo. O que efetivamente
 > funciona deve ser confirmado por testes e inspeção no preview.
 
+## Entrega — Sprites das flores do Santuário da Planície (3 variações × 3 estágios) (2026-09-29)
+
+**Status: implementado e verificado.** Pedido do usuário: *“Crie um sprite para as flores do
+santuario da planice. Quero no minimo 3 variações de flores tematicas do mapa. Com 3 estagios cada,
+sendo eles: broto (ao comprar 1 vez), broto meio aberto (a partir da 2 compra), e flor florescida
+(quando completa a melhoria).”*
+
+### Decisões confirmadas (Regra 1 + Regra 2)
+
+- **Inspirações indies (Regra 2):** *Pikmin* (estágios botânicos diegéticos *folha/broto → botão →
+  flor aberta* comunicando nível sem poluir a arte), *Ori and the Will of the Wisps* (Jardim de
+  Tuley em *Wellspring Glades*) e *Stardew Valley* / *Flowers with Growth Stages* (progressão de
+  silhueta em pixel art).
+- **Três variações temáticas da Planície do Amanhecer (aprovadas com 2 opções por estágio — Regra 6):**
+  1. **Margarida-do-Amanhecer** (linha 0: pétalas alvas/creme, miolo âmbar-dourado, gotas de orvalho
+     e espigas de trigo na base);
+  2. **Botão-de-Ouro Solar** (linha 1: pétalas amarelo-ouro/âmbar em cálice, miolo solar, orvalho e
+     folhas recortadas do campo);
+  3. **Trevo-Lilás Silvestre** (linha 2: corola lilás/rosada luminosa com coração de néctar dourado,
+     folhas de trevo e trigo na base).
+- **Formato e pipeline (`tools/prepare_fruit_art.py`):** 9 originais em alta resolução em
+  `art-source/flores/planicie_<flor>_<estagio>.png` (gitignorados) reunidos na folha 3×3
+  **`game/assets/ui/flores_planicie.png`** (**576×576 RGBA**, 3×3 células de 192×192 ancoradas na
+  base do caule, paleta quantizada de 256 cores, 190.881 bytes) via
+  `python3 tools/prepare_fruit_art.py flores planicie game/assets/ui/flores_planicie.png`.
+- **Três níveis de compra reais no Santuário da Planície e mapeamento de estágios:**
+  - As 13 melhorias da Planície (`f_p_1..3` em `game/js/config.js` e `v_p1..10` em
+    `game/js/fruit_skills.js`) passam a ter 3 níveis de compra (`cost` de 3 elementos);
+  - **Nível 0 (`0 compras`):** exibe o **Estágio 1 (Broto)** totalmente acinzentado (`gray: true`);
+  - **1ª compra (`level === 1`):** exibe o **Estágio 1 (Broto)** vivo/colorido (`BROTO`);
+  - **2ª compra (`level === 2`):** exibe o **Estágio 2 (Broto meio aberto)** (`BROTO MEIO ABERTO`);
+  - **3ª compra / melhoria completa (`level >= max`):** exibe o **Estágio 3 (Flor florescida)**
+    (`FLORESCIDA`).
+- **Renderização e desempenho (`game/js/meta.js`):** `flowerSheet("flores_planicie")` assa uma única
+  vez os canvases colorido e acromático em 144×144 (3×3 células de 48×48 com contorno escuro de 1px
+  `#120b18`), sem alocação ou reprocessamento por frame; `hitArea` das 13 flores permanece registrada
+  mesmo com o cursor sobre o painel lateral (`FRUIT_DETAIL`), sem deixar cliques no painel
+  atravessarem para o jardim.
+- **Modo debug (`game/js/game.js`):** `newRun` pula `startLoadingScreen` em teleportes de `?debug`
+  sem `&cutscene`, mantendo a transição imediata de `FUMIGA.go('RUN')` nos testes de navegador.
+
+### Verificação (2026-09-29)
+
+- `npm run test:quick`: **22/22** verdes.
+- `node game/test/tree-browser.mjs`: PC e mobile verdes (3 variações × 3 estágios verificados,
+  127 posições de flor/nó sem colisão em fonte normal e grande, 7 santuários sob demanda).
+- `node game/test/docs.mjs`: consolidação íntegra (6 documentos originais intactos).
+
 ## Entrega — Arte do cadeado fechado (2026-09-29)
 
 **Status: só a arte foi salva, sem integração no jogo.** O usuário escolheu 1 de 2 opções de um

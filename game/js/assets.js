@@ -14,6 +14,10 @@ const MANIFEST = {
   maca_outono: "ui/maca_outono.png",
   maca_gelo: "ui/maca_gelo.png",
   maca_palida: "ui/maca_palida.png",
+  // Folha 3×3 (576×576 RGBA) das flores do Santuário da Planície:
+  // 3 variações (Margarida-do-Amanhecer, Botão-de-Ouro, Trevo-Lilás) ×
+  // 3 estágios (broto, broto meio aberto, flor florescida).
+  flores_planicie: "ui/flores_planicie.png",
   // Sem correntes/cadeados: a Árvore não desenha mais cadeado sobre o fruto
   // bloqueado nem tranca sobre a Pálida (decisão do usuário, 2026-09-29) — os
   // três PNGs saíram do repositório e do boot. O estado bloqueado se lê pela
@@ -174,7 +178,7 @@ const WROT = {};         // silhuetas brancas rotacionadas (hit flash)
 // ANTIGA nos mesmos nomes de arquivo (foi assim que o rework dos inimigos da
 // Fase 2 "não apareceu" para quem já tinha jogado antes dele).
 // ---------------------------------------------------------------------------
-export const ASSET_V = "20260929-sem-correntes";
+export const ASSET_V = "20260929-flores-planicie";
 
 /**
  * URL final de um asset do jogo: base certa para a página atual + anti-cache.

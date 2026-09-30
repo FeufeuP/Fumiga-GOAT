@@ -72,6 +72,11 @@ check("formigueiro", ["nest", "nest_d1", "nest_d2"]);
 // saíram do repositório e do boot em 2026-09-29 (decisão do usuário): este
 // teste impede que voltem por descuido.
 check("maçãs dos mundos (boot)", FRUIT_TREES.map(f => "maca_" + fruitAssetName(f)));
+check("flores do santuário da planície (boot)", ["flores_planicie"]);
+const floresPng = fs.readFileSync(path.join(ROOT, "assets/ui/flores_planicie.png"));
+assert.equal(floresPng.readUInt32BE(16), 576, "flores_planicie largura 576 (3x192)");
+assert.equal(floresPng.readUInt32BE(20), 576, "flores_planicie altura 576 (3x192)");
+assert.equal(floresPng[25], 6, "flores_planicie RGBA com fundo transparente");
 assert.equal(Object.keys(IMG).filter(k => k.startsWith("correntes")).length, 0,
   "nenhuma corrente/cadeado no boot");
 for (const file of ["correntes_cadeados.png", "correntes_deserto.png", "correntes_tranca.png"]) {

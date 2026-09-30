@@ -89,13 +89,46 @@ try {
           assert.equal(await page.evaluate(()=>Object.keys(FUMIGA.G.save.nodes).length),0,'trocar de flor não compra');
           await page.screenshot({path:out+'/'+(mobile?'mobile':'pc')+'-santuario-flor-trocada.png'});
           await click('treeClose');
+          // Estágio 1 (1ª compra = broto vivo), Estágio 2 (2ª compra = broto meio aberto),
+          // Estágio 3 (3ª compra = flor florescida), nas 3 variações de flores da Planície.
           await click(cards[0].id); await click('treeBuy');
           const grown=await page.evaluate(async()=>(await M('meta.js')).fruitGardenGrowth('planicie'));
           assert.equal(grown.levels,1,'a compra real avança o jardim');
           assert.equal(grown.progress,1/grown.total,'o avanço usa os níveis comprados daquele fruto');
           assert.equal(grown.saturation,Math.sqrt(grown.progress),'curva de cor acompanha a Árvore original');
+          const stagesCheck = await page.evaluate(async () => {
+            const { flowerStage, flowerVariant } = await M('meta.js');
+            const { FRUIT_TREES } = await M('config.js');
+            const f = FRUIT_TREES.find(x => x.map === 'planicie');
+            const variants = new Set(f.nodes.map((n, i) => flowerVariant({ ...n, _nodeIdx: i })));
+            return {
+              variants: [...variants].sort(),
+              s0: flowerStage(0, 3),
+              s1: flowerStage(1, 3),
+              s2: flowerStage(2, 3),
+              s3: flowerStage(3, 3),
+            };
+          });
+          assert.deepEqual(stagesCheck.variants, [0, 1, 2], '3 variações temáticas na Planície');
+          assert.deepEqual(stagesCheck.s0, { stage: 0, gray: true, name: 'BROTO' }, '0 compras = broto cinza');
+          assert.deepEqual(stagesCheck.s1, { stage: 0, gray: false, name: 'BROTO' }, '1ª compra = broto vivo');
+          assert.deepEqual(stagesCheck.s2, { stage: 1, gray: false, name: 'BROTO MEIO ABERTO' }, '2ª compra = broto meio aberto');
+          assert.deepEqual(stagesCheck.s3, { stage: 2, gray: false, name: 'FLORESCIDA' }, '3ª compra (completa) = flor florescida');
+          // Compra 2ª vez na flor 0 (broto meio aberto) e 3ª vez (florescida),
+          // 2 vezes na flor 1 (meio aberto) e 1 vez na flor 2 (broto) para exibir todas juntas.
+          await click('treeBuy');
+          assert.equal(await page.evaluate(() => FUMIGA.G.save.nodes.v_p1), 2, '2ª compra = estágio 2');
+          await click('treeBuy');
+          assert.equal(await page.evaluate(() => FUMIGA.G.save.nodes.v_p1), 3, '3ª compra = estágio 3 completo');
+          await click('treeClose');
+          await click(cards[1].id); await click('treeBuy'); await click('treeBuy');
+          assert.equal(await page.evaluate(() => FUMIGA.G.save.nodes.v_p2), 2, 'flor 2 em broto meio aberto');
+          await click('treeClose');
+          await click(cards[2].id); await click('treeBuy');
+          assert.equal(await page.evaluate(() => FUMIGA.G.save.nodes.v_p3), 1, 'flor 3 em broto');
           await page.screenshot({path:out+'/'+(mobile?'mobile':'pc')+'-santuario-cor.png'});
           await click('treeClose');
+          await page.screenshot({path:out+'/'+(mobile?'mobile':'pc')+'-santuario-estagios.png'});
         }
       }
       await click('treeMiniBack');

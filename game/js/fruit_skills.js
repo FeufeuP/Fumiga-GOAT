@@ -86,9 +86,12 @@ export const FRUIT_SKILLS = {
     ['a10','Coração da Colônia Eterna','Uma vez por expedição, ao cair abaixo de 30% de vida, a rainha restaura 40% da vida máxima de toda a colônia.','sun'],
   ],
 };
-export const NEW_FRUIT_NODES = Object.entries(FRUIT_SKILLS).flatMap(([map, rows], mi) => rows.map(([key,name,desc,icon], i) => ({
-  id:'v_'+key, key, name:name.toUpperCase(), desc:'GLOBAL: '+desc, map, fruit:'fruit_'+map,
-  cost:[60 + mi*15 + Math.floor(i/3)*45 + (i===9?120:0)],
-  requires:i<3?[]:(i===9?[6,7,8]:[i-3]).map(j=>'v_'+rows[j][0]),
-  tier:i===9?2:i>=3?1:0, br:['G','C','H'][i%3], icon, global:true,
-})));
+export const NEW_FRUIT_NODES = Object.entries(FRUIT_SKILLS).flatMap(([map, rows], mi) => rows.map(([key,name,desc,icon], i) => {
+  const c0 = 60 + mi*15 + Math.floor(i/3)*45 + (i===9?120:0);
+  return {
+    id:'v_'+key, key, name:name.toUpperCase(), desc:'GLOBAL: '+desc, map, fruit:'fruit_'+map,
+    cost: map === 'planicie' ? [c0, c0 + 30, c0 + 60] : [c0],
+    requires:i<3?[]:(i===9?[6,7,8]:[i-3]).map(j=>'v_'+rows[j][0]),
+    tier:i===9?2:i>=3?1:0, br:['G','C','H'][i%3], icon, global:true,
+  };
+}));

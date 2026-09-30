@@ -55,10 +55,14 @@ for (const f of FRUIT_TREES) {
   for(const n of f.nodes) {
     G.save.essence=n.cost[0]-1;
     assert.equal(metaBuy(n.id),false,'saldo insuficiente');
-    G.save.essence=n.cost[0];
     const era=G.save.era;
-    assert.equal(metaBuy(n.id),true); assert.equal(G.save.essence,0);
-    assert.equal(metaBuy(n.id),false,'sem recompra');
+    for (const price of n.cost) {
+      G.save.essence=price;
+      assert.equal(metaBuy(n.id),true); assert.equal(G.save.essence,0);
+    }
+    G.save.essence=1000;
+    assert.equal(metaBuy(n.id),false,'sem recompra além do estágio florescido');
+    G.save.essence=0;
     if(n.id==='f_g_3') assert.equal(G.save.era,era+1);
     const saved=JSON.stringify(G.save);
     G.save.nodes={}; loadSave(); assert.equal(JSON.stringify(G.save),saved,'reload byte-equivalente');
