@@ -102,7 +102,15 @@ for(const f of FRUIT_TREES) {
     assert.equal(unlockFruitForBoss(f.map,f.boss,'campanha'),true);
     assert.equal(unlockFruitForBoss(f.map,f.boss,'campanha'),false,'não duplica recompensa');
     assert.equal(metaBuy(f.newNodes[9].id),false,'ápice exige três caminhos');
-    for(const n of f.newNodes){const before=G.save.essence;assert.equal(metaBuy(n.id),true);near(G.save.essence,before-n.cost[0]);assert.equal(metaBuy(n.id),false);}
+    for(const n of f.newNodes){
+      assert.equal(n.cost.length, f.map === 'planicie' ? 3 : 1);
+      for(let lv = 0; lv < n.cost.length; lv++) {
+        const before = G.save.essence;
+        assert.equal(metaBuy(n.id), true);
+        near(G.save.essence, before - n.cost[lv]);
+      }
+      assert.equal(metaBuy(n.id), false);
+    }
   }
 }
 G.save.nodes={};loadSave();assert.equal(Object.keys(G.save.nodes).length,60,'60 novas compras obtíveis persistem');

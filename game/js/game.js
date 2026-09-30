@@ -294,8 +294,11 @@ function newRun(mode = null, seedOverride = null) {
     }
   };
 
-  if (isNodeTest) {
-    // Testes unitarios headless do Node: abre a cutscene diretamente
+  const skipDebugLoading = typeof window !== "undefined" && window.FUMIGA &&
+    typeof location !== "undefined" && !location.search.includes("cutscene");
+
+  if (isNodeTest || skipDebugLoading) {
+    // Testes unitarios headless do Node ou teleporte debug sem &cutscene: abre direto
     startIntro();
   } else {
     // Navegador real: exibe a tela de carregamento estilo Dead Cells antes da cutscene

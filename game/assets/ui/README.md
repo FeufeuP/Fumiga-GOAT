@@ -96,6 +96,15 @@ reconstruído somente quando níveis mudam. A imagem aprovada volta integralment
   detalhes) e restaura fragmentos de arte apagados. O critério de fundo é a cor estimada por
   mediana + guarda de cor (`violet_bg_like`, dist ≤ 34): sombras de arte sobrevivem.
   Desde 2026-09-29 o script só tem o modo de maçãs (`... macas`); a parte de correntes saiu.
-- Originais de alta resolução: `art-source/macas/`, `art-source/santuarios/` (fora do Git, como
-  `_orig/` da TITLE). Pipeline do preparo original: `python3 tools/prepare_fruit_art.py all`
-  (maçãs + santuários); reparo/normalização atual: `python3 tools/repair_fruit_sprites.py macas`.
+- Originais de alta resolução: `art-source/macas/`, `art-source/santuarios/`, `art-source/flores/`
+  (fora do Git, como `_orig/` da TITLE). Pipeline do preparo original:
+  `python3 tools/prepare_fruit_art.py all` (maçãs + santuários + flores); reparo/normalização atual:
+  `python3 tools/repair_fruit_sprites.py macas`.
+- **Flores do Santuário da Planície (`flores_planicie.png`, 2026-09-29):** folha 3×3 (**576×576 RGBA**,
+  células de 192×192 ancoradas na base, ~191 KB) com 3 variações temáticas do mapa (*Margarida-do-Amanhecer*,
+  *Botão-de-Ouro Solar* e *Trevo-Lilás Silvestre*) e 3 estágios de evolução cada:
+  1. **Broto** (coluna 0): exibido acinzentado antes da 1ª compra (`level === 0`) e colorido ao comprar 1 vez (`level === 1`);
+  2. **Broto meio aberto** (coluna 1): exibido a partir da 2ª compra (`level === 2`);
+  3. **Flor florescida** (coluna 2): exibido quando completa a melhoria (`level >= max`, 3ª compra).
+  Preparado por `python3 tools/prepare_fruit_art.py flores planicie game/assets/ui/flores_planicie.png`
+  e assado uma única vez em `flowerSheet()` (`js/meta.js`) em células 48×48 com contorno escuro de 1px.

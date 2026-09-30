@@ -91,7 +91,7 @@ python3 tools/prepare_fruit_art.py maca art-source/macas/02-floresta.png saida.p
 |---------|----------------------------|
 | `npm run test:quick` | **22/22** |
 | `node game/test/docs.mjs` | 6 documentos íntegros, **109.554 bytes** preservados |
-| PNGs em `game/assets/ui/` | 20 (desde 2026-09-29: −3 correntes/cadeados) |
+| PNGs em `game/assets/ui/` | 21 (desde 2026-09-29: −3 correntes/cadeados, +1 `flores_planicie.png`) |
 | Peso do boot com as maçãs | +~1,2 MB (aceito); −~67 KB desde 2026-09-29 |
 | Peso dos santuários | ~5,1 MB **somente sob demanda** |
 
