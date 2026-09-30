@@ -6,6 +6,10 @@ perguntar → implementar → mostrar arte → mobile → check-in → jogar →
 Lore e planejamento: [`LORE.md`](LORE.md) e [`MEGA_ARQUIVO.md`](MEGA_ARQUIVO.md). **Não leia
 o MEGA_ARQUIVO inteiro** (120 KB); abra só a seção que interessa.
 
+**Flores dos Santuários:** antes de criar flores de um santuário novo, leia
+[`DOCUMENTO_FLORES_DOS_SANTUARIOS.md`](DOCUMENTO_FLORES_DOS_SANTUARIOS.md): **3 variações × 4
+sprites**, feitas **uma por vez, com a confirmação do usuário entre cada variação**.
+
 **Regra 12:** a cada implementação ou atualização, atualizar também `MEGA_ARQUIVO.md`
 na mesma entrega: mudanças, decisões, testes/resultados, limitações e próximos passos.
 Preservar o histórico; sincronizar blocos e hashes dos originais editados.

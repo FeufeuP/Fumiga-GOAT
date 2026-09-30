@@ -84,6 +84,21 @@ São exatamente os dois passos do job `navegador` do workflow mais o job `headle
   Planície, níveis 2–3 sem poder próprio, 4 PNGs `loading_*_raw.png` órfãos e `KeyB`/`KeyG` lidos
   depois dos `return` de draft/transição/pausa.
 
+## Entrega — Documento de criação das flores dos próximos Santuários (2026-09-30)
+
+**Status: documento criado (sem mudança de código ou de arte).** Pedido do usuário: um documento que dite
+como criar as flores dos próximos santuários, deixando claro que são **3 variações com 4 sprites cada**
+e que **as 3 variações não são feitas de uma vez — é preciso a confirmação do usuário entre cada uma**.
+
+- **Arquivo:** [`DOCUMENTO_FLORES_DOS_SANTUARIOS.md`](DOCUMENTO_FLORES_DOS_SANTUARIOS.md); apontado em `AGENTS.md`.
+- **Conteúdo:** as 3 regras inegociáveis (3 variações, 4 sprites, confirmação entre variações); os 4
+  estágios e a ordem das colunas (`1_broto`, `2_meio`, `3_flor`, `0_morto`); fluxo com paradas
+  (Etapa 0 → ⛔ → Var. 1 → ⛔ → Var. 2 → ⛔ → Var. 3 → ⛔ → integração); especificação dos originais
+  (fundo `#1d1127`, nomes em `art-source/flores/`); folha 768×576; lista de integração (`MANIFEST`,
+  `ASSET_V`, 3 níveis nas 13 melhorias, testes); sugestões de tema por bioma; checklists e modelo de
+  mensagem de parada; Planície como referência.
+- **Testes:** `node game/test/docs.mjs` íntegro (o documento novo não altera os 6 originais).
+
 ## Entrega — Broto morto das flores da Planície (2026-09-30)
 
 **Status: implementado e verificado.** Pedido do usuário: *“Crie um sprite dos brotos das flores
