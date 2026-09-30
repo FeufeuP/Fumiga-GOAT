@@ -29,6 +29,61 @@ repetições, datas, branches, checklists e notas históricas foram preservados.
 > Divergências permanecem visíveis, sem apagar conteúdo. O que efetivamente
 > funciona deve ser confirmado por testes e inspeção no preview.
 
+## Correção — CI vermelha: a tela de carregamento engolia o input do teste do HUD (2026-09-30)
+
+**Status: implementado e verificado. Correção de teste — nenhum comportamento do jogo mudou.**
+Pedido do usuário: *“Faça apenas A”* — consertar a CI e deixar o `main` verde.
+
+### Diagnóstico (causa raiz provada em navegador)
+
+Desde o PR #48 (telas de carregamento estilo Dead Cells) o job **inspeção no navegador (Chromium)**
+falhava no passo **HUD orgânico** — inclusive nas merges do `main` (#48 e #49) — com
+`AssertionError: B abre formigueiro`, `actual: undefined`. (Nos runs do #48 o passo que falhava era o
+`npm run inspect`; o #49 adicionou o `skipDebugLoading`, que dispensa a carga nos teleportes de
+`?debug` sem `&cutscene`, e desde então esse passo passa.)
+
+`game/test/lorehud-browser.mjs` entrava pelo fluxo real (PRETITLE → TITLE → MODE → RUN) e apertava
+`Escape` **1,2 s** depois de começar a expedição. Nesse instante a tela de carregamento ainda está em
+`fadein`/`active`, e `handleLoadingInput()` só responde em `"ready"` — de propósito, o jogador não
+pula a carga. O `Escape` era descartado, a cutscene da Noite Branca abria (~4,2 s depois do início da
+carga) e **todo o resto do teste rodava contra o handler da HQ**: `B` ia para a biblioteca de
+memórias, `baseOpen` nunca virava `true` e a asserção morria na linha 66.
+
+Linha do tempo medida: `carga` ativa de 0 a ~4,2 s → `cutscene` ativa e estável. Confirmado que o
+**jogo está correto**: esperando a carga fechar e pulando a HQ como o jogador faz, `B` abre o
+formigueiro (`baseOpen: true`) e `G` inicia a onda (`phase: "wave"`).
+
+### Correção (`game/test/lorehud-browser.mjs` — só teste)
+
+O `Escape` solto virou `settleIntro()`: espera a abertura **assentar** — sem carga e sem HQ por três
+leituras seguidas (~300 ms), pulando cada cutscene que aparecer (mesmo padrão do
+`ui-navigation-browser.mjs`) — com asserções explícitas (`carga do Mundo 1 terminou`,
+`cutscene de abertura pulada`) e guarda contra pausa acidental: `Escape` no vazio pausa a expedição
+(e aí o `B` do teste não abriria o ninho), então o teste destrava via `isPaused()` antes de seguir.
+
+O input durante a tela de carregamento continua bloqueado de propósito no jogo; nada de produção foi
+alterado.
+
+### Verificação (2026-09-30)
+
+| Comando | Resultado |
+|---|---|
+| `node game/test/lorehud-browser.mjs` | **verde** — “BROWSER HUD OK — seis biomas, H, vida baixa, zoom, acessibilidade, viewports mobile, formigueiro e onda” (59,7 fps médios segurando H) |
+| `node game/test/inspect.mjs` | **verde** — 108,8 s: PC + mobile, 9 telas + 6 mapas, sem erro de JS, 404 ou glifo faltando |
+| `npm test` | **25/25 verdes** (bateria headless completa, 41,4 s) |
+
+São exatamente os dois passos do job `navegador` do workflow mais o job `headless`.
+
+### Limitações e próximos passos
+
+- O teste passou a esperar até ~24 s pela abertura (o normal é ~5 s): é espera ativa, não `sleep`
+  fixo, e falha com mensagem clara se a abertura travar.
+- A CI do `main` só fica verde **depois do merge** desta correção (Regra 11: `push` +
+  `CREATE PR` + `MERGE PR` no branch da sessão).
+- Pendências conhecidas do relatório de análise (não incluídas neste pedido): flores/3 estágios só na
+  Planície, níveis 2–3 sem poder próprio, 4 PNGs `loading_*_raw.png` órfãos e `KeyB`/`KeyG` lidos
+  depois dos `return` de draft/transição/pausa.
+
 ## Entrega — Sprites das flores do Santuário da Planície (3 variações × 3 estágios) (2026-09-29)
 
 **Status: implementado e verificado.** Pedido do usuário: *“Crie um sprite para as flores do
