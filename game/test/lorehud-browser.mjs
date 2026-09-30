@@ -17,7 +17,33 @@ const errors=[];page.on('pageerror',e=>errors.push(String(e)));page.on('response
 await page.goto((process.env.BASE_URL || server.url) + '/game/');
 await page.waitForFunction(async()=> (await import('./js/state.js')).G.screen==='PRETITLE');
 async function click(x,y){const box=await page.locator('canvas#game').boundingBox();await page.mouse.click(box.x+x*box.width/960,box.y+y*box.height/540);await page.waitForTimeout(900);}
-await click(480,270);await click(200,275);await click(114,282);await page.keyboard.press('Escape');await page.waitForTimeout(1200);
+await click(480,270);await click(200,275);await click(114,282);
+// A abertura real do Mundo 1 é uma sequência: tela de carregamento (estilo
+// Dead Cells) -> cutscene da Noite Branca -> gameplay. A carga IGNORA a entrada
+// em fadein/active (`handleLoadingInput` só responde em "ready": o jogador não
+// pula a carga), então o Escape que existia aqui era engolido por ela e a
+// cutscene continuava aberta: todo o resto do teste caía no handler da HQ e
+// "B abre formigueiro" falhava no CI desde o PR #48. Agora o teste espera a
+// abertura ASSENTAR (sem carga, sem HQ) pulando cada cutscene que aparecer,
+// como o jogador faz — mesma espera do ui-navigation-browser.mjs.
+async function settleIntro(){
+  let calmo=0;
+  for(let i=0;i<240 && calmo<3;i++){
+    const abertura=await page.evaluate(async()=>({
+      carga:(await import('./js/loading_screen.js')).isLoadingActive(),
+      hq:(await import('./js/cutscenes.js')).isCutsceneActive(),
+    }));
+    if(abertura.hq){await page.keyboard.press('Escape');calmo=0;}      // pula a HQ
+    else calmo=abertura.carga?0:calmo+1;                                // carga em curso: espera
+    await page.waitForTimeout(100);
+  }
+  assert.equal(await page.evaluate(async()=>(await import('./js/loading_screen.js')).isLoadingActive()),false,'carga do Mundo 1 terminou');
+  assert.equal(await page.evaluate(async()=>(await import('./js/cutscenes.js')).isCutsceneActive()),false,'cutscene de abertura pulada');
+  // Escape no vazio pausaria a expedição (e aí "B" não abriria o ninho): garante destravada.
+  if(await page.evaluate(async()=>(await import('./js/game.js')).isPaused())) await page.keyboard.press('Escape');
+  assert.equal(await page.evaluate(async()=>(await import('./js/game.js')).isPaused()),false,'expedição destravada');
+}
+await settleIntro();
 
 await page.evaluate(async()=>{const {G}=await import('./js/state.js');(await import('./js/tutorial.js')).stopTutorial(false);G.run.banner=null;G.run.elapsed=20;G.save.accessibility.invincible=true;});
 // Troca controlada de mapas para inspeção visual; não comprova a campanha inteira.
