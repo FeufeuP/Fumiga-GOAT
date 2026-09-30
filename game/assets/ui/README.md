@@ -100,11 +100,15 @@ reconstruído somente quando níveis mudam. A imagem aprovada volta integralment
   (fora do Git, como `_orig/` da TITLE). Pipeline do preparo original:
   `python3 tools/prepare_fruit_art.py all` (maçãs + santuários + flores); reparo/normalização atual:
   `python3 tools/repair_fruit_sprites.py macas`.
-- **Flores do Santuário da Planície (`flores_planicie.png`, 2026-09-29):** folha 3×3 (**576×576 RGBA**,
-  células de 192×192 ancoradas na base, ~191 KB) com 3 variações temáticas do mapa (*Margarida-do-Amanhecer*,
-  *Botão-de-Ouro Solar* e *Trevo-Lilás Silvestre*) e 3 estágios de evolução cada:
-  1. **Broto** (coluna 0): exibido acinzentado antes da 1ª compra (`level === 0`) e colorido ao comprar 1 vez (`level === 1`);
+- **Flores do Santuário da Planície (`flores_planicie.png`, 2026-09-29; 4ª coluna em 2026-09-30):** folha 4×3
+  (**768×576 RGBA**, células de 192×192 ancoradas na base, ~240 KB) com 3 variações temáticas do mapa
+  (*Margarida-do-Amanhecer*, *Botão-de-Ouro Solar* e *Trevo-Lilás Silvestre*) e 4 estágios cada:
+  1. **Broto** (coluna 0): exibido colorido ao comprar 1 vez (`level === 1`);
   2. **Broto meio aberto** (coluna 1): exibido a partir da 2ª compra (`level === 2`);
-  3. **Flor florescida** (coluna 2): exibido quando completa a melhoria (`level >= max`, 3ª compra).
+  3. **Flor florescida** (coluna 2): exibido quando completa a melhoria (`level >= max`, 3ª compra);
+  4. **Broto morto** (coluna 3): caule torto, cabeça pendendo, folhas secas. Exibido **em cinza** enquanto
+     a flor não foi comprada (`level === 0`); a 1ª compra o troca pelo broto vivo.
   Preparado por `python3 tools/prepare_fruit_art.py flores planicie game/assets/ui/flores_planicie.png`
-  e assado uma única vez em `flowerSheet()` (`js/meta.js`) em células 48×48 com contorno escuro de 1px.
+  (originais em `art-source/flores/<mundo>_<flor>_<estagio>.png`, incluindo `*_0_morto.png`; célula sem
+  original é copiada da folha atual) e assado uma única vez em `flowerSheet()` (`js/meta.js`) em células
+  48×48 com contorno escuro de 1px.

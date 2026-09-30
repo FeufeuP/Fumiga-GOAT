@@ -370,7 +370,7 @@ function drawNodeTip(ctx, n) {
   const chk = metaCanBuy(n.id), lvl = metaLevel(n.id), col = n._fruit?.color || META_BRANCHES[n.br].color;
   panel(ctx, x, y, w, h, { border: col });
   const stageLabel = n._fruit && n.cost.length >= 3
-    ? " • " + (lvl === 0 ? "BROTO CINZA" : lvl === 1 ? "BROTO" : lvl < n.cost.length ? "MEIO ABERTO" : "FLORESCIDA")
+    ? " • " + (lvl === 0 ? "BROTO MORTO" : lvl === 1 ? "BROTO" : lvl < n.cost.length ? "MEIO ABERTO" : "FLORESCIDA")
     : "";
   const blocks = [
     [n.name, col, .93],
@@ -487,6 +487,7 @@ function drawSanctuarySeal(ctx) {
     { align: "center", scale: .64, color: "#eee5f3" }));
 }
 const FLOWER_CELL = 48;
+const FLOWER_COLS = 4;   // broto, meio aberto, florescida, broto morto
 const FLOWER_SHEETS = new Map();
 
 export function flowerVariant(n) {
@@ -496,7 +497,8 @@ export function flowerVariant(n) {
 }
 
 export function flowerStage(level, max = 3) {
-  if (level <= 0) return { stage: 0, gray: true, name: "BROTO" };
+  // Nível 0: broto MORTO (4ª coluna da folha), sempre em cinza até a 1ª compra.
+  if (level <= 0) return { stage: 3, gray: true, name: "BROTO MORTO" };
   if (level >= max) return { stage: 2, gray: false, name: "FLORESCIDA" };
   if (level === 1) return { stage: 0, gray: false, name: "BROTO" };
   return { stage: 1, gray: false, name: "BROTO MEIO ABERTO" };
@@ -507,7 +509,7 @@ function flowerSheet(key) {
   const src = IMG[key];
   if (cached && cached.src === src) return cached;
   if (!src || typeof document === "undefined" || !src.width) return null;
-  const w = FLOWER_CELL * 3, h = FLOWER_CELL * 3;
+  const w = FLOWER_CELL * FLOWER_COLS, h = FLOWER_CELL * 3;
   const color = document.createElement("canvas");
   color.width = w; color.height = h;
   const cc = color.getContext("2d", { willReadFrequently: true });
@@ -516,7 +518,7 @@ function flowerSheet(key) {
   cc.drawImage(src, 0, 0, w, h);
   const d = cc.getImageData(0, 0, w, h);
   if (!d || d.data.length !== w * h * 4 || typeof cc.putImageData !== "function") {
-    cached = { src, color: src, gray: src, cell: Math.floor(src.width / 3) || FLOWER_CELL };
+    cached = { src, color: src, gray: src, cell: Math.floor(src.width / FLOWER_COLS) || FLOWER_CELL };
     FLOWER_SHEETS.set(key, cached);
     return cached;
   }
@@ -526,7 +528,7 @@ function flowerSheet(key) {
   }
   const copy = new Uint8ClampedArray(px);
   for (let row = 0; row < 3; row++) {
-    for (let col = 0; col < 3; col++) {
+    for (let col = 0; col < FLOWER_COLS; col++) {
       const x0 = col * FLOWER_CELL, y0 = row * FLOWER_CELL;
       for (let y = y0 + 1; y < y0 + FLOWER_CELL - 1; y++) {
         for (let x = x0 + 1; x < x0 + FLOWER_CELL - 1; x++) {

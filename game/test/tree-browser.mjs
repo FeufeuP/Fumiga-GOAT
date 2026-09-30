@@ -110,7 +110,7 @@ try {
             };
           });
           assert.deepEqual(stagesCheck.variants, [0, 1, 2], '3 variações temáticas na Planície');
-          assert.deepEqual(stagesCheck.s0, { stage: 0, gray: true, name: 'BROTO' }, '0 compras = broto cinza');
+          assert.deepEqual(stagesCheck.s0, { stage: 3, gray: true, name: 'BROTO MORTO' }, '0 compras = broto morto cinza (4ª coluna)');
           assert.deepEqual(stagesCheck.s1, { stage: 0, gray: false, name: 'BROTO' }, '1ª compra = broto vivo');
           assert.deepEqual(stagesCheck.s2, { stage: 1, gray: false, name: 'BROTO MEIO ABERTO' }, '2ª compra = broto meio aberto');
           assert.deepEqual(stagesCheck.s3, { stage: 2, gray: false, name: 'FLORESCIDA' }, '3ª compra (completa) = flor florescida');

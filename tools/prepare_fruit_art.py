@@ -14,8 +14,9 @@ so nothing is scaled or blurred at draw time:
   maca        320x320  RGBA   fundo violeta removido, recorte sem margem vazia
   santuario  960x540  RGB    1:1 com o canvas do jogo (nada de escala no render)
                              carregado sob demanda na tela do santuário
-  flores     576x576  RGBA   folha 3x3 (3 variações x 3 estágios: broto, meio
-                             aberto, florescida), células 192x192 ancoradas na base
+  flores     768x576  RGBA   folha 4x3 (3 variações x 4 estágios: broto, meio
+                             aberto, florescida, broto morto), células 192x192
+                             ancoradas na base
   sprite     auto     RGBA   recorte + 256 cores (ícones/overlays pequenos)
 
 Pillow is art tooling only, never a game dependency. Only the prepared PNGs are
@@ -39,8 +40,10 @@ MUNDOS = ["planicie", "floresta", "pantano", "deserto", "outono", "gelo", "palid
 FLORES_VARIACOES = {
     "planicie": ["margarida", "botao", "trevo"],
 }
-FLORES_ESTAGIOS = ["1_broto", "2_meio", "3_flor"]
-FLORES_ALTURAS = [0.74, 0.85, 0.95]
+# Colunas da folha: broto, meio aberto, florescida e broto MORTO (visto em cinza
+# antes da 1ª compra; originais "<mundo>_<flor>_0_morto.png").
+FLORES_ESTAGIOS = ["1_broto", "2_meio", "3_flor", "0_morto"]
+FLORES_ALTURAS = [0.74, 0.85, 0.95, 0.80]
 
 
 def key_background(image, tolerance=5):
@@ -180,34 +183,49 @@ def add_outline_1px(image, outline_col=(18, 11, 24, 255)):
     return out
 
 
+def flower_cell(src_path, flor, est, col, cell):
+    """Célula 192x192 de um estágio: fundo removido, recorte, base ancorada, contorno."""
+    cleaned = clean_flower_bg(Image.open(src_path), flor, est)
+    bbox = cleaned.getchannel("A").getbbox()
+    cropped = cleaned.crop(bbox) if bbox else cleaned
+    target_h = round(cell * FLORES_ALTURAS[col])
+    scale = min((cell - 14) / cropped.width, target_h / cropped.height)
+    nw = max(1, round(cropped.width * scale))
+    nh = max(1, round(cropped.height * scale))
+    resized = cropped.resize((nw, nh), Image.NEAREST)
+    cell_img = Image.new("RGBA", (cell, cell), (0, 0, 0, 0))
+    cell_img.paste(resized, ((cell - nw) // 2, cell - 6 - nh), resized)
+    return add_outline_1px(cell_img)
+
+
 def prepare_flores(mundo, destination, cell=192, colors=256):
-    """Monta a folha 3x3 (3 variações x 3 estágios) do santuário do bioma."""
+    """Monta a folha 4x3 (3 variações x 4 estágios) do santuário do bioma.
+
+    Se o original de uma célula não existir em art-source/ (fora do Git) e a
+    folha de destino já existir, a célula é copiada da folha atual: assim dá
+    para acrescentar/refazer só um estágio sem ter todos os originais.
+    """
     variacoes = FLORES_VARIACOES.get(mundo)
     if not variacoes:
         raise ValueError(f"Sem variações de flores configuradas para: {mundo}")
-    sheet = Image.new("RGBA", (cell * 3, cell * 3), (0, 0, 0, 0))
+    destination = Path(destination)
+    old = Image.open(destination).convert("RGBA") if destination.exists() else None
+    sheet = Image.new("RGBA", (cell * len(FLORES_ESTAGIOS), cell * len(variacoes)), (0, 0, 0, 0))
     for r, flor in enumerate(variacoes):
         for c, est in enumerate(FLORES_ESTAGIOS):
             src_path = FLORES_DIR / f"{mundo}_{flor}_{est}.png"
-            cleaned = clean_flower_bg(Image.open(src_path), flor, est)
-            bbox = cleaned.getchannel("A").getbbox()
-            cropped = cleaned.crop(bbox) if bbox else cleaned
-            target_h = round(cell * FLORES_ALTURAS[c])
-            scale = min((cell - 14) / cropped.width, target_h / cropped.height)
-            nw = max(1, round(cropped.width * scale))
-            nh = max(1, round(cropped.height * scale))
-            resized = cropped.resize((nw, nh), Image.NEAREST)
-            cell_img = Image.new("RGBA", (cell, cell), (0, 0, 0, 0))
-            ox = (cell - nw) // 2
-            oy = cell - 6 - nh
-            cell_img.paste(resized, (ox, oy), resized)
-            cell_img = add_outline_1px(cell_img)
+            if src_path.exists():
+                cell_img = flower_cell(src_path, flor, est, c, cell)
+            elif old is not None and old.width >= (c + 1) * cell:
+                cell_img = old.crop((c * cell, r * cell, (c + 1) * cell, (r + 1) * cell))
+            else:
+                raise FileNotFoundError(src_path)
             sheet.paste(cell_img, (c * cell, r * cell), cell_img)
     sheet = quantize_rgba(sheet, colors)
     sheet.save(destination, optimize=True)
     rel = destination.resolve().relative_to(ROOT)
     print(f"  {rel}: {sheet.width}x{sheet.height}, "
-          f"{destination.stat().st_size} bytes, RGBA (3x3 células {cell}x{cell})")
+          f"{destination.stat().st_size} bytes, RGBA ({len(FLORES_ESTAGIOS)}x{len(variacoes)} células {cell}x{cell})")
 
 
 def source_of(folder, mundo):
