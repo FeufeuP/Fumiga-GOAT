@@ -84,6 +84,33 @@ São exatamente os dois passos do job `navegador` do workflow mais o job `headle
   Planície, níveis 2–3 sem poder próprio, 4 PNGs `loading_*_raw.png` órfãos e `KeyB`/`KeyG` lidos
   depois dos `return` de draft/transição/pausa.
 
+## Entrega — Broto morto das flores da Planície (2026-09-30)
+
+**Status: implementado e verificado.** Pedido do usuário: *“Crie um sprite dos brotos das flores
+mortos, eles serão vistos enquanto as flores estiverem cinzas, ou seja antes de comprar, um sprite
+adicional para cada flor da planície.”*
+
+### Decisões confirmadas (Regra 1 + Regra 2)
+
+- **Inspiração (Regra 2):** pacotes de plantas indie com estágio de morte/murcho distinto, como
+  [*Growing Plants* (Soppycraft)](https://soppycraft.itch.io/growing-plants-pixel-pack), e o conjunto
+  de flores do [Shared Garden](https://github.com/C0derTang/shared-garden/issues/40) (silhueta legível
+  em tamanho pequeno).
+- **Escopo:** 3 sprites (1 por variação: Margarida, Botão-de-Ouro, Trevo), reaproveitando `flowerVariant`.
+- **Visual:** broto murcho, caule torto, cabeça caída, folhas secas marrom-acinzentadas, sem orvalho.
+  Cada original foi escolhido pelo usuário entre 2 opções (Regra 6).
+- **Integração:** 4ª coluna da folha, exibida **em cinza** com 0 compras no lugar do broto cinza.
+
+### Implementação
+
+- `game/assets/ui/flores_planicie.png`: **768×576 RGBA** (antes 576×576), 4 colunas × 3 variações.
+- `game/js/meta.js`: `flowerStage(0)` → `{ stage: 3, gray: true, name: "BROTO MORTO" }`; `flowerSheet()`
+  assa 4 colunas (`FLOWER_COLS`); rótulo do painel `BROTO MORTO`. 1ª compra = broto vivo (inalterado).
+- `tools/prepare_fruit_art.py`: estágio `0_morto`; `flower_cell()` extraído; célula sem original em
+  `art-source/` é copiada da folha atual (os 9 originais anteriores não estão no Git).
+- `ASSET_V` = `20260930-broto-morto`; `test/assets.mjs` (768×576) e `test/tree-browser.mjs` atualizados.
+- Originais em `art-source/flores/planicie_{margarida,botao,trevo}_0_morto.png` (fora do Git).
+
 ## Entrega — Sprites das flores do Santuário da Planície (3 variações × 3 estágios) (2026-09-29)
 
 **Status: implementado e verificado.** Pedido do usuário: *“Crie um sprite para as flores do
