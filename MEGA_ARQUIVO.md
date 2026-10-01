@@ -3785,3 +3785,11 @@ os alertas do relatório (mapa sem vitória, poder sem adoção, falhas de pacot
 balanceamento fino do A3. Depois: Eras transformando o mundo, artes de carregamento/cutscene,
 flores dos quatro biomas restantes, Pálida e idiomas. Este registro também fecha o pedido de salvar
 no GitHub (Regra 11: commit + PR + merge juntos).
+
+**Ajuste de CI na mesma entrega:** o job *headless* do GitHub Actions roda sem navegador, então o
+`run-all.mjs` passou a marcar `regressions-browser` como teste de navegador e a **pulá-lo com aviso**
+(cabeçalho e resumo) quando o Playwright não está instalado — `--only=` explícito continua rodando e
+falhando com a instrução do `setup-dev.sh`. Para o teste não sair da cobertura do CI, o job *inspeção
+no navegador* ganhou o passo `regressions-browser.mjs` (capturas no mesmo artefato) e o espelho
+`tools/ci/testes.yml` foi atualizado. Sondagem real: **30/30** na máquina com Playwright; **29/29 +
+1 pulado** no job headless; os dois jobs do CI verdes antes do merge (Regra 11).
