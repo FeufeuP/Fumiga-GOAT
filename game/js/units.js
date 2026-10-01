@@ -515,11 +515,31 @@ export function unitLimitLeft(typeId) {
 
 export function buyUnit(typeId) {
   const run = G.run; // setado por game.js
-  const cost = unitCost(typeId);
-  if (run.food < cost) { SFX.deny(); return { ok: false, why: "SEM COMIDA" }; }
-  if (popUsed() >= popCapTotal()) { SFX.deny(); return { ok: false, why: "POPULAÇÃO CHEIA" }; }
-  if (!unitLimitLeft(typeId)) { SFX.deny(); return { ok: false, why: "SÓ CABE UMA POR EXPEDIÇÃO" }; }
-  run.food -= cost;
+  const tp = run && run.testPowers;
+  const infMoney = !!(tp && tp.infMoney);
+  const infAnts = !!(tp && tp.infAnts);
+  const cost = infMoney ? 0 : unitCost(typeId);
+  if (!infMoney && run.food < cost) { SFX.deny(); return { ok: false, why: "SEM COMIDA" }; }
+  if (!infAnts && popUsed() >= popCapTotal()) { SFX.deny(); return { ok: false, why: "POPULAÇÃO CHEIA" }; }
+  if (!infAnts && !unitLimitLeft(typeId)) { SFX.deny(); return { ok: false, why: "SÓ CABE UMA POR EXPEDIÇÃO" }; }
+  if (!infMoney) run.food -= cost;
+  if (infAnts) {
+    // MODO TESTE (Formigas Infinitas): nasce instantaneamente ao redor do ninho, sem tempo de ovo
+    const A = world.anthill;
+    const ang = rand(0, 6.28);
+    const x = A.x + Math.cos(ang) * 46, y = A.y + Math.sin(ang) * 46;
+    const gp = { x: A.x + Math.cos(ang) * 200, y: A.y + Math.sin(ang) * 200 };
+    spawnAnt(typeId, x, y, { guardPos: gp, spawnT: 0.34 });
+    burst(x, y, { n: 12, color: ["#ffe9a8", "#ffd479", "#fff"], spMin: 20, spMax: 80, life: 0.45, sizeMin: 1, sizeMax: 2.6 });
+    SFX.hatch();
+    if (typeId === "giant") {
+      shake(0.7);
+      ring(x, y, { r0: 20, r1: 460, life: 1.0, color: "#ffd479", width: 6 });
+    }
+    floatText(x, y - (typeId === "giant" ? 300 : 14), "NOVA " + UNITS[typeId].name, { color: "#ffd479", life: 1.4 });
+    tutEvent("buy", typeId);
+    return { ok: true };
+  }
   const m = mods();
   const t = UNITS[typeId].hatchTime * m.hatchSpeed * m.muts.hatchMult;
   eggs.push({ type: typeId, tLeft: t, tTotal: t });
@@ -1435,6 +1455,6 @@ export function orderAttackSelected(foe) {
 fruitWorld.allies = allies;
 fruitWorld.home = () => world.anthill;
 fruitWorld.freeWorker = (a) => {
-  if(popUsed() >= popCapTotal()) return false;
+  if(!(G.run && G.run.testPowers && G.run.testPowers.infAnts) && popUsed() >= popCapTotal()) return false;
   spawnAnt("worker", a.x, a.y, { fruitFree:true, spawnT:0.34 }); return true;
 };

@@ -22,6 +22,7 @@ import { G } from "../js/state.js";
 import { cam, screenToWorld, panCam } from "../js/camera.js";
 import { clamp } from "../js/utils.js";
 import { isPaused } from "../js/game.js";
+import { isLoadingActive } from "../js/loading_screen.js";
 
 const canvas = document.getElementById("game");
 const hudEl = document.getElementById("touch-hud");
@@ -315,7 +316,7 @@ updateModeBtn();
 let hudShown = false, pauseShown = null, modeShown = false, modeSmart = null, nestShown = null;
 function hudTick() {
   requestAnimationFrame(hudTick);
-  const inRun = G.screen === "RUN" && !!G.run;
+  const inRun = G.screen === "RUN" && !!G.run && !isLoadingActive();
   const showHud = inRun && !G.run.baseOpen;
   if (showHud !== hudShown) {
     hudShown = showHud;

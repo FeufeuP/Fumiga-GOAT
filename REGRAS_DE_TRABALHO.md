@@ -197,6 +197,19 @@ Ao final de cada tarefa, apresentar um **checklist de conferência** com este fo
   original, qualquer ajuste posterior exigiria refazer a arte do zero (como ocorreu com os
   originais do Santuário da Planície).
 
+## Regra 14 — Tela de Carregamento em mudanças de telas, mundos e cargas pesadas ⏳
+
+> **Sempre que houver mudança de telas, mundos ou quando qualquer coisa pesada/demorada para carregar na hora aparecer no jogo, a tela de carregamento deve acontecer para que o jogo carregue tudo sem que o jogador veja.**
+
+- **Escopo obrigatório (`mundos_telas_pesadas`):**
+  1. **Mudança de mundos e biomas**: início/reinício de expedição (`newRun`), avanço entre mapas (`advanceMap` / transição de fim de mapa) e trocas de mapa no Modo Teste (`PRÓXIMO MAPA`, `M1..M6` e tecla `N`).
+  2. **Interior e superfície da colônia**: entrar (`openNest`) e sair (`closeNest`) do Formigueiro (`B` / botão `FORMIGUEIRO`).
+  3. **Telas pesadas e santuários**: entrada e saída da Árvore da Evolução (`TREE`, pré-assando `treeArtCanvas`), abertura dos Santuários dos Frutos (`openFruit`, baixando `loadSantuario` de ~5,1 MB e pré-assando a restauração de cor), Profecias (`PROPHECY`), Memórias (`MEMORY`) e replays de cutscenes em camadas.
+  4. **Aparições pesadas em jogo**: chegada da Onda do Chefão (pré-carregando e compondo o boss fora de vista antes do combate).
+- **Submenus leves** (`OPTIONS` e `HELP`) permanecem com transição rápida para não interromper ajustes simples de volume/acessibilidade.
+- **Execução invisível ao jogador**: a tela de carregamento (`loading_screen.js` / `runWithLoadingScreen`) cobre 100% do canvas (`alpha = 1`) **antes** de executar a tarefa pesada (no frame seguinte ao da cortina fechar), impedindo qualquer engasgo visual, pop-in de sprite ou tela incompleta.
+- **Confirmação manual ao concluir (`sempre_confirmar`)**: ao atingir 100% (`ready`), a tela de carregamento aguarda o clique/toque ou `ESPAÇO`/`ENTER` do jogador com aviso piscante (`CLIQUE, TOQUE OU PRESSIONE ESPAÇO PARA CONTINUAR`), permitindo ler a dica/lore do bioma sem pressa.
+
 ---
 
 ## 🔄 Resumo do fluxo obrigatório a cada pedido
@@ -204,7 +217,7 @@ Ao final de cada tarefa, apresentar um **checklist de conferência** com este fo
 ```text
 1. PESQUISAR  → inspirações em jogos indies na Web (Regra 2)
 2. PERGUNTAR  → opções de implementação (Regra 1)
-3. IMPLEMENTAR → seguindo as escolhas do usuário e a otimização (Regra 5)
+3. IMPLEMENTAR → seguindo as escolhas do usuário, otimização (Regra 5) e tela de carregamento em cargas pesadas (Regra 14)
 4. ARTE       → imagens em alta resolução, pixel art harmônico (Regra 6) + Regra 8 não-humanóide
 5. MOSTRAR    → exibir toda arte gerada para aprovação visual (Regra 10)
 6. ADAPTAR    → mobile: todo input novo vira gesto/botão de toque (Regra 9)

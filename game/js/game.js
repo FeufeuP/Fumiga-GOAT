@@ -30,7 +30,7 @@ import {
 import { foes, boss, clearFoes, updateFoes, updateBoss } from "./enemies.js";
 import { projectiles, orbs, updateProjectiles, updateOrbs, clearCombat } from "./combat.js";
 import {
-  director, resetDirector, updateDirector, skipPeace, mapDef, waveDef, isLastMap, nextMapCalm,
+  director, resetDirector, updateDirector, skipPeace, skipWave, mapDef, waveDef, isLastMap, nextMapCalm,
   calmFrac, waveProgress,
 } from "./waves.js";
 import { rollDraft, applyMutation, mutationList } from "./mutations.js";
@@ -40,12 +40,14 @@ import {
   transitionFx, notePointer, drawTitleLogo
 } from "./render.js";
 import { enterTree, updateTree, drawTree, treeClick, treeBack } from "./meta.js";
+import { treeGrowth, treeArtCanvas } from "./tree_art.js";
 import { colony, foodTrailAt, dangerAt } from "./brain.js";
 import { BIOME_HUD, drawBiomeTexture, drawGasterBar, drawPheromoneOverlay, drawPheromoneLegend, drawFoodIcon, drawEssenceCrystal, drawTrailAnt, trailProgress, drawTreeRings, drawScentMinimap, drawWoodBanner, drawKitIcon, hudBiome } from "./lore_hud.js";
 import { startCutscene, updateCutscene, drawCutscene, handleCutsceneInput, isCutsceneActive, startLoadingCutscene, getCutsceneDefs } from "./cutscenes.js";
 import {
   startLoadingScreen, updateLoadingScreen, drawLoadingScreen, isLoadingActive,
-  dismissLoadingScreen, handleLoadingInput,
+  isLoadingFadingOut, dismissLoadingScreen, handleLoadingInput,
+  shouldUseLoadingScreen, runWithLoadingScreen,
 } from "./loading_screen.js";
 import { uiBegin, uiButtons, button, iconButton, panel, bar, pointInRect, dialogBox, isTouchUI, touchPad } from "./ui.js";
 import { startTutorial, stopTutorial, updateTutorial, drawTutorial, tutEvent, TUT, tutorialCardRect } from "./tutorial.js";
@@ -81,50 +83,31 @@ let shopOpen = false;
 let rallyCooldown = 0; // FASE 4: cooldown rally F quando infiniteDash desligado
 
 // ------------------------------------------------------------- modos de jogo --
+// NOTA: o MODO TESTE é um modo auxiliar de desenvolvimento que será removido
+// no lançamento final, restando apenas a Campanha Principal (Modo História).
 const GAME_MODES = [
   {
     id: "campanha",
     name: "CAMPANHA",
     icon: "C",
     color: "#37e6c8",
-    diff: "NORMAL • 6 MAPAS",
+    diff: "MODO HISTÓRIA • 6 MAPAS",
     desc: "A jornada completa\n6 biomas, 6 chefões\nEvolua a colônia eterna",
     stats: ["• 6 mapas progressivos", "• Chefões únicos", "• Tutorial ativo", "• Recompensa: 100%"],
     mapIdx: 0,
     endless: false,
   },
   {
-    id: "sobrevivencia",
-    name: "SOBREVIVÊNCIA",
-    icon: "S",
-    color: "#c77dff",
-    diff: "DIFÍCIL • INFINITO",
-    desc: "Ondas infinitas\nAté onde a colônia aguenta?\nRecursos escassos",
-    stats: ["• Ondas infinitas", "• Dificuldade crescente", "• Sem chefões", "• Recompensa: 150%"],
+    id: "teste",
+    name: "MODO TESTE",
+    icon: "T",
+    color: "#ffd479",
+    diff: "LABORATÓRIO • PODERES ∞",
+    desc: "Auxiliar de criação\nDinheiro, formigas e ondas ∞\nPule ondas e mapas livremente",
+    stats: ["• Dinheiro infinito (∞)", "• Formigas infinitas (∞)", "• Ondas infinitas (∞)", "• Pular onda e mapa"],
     mapIdx: 0,
     endless: true,
-  },
-  {
-    id: "enxame",
-    name: "ENXAME RÁPIDO",
-    icon: "R",
-    color: "#ffb347",
-    diff: "INTENSO • 10 MIN",
-    desc: "Ação sem pausa\nOndas a cada 12s\nPara veteranos famintos",
-    stats: ["• Ondas a cada 12s", "• Começa com exército", "• XP x2", "• Recompensa: 200%"],
-    mapIdx: 2,
-    fast: true,
-  },
-  {
-    id: "cacada",
-    name: "CAÇADA",
-    icon: "B",
-    color: "#ff4d5a",
-    diff: "EXTREMO • CHEFES",
-    desc: "Só chefões\nUm após o outro\nProve ser a colônia alfa",
-    stats: ["• Só chefões", "• Sem coleta", "• Exército pré-montado", "• Recompensa: 300%"],
-    mapIdx: 5,
-    bossRush: true,
+    testMode: true,
   },
 ];
 
@@ -187,7 +170,7 @@ function optSetVolume(sl, x, silent) {
 function isMobileLayout() { return isTouchUI(); }
 
 // ------------------------------------------------------------------ run -----
-function newRun(mode = null, seedOverride = null) {
+function newRun(mode = null, seedOverride = null, opts = {}) {
   const mSel = mode || selectedMode;
   // seedOverride: só o modo debug (?seed=) — mesmo mapa gerado toda vez
   const seed = seedOverride != null ? seedOverride >>> 0 : (Math.random() * 0xffffffff) >>> 0;
@@ -205,14 +188,15 @@ function newRun(mode = null, seedOverride = null) {
   nestExit();
 
   const m = metaBonus();
+  const isTest = !!mSel.testMode;
   const run = {
     seed,
     mode: mSel.id,
     modeDef: mSel,
     status: "running",
     endT: 0, payoutDone: false, payout: null,
-    food: START.food + m.startFood + (mSel.fast ? 120 : 0) + (mSel.bossRush ? 200 : 0),
-    essencePool: m.startEssence + (mSel.bossRush ? 100 : 0),
+    food: isTest ? 9999 : START.food + m.startFood + (mSel.fast ? 120 : 0) + (mSel.bossRush ? 200 : 0),
+    essencePool: isTest ? 9999 : m.startEssence + (mSel.bossRush ? 100 : 0),
     level: mSel.fast ? 3 : 0,
     xp: 0, xpNext: xpForLevel(mSel.fast ? 4 : 1),
     fungusT: 9,
@@ -231,6 +215,9 @@ function newRun(mode = null, seedOverride = null) {
     endless: !!mSel.endless,
     fast: !!mSel.fast,
     bossRush: !!mSel.bossRush,
+    testMode: isTest,
+    // Poderes do Modo Teste (auxiliar de desenvolvimento; ativos por padrão, alternáveis no HUD)
+    testPowers: isTest ? { infMoney: true, infAnts: true, infWaves: true } : null,
     // PÓS-FINAL: ASCENSÃO DA NÉVOA (só campanha, só depois da 1ª vitória)
     ascension: mSel.id === "campanha" && G.save.best.wins > 0
       ? Math.max(0, Math.min(G.pendingAsc | 0, Math.min(G.save.ascension + 1, ASC_MAX))) : 0,
@@ -281,11 +268,6 @@ function newRun(mode = null, seedOverride = null) {
 
   if (!G.save.tutorial) startTutorial(); else stopTutorial(false);
 
-  // A tela de carregamento tematica da Planicie aparece ANTES da cutscene,
-  // garantindo tempo para carregar os assets e o mundo 1. A cutscene so
-  // abre apos a conclusao da tela de carregamento.
-  const isNodeTest = typeof process !== "undefined" && !!process.versions && !!process.versions.node;
-
   const startIntro = () => {
     if (!G.save.cutscenes || !G.save.cutscenes.noite_branca) {
       startCutscene("noite_branca");
@@ -294,27 +276,58 @@ function newRun(mode = null, seedOverride = null) {
     }
   };
 
-  const skipDebugLoading = typeof window !== "undefined" && window.FUMIGA &&
-    typeof location !== "undefined" && !location.search.includes("cutscene");
-
-  if (isNodeTest || skipDebugLoading) {
-    // Testes unitarios headless do Node ou teleporte debug sem &cutscene: abre direto
+  if (opts.skipIntroLoad) {
+    // Chamado por dentro da task da tela de carregamento (startRunWithLoading):
+    // a cutscene é disparada no onFinish quando o jogador confirma o 100%.
+  } else if (!shouldUseLoadingScreen()) {
     startIntro();
+    startTransition("auto", "MODE", "RUN", 0, null);
   } else {
-    // Navegador real: exibe a tela de carregamento estilo Dead Cells antes da cutscene
     startLoadingScreen({
       biome: MAPS[startMap] ? MAPS[startMap].id : "planicie",
-      minDuration: 2.2,
+      minDuration: 1.8,
       onFinish: () => {
         startIntro();
       },
     });
   }
 
-  // transição de entrada
-  startTransition("auto", "MODE", "RUN", 0, null);
-
   return run;
+}
+
+/**
+ * Regra 14: abre a tela de carregamento ANTES de gerar o mundo da expedição,
+ * garantindo que genWorld, formigas e névoa carreguem sem que o jogador veja.
+ */
+function startRunWithLoading(mSel, seedOverride = null) {
+  const modeObj = mSel || selectedMode;
+  const startMap = modeObj.mapIdx || 0;
+  const mDef = MAPS[startMap] || MAPS[0];
+  const bId = mDef.id || "planicie";
+  const degraus = ["I", "II", "III", "IV", "V", "VI"];
+  mouse.justDown = false; pressed.Space = false; pressed.Enter = false;
+  if (!shouldUseLoadingScreen()) {
+    return newRun(modeObj, seedOverride);
+  }
+  runWithLoadingScreen({
+    biome: bId,
+    degrau: "DEGRAU " + (degraus[startMap] || "I"),
+    title: mDef.name,
+    subtitle: mDef.sub ? mDef.sub.toUpperCase() : "",
+    minDuration: 1.8,
+    task: (onProgress) => {
+      onProgress(0.35, "GERANDO MUNDO E TÚNEIS...");
+      newRun(modeObj, seedOverride, { skipIntroLoad: true });
+      onProgress(1.0, "TERRENO PRONTO");
+    },
+    onFinish: () => {
+      if (!G.save.cutscenes || !G.save.cutscenes.noite_branca) {
+        startCutscene("noite_branca");
+      } else {
+        startCutscene(bId);
+      }
+    },
+  });
 }
 
 function endRun(won) {
@@ -340,11 +353,11 @@ export function settleRun() {
   run.payoutDone = true;
   const em = metaBonus().essMult;
   const won = run.status === "won";
-  const modeMult = run.modeDef ? (run.modeDef.id === "campanha" ? 1 : run.modeDef.id === "sobrevivencia" ? 1.5 : run.modeDef.id === "enxame" ? 2 : 3) : 1;
+  const modeMult = run.modeDef ? (run.modeDef.id === "campanha" ? 1 : 1.5) : 1;
   const mapBonus = run.mapsCleared * 160;
   const waveBonus = run.wave * 8;
   const killBonus = run.kills;
-  const relic = Math.round(run.essencePool * 0.1);
+  const relic = Math.round((run.testMode ? Math.min(run.essencePool, 1000) : run.essencePool) * 0.1);
   const winBonus = won ? 200 : 0;
   const base = relic + waveBonus + killBonus + mapBonus + winBonus;
   // PÓS-FINAL: a ASCENSÃO paga essência extra proporcional ao desafio aceito
@@ -362,8 +375,8 @@ export function settleRun() {
   b.wave = Math.max(b.wave, run.wave);
   b.maps = Math.max(b.maps || 0, run.mapsCleared);
   b.kills += run.kills;
-  // PÓS-FINAL: a vitória da campanha avança a ERA e o teto da ASCENSÃO
-  if (won && run.mode === "campanha") {
+  // PÓS-FINAL: a vitória da campanha (ou modo teste durante o desenvolvimento) avança a ERA e o teto da ASCENSÃO
+  if (won && (run.mode === "campanha" || run.mode === "teste")) {
     G.save.era = (G.save.era || 0) + 1;
     if (run.ascension === (G.save.ascension || 0) && G.save.ascension < ASC_MAX) G.save.ascension++;
   }
@@ -375,10 +388,19 @@ export function settleRun() {
 }
 
 // --------------------------------------------------------- avanço de mapa ---
-function advanceMap() {
+function advanceMap(targetIdx = null) {
   const run = G.run;
-  director.mapIdx++;
+  if (targetIdx !== null && targetIdx !== undefined) {
+    director.mapIdx = ((targetIdx | 0) % MAPS.length + MAPS.length) % MAPS.length;
+  } else {
+    director.mapIdx = (director.mapIdx + 1) % MAPS.length;
+  }
   run.mapIdx = director.mapIdx;
+  run.bossDefeated = false;
+  if (run.testMode) {
+    director.cycle = 0;
+    run.mapsCleared = Math.max(run.mapsCleared || 0, director.mapIdx);
+  }
   const m = mapDef();
 
   genWorld((Math.random() * 0xffffffff) >>> 0, director.mapIdx);
@@ -421,6 +443,31 @@ function advanceMap() {
   run.transition = false;
   SFX.chime();
   floatText(A.x, A.y - 120, "A COLÔNIA MIGRA PARA NOVAS TERRAS", { color: "#ffd479", life: 2.2, scale: 2 });
+}
+
+/**
+ * Regra 14: realiza a troca de mundo/bioma sob a tela de carregamento,
+ * executando advanceMap(nextIdx) nos bastidores sem que o jogador veja.
+ */
+function triggerMapChange(targetIdx = null) {
+  const nextIdx = targetIdx !== null && targetIdx !== undefined
+    ? (((targetIdx | 0) % MAPS.length + MAPS.length) % MAPS.length)
+    : ((director.mapIdx + 1) % MAPS.length);
+  const next = MAPS[nextIdx] || MAPS[0];
+  const degraus = ["I", "II", "III", "IV", "V", "VI"];
+  mouse.justDown = false; pressed.KeyN = false; pressed.Space = false; pressed.Enter = false;
+  runWithLoadingScreen({
+    biome: next.id,
+    degrau: "DEGRAU " + (degraus[nextIdx] || "I"),
+    title: "MAPA " + (nextIdx + 1) + " — " + next.name,
+    subtitle: next.sub ? next.sub.toUpperCase() : "",
+    minDuration: 1.6,
+    task: (onProgress) => {
+      onProgress(0.35, "MIGRANDO A COLÔNIA...");
+      advanceMap(nextIdx);
+      onProgress(1.0, "BIOMA PRONTO");
+    },
+  });
 }
 
 // -------------------------------------------------------------- seleção -----
@@ -566,7 +613,7 @@ function updateMode(dt) {
     selectedMode = GAME_MODES[modeHover];
     if (mobile && navigator.vibrate) navigator.vibrate(20);
     SFX.uiClick();
-    newRun(selectedMode);
+    startRunWithLoading(selectedMode);
     return;
   }
   if (pressed.Escape) {
@@ -657,6 +704,13 @@ function outsideAllies() {
  * formigueiro aberto — é isso que faz as duas telas rodarem ao mesmo tempo.
  */
 function worldTick(simDt, run) {
+  if (run.testPowers) {
+    if (run.testPowers.infMoney) {
+      if (run.food < 9999) run.food = 9999;
+      if (run.essencePool < 9999) run.essencePool = 9999;
+    }
+    run.endless = !!run.testPowers.infWaves;
+  }
   // a colônia de DENTRO também trabalha enquanto o jogador está no mundo
   // (visible=false: o turno produz, mas a chocagem grátis espera a visita)
   if (!run.baseOpen) nestUpdate(simDt, false);
@@ -841,7 +895,15 @@ function updateRun(dt) {
   }
   if (pressed.KeyQ) { shopOpen = !shopOpen; SFX.uiClick(); }
   if (pressed.KeyG && director.phase === "calm") skipPeace();
-  if (pressed.KeyB && run.status === "running") { openNest(run); }
+  if (pressed.KeyB && run.status === "running") { openNest(run); return; }
+  if (run.testMode && pressed.KeyN && run.status === "running") {
+    triggerMapChange((director.mapIdx + 1) % MAPS.length);
+    return;
+  }
+  if (run.testMode && pressed.KeyK && run.status === "running") {
+    skipWave();
+    return;
+  }
   // FASE 4 FINAL: infiniteDash - sem cooldown quando ligado, 3s cooldown quando desligado
   if (rallyCooldown > 0) rallyCooldown -= simDt;
   if (pressed.KeyF) {
@@ -1037,7 +1099,7 @@ function pickDraft(i) {
 let paused = false;
 
 export function render(dt) {
-  if (isLoadingActive()) {
+  if (isLoadingActive() && !isLoadingFadingOut()) {
     drawLoadingScreen(ctx, G.time);
     cursorCustom();
     return;
@@ -1074,6 +1136,7 @@ export function render(dt) {
   ctx.restore();
   ctx.globalAlpha = 1;
   if (hasTransition()) drawTransition(ctx);
+  if (isLoadingActive()) drawLoadingScreen(ctx, G.time);
   cursorCustom();
 }
 
@@ -1143,9 +1206,7 @@ function renderTitle() {
         return;
       } else if (b.id === "tree") {
         notePointer(mouse.x, mouse.y);
-        enterTree();
-        treeReturn = "TITLE";
-        startTransition("auto", "TITLE", "TREE", 0, () => { G.screen = "TREE"; });
+        openTreeScreen("TITLE");
         return;
       } else if (b.id === "options") {
         notePointer(mouse.x, mouse.y);
@@ -1220,7 +1281,7 @@ function renderModeScreen() {
   // fonte pequena tem 18px de célula; antes o texto caía 2px fora da barra)
   const footerH = 28, footerY = VIEW_H - footerH - 4;
   panel(ctx, 12, footerY, VIEW_W - 24, footerH, { fill: "rgba(10,8,16,0.65)", border: "rgba(74,58,110,0.35)", r: 3 });
-  drawText(ctx, mobile ? "TOQUE NO CARD PARA JOGAR • ARRASTE PARA NAVEGAR • SWIPE" : "ESC: VOLTAR • CLIQUE NO CARD PARA JOGAR • SCROLL VISUAL ATIVO",
+  drawText(ctx, mobile ? "TOQUE NO CARD PARA JOGAR • CAMPANHA OU MODO TESTE" : "ESC: VOLTAR • CLIQUE NO CARD PARA JOGAR • CAMPANHA OU MODO TESTE",
     VIEW_W / 2, footerY + 5, { color: "#5a4f78", align: "center", scale: mobile ? 0.85 : 1, maxWidth: VIEW_W - 60 });
 }
 
@@ -1668,15 +1729,63 @@ export function setLastDt(v) { lastDt = v; }
 function dtClampForAnim() { return lastDt; }
 
 function openNest(run) {
-  run.baseOpen = true;
-  nestEnter();
-  SFX.uiClick();
+  if (!shouldUseLoadingScreen()) {
+    run.baseOpen = true;
+    nestEnter();
+    SFX.uiClick();
+    return;
+  }
+  const m = mapDef();
+  const biomeId = m ? m.id : "planicie";
+  const nestNames = {
+    planicie: "VENTRE ÂMBAR",
+    floresta: "JARDIM ETERNO",
+    pantano: "CÂMARA SILENCIOSA",
+    deserto: "FORNALHA REAL",
+    outono: "BERÇO DOURADO",
+    gelo: "GASTER DE GELO",
+  };
+  mouse.justDown = false; pressed.KeyB = false; pressed.Space = false; pressed.Enter = false;
+  runWithLoadingScreen({
+    biome: biomeId,
+    degrau: "INTERIOR DA COLÔNIA",
+    title: nestNames[biomeId] || "FORMIGUEIRO",
+    subtitle: "DESCENDO PELOS TÚNEIS E CÂMARAS REAIS",
+    minDuration: 1.2,
+    task: (onProgress) => {
+      onProgress(0.45, "PREPARANDO CÂMARAS DO NINHO...");
+      run.baseOpen = true;
+      nestEnter();
+      SFX.uiClick();
+      onProgress(1.0, "FORMIGUEIRO PRONTO");
+    },
+  });
 }
 
 function closeNest(run, click) {
-  run.baseOpen = false;
-  nestExit();
-  if (click) SFX.uiClick();
+  if (!shouldUseLoadingScreen()) {
+    run.baseOpen = false;
+    nestExit();
+    if (click) SFX.uiClick();
+    return;
+  }
+  const m = mapDef();
+  const biomeId = m ? m.id : "planicie";
+  mouse.justDown = false; pressed.KeyB = false; pressed.Escape = false; pressed.Space = false; pressed.Enter = false;
+  runWithLoadingScreen({
+    biome: biomeId,
+    degrau: "SUPERFÍCIE DO MUNDO",
+    title: m ? m.name : "EXPEDIÇÃO",
+    subtitle: "RETORNANDO À TRILHA DA SUPERFÍCIE",
+    minDuration: 1.2,
+    task: (onProgress) => {
+      onProgress(0.45, "SUBINDO PELA BOCA DO NINHO...");
+      run.baseOpen = false;
+      nestExit();
+      if (click) SFX.uiClick();
+      onProgress(1.0, "TERRENO PRONTO");
+    },
+  });
 }
 
 function drawNestScreen(run) {
@@ -1744,7 +1853,10 @@ function drawHUD() {
   // O contador de irmãs (à direita) e o nome do bioma (à esquerda) dividem a
   // MESMA faixa: a largura do bioma sai do que o contador não usa. Sem isso,
   // com FONTE GRANDE o "VASO DA PLANÍCIE" encostava no "IRMÃS 5/16".
-  const popTxt = "IRMÃS " + popUsed() + "/" + popCapTotal();
+  const tp = run.testPowers;
+  const infMoney = !!(tp && tp.infMoney);
+  const infAnts = !!(tp && tp.infAnts);
+  const popTxt = "IRMÃS " + popUsed() + "/" + (infAnts ? "∞" : popCapTotal());
   const popW = Math.min(118, textWidth(popTxt, { scale: 1 }));
   const biomeW = Math.min(168, Math.max(96, 278 - popW - 10));
   if (run.modeDef) {
@@ -1773,15 +1885,15 @@ function drawHUD() {
   // ficavam a 2px uma da outra com FONTE GRANDE)
   const essRow = Math.ceil(19 * hudFS);
   drawFoodIcon(ctx, biomeId, 104, yy-1);
-  drawText(ctx, bh.foodLabel + " " + fmt(run.food), 124, yy, { color: bh.foodColor, scale: 1, maxWidth: 190 });
+  drawText(ctx, bh.foodLabel + " " + (infMoney ? "∞" : fmt(run.food)), 124, yy, { color: bh.foodColor, scale: 1, maxWidth: 190 });
   // essência cristal geométrico
   drawEssenceCrystal(ctx, 26, yy + essRow + 4, 14, bh.essenceColor, G.time);
-  drawText(ctx, bh.essenceLabel + " " + fmt(run.essencePool), 38, yy + essRow, { color: bh.essenceColor, scale: 1, maxWidth: 272 });
+  drawText(ctx, bh.essenceLabel + " " + (infMoney ? "∞" : fmt(run.essencePool)), 38, yy + essRow, { color: bh.essenceColor, scale: 1, maxWidth: 272 });
   {
     // na linha do nome do bioma (nunca em cima do nome do modo)
     const used = popUsed(), cap = popCapTotal();
     const popY = run.modeDef ? 12 + rowH : 12;
-    drawText(ctx, popTxt, 298, popY, { color: used >= cap ? "#ff4d5a" : PAL.text, align: "right", scale: 1, maxWidth: popW });
+    drawText(ctx, popTxt, 298, popY, { color: (!infAnts && used >= cap) ? "#ff4d5a" : PAL.text, align: "right", scale: 1, maxWidth: popW });
   }
 
   // ---- fileira de mutações como SEIVA Dourada (Vampire Survivors) ----
@@ -1878,7 +1990,7 @@ function drawHUD() {
         ctx.beginPath(); ctx.arc(rcx, rcy, rr, -Math.PI / 2, -Math.PI / 2 + Math.PI*2 * frac); ctx.stroke();
       }
       if (!run.draft) drawText(ctx, Math.max(0, Math.ceil(director.timer)), rcx, rcy - 8, { color: rest < 0.25 ? "#ff8a94" : PAL.text, align: "center" });
-      drawText(ctx, run.endless ? "SOBREVIVÊNCIA • " + bh.waveLabel : bh.waveLabel, cx0 + 52, 14, { font: "small", color: bh.border, scale: 1, maxWidth: cw-64 });
+      drawText(ctx, run.testMode ? "MODO TESTE • " + bh.waveLabel : (run.endless ? "SOBREVIVÊNCIA • " + bh.waveLabel : bh.waveLabel), cx0 + 52, 14, { font: "small", color: bh.border, scale: 1, maxWidth: cw-64 });
       const cycTag = run.endless ? (director.cycle ? " • CICLO " + (director.cycle + 1) : " • INF") : "";
       drawText(ctx, run.draft ? "ESCOLHA UMA MEMÓRIA" : ("ONDA " + (director.waveInMap + 1) + "/" + m.waves.length + cycTag), cx0 + 52, 34, { color: PAL.textDim, scale: 1, maxWidth: cw-64 });
     } else if (director.phase === "mapClear") {
@@ -1939,8 +2051,8 @@ function drawHUD() {
       if (lastGroup && sp.group !== lastGroup) gx += 12;
       lastGroup = sp.group;
       const x = gx;
-      const cost = unitCost(sp.type);
-      const canBuy = run.food >= cost && popUsed() < popCapTotal() && unitLimitLeft(sp.type);
+      const cost = infMoney ? 0 : unitCost(sp.type);
+      const canBuy = (infMoney || run.food >= cost) && (infAnts || (popUsed() < popCapTotal() && unitLimitLeft(sp.type)));
       // fundo orgânico por card
       drawBiomeTexture(ctx, x, footY, SHOP_W, 64, biomeId, G.time*0.1 + i);
       const r = iconButton(ctx, { x, y: footY, w: SHOP_W, h: 64, id: "shop" + sp.type, disabled: !canBuy, frame: sp.accent, maxPadX: 2 });
@@ -1953,7 +2065,7 @@ function drawHUD() {
       ctx.globalAlpha = canBuy ? 1 : 0.35;
       ctx.drawImage(frame, x + SHOP_W / 2 - frame.width * sc2 / 2, footY + 5, frame.width * sc2, frame.height * sc2);
       ctx.globalAlpha = 1;
-      drawText(ctx, cost, x + SHOP_W / 2, footY + 40, { color: canBuy ? bh.accent : "#a32e46", align: "center", scale: 0.85, maxWidth: SHOP_W - 4 });
+      drawText(ctx, infMoney ? "∞" : cost, x + SHOP_W / 2, footY + 40, { color: canBuy ? bh.accent : "#a32e46", align: "center", scale: 0.85, maxWidth: SHOP_W - 4 });
       const hot = i < 9 ? String(i + 1) : i === 9 ? "0" : "";
       if (hot) drawText(ctx, hot, x + SHOP_W - 3, footY + 4, { color: PAL.textDim, align: "right", scale: 0.8 });
       if (r.hot) shopTooltip = sp;
@@ -2019,6 +2131,88 @@ function drawHUD() {
   }
 
   drawMinimap();
+
+  // Painel de poderes e salto de mapa do MODO TESTE (auxiliar de desenvolvimento):
+  // fica abaixo do minimapa (x: 784..950, y: 152..338), fora de banners/chefes/rodapé.
+  if (run.testMode && run.testPowers) {
+    const tChrome = 1 / fontScale();
+    const tx = 784, tw = 166;
+    let ty = 152;
+    if (button(ctx, {
+      x: tx, y: ty, w: tw, h: 26, compact: true,
+      label: isTouchUI() ? "PRÓXIMO MAPA ▶" : "PRÓXIMO MAPA (N)",
+      id: "testNextMap", accent: "#ffd479", scale: 0.75 * tChrome,
+    }) && live) {
+      triggerMapChange((director.mapIdx + 1) % MAPS.length);
+      return;
+    }
+    ty += 29;
+    const mw2 = 52, mh2 = 22, mgap = 5;
+    for (let mi = 0; mi < MAPS.length; mi++) {
+      const col = mi % 3, row = (mi / 3) | 0;
+      const mx2 = tx + col * (mw2 + mgap);
+      const my2 = ty + row * (mh2 + 3);
+      const cur = director.mapIdx === mi;
+      if (button(ctx, {
+        x: mx2, y: my2, w: mw2, h: mh2, compact: true,
+        label: "M" + (mi + 1),
+        id: "testMap" + (mi + 1),
+        accent: cur ? "#37e6c8" : "#6b5a8a",
+        color: cur ? "#37e6c8" : PAL.text,
+        scale: 0.78 * tChrome,
+      }) && live) {
+        triggerMapChange(mi);
+        return;
+      }
+    }
+    ty += 2 * (mh2 + 3);
+    if (button(ctx, {
+      x: tx, y: ty, w: tw, h: 26, compact: true,
+      label: isTouchUI() ? "PULAR ONDA ▶" : "PULAR ONDA (K)",
+      id: "testSkipWave", accent: "#ffb347", scale: 0.75 * tChrome,
+    }) && live) {
+      skipWave();
+      return;
+    }
+    ty += 29;
+    if (button(ctx, {
+      x: tx, y: ty, w: tw, h: 24, compact: true,
+      label: "DINHEIRO ∞: " + (tp.infMoney ? "SIM" : "NÃO"),
+      id: "testInfMoney",
+      accent: tp.infMoney ? "#7fd6a0" : "#5a4f78",
+      color: tp.infMoney ? "#7fd6a0" : PAL.textDim,
+      scale: 0.72 * tChrome,
+    }) && live) {
+      tp.infMoney = !tp.infMoney;
+      if (tp.infMoney) {
+        run.food = Math.max(run.food, 9999);
+        run.essencePool = Math.max(run.essencePool, 9999);
+      }
+    }
+    ty += 27;
+    if (button(ctx, {
+      x: tx, y: ty, w: tw, h: 24, compact: true,
+      label: "FORMIGAS ∞: " + (tp.infAnts ? "SIM" : "NÃO"),
+      id: "testInfAnts",
+      accent: tp.infAnts ? "#37e6c8" : "#5a4f78",
+      color: tp.infAnts ? "#37e6c8" : PAL.textDim,
+      scale: 0.72 * tChrome,
+    }) && live) {
+      tp.infAnts = !tp.infAnts;
+    }
+    ty += 27;
+    if (button(ctx, {
+      x: tx, y: ty, w: tw, h: 24, compact: true,
+      label: "ONDAS ∞: " + (tp.infWaves ? "SIM" : "NÃO"),
+      id: "testInfWaves",
+      accent: tp.infWaves ? "#c77dff" : "#5a4f78",
+      color: tp.infWaves ? "#c77dff" : PAL.textDim,
+      scale: 0.72 * tChrome,
+    }) && live) {
+      tp.infWaves = !tp.infWaves;
+      run.endless = tp.infWaves;
+    }
+  }
 
   let bossBottom = 0;
   if (bossUp) {
@@ -2284,20 +2478,7 @@ function drawMapTransition(run) {
   const advY = Math.min(408, Math.max(ty + 16, 316));
 
   const triggerAdvance = () => {
-    const nextBiome = next ? next.id : "planicie";
-    startLoadingScreen({
-      biome: nextBiome,
-      title: next ? ("MAPA " + (nextIdx + 1) + " — " + next.name) : "NOVAS TERRAS",
-      subtitle: next ? next.sub : "",
-      minDuration: 2.2,
-      task: async (onProgress) => {
-        onProgress(0.3, "MIGRANDO A COLONIA...");
-        await new Promise((r) => setTimeout(r, 60));
-        onProgress(0.7, "GERANDO BIOMA...");
-        advanceMap();
-        onProgress(1.0, "BIOMA PRONTO");
-      },
-    });
+    triggerMapChange(nextIdx);
   };
 
   if (button(ctx, { x: VIEW_W / 2 - 150, y: advY, w: 300, h: 48, label: "AVANÇAR A EXPEDIÇÃO", id: "goNext", accent: "#37e6c8" })) {
@@ -2361,9 +2542,7 @@ function drawPause() {
       if (b.id === "pauseTree") {
         notePointer(mouse.x, mouse.y);
         paused = false;
-        enterTree();
-        treeReturn = "RUN";
-        startTransition("auto", "RUN", "TREE", 0, () => { G.screen = "TREE"; });
+        openTreeScreen("RUN");
         return;
       }
       if (b.id === "pauseHelp") {
@@ -2377,19 +2556,7 @@ function drawPause() {
         notePointer(mouse.x, mouse.y);
         paused = false;
         settleAbandon();
-        const mDef = G.run.modeDef;
-        const sMap = mDef.mapIdx || 0;
-        const bId = MAPS[sMap] ? MAPS[sMap].id : "planicie";
-        startLoadingScreen({
-          biome: bId,
-          minDuration: 2.0,
-          task: async (onProgress) => {
-            onProgress(0.4, "REINICIANDO EXPEDICAO...");
-            await new Promise((r) => setTimeout(r, 60));
-            newRun(mDef);
-            onProgress(1.0, "PRONTO");
-          },
-        });
+        startRunWithLoading(G.run.modeDef);
         return;
       }
       if (b.id === "quit") {
@@ -2494,10 +2661,51 @@ function settleAbandon() {
 let helpReturn = "TITLE";
 let treeReturn = "TITLE";
 
+function openTreeScreen(fromScreen = "TITLE") {
+  treeReturn = fromScreen;
+  if (!shouldUseLoadingScreen()) {
+    enterTree();
+    startTransition("auto", fromScreen, "TREE", 0, () => { G.screen = "TREE"; });
+    return;
+  }
+  mouse.justDown = false; pressed.Space = false; pressed.Enter = false;
+  runWithLoadingScreen({
+    biome: "palida",
+    degrau: "MEMÓRIA ANCESTRAL",
+    title: "ÁRVORE DA EVOLUÇÃO",
+    subtitle: "DESPERTANDO RAÍZES, GALHOS E FRUTOS DA COLÔNIA",
+    minDuration: 1.3,
+    task: (onProgress) => {
+      onProgress(0.4, "RESTAURANDO SEIVA E GALHOS...");
+      enterTree();
+      try { treeArtCanvas(treeGrowth()); } catch (e) { /* ok */ }
+      G.screen = "TREE";
+      onProgress(1.0, "ÁRVORE PRONTA");
+    },
+  });
+}
+
 function backFromTree() {
   notePointer(mouse.x, mouse.y);
   const to = treeReturn;
-  startTransition("auto", "TREE", to, 0, () => { G.screen = to; });
+  if (!shouldUseLoadingScreen()) {
+    startTransition("auto", "TREE", to, 0, () => { G.screen = to; });
+    return;
+  }
+  const bId = to === "RUN" && G.run ? (MAPS[G.run.mapIdx]?.id || "planicie") : "planicie";
+  mouse.justDown = false; pressed.Escape = false; pressed.Space = false; pressed.Enter = false;
+  runWithLoadingScreen({
+    biome: bId,
+    degrau: to === "RUN" ? "EXPEDIÇÃO EM CURSO" : "COLÔNIA ETERNA",
+    title: to === "RUN" && G.run ? MAPS[G.run.mapIdx].name : "MENU PRINCIPAL",
+    subtitle: "RETORNANDO DAS RAÍZES ANCESTRAIS",
+    minDuration: 1.1,
+    task: (onProgress) => {
+      onProgress(0.5, "PREPARANDO RETORNO...");
+      G.screen = to;
+      onProgress(1.0, "PRONTO");
+    },
+  });
 }
 
 // ------------------------------------------- PÓS-FINAL: tela de PROFECIAS ----
@@ -2506,15 +2714,49 @@ function openProphecies() {
   prophecyPage = 0;
   notePointer(mouse.x, mouse.y);
   SFX.uiClick();
-  checkProphecies(null, false, null);   // concede as de estado acumulado
-  persistSave();
-  startTransition("auto", "TREE", "PROPHECY", 0, () => { G.screen = "PROPHECY"; });
+  if (!shouldUseLoadingScreen()) {
+    checkProphecies(null, false, null);   // concede as de estado acumulado
+    persistSave();
+    startTransition("auto", "TREE", "PROPHECY", 0, () => { G.screen = "PROPHECY"; });
+    return;
+  }
+  mouse.justDown = false; pressed.Space = false; pressed.Enter = false;
+  runWithLoadingScreen({
+    biome: "palida",
+    degrau: "VATICÍNIOS DA MATRIARCA",
+    title: "PROFECIAS DA COLÔNIA",
+    subtitle: "DECIFRANDO AS PROMESSAS GRAVADAS NA BRUMA",
+    minDuration: 1.1,
+    task: (onProgress) => {
+      onProgress(0.5, "CONFERINDO PROFECIAS...");
+      checkProphecies(null, false, null);
+      persistSave();
+      G.screen = "PROPHECY";
+      onProgress(1.0, "PRONTO");
+    },
+  });
 }
 
 function backFromProphecies() {
   notePointer(mouse.x, mouse.y);
   SFX.uiClick();
-  startTransition("auto", "PROPHECY", "TREE", 0, () => { G.screen = "TREE"; });
+  if (!shouldUseLoadingScreen()) {
+    startTransition("auto", "PROPHECY", "TREE", 0, () => { G.screen = "TREE"; });
+    return;
+  }
+  mouse.justDown = false; pressed.Escape = false; pressed.Space = false; pressed.Enter = false;
+  runWithLoadingScreen({
+    biome: "palida",
+    degrau: "MEMÓRIA ANCESTRAL",
+    title: "ÁRVORE DA EVOLUÇÃO",
+    subtitle: "RETORNANDO À COPA DA ÁRVORE",
+    minDuration: 1.1,
+    task: (onProgress) => {
+      onProgress(0.5, "RETORNANDO À ÁRVORE...");
+      G.screen = "TREE";
+      onProgress(1.0, "PRONTO");
+    },
+  });
 }
 
 function updateProphecyScreen(dt) {
@@ -2666,26 +2908,12 @@ function drawEnd(run) {
   if (button(ctx, { x: VIEW_W / 2 - 230, y: by, w: 220, h: btnH, label: "NOVA EXPEDIÇÃO", id: "again", accent: "#37e6c8" })) {
     notePointer(mouse.x, mouse.y);
     paused = false;
-    const mDef = run.modeDef;
-    const sMap = mDef.mapIdx || 0;
-    const bId = MAPS[sMap] ? MAPS[sMap].id : "planicie";
-    startLoadingScreen({
-      biome: bId,
-      minDuration: 2.0,
-      task: async (onProgress) => {
-        onProgress(0.4, "PREPARANDO NOVA EXPEDICAO...");
-        await new Promise((r) => setTimeout(r, 60));
-        newRun(mDef);
-        onProgress(1.0, "PRONTO");
-      },
-    });
+    startRunWithLoading(run.modeDef);
     return;
   }
   if (button(ctx, { x: VIEW_W / 2 + 10, y: by, w: 220, h: btnH, label: "ÁRVORE DA EVOLUÇÃO", id: "goTree", accent: "#c77dff" })) {
     notePointer(mouse.x, mouse.y);
-    enterTree();
-    treeReturn = "TITLE";
-    startTransition("auto", "RUN", "TREE", 0, () => { G.screen = "TREE"; });
+    openTreeScreen("TITLE");
     return;
   }
   if (button(ctx, { x: VIEW_W / 2 - 110, y: menuY, w: 220, h: row2H, label: "MENU PRINCIPAL", id: "menu" })) {
@@ -2706,7 +2934,45 @@ function openMemories() {
   notePointer(mouse.x, mouse.y);
   SFX.uiClick();
   memoryHover = -1;
-  startTransition("auto", "TREE", "MEMORY", 0, () => { G.screen = "MEMORY"; });
+  if (!shouldUseLoadingScreen()) {
+    startTransition("auto", "TREE", "MEMORY", 0, () => { G.screen = "MEMORY"; });
+    return;
+  }
+  mouse.justDown = false; pressed.Space = false; pressed.Enter = false;
+  runWithLoadingScreen({
+    biome: "palida",
+    degrau: "ARQUIVO DA COLÔNIA",
+    title: "MEMÓRIAS DA COLÔNIA",
+    subtitle: "REUNINDO RELATOS E VISÕES DOS SEIS DEGRAUS",
+    minDuration: 1.1,
+    task: (onProgress) => {
+      onProgress(0.5, "ABRINDO ARQUIVO DE MEMÓRIAS...");
+      G.screen = "MEMORY";
+      onProgress(1.0, "PRONTO");
+    },
+  });
+}
+
+function backFromMemories() {
+  notePointer(mouse.x, mouse.y);
+  SFX.uiClick();
+  if (!shouldUseLoadingScreen()) {
+    startTransition("auto", "MEMORY", "TREE", 0, () => { G.screen = "TREE"; });
+    return;
+  }
+  mouse.justDown = false; pressed.Escape = false; pressed.Space = false; pressed.Enter = false;
+  runWithLoadingScreen({
+    biome: "palida",
+    degrau: "MEMÓRIA ANCESTRAL",
+    title: "ÁRVORE DA EVOLUÇÃO",
+    subtitle: "RETORNANDO À COPA DA ÁRVORE",
+    minDuration: 1.1,
+    task: (onProgress) => {
+      onProgress(0.5, "RETORNANDO À ÁRVORE...");
+      G.screen = "TREE";
+      onProgress(1.0, "PRONTO");
+    },
+  });
 }
 
 function updateMemoryScreen(dt) {
@@ -2718,16 +2984,34 @@ function updateMemoryScreen(dt) {
   }
   if (mouse.justDown && memoryHover >= 0) {
     const id = memoryRects[memoryHover].id;
+    const def = defs[id];
     SFX.uiClick();
-    startTransition("auto", "MEMORY", "RUN", 0, () => {
-      G.screen = "RUN";
-      // abre cutscene da memória em modo biblioteca
-      setTimeout(() => startCutscene(id, { fromLibrary: true, force: true }), 400);
+    if (!shouldUseLoadingScreen()) {
+      startTransition("auto", "MEMORY", "RUN", 0, () => {
+        G.screen = "RUN";
+        setTimeout(() => startCutscene(id, { fromLibrary: true, force: true }), 400);
+      });
+      return;
+    }
+    mouse.justDown = false; pressed.Space = false; pressed.Enter = false;
+    runWithLoadingScreen({
+      biome: (def && def.biome) || "planicie",
+      degrau: "MEMÓRIA DA COLÔNIA",
+      title: def ? def.title : "MEMÓRIA",
+      subtitle: def && def.subtitle ? def.subtitle.toUpperCase() : "RECORDANDO O PASSADO...",
+      minDuration: 1.2,
+      task: (onProgress) => {
+        onProgress(0.5, "PREPARANDO PAINÉIS DA MEMÓRIA...");
+        G.screen = "RUN";
+        onProgress(1.0, "MEMÓRIA PRONTA");
+      },
+      onFinish: () => {
+        startCutscene(id, { fromLibrary: true, force: true });
+      },
     });
   }
   if (pressed.Escape) {
-    notePointer(VIEW_W/2, VIEW_H/2);
-    startTransition("auto", "MEMORY", "TREE", 0, () => { G.screen = "TREE"; });
+    backFromMemories();
   }
 }
 
@@ -2772,8 +3056,7 @@ function renderMemoryScreen() {
   memoryPage = drawPageControls("memory", memoryPage, pages, 446);
 
   if (button(ctx, { x: VIEW_W/2-120, y: 446, w: 240, h: 44, label:"VOLTAR ÁRVORE", id:"memBack", accent:"#8f6fd6" })) {
-    notePointer(mouse.x, mouse.y);
-    startTransition("auto", "MEMORY", "TREE", 0, () => { G.screen = "TREE"; });
+    backFromMemories();
   }
   drawText(ctx, (isTouchUI() ? "TOQUE NO CARTÃO PARA REVER • " : "ESC: VOLTAR • CLIQUE PARA REVER CUTSCENE • ") + "320x180 8 LAYERS",
     VIEW_W/2, VIEW_H-42, { color:"#5a4f78", align:"center", scale:0.8, maxWidth: VIEW_W-60 });
@@ -2820,8 +3103,9 @@ export const __debug = {
   },
   openScreen(name, opts = {}) {
     if (name === "LOADING") {
-      const biome = opts.bioma || (opts.mapa === 2 || opts.mapa === 1 ? "floresta" : "planicie");
-      startLoadingScreen({ biome, minDuration: 9999 });
+      const mIdx = opts.mapa != null ? Math.max(0, Math.min(MAPS.length - 1, (opts.mapa | 0) - 1)) : 0;
+      const biome = opts.bioma || (opts.mapa != null ? MAPS[mIdx].id : "planicie");
+      startLoadingScreen({ biome, minDuration: opts.minDuration != null ? opts.minDuration : 1.5 });
       return;
     }
     if (name === "TREE") { enterTree(); treeReturn = "TITLE"; }
@@ -2832,4 +3116,5 @@ export const __debug = {
     G.screen = name;
   },
   openNest() { if (G.run && G.screen === "RUN") openNest(G.run); },
+  skipWave() { if (G.run && G.screen === "RUN") return skipWave(); return false; },
 };
