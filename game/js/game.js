@@ -1,4 +1,7 @@
 import { fruitSight } from "./fruit_effects.js";
+// DIÁRIO DE PLAYTEST: ganchos de expedição, draft, fim de run e a aba TESTE
+// das OPÇÕES (exportar/apagar). Módulo local, sem PII; ver playtest.js.
+import { ptEvento, ptPoderes, ptResumo, ptAtivo, ptLigar, ptApagar, ptEntregar } from "./playtest.js";
 // ============================================================================
 // FUMIGA — orquestrador V3: PRETITLE -> TITLE -> MODE -> OPTIONS -> RUN + Planície Viva
 // ============================================================================
@@ -135,9 +138,13 @@ const OPTIONS_TABS = [
   { id: "audio", label: "ÁUDIO", color: "#37e6c8" },
   { id: "video", label: "VÍDEO", color: "#6db7ff" },
   { id: "controles", label: "CONTROLES", color: "#ffb347" },
-  { id: "acess", label: "ACESSIBILIDADE", color: "#7fd6a0" },
+  { id: "acess", label: "ACESSO", color: "#7fd6a0" },
   { id: "idioma", label: "IDIOMA", color: "#ffd479" },
+  { id: "teste", label: "TESTE", color: "#ff7ab8" },
 ];
+// Aba TESTE (playtest de campo): mensagem de retorno e confirmação de apagar.
+let ptMsg = "", ptMsgT = 0, ptArmed = false;
+function ptAviso(texto) { ptMsg = String(texto || ""); ptMsgT = 5; }
 
 /** Janela do conteúdo rolável (entre as abas e o rodapé). */
 function optViewport() { return { x: 52, y: 156, w: VIEW_W - 104, h: 324 }; }
@@ -146,7 +153,7 @@ function optFS() { return G.save.accessibility.bigFont ? 1.3 : 1; }
 /** Troca de aba pelo teclado: zera a rolagem como os botões fazem. */
 function optSetTab(i) {
   i = clamp(i, 0, OPTIONS_TABS.length - 1);
-  if (i !== optionsTab) { optionsTab = i; optionsScroll = 0; optGrab = null; SFX.uiClick(); }
+  if (i !== optionsTab) { optionsTab = i; optionsScroll = 0; optGrab = null; ptArmed = false; SFX.uiClick(); }
 }
 /** Barra de volume sob o ponto (coords de tela) ou null. */
 function optSliderAt(x, y) {
@@ -194,6 +201,7 @@ function newRun(mode = null, seedOverride = null, opts = {}) {
     mode: mSel.id,
     modeDef: mSel,
     status: "running",
+    baseOpen: false,
     endT: 0, payoutDone: false, payout: null,
     food: isTest ? 9999 : START.food + m.startFood + (mSel.fast ? 120 : 0) + (mSel.bossRush ? 200 : 0),
     essencePool: isTest ? 9999 : m.startEssence + (mSel.bossRush ? 100 : 0),
@@ -229,6 +237,12 @@ function newRun(mode = null, seedOverride = null, opts = {}) {
     chambers: { nursery: 0, pantry: 0, barracks: 0, fungus: 0, refinery: 0 },
   };
   G.run = run;
+  // PLAYTEST: retrato do início da expedição — modo, mapa, ascensão, seed e os
+  // poderes já comprados (é com isto que o relatório mede adoção/efeito no A3).
+  ptEvento("expedicao_inicio", {
+    modo: run.mode, mapa: run.mapIdx, ascensao: run.ascension, seed: run.seed,
+    era: G.save.era || 0, poderes: ptPoderes(G.save.nodes), essencia: Math.round(run.essencePool),
+  });
   if (run.ascension > 0) run.ascFood = ascMods(run.ascension).foodMult;
 
   spawnQueen(); // allies.queen fica apontando para ela (units.js)
@@ -332,7 +346,19 @@ function startRunWithLoading(mSel, seedOverride = null) {
 
 function endRun(won) {
   const run = G.run;
+  // O fim não depende de sair manualmente do ninho; mostra o mesmo desfecho.
+  if (run.baseOpen) { run.baseOpen = false; nestExit(); }
+  paused = false;
   run.status = won ? "won" : "lost";
+  // PLAYTEST: desfecho com o contexto do balanceamento (mapa, onda, tempo,
+  // mortes, pior momento da rainha, mutações e castas nascidas).
+  ptEvento("expedicao_fim", {
+    venceu: !!won, modo: run.mode, mapa: run.mapIdx, mapas: run.mapsCleared,
+    onda: run.wave, abates: run.kills, t: Math.round(run.elapsed), mortes: run.deaths,
+    vidaMin: +(run.queenMinHp || 1).toFixed(2), ascensao: run.ascension || 0,
+    mutacoes: run.mutationLog.map(m => m.id), nascidas: run.hatched ? run.hatched.size : 0,
+    teste: !!run.testMode,
+  });
   run.endT = won ? 2.0 : 1.9;
   G.timeScale = 0.3;
   G.slowMo = run.endT;
@@ -368,6 +394,11 @@ export function settleRun() {
     ascension: run.ascension || 0, ascMult,
   };
 
+  // PLAYTEST: economia da expedição (quanto o teste realmente rendeu).
+  ptEvento("recompensa", {
+    total: run.payout.total, vitoria: run.payout.winBonus, onda: run.payout.waveBonus,
+    abates: run.payout.killBonus, mapas: run.payout.mapBonus, mult: +run.payout.mult.toFixed(2),
+  });
   G.save.essence += total;
   const b = G.save.best;
   b.runs++;
@@ -390,6 +421,11 @@ export function settleRun() {
 // --------------------------------------------------------- avanço de mapa ---
 function advanceMap(targetIdx = null) {
   const run = G.run;
+  // PLAYTEST: o mapa ANTERIOR foi vencido (a migração vem logo abaixo).
+  ptEvento("mapa_limpo", {
+    mapa: director.mapIdx, modo: run.mode, t: Math.round(run.elapsed), onda: run.wave,
+    abates: run.kills, mortes: run.deaths, vidaMin: +(run.queenMinHp || 1).toFixed(2), teste: !!run.testMode,
+  });
   if (targetIdx !== null && targetIdx !== undefined) {
     director.mapIdx = ((targetIdx | 0) % MAPS.length + MAPS.length) % MAPS.length;
   } else {
@@ -516,9 +552,9 @@ export function update(dt) {
   G.time += dt;
 
   if (isLoadingActive()) {
-    if (mouse.justDown || pressed.Space || pressed.Enter) {
-      handleLoadingInput("key");
-    }
+    if (pressed.Escape) handleLoadingInput("key", "Escape");
+    else if (mouse.justDown) handleLoadingInput("pointer");
+    else if (pressed.Space || pressed.Enter) handleLoadingInput("key", pressed.Enter ? "Enter" : "Space");
     updateLoadingScreen(dt);
     return;
   }
@@ -639,6 +675,7 @@ function updateOptions(dt) {
   if (pressed.PageUp) optionsScroll -= V.h * 0.85;
   if (pressed.ArrowLeft) optSetTab(optionsTab - 1);
   if (pressed.ArrowRight) optSetTab(optionsTab + 1);
+  if (ptMsgT > 0) { ptMsgT -= dt; if (ptMsgT <= 0) ptMsg = ""; }
   // gesto: começa no pressionar dentro da viewport; vira "slider" se o
   // primeiro movimento for horizontal sobre uma barra de volume, senão
   // vira rolagem vertical (toque = soltar sem arrastar, tratado no botão)
@@ -763,6 +800,44 @@ function worldTick(simDt, run) {
     if (boss && !boss.dead && (boss.revealT || 0) > 0) beings.push({ x: boss.x, y: boss.y, sight: 320 });
     fogUpdate(beings);
   }
+  checkRunOutcome(run);
+}
+
+// Regras comuns da partida: são executadas antes de curas e depois de cada
+// tick do mundo, no interior e na superfície. Nenhuma tela pula o desfecho.
+function checkRunOutcome(run) {
+  if (run.status !== "running") return false;
+  const q = allies.queen;
+  if (q && q.hp <= 0 && !q.dead) {
+    // acessibilidade invencível
+    if (G.save.accessibility.invincible) {
+      q.hp = q.maxHp * 0.3;
+      floatText(world.anthill.x, world.anthill.y - 80, "MODO ACESSÍVEL: RAINHA PROTEGIDA", { color: "#7fd6a0", life: 1.5 });
+      return false;
+    }
+    if (metaBonus().rebirth && !run.rebirthUsed) {
+      run.rebirthUsed = true;
+      q.hp = q.maxHp * META_POWER.r_ren;
+      q.flash = 0.4;
+      SFX.rebirth();
+      ring(world.anthill.x, world.anthill.y, { r0: 14, r1: 260, life: 0.9, color: "#c77dff", width: 6 });
+      burst(world.anthill.x, world.anthill.y, { n: 46, color: ["#c77dff", "#ffd479", "#efe9ff"], spMin: 40, spMax: 220, life: 0.9, glow: true });
+      floatText(world.anthill.x, world.anthill.y - 110, "RENASCIMENTO REAL!", { color: "#c77dff", life: 2.2, scale: 2 });
+    } else {
+      q.dead = true;
+      endRun(false);
+      return true;
+    }
+  }
+  if (run.status === "running" && run.bossDefeated && isLastMap() && run.bossDefeated === mapDef().boss && !run.endless && !run.bossRush) {
+    endRun(true);
+    return true;
+  }
+  if (run.bossRush && run.kills >= 3 && run.status === "running") {
+    if (run.mapsCleared >= 3) { endRun(true); return true; }
+  }
+
+  return false;
 }
 
 // --------------------------------------------------------------------- RUN --
@@ -781,6 +856,7 @@ function updateRun(dt) {
     }
     return;
   }
+  if (!paused && checkRunOutcome(run)) { hudInputless(dt); return; }
   // FASE 2: gameSpeed + acessibilidade slowMo combinados
   const baseSpeed = G.save.settings.gameSpeed || 1;
   const slowMult = G.save.accessibility.slowMo ? 0.5 : 1;
@@ -922,35 +998,8 @@ function updateRun(dt) {
 
   worldTick(simDt, run);
 
+  if (run.status !== "running") { hudInputless(dt); return; }
   const q = allies.queen;
-  if (q && q.hp <= 0 && !q.dead) {
-    // acessibilidade invencível
-    if (G.save.accessibility.invincible) {
-      q.hp = q.maxHp * 0.3;
-      floatText(world.anthill.x, world.anthill.y - 80, "MODO ACESSÍVEL: RAINHA PROTEGIDA", { color: "#7fd6a0", life: 1.5 });
-      return;
-    }
-    if (metaBonus().rebirth && !run.rebirthUsed) {
-      run.rebirthUsed = true;
-      q.hp = q.maxHp * META_POWER.r_ren;
-      q.flash = 0.4;
-      SFX.rebirth();
-      ring(world.anthill.x, world.anthill.y, { r0: 14, r1: 260, life: 0.9, color: "#c77dff", width: 6 });
-      burst(world.anthill.x, world.anthill.y, { n: 46, color: ["#c77dff", "#ffd479", "#efe9ff"], spMin: 40, spMax: 220, life: 0.9, glow: true });
-      floatText(world.anthill.x, world.anthill.y - 110, "RENASCIMENTO REAL!", { color: "#c77dff", life: 2.2, scale: 2 });
-    } else {
-      q.dead = true;
-      endRun(false);
-      return;
-    }
-  }
-  if (run.status === "running" && run.bossDefeated && isLastMap() && run.bossDefeated === mapDef().boss && !run.endless && !run.bossRush) {
-    endRun(true);
-    return;
-  }
-  if (run.bossRush && run.kills >= 3 && run.status === "running") {
-    if (run.mapsCleared >= 3) { endRun(true); return; }
-  }
 
   if (q && !q.dead && q.hp < q.maxHp * 0.3) {
     run.heartbeatT -= dt;
@@ -1089,6 +1138,7 @@ function pickDraft(i) {
   const m = run.draft.options[i];
   if (!m) return;
   applyMutation(m);
+  ptEvento("draft", { id: m.id, raridade: m.rar, nivel: run.level, t: Math.round(run.elapsed) });
   run.draft = null;
   SFX.buy();
   const A = world.anthill;
@@ -1314,12 +1364,13 @@ function renderOptions() {
     touchMode.on ? "TOQUES E GESTOS" : "TECLADO E MOUSE",
     "JOGUE DO SEU JEITO",
     "MENUS E TUTORIAIS",
+    "DIÁRIO DE PLAYTEST — NADA SAI DESTE APARELHO",
   ];
   drawText(ctx, SUBS[optionsTab], VIEW_W / 2, PY + 64, { color: "#9a8fc0", align: "center", scale: 0.85 * chrome, maxWidth: PW - 60 });
 
   // abas: 5 botões de largura igual preenchendo o diálogo
-  const tabGap = 10, tabW = Math.floor((PW - 16 - tabGap * 4) / 5), tabH = 34, tabY = PY + 92;
-  const tabX0 = VIEW_W / 2 - (tabW * 5 + tabGap * 4) / 2;
+  const NT = OPTIONS_TABS.length, tabGap = 10, tabW = Math.floor((PW - 16 - tabGap * (NT - 1)) / NT), tabH = 34, tabY = PY + 92;
+  const tabX0 = VIEW_W / 2 - (tabW * NT + tabGap * (NT - 1)) / 2;
   for (let i = 0; i < OPTIONS_TABS.length; i++) {
     const tab = OPTIONS_TABS[i];
     const x = tabX0 + i * (tabW + tabGap);
@@ -1348,7 +1399,8 @@ function renderOptions() {
   else if (optionsTab === 1) optionsContentH = optContentVideo(TX, RR, oy, V, FS);
   else if (optionsTab === 2) optionsContentH = optContentControls(TX, RR, oy, V, FS);
   else if (optionsTab === 3) optionsContentH = optContentAccess(TX, RR, oy, V, FS);
-  else optionsContentH = optContentLang(TX, RR, oy, V, FS);
+  else if (optionsTab === 4) optionsContentH = optContentLang(TX, RR, oy, V, FS);
+  else optionsContentH = optContentTeste(TX, RR, oy, V, FS);
   layoutRec.clip = null;
   ctx.restore();
 
@@ -1607,6 +1659,68 @@ function optContentLang(TX, RR, oy, V, FS) {
   cy = optNote(cy, TX, RR, oy, FS, [
     "O IDIOMA VALE PARA MENUS, TUTORIAIS E DESCRIÇÕES",
   ], "#ffd479");
+  return cy + 8;
+}
+
+// ------------------------------------------------------------- playtest -----
+// Aba TESTE: resumo do diário local + EXPORTAR/APAGAR. Serve ao playtest de
+// campo (PWA em aparelho real e balanceamento); nada é enviado sozinho.
+function ptKb(bytes) {
+  return bytes >= 1048576 ? (bytes / 1048576).toFixed(1) + " MB" : Math.max(1, Math.round(bytes / 1024)) + " KB";
+}
+function ptDataCurta(iso) {
+  const d = new Date(iso);
+  if (isNaN(d.getTime())) return "";
+  const p = n => String(n).padStart(2, "0");
+  return p(d.getDate()) + "/" + p(d.getMonth() + 1) + "/" + d.getFullYear();
+}
+const PT_MODO_NOME = { campanha: "CAMPANHA", sobrevivencia: "SOBREVIVÊNCIA", enxame: "ENXAME", cacada: "CAÇADA", teste: "MODO TESTE" };
+
+function optContentTeste(TX, RR, oy, V, FS) {
+  const r = ptResumo();
+  let cy = 8;
+  cy = optToggle(cy, TX, RR, oy, V, FS, {
+    label: "DIÁRIO DE TESTE", on: r.ativo, id: "ptToggle", color: "#7fd6a0",
+    desc: "REGISTRA EXPEDIÇÕES, PODERES E FALHAS PARA O PLAYTEST",
+    flip() { const on = ptLigar(!r.ativo); ptAviso(on ? "DIÁRIO LIGADO" : "DIÁRIO DESLIGADO"); },
+  });
+  const t = r.tot;
+  // Estado em linhas curtas (a mensagem nunca cresce o layout: ver abaixo).
+  const linhas = r.ativo ? [] : ["DIÁRIO DESLIGADO — NADA NOVO SERÁ GRAVADO"];
+  linhas.push(
+    "SESSÕES " + t.sessoes + " • EXPEDIÇÕES " + t.expedicoes + " • VITÓRIAS " + t.vitorias + " • DERROTAS " + t.derrotas,
+    "EVENTOS " + r.eventos + " • " + ptKb(r.bytes) + " • ERROS " + t.erros + " • PACOTES " + t.pacotes,
+  );
+  if (r.ultima) linhas.push("ÚLTIMA: " + (PT_MODO_NOME[r.ultima.modo] || "?") + " • MAPA " + ((r.ultima.mapa | 0) + 1) + " • " + (r.ultima.venceu ? "VITÓRIA" : "DERROTA"));
+  for (const ln of linhas) {
+    drawText(ctx, ln, TX, cy + oy, { color: r.ativo ? "#c9b8f5" : "#ff9ecb", scale: 0.85, maxWidth: RR - TX });
+    cy += 17 * FS;
+  }
+  cy += 2;
+
+  // Ações PRIMEIRO: com rolagem ou FONTE GRANDE os botões continuam à mão.
+  const bw = RR - TX;
+  if (button(ctx, { x: TX, y: cy + oy, w: bw, h: 40, label: "EXPORTAR DADOS", id: "ptExport", accent: "#37e6c8", tap: true, clip: V })) {
+    ptArmed = false;
+    ptAviso("PREPARANDO O ARQUIVO...");
+    // ptEntregar abre a folha de compartilhamento ainda no gesto do toque
+    // (iOS/Android exigem isso); o retorno só atualiza a mensagenzinha.
+    ptEntregar().then(res => ptAviso(res.ok ? ("PRONTO: " + String(res.via).toUpperCase()) : ("FALHOU: " + (res.erro || "?"))))
+      .catch(() => ptAviso("FALHOU AO EXPORTAR"));
+  }
+  cy += 58; // a hitbox cresce com a FONTE GRANDE: 8px de folga sobrepunham os botões
+  if (button(ctx, { x: TX, y: cy + oy, w: bw, h: 34, label: ptArmed ? "CONFIRMAR APAGAR" : "APAGAR DADOS", id: "ptClear", accent: "#ff4d5a", color: ptArmed ? "#ff8a94" : undefined, tap: true, clip: V, scale: ptArmed ? 1 : 0.9 })) {
+    if (!ptArmed) { ptArmed = true; ptAviso("APERTE DE NOVO PARA APAGAR TUDO"); }
+    else { ptArmed = false; ptApagar(); ptAviso("DIÁRIO APAGADO"); }
+  }
+  cy += 40;
+  // A mensagem SUBSTITUI a linha do ID: aparecer/sumir não muda a altura.
+  drawText(ctx, ptMsg || ("ID: " + r.id + " • DESDE " + ptDataCurta(r.criadoEm)), TX, cy + oy,
+    { color: ptMsg ? "#7fd6a0" : "#6b5a8a", scale: 0.8, maxWidth: RR - TX });
+  cy += 20 * FS;
+  cy = optNote(cy, TX, RR, oy, FS, [
+    "OS DADOS FICAM SÓ NESTE APARELHO: EXPORTE E ENVIE NO FIM DO TESTE.",
+  ], "#8f6fd6", "#c9b8f5");
   return cy + 8;
 }
 
@@ -3085,6 +3199,11 @@ function applyScanlines() {
 export function __optScrollToEnd() {
   optionsScroll = Math.max(0, optionsContentH - optViewport().h);
 }
+
+// Gancho de teste: a confirmação do APAGAR é em dois toques (arma/confirma);
+// o teste de regressão usa isto para saber que o 1º toque foi processado antes
+// do 2º (dois toques no MESMO quadro viram um só).
+export function __ptArmed() { return ptArmed; }
 
 export function boot() {
   initInput(canvas);

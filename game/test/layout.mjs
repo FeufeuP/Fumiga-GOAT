@@ -388,7 +388,7 @@ const { __optScrollToEnd } = await import(BASE + "game.js");
 async function auditOptions(label) {
   for (const big of [false, true]) {
     G.save.accessibility.bigFont = big;
-    for (let t = 0; t < 5; t++) {
+    for (let t = 0; t < 6; t++) {
       G.screen = "OPTIONS";
       frame();
       const tab = uiButtons().find((b) => b.id === "tab" + t);

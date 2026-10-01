@@ -2,6 +2,7 @@
 // PC e mobile compartilham arte, câmera, progressão e interface.
 import { PAL, META_BRANCHES, META_STAGES, VIEW_W, VIEW_H, FRUIT_TREES } from "./config.js";
 import { G, metaLevel, metaCanBuy, metaBuy, isFruitUnlocked, isSupremeFlowerUnlocked, supremeProgress, isTreeStageUnlocked, treeStageRequirement } from "./state.js";
+import { FRUIT_POWER_PREFIX } from "./fruit_skills.js";
 import { drawText, textWidth, wrapText, fontScale, layoutRec } from "./font.js";
 import { IMG, loadSantuario } from "./assets.js";
 import { panel, button, hitArea, pointInRect, isTouchUI } from "./ui.js";
@@ -378,7 +379,9 @@ function drawNodeTip(ctx, n) {
   const blocks = [
     [n.name, n.supreme ? "#ffd479" : col, .93],
     [(n._fruit ? (n.supreme ? "SUPREMA • " : n.global ? "GLOBAL • " : "LEGADO • ") : "GALHO " + n.stage + " • " + META_BRANCHES[n.br].name + " • ") + lvl + "/" + n.cost.length + stageLabel, PAL.textDim, .72],
-    [n.desc, PAL.text, .80],
+    [n.levelDescriptions
+      ? FRUIT_POWER_PREFIX + (lvl < n.cost.length ? "PRÓXIMO NÍVEL " + (lvl + 1) + ": " + n.levelDescriptions[lvl]
+        : n.levelDescriptions[lvl - 1]) : n.desc, PAL.text, .80],
     [lvl < n.cost.length ? "CUSTO: " + n.cost[lvl] + " ESSÊNCIA" : "NÍVEL MÁXIMO", "#ffd479", .76],
   ];
   if (!chk.ok && lvl < n.cost.length) blocks.push([chk.why, "#ffb4bc", .74]);

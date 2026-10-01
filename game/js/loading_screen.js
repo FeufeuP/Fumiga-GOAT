@@ -6,7 +6,11 @@
 import { VIEW_W, VIEW_H, PAL, MAPS } from "./config.js";
 import { drawText, textWidth, fontScale } from "./font.js";
 import { SFX } from "./audio.js";
+import { G } from "./state.js";
+import { button } from "./ui.js";
 import { assetUrl, loadImage, LOAD_CFG } from "./assets.js";
+// PLAYTEST: falha de tarefa essencial entra no diário de campo (A8).
+import { ptEvento } from "./playtest.js";
 
 // Cache de imagens de carregamento por bioma (apenas arquivos existentes em assets/loading/)
 const LOADING_CACHE = new Map();
@@ -233,6 +237,7 @@ export function startLoadingScreen({
   minDuration = 1.6,
   autoAdvance = false,
   onFinish = null,
+  onCancel = null,
 } = {}) {
   const info = BIOME_LORE[biome] || BIOME_LORE.planicie;
   const loreText = info.lores[Math.floor(Math.random() * info.lores.length)];
@@ -256,7 +261,7 @@ export function startLoadingScreen({
     statusText: "PREPARANDO TERRENO...",
     timer: 0,
     minDuration: Math.max(0.8, minDuration),
-    phase: "active", // active -> ready -> fadeout -> done
+    phase: "active", // active -> ready -> fadeout -> done; error -> retry/cancel
     alpha: 1,
     framesRendered: 0,
     taskFn: typeof task === "function" ? task : null,
@@ -267,6 +272,8 @@ export function startLoadingScreen({
     image: null,
     autoAdvance: !!autoAdvance,
     onFinish,
+    onCancel,
+    attempt: 0,
     finishCalled: false,
     autoAdvanceTimer: 0,
   };
@@ -275,20 +282,21 @@ export function startLoadingScreen({
     activeLoading.targetProgress = 1;
   }
 
-  // Carrega imagem de fundo e garante sincronização
+  // A arte é opcional (fallback), a tarefa de preparação é essencial.
+  const currentLoading = activeLoading;
   loadLoadingImage(biome)
     .then((img) => {
-      if (activeLoading && activeLoading.biome === biome) {
+      if (activeLoading === currentLoading) {
         activeLoading.image = img;
         activeLoading.imageLoaded = true;
-        if (activeLoading.targetProgress < 0.7) {
+        if (activeLoading.phase === "active" && activeLoading.targetProgress < 0.7) {
           activeLoading.targetProgress = 0.7;
           activeLoading.statusText = "DESPERTANDO A COLÔNIA...";
         }
       }
     })
     .catch(() => {
-      if (activeLoading && activeLoading.biome === biome) {
+      if (activeLoading === currentLoading) {
         activeLoading.imageLoaded = true; // libera fallback caso falhe
       }
     });
@@ -312,11 +320,50 @@ export function getLoadingProgress() {
   return activeLoading ? activeLoading.progress : 1;
 }
 
+function loadingFailed(L, err) {
+  L.taskDone = false;
+  L.taskError = err;
+  L.phase = "error";
+  L.progress = Math.min(L.progress, .95);
+  L.targetProgress = L.progress;
+  L.statusText = "FALHA NO CARREGAMENTO";
+  // PLAYTEST: a falha (e a tentativa) viram evento — no aparelho real é o
+  // sinal mais direto de que a conexão ou um asset estão ruins.
+  ptEvento("loader_erro", {
+    msg: String((err && err.message) || err || "").slice(0, 140),
+    tentativa: Number.isFinite(L.attempt) ? L.attempt : 1,
+    bioma: L.biome ? String(L.biome).slice(0, 20) : "",
+  });
+}
+export function getLoadingError() { return activeLoading?.taskError || null; }
+export function retryLoadingScreen() {
+  const L = activeLoading;
+  if (!L || L.phase !== "error") return false;
+  L.attempt++;
+  L.taskStarted = false; L.taskDone = !L.taskFn; L.taskError = null;
+  L.phase = "active"; L.progress = 0; L.targetProgress = L.taskFn ? .18 : 1;
+  L.timer = 0; L.framesRendered = 0; L.alpha = 1; L.finishCalled = false;
+  L.statusText = "TENTANDO NOVAMENTE...";
+  return true;
+}
+export function cancelLoadingScreen() {
+  const L = activeLoading;
+  if (!L || L.phase !== "error") return false;
+  activeLoading = null;
+  // Não retomar um mundo parcialmente preparado. Metaprogressão fica intacta.
+  if (typeof L.onCancel === "function") L.onCancel();
+  else { G.screen = "TITLE"; G.run = null; G.timeScale = 1; G.slowMo = 0; }
+  return true;
+}
 function invokeFinishOnce() {
-  if (!activeLoading || activeLoading.finishCalled) return;
-  activeLoading.finishCalled = true;
-  const cb = activeLoading.onFinish;
-  if (typeof cb === "function") cb();
+  if (!activeLoading || activeLoading.phase === "error") return false;
+  if (activeLoading.finishCalled) return true;
+  const L = activeLoading;
+  try {
+    if (typeof L.onFinish === "function") L.onFinish();
+    L.finishCalled = true;
+    return true;
+  } catch (err) { loadingFailed(L, err); return false; }
 }
 
 /**
@@ -324,8 +371,9 @@ function invokeFinishOnce() {
  */
 export function dismissLoadingScreen() {
   if (!activeLoading) return false;
+  if (activeLoading.phase === "error" || activeLoading.taskError) return false;
   if (activeLoading.phase === "ready" || (activeLoading.taskDone && activeLoading.imageLoaded && activeLoading.timer >= activeLoading.minDuration)) {
-    invokeFinishOnce();
+    if (!invokeFinishOnce()) return false;
     activeLoading.phase = "fadeout";
     SFX.uiClick();
     return true;
@@ -347,8 +395,10 @@ export function updateLoadingScreen(dt) {
   if (!activeLoading.taskStarted && activeLoading.taskFn && (activeLoading.framesRendered >= 1 || activeLoading.timer >= 0.025)) {
     activeLoading.taskStarted = true;
     const currentLoading = activeLoading;
+    const attempt = currentLoading.attempt;
     const reportProgress = (p, msg) => {
-      if (activeLoading !== currentLoading) return;
+      if (activeLoading !== currentLoading || currentLoading.attempt !== attempt || currentLoading.phase === "error") return;
+      if (!Number.isFinite(p)) return;
       activeLoading.targetProgress = Math.max(0, Math.min(1, p));
       if (msg) activeLoading.statusText = msg;
     };
@@ -356,17 +406,14 @@ export function updateLoadingScreen(dt) {
     Promise.resolve()
       .then(() => currentLoading.taskFn(reportProgress))
       .then(() => {
-        if (activeLoading !== currentLoading) return;
+        if (activeLoading !== currentLoading || currentLoading.attempt !== attempt) return;
         activeLoading.taskDone = true;
         activeLoading.targetProgress = 1;
         activeLoading.statusText = "TERRENO PRONTO";
       })
       .catch((err) => {
-        if (activeLoading !== currentLoading) return;
-        activeLoading.taskDone = true;
-        activeLoading.taskError = err;
-        activeLoading.targetProgress = 1;
-        activeLoading.statusText = "AVISO AO CARREGAR";
+        if (activeLoading !== currentLoading || currentLoading.attempt !== attempt) return;
+        loadingFailed(currentLoading, err);
       });
   }
 
@@ -405,15 +452,14 @@ export function updateLoadingScreen(dt) {
     if (activeLoading.autoAdvance) {
       activeLoading.autoAdvanceTimer += dt;
       if (activeLoading.autoAdvanceTimer >= 2.0) {
-        invokeFinishOnce();
-        activeLoading.phase = "fadeout";
+        if (invokeFinishOnce()) activeLoading.phase = "fadeout";
       }
     }
   } else if (activeLoading.phase === "fadeout") {
     activeLoading.alpha -= dt * 3.5;
     if (activeLoading.alpha <= 0) {
       activeLoading.alpha = 0;
-      invokeFinishOnce();
+      if (!invokeFinishOnce()) { activeLoading.alpha = 1; return true; }
       activeLoading = null;
       return "done";
     }
@@ -555,6 +601,19 @@ export function drawLoadingScreen(ctx, time) {
     align: "center",
     maxWidth: 820,
   });
+
+  if (L.phase === "error") {
+    drawText(ctx, "FALHA NO CARREGAMENTO", VIEW_W / 2, 304,
+      { align: "center", color: "#ff8a96", scale: 1.1 * chrome, maxWidth: 740 });
+    drawText(ctx, "A PREPARAÇÃO NÃO TERMINOU. TENTE NOVAMENTE OU VOLTE AO MENU.", VIEW_W / 2, 338,
+      { align: "center", color: PAL.text, scale: .8 * chrome, maxWidth: 780 });
+    if (button(ctx, { x: 282, y: 386, w: 220, h: 48, label: "TENTAR NOVAMENTE", id: "loadingRetry", scale: .8, accent: "#37e6c8" })) retryLoadingScreen();
+    else if (button(ctx, { x: 522, y: 386, w: 160, h: 48, label: "VOLTAR AO MENU", id: "loadingCancel", scale: .75 })) cancelLoadingScreen();
+    drawText(ctx, "ENTER OU ESPAÇO: TENTAR NOVAMENTE • ESC: VOLTAR AO MENU", VIEW_W / 2, 452,
+      { align: "center", color: PAL.textDim, scale: .7 * chrome, maxWidth: 780 });
+    ctx.restore();
+    return true;
+  }
 
   // 6. Painel Inferior de Lore e Dica (Caixa de vidro translúcido com borda mística)
   const panelW = 760;
@@ -711,6 +770,11 @@ export function runWithLoadingScreen(opts = {}) {
  */
 export function handleLoadingInput(type = "key", key = "") {
   if (!activeLoading) return false;
+  if (activeLoading.phase === "error") {
+    if (type === "key" && key === "Escape") return cancelLoadingScreen();
+    if (type === "key" && ["Enter", "Space", " "].includes(key)) return retryLoadingScreen();
+    return false; // no erro, clique/toque só funciona nos dois botões
+  }
   if (activeLoading.phase === "ready") {
     dismissLoadingScreen();
     return true;

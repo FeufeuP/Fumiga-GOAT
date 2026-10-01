@@ -3633,6 +3633,190 @@ Decisões confirmadas com o usuário (`ask_user`):
   - `game/mobile/touch.js`: ocultação automática de `#touch-hud` enquanto `isLoadingActive()` estiver ativa.
   - `game/test/endless.mjs` e `game/test/lorehud-browser.mjs`: testes automatizados do botão `PULAR ONDA` e da confirmação manual da tela de carregamento.
 
+## Registro — Estabilidade: offline durável, fim de partida no ninho, níveis de poder e falhas de carga (2026-10-01, branch arena/01a0f6cf-fumiga-goat)
 
+**Status: implementado e verificado.** Pedido do usuário: *“Corrija tudo dito no tópico 1”* — os nove
+achados reproduzidos na auditoria do mesmo dia (relatório fora do Git, em `~/analise-fumiga/`).
 
+### Pesquisa de inspiração (Regra 2)
 
+- **Persistência e ciclo de vida de Service Worker** — [web.dev, Service Workers](https://web.dev/learn/pwa/service-workers)
+  e [MDN, ServiceWorkerGlobalScope](https://developer.mozilla.org/en-US/docs/Web/API/ServiceWorkerGlobalScope):
+  o estado global do worker **não** sobrevive a terminar/reiniciar, então versão e cache ativos passam a
+  viver no Cache Storage. `web.dev` também documenta que a janela de atualização é opcional para o
+  usuário — daí a atualização só promover depois de verificada.
+- **Bônus explícitos por nível (Hades)** — [prima games, Mirror of Night](https://primagames.com/gaming/hades-guide-mirror-of-night-upgrades-fated-list-of-prophecies)
+  e [Gamepur](https://www.gamepur.com/guides/all-of-the-mirror-of-night-abilities-in-hades): cada rank
+  descreve numericamente o que ganha; a adaptação foi dar aos 20 poderes globais valores-base por rank
+  com descrição própria, sem inflar gatilhos, alvos ou ressurreições.
+- **Correções de acessibilidade/ressurreição e migração de saves (Dead Cells — “Breaking Barriers”)** —
+  [patch notes 29](https://dead-cells.com/patchnotes/29): “Fixed a bug where Assist Mode's Continue would
+  not work if the player died by a curse” e “Fixed multiple issues when going back to an older version…
+  will create a clean version of the Options, while keeping what you changed”. Inspirou o cuidado com
+  estados de morte + assistência e a validação de saves antigos sem descartar o que é válido.
+
+### Escolha do usuário (Regra 1, `ask_user`)
+
+**Progressão conservadora** para os níveis 2 e 3: o **bônus** cresce **+25% / +50%** sobre o nível 1
+(não o multiplicador inteiro), contagens arredondadas e limites de usos/ressurreições iguais.
+
+### Correções implementadas
+
+1. **Offline após reiniciar o worker (crítico)** — `sw.js` reescrito: versão ativa, versão anterior e
+   a versão de cada cliente ficam persistidas no Cache Storage (`fumiga-controle`); ao acordar, o worker
+   recupera a versão do cache (inclusive dos caches da implementação anterior) antes de responder ao
+   fetch. Atualização é preparada num snapshot e **promovida só depois de verificada**; a cópia anterior
+   e os snapshots de abas abertas sobrevivem a falha de rede, interrupção e quota. O `app/offline.js`
+   correlaciona respostas por `requestId`, rejeita timeout com mensagem clara e confirma o pacote pelo
+   **cache real** (nunca pelo anúncio do worker).
+2. **Morte da Rainha dentro do ninho (crítico)** — as regras de fim viraram `checkRunOutcome()` em
+   `game/js/game.js`, chamada antes de curas e depois de **cada** `worldTick`, no interior e na
+   superfície. `endRun()` fecha o ninho. Renascimento, modo acessível, chefe final e `bossRush`
+   continuam valendo; ataque ocorrido durante o tick também encerra no mesmo quadro.
+3. **Níveis 2 e 3 dos poderes globais** — `game/js/fruit_skills.js` ganhou `POWER_BASE`/`fruitPowerValues`
+   e descrições por nível; `game/js/fruit_effects.js` passou a ler o rank (alcance 45/56/68, cura da
+   gota 8/10/12, etc.) e `game/js/meta.js` mostra “PRÓXIMO NÍVEL n”. **Nível 1, preços, IDs e saves
+   anteriores não mudaram.**
+4. **SANGUE FRIO** — o vale de vida da Rainha é registrado no caminho real de dano
+   (`spawnQueen.takeDamage` e no pulso de `updateAllies`), **antes** de cura/resgate.
+5. **Saves robustos** — `game/js/state.js` valida schema, tipos, chaves perigosas e limites por nó;
+   `metaCanBuy` recusa preço/nível não finito; `persistSave` recusa saldo inválido. IDs, preços e saves
+   v1 de PC/mobile/debug continuam os mesmos.
+6. **Timeout do download** — `mensagemSW` rejeita (15 min) com “tente novamente para retomar”; o retorno
+   do pacote é conferido e reconfirmado no Cache Storage.
+7. **Atualização malsucedida** — coberta pelo item 1 (staging + rollback + retomada).
+8. **Falha de tarefa essencial no carregamento** — `game/js/loading_screen.js` ganhou o estado `error`
+   com **TENTAR NOVAMENTE** (`retryLoadingScreen`) e **VOLTAR AO MENU** (`cancelLoadingScreen`, sem
+   retomar mundo pela metade); `onFinish` com erro também vira estado de erro e callbacks antigos não
+   escrevem na tentativa nova. A arte panorâmica continua opcional (fallback).
+9. **Janela estreita no PC** — `game/css/style.css` não força mais `100vw×100vh` em `<=900px`: o
+   `fit()` de `main.js` mantém 16:9 (800×450 em 800×1000) e as scanlines acompanham o canvas.
+
+### Testes e resultados (2026-10-01)
+
+| Verificação | Resultado |
+|---|---|
+| `npm run test:quick` | **25/25** (novos: `regressions`, `pwa-worker`) |
+| `npm test` | **29/29** (novos: `regressions`, `pwa-worker`, `regressions-browser`) |
+| `npm run inspect` | PC/mobile, todas as telas e 6 mapas, sem erro/404/glifo; 60 FPS |
+| `npm run inspect:pwa` | worker **reiniciado offline** mantém `20261001-estabilidade`; update com 208 falhas preserva a cópia anterior; timeout rejeita; boot offline PC + mobile |
+| `npm run inspect:ui` / `inspect:hud` / `inspect:layout` | OK (layout: 112 estados) |
+| `npm run inspect:tree` | OK (arte, gates, 127 posições, Renascimento) |
+| `node tools/make_assets_list.mjs --check` | em dia — **`ASSET_V` subiu para `20261001-estabilidade`** |
+
+Limitações: sem aparelho físico (Android/iOS), sem teste de quota/eviction real de dias, e o cenário
+“atualização com duas abas executando” é validado por snapshots por cliente, não por sessão longa.
+
+### Próximos passos (backlog da auditoria)
+
+A3 (balanceamento fino de builds), artes próprias de carregamento, Eras transformando o mundo, flores
+dos quatro biomas restantes, Pálida e idiomas — todos dependem do fluxo de pesquisa → perguntas →
+implementação. O CI está ativo, mas o `main` não tem proteção de branch/ruleset (exigir os checks no
+merge segue manual).
+
+## Registro — Playtest de campo: diário local, aba TESTE e relatório (2026-10-01, branch arena/01a0f6cf-fumiga-goat)
+
+**Status: implementado e verificado.** Pedido do usuário: *“Preparar playtest e após salvar no
+GitHub”*. Escolhas da Regra 1 (`ask_user`): exportar/apagar numa **aba TESTE das OPÇÕES** (PC e
+mobile juntos), **gravar por padrão** com botão APAGAR, e roteiro cobrindo **PWA em aparelho real
++ balanceamento**. Nada é enviado a servidor: os dados só saem do aparelho quando o tester exporta.
+
+### Pesquisa de inspiração (Regra 2)
+
+- **“The First 10 Telemetry Events Every Indie Game Should Ship”** ([gamineai](https://gamineai.com/blog/the-first-10-telemetry-events-every-indie-game-should-ship-and-why)):
+  sessão, funil de fase e economia (ganho/gasto) como base; foi o desenho dos eventos `sessao`,
+  `expedicao_inicio/fim`, `mapa_limpo`, `poder_comprado` e `recompensa`.
+- **“What a few days of playtest telemetry found…”** ([DEV](https://dev.to/chris_longden/what-a-few-days-of-playtest-telemetry-found-that-my-own-testing-never-did-20b)):
+  flag de teste, log pequeno em `localStorage`, **nada de upload automático** e um script que
+  transforma o log em lista de problemas (a seção ALERTAS do relatório). Daqui veio também a
+  ideia de carimbar o contexto do aparelho uma vez por sessão.
+- **PRs open-source de telemetria local** ([bio_siege #25](https://github.com/briercliffe/bio_siege/issues/25),
+  [Idle-game #13](https://github.com/Kayza1708/Idle-game-/pull/13)): JSONL/JSON versionado com
+  “exportar relatório” + script de análise offline; serviu de referência para o formato do arquivo
+  e para o `tools/playtest.mjs`.
+- Já em uso desde a auditoria: **Slay the Spire — Metrics Driven Design (GDC 2019)**, para as
+  métricas de balanceamento (taxa de vitória, onde a expedição termina, tempo e economia).
+
+### Decisões
+
+1. **Local-first e sem PII**: sem nome/e-mail/IP/localização/UA crua; o `pt-xxxxxxxx` é um id
+   aleatório do aparelho, criado localmente. Chave própria `localStorage["fumiga_playtest_v1"]`,
+   separada dos saves (não interfere em PC/mobile/debug).
+2. **Grava por padrão** (para não perder o teste de quem esquecer de ligar), com **DIÁRIO DE TESTE
+   LIGADO/DESLIGADO** e **APAGAR DADOS** (confirmação em dois toques) na aba TESTE.
+3. **Teto de 4.000 eventos** (~400 KB) com poda dos mais antigos e corte de emergência em quota:
+   o diário nunca derruba nem trava o jogo (`try/catch` em tudo, escrita só em evento discreto —
+   nada por frame).
+4. **Entrega do arquivo** na melhor via do aparelho: folha de compartilhamento (Android/iOS) →
+   download → copiar para a área de transferência. O `ptEntregar()` é síncrono até a chamada do
+   share, para preservar o gesto do toque que o iOS/Android exigem.
+5. **Sexta aba `TESTE`** nas OPÇÕES, com o rótulo da aba 4 encurtado para `ACESSO` (o nome antigo
+   não caberia com 6 abas). As ações (EXPORTAR/APAGAR) ficam **acima** das notas, para continuarem
+   à mão com rolagem/FONTE GRANDE; a mensagem de status substitui a linha do ID e não muda a altura.
+6. **Eventos**: `sessao`, `pwa_offline` (a evidência do A1), `expedicao_inicio`, `mapa_limpo`,
+   `draft`, `poder_comprado`, `expedicao_fim`, `recompensa`, `pwa_pacote`, `erro`, `loader_erro`.
+
+### Implementação
+
+| Onde | O que mudou |
+|---|---|
+| `game/js/playtest.js` (novo) | diário local: eventos, contadores, ambiente derivado, teto/quota, redes de erro, exportação (share → download → clipboard) |
+| `game/js/game.js` | ganchos em `newRun`/`advanceMap`/`pickDraft`/`endRun`/`settleRun`; aba TESTE (resumo, EXPORTAR, APAGAR, ligar/desligar; `__ptArmed()` como gancho de teste) |
+| `game/js/state.js` | `metaBuy` registra `poder_comprado` (id, nível 1/2/3, preço, saldo) |
+| `game/js/main.js` | sessão do jogo no boot (antes das cargas) e instalação das redes de erro |
+| `game/js/loading_screen.js` | `loadingFailed` registra `loader_erro` (mensagem + tentativa + bioma) |
+| `app/offline.js` | sessão nas páginas do app; `baixarPacote` registra `pwa_pacote` (ok/falha, ms, arquivos) |
+| `tools/playtest.mjs` (novo) | relatório: funil por modo/mapa, poderes (comprado/presente × vitória), economia, PWA, erros e **alertas**; CLI `npm run playtest -- arquivos|pasta [--json=…]` |
+| `PLAYTEST.md` (novo) + `playtest/LEIA-ME.md` | roteiro de campo: A1–A7 no Android, i1–i5 no iPhone, roteiro de balanceamento, perguntas de feedback, envio dos dados e check-in |
+| `.gitignore` | `playtest/*.json` fora do Git (dados dos testers) |
+
+### Testes e resultados (2026-10-01)
+
+| Verificação | Resultado |
+|---|---|
+| `npm run test:quick` | **26/26** (novo: `playtest`) |
+| `npm test` | **30/30 (52,0 s)** — novo `game/test/playtest.mjs`: gravação, teto, ligar/apagar, sessão offline, erros e o relatório/CLI |
+| `regressions-browser` | PC + mobile: EXPORTAR gera **download real** e o JSON tem sessão/eventos; APAGAR em dois toques limpa; aba TESTE sem problemas de layout |
+| `npm run inspect` | todas as telas e 6 mapas, sem erro/404/glifo; 59,5–60 FPS (114,2 s) |
+| `npm run inspect:pwa` | instalável, download, **boot offline PC + mobile**, update falho preserva a cópia, timeout (21,0 s) |
+| `npm run inspect:ui` / `inspect:hud` / `inspect:tree` | OK (HUD 59,1 FPS/1800 quadros; árvore PC/mobile) |
+| `npm run inspect:layout` | **118 estados** (as 6 abas × 2 fontes nos dois perfis), nada sobreposto/vazando (318 s) |
+| `node tools/make_assets_list.mjs --check` | em dia — **`ASSET_V = 20261001-playtest`** |
+
+Limitações: a sessão atual não tem aparelho físico, então a folha de compartilhamento e o ciclo de
+instalação real (Android/iOS) ficam para o roteiro; o diário cobre eventos discretos de jogo/PWA
+(não é telemetria contínua de FPS); testadores podem apagar/desligar o diário a qualquer momento
+(por desenho).
+
+### Próximos passos
+
+Rodar o `PLAYTEST.md` num aparelho real, devolver os JSONs e analisar com `npm run playtest` —
+os alertas do relatório (mapa sem vitória, poder sem adoção, falhas de pacote) viram o backlog do
+balanceamento fino do A3. Depois: Eras transformando o mundo, artes de carregamento/cutscene,
+flores dos quatro biomas restantes, Pálida e idiomas. Este registro também fecha o pedido de salvar
+no GitHub (Regra 11: commit + PR + merge juntos).
+
+**Ajuste de CI na mesma entrega:** o job *headless* do GitHub Actions roda sem navegador, então o
+`run-all.mjs` passou a marcar `regressions-browser` como teste de navegador e a **pulá-lo com aviso**
+(cabeçalho e resumo) quando o Playwright não está instalado — `--only=` explícito continua rodando e
+falhando com a instrução do `setup-dev.sh`. Para o teste não sair da cobertura do CI, o job *inspeção
+no navegador* ganhou o passo `regressions-browser.mjs` (capturas no mesmo artefato) e o espelho
+`tools/ci/testes.yml` foi atualizado. Sondagem real: **30/30** na máquina com Playwright; **29/29 +
+1 pulado** no job headless; os dois jobs do CI verdes antes do merge (Regra 11).
+
+**Merge da `main` (Flores do Pântano) na entrega de playtest:** o PR #56 ficou sem base
+enquanto o PR #55 entrava com a árvore de flores reformulada. Resolução arquivo a arquivo,
+preservando as DUAS decisões:
+
+| Arquivo | Resolução |
+| --- | --- |
+| `game/js/fruit_skills.js` | mantém `levelDescriptions` + ranks (A3) e adota o fluxo livre do PR #55: `requires: []`, Flor Suprema com `SUPREME_COSTS` e `tier 3` |
+| `game/js/fruit_effects.js` | efeitos por rank (nível 1 idêntico ao valor aprovado) + poderes das supremas (`p11`, `f11`, `o11`, `s11`, `d11`, `i11`, `a11`) |
+| `game/js/meta.js` | tip do nó com "SUPREMA •" e cor dourada (PR #55) + texto "PRÓXIMO NÍVEL n:" por rank (A3) |
+| `game/test/fruit-powers.mjs` | mantém as expectativas de rank (alcance do p6 no nível 3 = 68) e a contagem de 77 poderes |
+| `game/js/assets.js` | `ASSET_V = "20261001-playtest-flores"` (arte nova do Pântano + código de playtest) |
+| `app/assets.json` | regenerado por `tools/make_assets_list.mjs` (shell 53, essencial 160, completo 18) |
+
+Verificação depois do merge: **30/30 testes** (45,6 s) e inspeções `inspect`, `inspect:pwa`,
+`inspect:ui`, `inspect:hud`, `inspect:tree` e `inspect:layout` todas verdes — nenhum erro de JS,
+404 ou glifo faltando, e layout limpo nos 118 estados.
