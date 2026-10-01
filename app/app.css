@@ -1,0 +1,151 @@
+/* ============================================================================
+   FUMIGA — páginas de instalação/download (index.html na raiz e app/online.html)
+   Mesma identidade do jogo: violeta profundo, ciano do amanhecer, âmbar da
+   colônia, monoespaçada. Só páginas: nada aqui entra no canvas do jogo.
+   ========================================================================== */
+:root {
+  --fundo: #05040a;
+  --violeta: #1d1127;
+  --painel: rgba(29, 17, 39, 0.72);
+  --borda: rgba(143, 111, 214, 0.35);
+  --ciano: #37e6c8;
+  --amber: #ffb347;
+  --ouro: #ffd479;
+  --texto: #efe9ff;
+  --fraco: #b7a9d6;
+  --apagado: #6f6490;
+  --erro: #ff6b78;
+  --ok: #7fd6a0;
+  --raio: 6px;
+  --mono: "Courier New", ui-monospace, monospace;
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+/* O atributo hidden PRECISA vencer o display dos botões (.botao tem
+   display:inline-flex: sem esta regra, "LIBERAR ESPAÇO" e o botão de iPhone
+   apareciam para todo mundo, mesmo escondidos pelo JS). */
+[hidden] { display: none !important; }
+html { -webkit-text-size-adjust: 100%; }
+body {
+  min-height: 100%;
+  padding: clamp(16px, 4vw, 40px) clamp(14px, 4vw, 32px) 48px;
+  background:
+    radial-gradient(120% 80% at 50% 0%, #1a1430 0%, #0a0812 55%, var(--fundo) 100%);
+  color: var(--texto);
+  font-family: var(--mono);
+  line-height: 1.5;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 18px;
+}
+main { width: min(760px, 100%); display: flex; flex-direction: column; gap: 14px; }
+
+/* ---------------------------------------------------------------- topo ----- */
+.topo { text-align: center; display: flex; flex-direction: column; gap: 6px; align-items: center; }
+h1 {
+  font-size: clamp(30px, 9vw, 58px);
+  letter-spacing: .16em;
+  color: var(--ciano);
+  text-shadow: 0 0 12px #37e6c8, 0 0 42px rgba(199, 125, 255, .5), 0 2px 0 #1a1330;
+}
+.topo .sub { color: var(--fraco); letter-spacing: .08em; font-size: clamp(12px, 2.6vw, 15px); }
+.topo .selo {
+  margin-top: 4px; display: inline-block; padding: 4px 10px; border: 1px solid var(--borda);
+  border-radius: 999px; color: var(--amber); font-size: 11px; letter-spacing: .14em;
+}
+
+/* --------------------------------------------------------------- cartões --- */
+.cartao {
+  background: var(--painel);
+  border: 1px solid var(--borda);
+  border-radius: var(--raio);
+  padding: 16px clamp(14px, 3.4vw, 22px) 18px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, .35);
+}
+.cartao h2 {
+  font-size: clamp(13px, 3.4vw, 16px); letter-spacing: .16em; color: var(--ouro);
+  display: flex; align-items: center; gap: 8px; flex-wrap: wrap;
+}
+.cartao h2 .tag {
+  font-size: 10px; letter-spacing: .12em; color: var(--apagado);
+  border: 1px solid var(--borda); border-radius: 999px; padding: 2px 8px;
+}
+.cartao p { color: var(--fraco); font-size: clamp(12px, 3vw, 14px); margin-top: 8px; }
+.cartao p.fino { color: var(--apagado); font-size: 11.5px; }
+.cartao .linha { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 14px; }
+
+/* --------------------------------------------------------------- botões ---- */
+.botao {
+  --cor: var(--ciano);
+  appearance: none; cursor: pointer; text-decoration: none; text-align: center;
+  display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+  min-height: 48px; padding: 12px 20px;
+  border: 2px solid var(--cor); border-radius: 4px;
+  background: linear-gradient(180deg, rgba(55, 230, 200, .14), rgba(199, 125, 255, .10));
+  color: #eafffb; font-family: var(--mono); font-weight: bold;
+  font-size: clamp(13px, 3.2vw, 15px); letter-spacing: .14em;
+  transition: transform .12s ease, background .15s ease, box-shadow .2s ease;
+}
+.botao:hover { background: rgba(55, 230, 200, .22); box-shadow: 0 0 22px rgba(55, 230, 200, .28); }
+.botao:active { transform: translateY(1px); }
+.botao:focus-visible { outline: 2px dashed var(--ouro); outline-offset: 3px; }
+.botao.grande { width: 100%; font-size: clamp(16px, 4.6vw, 20px); padding: 16px 22px; letter-spacing: .2em; }
+.botao.ambar { --cor: var(--amber); color: #fff3e2; }
+.botao.ambar:hover { background: rgba(255, 179, 71, .2); box-shadow: 0 0 22px rgba(255, 179, 71, .26); }
+.botao.secundario { --cor: var(--borda); min-height: 40px; font-weight: normal; font-size: 12.5px; letter-spacing: .1em; }
+.botao.secundario:hover { background: rgba(143, 111, 214, .16); box-shadow: none; }
+.botao[disabled], .botao[aria-disabled="true"] { opacity: .5; cursor: default; pointer-events: none; }
+.botao .tam { color: var(--apagado); font-weight: normal; letter-spacing: .06em; }
+
+/* ------------------------------------------------------------- progresso --- */
+.progresso { margin-top: 14px; display: none; }
+.progresso.ativo { display: block; }
+.barra {
+  height: 14px; border: 1px solid var(--borda); border-radius: 3px;
+  background: #150f22; overflow: hidden; position: relative;
+}
+.barra > i {
+  display: block; height: 100%; width: 0%;
+  background: linear-gradient(90deg, var(--ciano), #8f6fd6, #c77dff);
+  transition: width .25s ease;
+}
+.progresso .texto {
+  margin-top: 8px; display: flex; justify-content: space-between; gap: 10px;
+  font-size: 12px; color: var(--fraco); flex-wrap: wrap;
+}
+
+/* --------------------------------------------------------------- estado ---- */
+.estado { display: flex; align-items: center; gap: 8px; margin-top: 10px; font-size: 12.5px; letter-spacing: .06em; }
+.estado .bolinha { width: 9px; height: 9px; border-radius: 50%; background: var(--apagado); flex: none; }
+.estado.ok { color: var(--ok); } .estado.ok .bolinha { background: var(--ok); box-shadow: 0 0 8px var(--ok); }
+.estado.espera { color: var(--amber); } .estado.espera .bolinha { background: var(--amber); }
+.estado.erro { color: var(--erro); } .estado.erro .bolinha { background: var(--erro); }
+
+/* ------------------------------------------------------------- passos iOS -- */
+.passos { margin-top: 12px; display: none; gap: 8px; flex-direction: column; }
+.passos.ativo { display: flex; }
+.passos li {
+  list-style: none; display: flex; gap: 10px; align-items: flex-start;
+  background: rgba(55, 230, 200, .06); border: 1px dashed var(--borda);
+  border-radius: 4px; padding: 10px 12px; font-size: 12.5px; color: var(--fraco);
+}
+.passos li b { color: var(--texto); }
+.passos .num {
+  flex: none; width: 22px; height: 22px; border-radius: 50%;
+  border: 1px solid var(--ciano); color: var(--ciano);
+  display: grid; place-items: center; font-size: 11px;
+}
+
+/* --------------------------------------------------------------- rodapé ---- */
+.rodape { width: min(760px, 100%); color: var(--apagado); font-size: 11.5px; text-align: center; letter-spacing: .06em; }
+.rodape code {
+  background: rgba(143, 111, 214, .14); border: 1px solid var(--borda);
+  border-radius: 3px; padding: 1px 5px; color: var(--fraco);
+}
+.rodape a { color: var(--fraco); }
+.rodape a:hover { color: var(--ciano); }
+
+@media (prefers-reduced-motion: reduce) {
+  .botao, .barra > i { transition: none; }
+}

@@ -43,4 +43,7 @@ game/assets/parallax/menu/_orig/
 # originais de arte aprovados (alta resolução) + folhas de revisão
 # Fora do Git pela mesma razão das camadas _orig/ do TITLE: pesados e
 # reproduzíveis — o que o JOGO carrega está em game/assets/ui/.
+# Aqui também moram os originais que saíram de game/assets/ em 2026-10-01
+# (loading/, parallax/) e o ícone do app instalável (pwa/), aprovado e
+# reproduzível por tools/make_pwa_icons.sh.
 art-source/

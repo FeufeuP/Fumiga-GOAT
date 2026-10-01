@@ -47,6 +47,7 @@ const TESTS = [
   { name: "attack", file: "attack.mjs" },
   { name: "prophecy", file: "prophecy.mjs" },
   { name: "docs", file: "docs.mjs" },
+  { name: "pwa", file: "pwa.mjs" },
 ];
 
 const args = process.argv.slice(2);
