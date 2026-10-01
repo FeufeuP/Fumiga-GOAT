@@ -1,7 +1,7 @@
 // FUMIGA — Árvore ancestral: sete galhos, cor restaurada e compras explícitas.
 // PC e mobile compartilham arte, câmera, progressão e interface.
 import { PAL, META_BRANCHES, META_STAGES, VIEW_W, VIEW_H, FRUIT_TREES } from "./config.js";
-import { G, metaLevel, metaCanBuy, metaBuy, isFruitUnlocked, isTreeStageUnlocked, treeStageRequirement } from "./state.js";
+import { G, metaLevel, metaCanBuy, metaBuy, isFruitUnlocked, isSupremeFlowerUnlocked, supremeProgress, isTreeStageUnlocked, treeStageRequirement } from "./state.js";
 import { FRUIT_POWER_PREFIX } from "./fruit_skills.js";
 import { drawText, textWidth, wrapText, fontScale, layoutRec } from "./font.js";
 import { IMG, loadSantuario } from "./assets.js";
@@ -370,13 +370,15 @@ function drawNodeTip(ctx, n) {
     { x: DETAIL.x, y: DETAIL.y, w: DETAIL.w, h: 386 };
   const { x, y, w, h } = detail;
   const chk = metaCanBuy(n.id), lvl = metaLevel(n.id), col = n._fruit?.color || META_BRANCHES[n.br].color;
-  panel(ctx, x, y, w, h, { border: col });
-  const stageLabel = n._fruit && n.cost.length >= 3
-    ? " • " + (lvl === 0 ? "BROTO MORTO" : lvl === 1 ? "BROTO" : lvl < n.cost.length ? "MEIO ABERTO" : "FLORESCIDA")
-    : "";
+  panel(ctx, x, y, w, h, { border: n.supreme ? "#ffd479" : col });
+  const stageLabel = n.supreme
+    ? " • " + supremeFlowerStage(n.id).name
+    : (n._fruit && n.cost.length >= 3
+      ? " • " + (lvl === 0 ? "BROTO MORTO" : lvl === 1 ? "BROTO" : lvl < n.cost.length ? "MEIO ABERTO" : "FLORESCIDA")
+      : "");
   const blocks = [
-    [n.name, col, .93],
-    [(n._fruit ? (n.global ? "GLOBAL • " : "LEGADO • ") : "GALHO " + n.stage + " • " + META_BRANCHES[n.br].name + " • ") + lvl + "/" + n.cost.length + stageLabel, PAL.textDim, .72],
+    [n.name, n.supreme ? "#ffd479" : col, .93],
+    [(n._fruit ? (n.supreme ? "SUPREMA • " : n.global ? "GLOBAL • " : "LEGADO • ") : "GALHO " + n.stage + " • " + META_BRANCHES[n.br].name + " • ") + lvl + "/" + n.cost.length + stageLabel, PAL.textDim, .72],
     [n.levelDescriptions
       ? FRUIT_POWER_PREFIX + (lvl < n.cost.length ? "PRÓXIMO NÍVEL " + (lvl + 1) + ": " + n.levelDescriptions[lvl]
         : n.levelDescriptions[lvl - 1]) : n.desc, PAL.text, .80],
@@ -401,8 +403,8 @@ function drawNodeTip(ctx, n) {
   const actionY = y + h - 54;
   const buyW = activeFruit ? 88 : 196, closeX = activeFruit ? x + 106 : x + 220;
   const closeW = activeFruit ? 92 : 108;
-  if (button(ctx, { x: x + 12, y: actionY, w: buyW, h: 44, compact: true, label: "EVOLUIR", id: "treeBuy", disabled: !chk.ok, accent: col, scale: activeFruit ? .68 : 1 })) {
-    if (metaBuy(n.id)) { SFX.buy(); if (n.tier === 2) SFX.chime(); }
+  if (button(ctx, { x: x + 12, y: actionY, w: buyW, h: 44, compact: true, label: "EVOLUIR", id: "treeBuy", disabled: !chk.ok, accent: n.supreme ? "#ffd479" : col, scale: activeFruit ? .68 : 1 })) {
+    if (metaBuy(n.id)) { SFX.buy(); if (n.tier >= 2 || n.supreme) SFX.chime(); }
   }
   if (button(ctx, { x: closeX, y: actionY, w: closeW, h: 44, compact: true, label: "FECHAR", id: "treeClose", scale: activeFruit ? .72 : .85 })) selectedNode = null;
 }
@@ -481,21 +483,21 @@ function drawSanctuaryBackground(ctx, fruit, saturation) {
 }
 function drawSanctuaryApple(ctx, fruit, saturation) {
   const key = "maca_" + fruitAssetName(fruit), img = IMG[key];
-  const bob = reduced() ? 0 : Math.sin(time() * 1.1) * 7;
-  const x = 480, y = 205 + bob, size = 280;
+  const bob = reduced() ? 0 : Math.sin(time() * 1.1) * 6;
+  const x = 480, y = 176 + bob, size = 232;
   ctx.save();
   ctx.globalAlpha = .34 + (reduced() ? 0 : .08 * Math.sin(time() * 1.4));
   ctx.strokeStyle = gardenColor(fruit.color, saturation); ctx.lineWidth = 2;
-  ctx.beginPath(); ctx.ellipse(x, y + 39, 62, 17, 0, 0, TAU); ctx.stroke();
+  ctx.beginPath(); ctx.ellipse(x, y + 32, 52, 14, 0, 0, TAU); ctx.stroke();
   ctx.globalAlpha = .22;
-  ctx.beginPath(); ctx.ellipse(x, y + 39, 80, 25, 0, 0, TAU); ctx.stroke();
+  ctx.beginPath(); ctx.ellipse(x, y + 32, 68, 21, 0, 0, TAU); ctx.stroke();
   // Névoa em pequenos blocos, sem partículas/alocações por frame.
   ctx.fillStyle = gardenColor("#e0d8e9", saturation);
-  const drift = reduced() ? 0 : Math.sin(time() * .7) * 9;
-  ctx.fillRect(x - 66 + drift, y + 22, 42, 5);
-  ctx.fillRect(x + 24 - drift, y + 36, 44, 4);
-  ctx.fillRect(x - 40 - drift, y + 48, 34, 4);
-  ctx.fillRect(x + 4 + drift, y + 12, 28, 4);
+  const drift = reduced() ? 0 : Math.sin(time() * .7) * 8;
+  ctx.fillRect(x - 54 + drift, y + 18, 36, 4);
+  ctx.fillRect(x + 20 - drift, y + 30, 38, 4);
+  ctx.fillRect(x - 34 - drift, y + 40, 28, 4);
+  ctx.fillRect(x + 4 + drift, y + 10, 24, 4);
   ctx.restore();
   if (img) {
     ctx.imageSmoothingEnabled = false;
@@ -515,6 +517,9 @@ function drawSanctuarySeal(ctx) {
 const FLOWER_CELL = 48;
 const FLOWER_COLS = 4;   // broto, meio aberto, florescida, broto morto
 const FLOWER_SHEETS = new Map();
+const SUPREME_CELL = 64;
+const SUPREME_COLS = 6;  // 0: broto morto (cinza), 1..5: 5 fases revivendo até florescer
+const SUPREME_SHEETS = new Map();
 
 export function flowerVariant(n) {
   if (typeof n?._nodeIdx === "number") return n._nodeIdx % 3;
@@ -528,6 +533,72 @@ export function flowerStage(level, max = 3) {
   if (level >= max) return { stage: 2, gray: false, name: "FLORESCIDA" };
   if (level === 1) return { stage: 0, gray: false, name: "BROTO" };
   return { stage: 1, gray: false, name: "BROTO MEIO ABERTO" };
+}
+
+const SUPREME_PHASE_META = [
+  { phase: 0, stage: 3, gray: true,  scale: 1.00, aura: 0.00, name: "BROTO MORTO" },
+  { phase: 1, stage: 3, gray: false, scale: 1.04, aura: 0.25, name: "DESPERTAR (1/5)" },
+  { phase: 2, stage: 0, gray: false, scale: 1.09, aura: 0.48, name: "SEIVA VIVA (2/5)" },
+  { phase: 3, stage: 1, gray: false, scale: 1.14, aura: 0.70, name: "CÁLICE REAL (3/5)" },
+  { phase: 4, stage: 2, gray: false, scale: 1.20, aura: 0.88, name: "ABERTURA SOLAR (4/5)" },
+  { phase: 5, stage: 2, gray: false, scale: 1.25, aura: 1.00, name: "FLOR SUPREMA (5/5)" },
+];
+export function supremeFlowerStage(nodeId, now = G.time) {
+  const lvl = metaLevel(nodeId);
+  if (lvl <= 0) return SUPREME_PHASE_META[0];
+  const start = G.supremeBloomAt?.[nodeId];
+  if (typeof start !== "number") return SUPREME_PHASE_META[5];
+  const elapsed = Math.max(0, (now || 0) - start);
+  const phase = Math.min(5, 1 + Math.floor(elapsed / 0.45));
+  return SUPREME_PHASE_META[phase];
+}
+
+function supremeSheet(key) {
+  let cached = SUPREME_SHEETS.get(key);
+  const src = IMG[key];
+  if (cached && cached.src === src) return cached;
+  if (!src || typeof document === "undefined" || !src.width) return null;
+  const w = SUPREME_CELL * SUPREME_COLS, h = SUPREME_CELL;
+  const color = document.createElement("canvas");
+  color.width = w; color.height = h;
+  const cc = color.getContext("2d", { willReadFrequently: true });
+  if (!cc) return null;
+  cc.imageSmoothingEnabled = true;
+  cc.drawImage(src, 0, 0, w, h);
+  const d = cc.getImageData(0, 0, w, h);
+  if (!d || d.data.length !== w * h * 4 || typeof cc.putImageData !== "function") {
+    cached = { src, color: src, gray: src, cell: Math.floor(src.width / SUPREME_COLS) || SUPREME_CELL };
+    SUPREME_SHEETS.set(key, cached);
+    return cached;
+  }
+  const px = d.data;
+  for (let i = 0; i < px.length; i += 4) px[i + 3] = px[i + 3] >= 110 ? 255 : 0;
+  const copy = new Uint8ClampedArray(px);
+  for (let col = 0; col < SUPREME_COLS; col++) {
+    const x0 = col * SUPREME_CELL;
+    for (let y = 1; y < SUPREME_CELL - 1; y++) {
+      for (let x = x0 + 1; x < x0 + SUPREME_CELL - 1; x++) {
+        const k = (y * w + x) * 4;
+        if (copy[k + 3]) continue;
+        if (copy[k - 4 + 3] || copy[k + 4 + 3] || copy[k - w * 4 + 3] || copy[k + w * 4 + 3]) {
+          px[k] = 18; px[k + 1] = 11; px[k + 2] = 24; px[k + 3] = 255;
+        }
+      }
+    }
+  }
+  cc.putImageData(d, 0, 0);
+  const gray = document.createElement("canvas");
+  gray.width = w; gray.height = h;
+  const gc = gray.getContext("2d");
+  for (let i = 0; i < px.length; i += 4) {
+    if (!px[i + 3]) continue;
+    const l = Math.round(px[i] * .2126 + px[i + 1] * .7152 + px[i + 2] * .0722);
+    px[i] = px[i + 1] = px[i + 2] = l;
+  }
+  gc.putImageData(d, 0, 0);
+  cached = { src, color, gray, cell: SUPREME_CELL };
+  SUPREME_SHEETS.set(key, cached);
+  return cached;
 }
 
 function flowerSheet(key) {
@@ -582,7 +653,59 @@ function flowerSheet(key) {
   return cached;
 }
 
+function drawSupremeAura(ctx, p, fruit, st) {
+  const ready = isSupremeFlowerUnlocked(fruit);
+  const t = time();
+  const pulse = reduced() ? 0 : Math.sin(t * 2.2) * 0.12;
+  ctx.save();
+  if (st.phase === 0) {
+    ctx.globalAlpha = ready ? 0.52 + pulse : 0.24;
+    ctx.strokeStyle = ready ? "#ffd479" : "#8d7e99";
+    ctx.lineWidth = ready ? 2 : 1.5;
+    ctx.beginPath(); ctx.ellipse(p.x, p.y + 12, 22, 9, 0, 0, TAU); ctx.stroke();
+    ctx.restore();
+    return;
+  }
+  const a = st.aura;
+  ctx.globalAlpha = (0.32 + pulse) * a;
+  ctx.fillStyle = fruit.color;
+  ctx.beginPath(); ctx.ellipse(p.x, p.y + 12, 28 * a, 12 * a, 0, 0, TAU); ctx.fill();
+  ctx.globalAlpha = (0.68 + pulse) * a;
+  ctx.strokeStyle = "#ffd479"; ctx.lineWidth = 2;
+  ctx.beginPath(); ctx.ellipse(p.x, p.y + 12, 26 * a, 11 * a, 0, 0, TAU); ctx.stroke();
+  for (let i = 0; i < 6; i++) {
+    const ang = t * 1.3 + (i * TAU) / 6;
+    const mx = Math.round(p.x + Math.cos(ang) * (18 + 6 * a));
+    const my = Math.round(p.y - 2 + Math.sin(ang * 1.5) * (10 + 4 * a));
+    ctx.fillStyle = i % 2 ? "#ffd479" : "#fff6d6";
+    ctx.fillRect(mx - 1, my - 1, 3, 3);
+  }
+  ctx.restore();
+}
+
 function drawFlowerArt(ctx, n, p, fruit, saturation) {
+  if (n.supreme) {
+    const st = supremeFlowerStage(n.id);
+    drawSupremeAura(ctx, p, fruit, st);
+    const supSheet = supremeSheet("flor_suprema_" + fruitAssetName(fruit));
+    if (supSheet) {
+      const c = supSheet.cell, img = st.gray ? supSheet.gray : supSheet.color;
+      const col = Math.min(SUPREME_COLS - 1, st.phase);
+      ctx.imageSmoothingEnabled = false;
+      ctx.drawImage(img, col * c, 0, c, c,
+        Math.round(p.x - SUPREME_CELL / 2), Math.round(p.y - SUPREME_CELL / 2 - 4), SUPREME_CELL, SUPREME_CELL);
+      return;
+    }
+    const sheet = flowerSheet("flores_" + fruitAssetName(fruit));
+    if (sheet) {
+      const c = sheet.cell, img = st.gray ? sheet.gray : sheet.color;
+      const drawSz = Math.round(FLOWER_CELL * st.scale);
+      ctx.imageSmoothingEnabled = false;
+      ctx.drawImage(img, st.stage * c, 0, c, c,
+        Math.round(p.x - drawSz / 2), Math.round(p.y - drawSz / 2 - 4), drawSz, drawSz);
+      return;
+    }
+  }
   const level = metaLevel(n.id), max = n.cost.length, full = level >= max;
   const sheet = flowerSheet("flores_" + fruitAssetName(fruit));
   if (sheet) {
@@ -595,26 +718,32 @@ function drawFlowerArt(ctx, n, p, fruit, saturation) {
     return;
   }
   const cx = p.x, cy = p.y - 3;
-  ctx.fillStyle = gardenColor("#79a96b", saturation);
+  const isSup = !!n.supreme;
+  const supSt = isSup ? supremeFlowerStage(n.id) : null;
+  const col = isSup && supSt.phase === 0 ? "#7c7385" : gardenColor(fruit.color, isSup ? 1 : saturation);
+  ctx.fillStyle = isSup && supSt.phase === 0 ? "#5e5866" : gardenColor("#79a96b", isSup ? 1 : saturation);
   ctx.fillRect(cx - 2, cy + 4, 4, 16);
   ctx.fillRect(cx - 9, cy + 12, 8, 4); ctx.fillRect(cx + 2, cy + 8, 8, 4);
   if (!level) {
-    ctx.fillStyle = gardenColor(fruit.color, saturation);
-    ctx.fillRect(cx - 5, cy - 10, 10, 11);
-    ctx.fillRect(cx - 9, cy - 5, 5, 4); ctx.fillRect(cx + 4, cy - 7, 5, 4);
-    ctx.fillStyle = gardenColor("#fff0c7", saturation); ctx.fillRect(cx - 1, cy - 9, 2, 4);
+    ctx.fillStyle = col;
+    ctx.fillRect(cx - 6, cy - 11, 12, 12);
+    ctx.fillRect(cx - 10, cy - 5, 5, 4); ctx.fillRect(cx + 5, cy - 7, 5, 4);
+    ctx.fillStyle = isSup ? "#b8b0c2" : gardenColor("#fff0c7", saturation);
+    ctx.fillRect(cx - 1, cy - 9, 2, 4);
     return;
   }
-  const petals = full ? 8 : 5, radius = full ? 11 : 9, petal = full ? 8 : 8;
-  ctx.fillStyle = gardenColor(fruit.color, saturation);
+  const petals = isSup ? 4 + supSt.phase : (full ? 8 : 5);
+  const radius = isSup ? Math.round(9 + supSt.phase * 1.2) : (full ? 11 : 9);
+  const petal = isSup ? 9 : 8;
+  ctx.fillStyle = col;
   for (let i = 0; i < petals; i++) {
     const a = -Math.PI / 2 + i * TAU / petals;
     const px = Math.round(cx + Math.cos(a) * radius - petal / 2);
     const py = Math.round(cy + Math.sin(a) * radius - petal / 2);
     ctx.fillRect(px, py, petal, petal);
   }
-  ctx.fillStyle = gardenColor(full ? "#ffd479" : "#fff0c7", saturation);
-  ctx.fillRect(cx - 3, cy - 3, 6, 6);
+  ctx.fillStyle = isSup ? "#ffd479" : gardenColor(full ? "#ffd479" : "#fff0c7", saturation);
+  ctx.fillRect(cx - 4, cy - 4, 8, 8);
 }
 function drawSanctuaryFlowers(ctx, fruit, list, saturation) {
   const fi = FRUIT_TREES.indexOf(fruit);
@@ -623,18 +752,8 @@ function drawSanctuaryFlowers(ctx, fruit, list, saturation) {
   // atravessa para uma flor escondida atrás dele.
   const pressInPanel = !!selectedNode &&
     pointInRect(mouse.x, mouse.y, FRUIT_DETAIL.x, FRUIT_DETAIL.y, FRUIT_DETAIL.w, FRUIT_DETAIL.h);
-  // Caminhos sob as flores: o cinza também recupera a cor do bioma com as compras.
-  for (const n of list) {
-    const p = flowerPosition(n);
-    for (const id of n.requires) {
-      const req = list.find(x => x.id === id); if (!req) continue;
-      const q = flowerPosition(req), owned = metaLevel(n.id) > 0;
-      ctx.strokeStyle = gardenColor(owned ? fruit.color : "#b4aabb", saturation);
-      ctx.globalAlpha = owned ? .88 : .62;
-      ctx.lineWidth = owned ? 2.5 : 1.5;
-      ctx.beginPath(); ctx.moveTo(q.x, q.y); ctx.lineTo(p.x, p.y); ctx.stroke();
-    }
-  }
+  // As 13 flores regulares são 100% livres (sem linhas de dependência no chão)
+  // e a 14ª Flor Suprema desperta quando todas as 13 flores atingem o nível máximo.
   ctx.globalAlpha = 1;
   for (const n of list) {
     const p = fruitFlowerPos(fi, activeFruit.nodes.indexOf(n)) || flowerPosition(n);
@@ -642,8 +761,9 @@ function drawSanctuaryFlowers(ctx, fruit, list, saturation) {
     if (hitArea({ ...hit, id: "fruitNode_" + n.id, compact: true }) && !pressInPanel) selectedNode = { ...n, _fruit: fruit };
     // Moldura mostra qual flor o painel aberto está lendo.
     if (selectedNode?.id === n.id) {
-      ctx.strokeStyle = "#fff0c7"; ctx.lineWidth = 2;
-      ctx.strokeRect(hit.x + 2.5, hit.y + 2.5, hit.w - 5, hit.h - 5);
+      ctx.strokeStyle = n.supreme ? "#ffd479" : "#fff0c7"; ctx.lineWidth = 2;
+      if (n.supreme) ctx.strokeRect(p.x - 29.5, p.y - 33.5, 59, 63);
+      else ctx.strokeRect(hit.x + 2.5, hit.y + 2.5, hit.w - 5, hit.h - 5);
     }
     drawFlowerArt(ctx, n, p, fruit, saturation);
   }

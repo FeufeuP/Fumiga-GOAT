@@ -120,3 +120,16 @@ reconstruído somente quando níveis mudam. A imagem aprovada volta integralment
   `python3 tools/prepare_fruit_art.py flores floresta game/assets/ui/flores_floresta.png`;
   originais em `art-source/flores/floresta_<especie>_<estagio>.png` (fora do Git) com espelho de
   segurança em `~/art-source-backup/flores/` (Regra 13).
+- **Flores do Santuário do Pântano (`flores_pantano.png`, 2026-10-01):** folha 4×3
+  (**768×576 RGBA**, células de 192×192, ~289 KB) com as 3 espécies do brejo
+  (*Lótus-de-Lama Bioluminescente* azul-ciano `#7fd6ff`, linha 0; *Jarro-Carnívoro Violeta* `#c26be0`,
+  linha 1; *Taboa-Tocha de Esporos*, linha 2) nos 4 estágios (`1_broto`, `2_meio`, `3_flor`, `0_morto`
+  apodrecido na lama com limo).
+- **14ª Flor Suprema por Santuário (`flor_suprema_planicie.png`, `flor_suprema_floresta.png`, `flor_suprema_pantano.png`, 2026-10-01):**
+  folha 6×1 (**1152×192 RGBA**, 6 células de 192×192: `0_morto` em cinza + 5 fases revivendo até a
+  flor suprema florescida `1_despertar`..`5_flor`), assada em células 64×64 com contorno escuro de 1px
+  em `supremeSheet()` (`js/meta.js`). As 13 flores regulares de cada santuário são 100% livres
+  (`requires: []`, sem linhas no chão), posicionadas na clareira central por semente fixa por bioma
+  (`SANTUARIO_SLOTS_BY_MAP` em `js/tree_layout.js`), e a 14ª Flor Suprema desbloqueia após maximizar
+  todas as 13 flores regulares daquele mundo.
+

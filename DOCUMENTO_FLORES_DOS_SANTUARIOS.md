@@ -1,8 +1,8 @@
 # 🌸 Documento — Como criar as flores dos próximos Santuários
 
-**Criado em:** 30 de setembro de 2026 · **Modelo v2 (cadência 9 + 3), aprovado pelo usuário em 30/09/2026**
+**Criado em:** 30 de setembro de 2026 · **Modelo v3 (cadência 9 + ⛔ + 9: 9 vivos regulares → pausa → 3 brotos mortos + 6 fases da Flor Suprema), aprovado pelo usuário em 01/10/2026**
 **Vale para:** Santuários do Pântano, do Deserto, do Outono, do Gelo e da Pálida
-(o da **Planície já está pronto** — seção 10 — e o da **Floresta também** — seção 10b; ambos são modelos).
+(o da **Planície já está pronto** — seção 10 — e o da **Floresta também** — seção 10b, incluindo as respectivas Flores Supremas de 6 fases; ambos são modelos).
 **Status:** regra obrigatória, no mesmo nível de [`REGRAS_DE_TRABALHO.md`](REGRAS_DE_TRABALHO.md).
 Quem for criar flores de um santuário novo **lê este documento inteiro antes de gerar qualquer imagem**.
 
@@ -13,14 +13,14 @@ Quem for criar flores de um santuário novo **lê este documento inteiro antes d
 
 ## 1. As regras que não podem ser quebradas
 
-> ### 1️⃣ Cada santuário tem **exatamente 3 variações** de flor (espécies do bioma).
-> ### 2️⃣ Cada variação tem **exatamente 4 sprites** (4 estágios). Total: **12 sprites por santuário**.
+> ### 1️⃣ Cada santuário tem **exatamente 3 variações regulares** de flor (espécies do bioma) + **1 Flor Suprema exclusiva** (14ª flor).
+> ### 2️⃣ Cada variação regular tem **exatamente 4 sprites** (4 estágios = 12 sprites regulares) e a **Flor Suprema tem 6 sprites** (`suprema_0_morto` a `suprema_5_flor`). Total: **18 sprites por santuário**.
 > ### 3️⃣ **Cadência oficial em duas levas, com ⛔ parada de confirmação entre elas:**
-> - **Leva 1 (uma rodada):** os **9 sprites vivos** — 3 espécies × (florescida, meio aberto, broto).
+> - **Leva 1 (uma rodada):** os **9 sprites vivos regulares** — 3 espécies × (florescida, meio aberto, broto).
 >   ⛔ **PARADA 1:** prévia lado a lado + confirmação **explícita** do usuário.
-> - **Leva 2 (rodada seguinte, só após a confirmação):** os **3 brotos mortos**.
->   ⛔ **PARADA 2:** prévia com a 4ª coluna + versão em cinza + confirmação **explícita**.
-> - Só depois das **duas confirmações** vem a integração (Etapa 3).
+> - **Leva 2 (rodada seguinte, só após a confirmação):** os **3 brotos mortos regulares** + as **6 fases da Flor Suprema** (`suprema_0_morto`, `suprema_1_despertar`, `suprema_2_seiva`, `suprema_3_calice`, `suprema_4_abertura`, `suprema_5_flor` — **total de 9 imagens na 2ª leva**).
+>   ⛔ **PARADA 2:** prévia das 12 células regulares + tira dos mortos em cinza + prévia das 6 fases da Flor Suprema + confirmação **explícita**.
+> - Só depois das **duas confirmações** vem a integração (Etapa 3: `flores_<mundo>.png` 768×576 + `flor_suprema_<mundo>.png` 1152×192).
 
 Se alguma dessas regras não puder ser cumprida, **pare e pergunte** — não improvise.
 
@@ -292,8 +292,8 @@ pergunta da Etapa 0, não decisões.** Cada espécie final precisa de aprovaçã
 
 | Santuário | Paleta de flores do bioma | Direções possíveis (perguntar) |
 |-----------|---------------------------|--------------------------------|
-| ~~Floresta de Musgo~~ ✅ | **feito em 2026-09-30** — Sino-do-Dossel (azul), Cogumelo-Flor Violeta, Espiral-de-Ouro (dourada); morto apodrecido com mofo | ver seção 10b |
-| Pântano | azul-claro `#7fd6ff`, violeta `#c26be0` | lírio-d'água, flor bioluminescente, flor carnívora; base com lama, juncos e vitória-régia; morto **apodrecido** |
+| ~~Floresta de Musgo~~ ✅ | **feito em 2026-09-30** — Sino-do-Dossel (azul), Cogumelo-Flor Violeta, Espiral-de-Ouro (dourada) + Orquídea-Rainha (Suprema); morto apodrecido com mofo | ver seção 10b |
+| ~~Pântano~~ ✅ | **feito em 2026-10-01** — Lótus-de-Lama (`lotus`), Jarro-Carnívoro Violeta (`carnivora`), Taboa-Tocha de Esporos (`taboa`) + Planta-Carnívora Real do Charco (Suprema); morto apodrecido na lama com limo | integrado |
 | Deserto | dourado `#ffd479`, laranja `#ff9a5c` | flor de cacto, flor-de-areia, flor de brasa; base com areia, pedra e espinhos; morto **seco/queimado** |
 | Outono | laranja `#ff9a5c`, dourado `#ffd479`, violeta `#c26be0` | crisântemo, flor de folha-seca, flor de bolota; base com folhas caídas |
 | Gelo | branco `#e8f4ff`, azul-claro `#7fd6ff`, lilás `#c98df5` | flor de cristal, flor de geada, flor de neve; base com gelo e neve; morto **congelado/quebradiço** |

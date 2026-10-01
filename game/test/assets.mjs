@@ -72,12 +72,18 @@ check("formigueiro", ["nest", "nest_d1", "nest_d2"]);
 // saíram do repositório e do boot em 2026-09-29 (decisão do usuário): este
 // teste impede que voltem por descuido.
 check("maçãs dos mundos (boot)", FRUIT_TREES.map(f => "maca_" + fruitAssetName(f)));
-check("flores dos santuários com folha (boot)", ["flores_planicie", "flores_floresta"]);
-for (const mundo of ["planicie", "floresta"]) {
+check("flores dos santuários com folha (boot)", ["flores_planicie", "flores_floresta", "flores_pantano", "flor_suprema_planicie", "flor_suprema_floresta", "flor_suprema_pantano"]);
+for (const mundo of ["planicie", "floresta", "pantano"]) {
   const floresPng = fs.readFileSync(path.join(ROOT, `assets/ui/flores_${mundo}.png`));
   assert.equal(floresPng.readUInt32BE(16), 768, `flores_${mundo} largura 768 (4x192: broto, meio, flor, broto morto)`);
   assert.equal(floresPng.readUInt32BE(20), 576, `flores_${mundo} altura 576 (3x192)`);
   assert.equal(floresPng[25], 6, `flores_${mundo} RGBA com fundo transparente`);
+}
+for (const mundo of ["planicie", "floresta", "pantano"]) {
+  const supPng = fs.readFileSync(path.join(ROOT, `assets/ui/flor_suprema_${mundo}.png`));
+  assert.equal(supPng.readUInt32BE(16), 1152, `flor_suprema_${mundo} largura 1152 (6x192: morto + 5 fases)`);
+  assert.equal(supPng.readUInt32BE(20), 192, `flor_suprema_${mundo} altura 192 (1x192)`);
+  assert.equal(supPng[25], 6, `flor_suprema_${mundo} RGBA com fundo transparente`);
 }
 assert.equal(Object.keys(IMG).filter(k => k.startsWith("correntes")).length, 0,
   "nenhuma corrente/cadeado no boot");

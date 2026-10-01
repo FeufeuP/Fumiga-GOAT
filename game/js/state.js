@@ -167,6 +167,29 @@ export function treeStageRequirement(stage) {
 }
 export function isTreeStageUnlocked(stage) { return treeStageRequirement(stage) === ""; }
 
+export function supremeProgress(fruitOrMap) {
+  const fruit = typeof fruitOrMap === "string"
+    ? FRUIT_TREES.find(f => f.map === fruitOrMap || f.id === fruitOrMap)
+    : fruitOrMap;
+  if (!fruit) return { maxed: 0, total: 0 };
+  let maxed = 0, total = 0;
+  for (const n of fruit.nodes) {
+    if (n.supreme) continue;
+    total++;
+    if (metaLevel(n.id) >= n.cost.length) maxed++;
+  }
+  return { maxed, total };
+}
+
+export function isSupremeFlowerUnlocked(fruitOrMap) {
+  const fruit = typeof fruitOrMap === "string"
+    ? FRUIT_TREES.find(f => f.map === fruitOrMap || f.id === fruitOrMap)
+    : fruitOrMap;
+  if (!fruit || !isFruitUnlocked(fruit.map)) return false;
+  const p = supremeProgress(fruit);
+  return p.total > 0 && p.maxed >= p.total;
+}
+
 export function metaCanBuy(id) {
   const node = metaNode(id);
   if (!node) return { ok: false, why: "?" };
@@ -175,6 +198,10 @@ export function metaCanBuy(id) {
   // gate de fruta: precisa ter vencido o mapa
   const fruit = fruitForNode(id);
   if (fruit && !isFruitUnlocked(fruit.map)) return { ok: false, why: fruit.pending ? "FUTURO: DERROTE A PÁLIDA (FASE 8)" : "DERROTE " + fruit.bossName };
+  if (node.supreme && fruit && !isSupremeFlowerUnlocked(fruit)) {
+    const p = supremeProgress(fruit);
+    return { ok: false, why: "MAXIMIZE AS " + p.total + " FLORES (" + p.maxed + "/" + p.total + ")" };
+  }
   if (!fruit) {
     const why = treeStageRequirement(node.stage);
     if (why) return { ok: false, why };
@@ -193,8 +220,13 @@ export function metaCanBuy(id) {
 export function metaBuy(id) {
   const chk = metaCanBuy(id);
   if (!chk.ok) return false;
+  const node = metaNode(id);
   G.save.essence -= chk.price;
   G.save.nodes[id] = metaLevel(id) + 1;
+  if (node?.supreme) {
+    G.supremeBloomAt ||= {};
+    G.supremeBloomAt[id] = G.time || 0.001;
+  }
   // ERA lendária: Topo do Mundo dá +1 ERA imediata
   if (id === "f_g_3") {
     G.save.era = (G.save.era || 0) + 1;

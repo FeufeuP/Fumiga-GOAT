@@ -40,6 +40,7 @@ MUNDOS = ["planicie", "floresta", "pantano", "deserto", "outono", "gelo", "palid
 FLORES_VARIACOES = {
     "planicie": ["margarida", "botao", "trevo"],
     "floresta": ["sino", "cogumelo", "espiral"],
+    "pantano": ["lotus", "carnivora", "taboa"],
 }
 # Colunas da folha: broto, meio aberto, florescida e broto MORTO (visto em cinza
 # antes da 1ª compra; originais "<mundo>_<flor>_0_morto.png").
