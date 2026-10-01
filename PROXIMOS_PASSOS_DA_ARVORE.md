@@ -273,3 +273,11 @@ Capturas ficam em `/tmp/fumiga-inspect/*.png` — **abra com `read_file`** (Regr
 10. **Excluir todas as correntes/cadeados da Árvore (2026-09-29):** copa + santuário da Pálida,
     assets **apagados** (não é arquivo morto), bloqueio comunicado como já era (maçã acinzentada +
     rótulo + painel de pré-requisito) e o aviso textual da Pálida preservado.
+11. **Clareira orgânica por bioma, 13 flores livres e 14ª Flor Suprema (2026-10-01):** todas as 13
+    flores regulares têm `requires: []` (sem linhas no chão), posicionadas dentro do oval de grama da
+    clareira com semente fixa por bioma (`SANTUARIO_SLOTS_BY_MAP`), maçã flutuante reduzida (232 px) e
+    elevada (`y = 176`), e 14ª Flor Suprema (`v_p11..v_a11`, compra única lendária de 6 fases visuais)
+    desbloqueada ao maximizar todas as 13 flores regulares do mundo. Folhas integradas:
+    `flores_{planicie,floresta,pantano}.png` (768×576 RGBA) e
+    `flor_suprema_{planicie,floresta,pantano}.png` (1152×192 RGBA).
+

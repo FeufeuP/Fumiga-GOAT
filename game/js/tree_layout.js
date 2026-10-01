@@ -57,23 +57,80 @@ export const TREE_STAGE_BOUNDS = TREE_STAGE_NODES.map((nodes, i) => {
 
 // Flores dos Santuários (coords de tela 960×540). As 10 melhorias novas e as
 // 3 legadas ficam juntas em cinco fileiras; nenhuma pétala recebe placa/cadeado.
-// A distância mínima de 52 px permite hitbox invisível de 44 px + 8 px de respiro.
-export const SANTUARIO_SLOTS = [
-  { x: 300, y: 286 }, { x: 660, y: 286 },
-  { x: 260, y: 338 }, { x: 380, y: 338 }, { x: 700, y: 338 },
-  { x: 260, y: 390 }, { x: 480, y: 390 }, { x: 700, y: 390 },
-  { x: 350, y: 442 }, { x: 610, y: 442 },
-  { x: 260, y: 494 }, { x: 480, y: 494 }, { x: 700, y: 494 },
-];
+// Santuário da fruta (960×540): clareira orgânica determinística por bioma.
+// Semente fixa por mapa garante que cada santuário tenha seu próprio arranjo natural
+// estritamente dentro do oval central de grama (abaixo da maçã flutuante elevada e
+// longe das raízes da borda, cactos/crânios, cogumelos e painel lateral x=738).
+// A distância mínima >= 52 px permite hitbox invisível de 44 px + respiro.
+const CLEARING_SEEDS = {
+  planicie: { cx: 476, cy: 356, rx: 238, ry: 82, seed: 104729 },
+  floresta: { cx: 476, cy: 356, rx: 234, ry: 80, seed: 224737 },
+  pantano:  { cx: 478, cy: 348, rx: 228, ry: 76, seed: 350377 },
+  deserto:  { cx: 508, cy: 352, rx: 202, ry: 82, seed: 481123 },
+  outono:   { cx: 478, cy: 356, rx: 234, ry: 80, seed: 611953 },
+  gelo:     { cx: 476, cy: 358, rx: 238, ry: 80, seed: 746773 },
+};
+function makeClearingRng(seed) {
+  let s = seed >>> 0;
+  return () => {
+    s = (s + 0x6D2B79F5) >>> 0;
+    let t = Math.imul(s ^ (s >>> 15), 1 | s) >>> 0;
+    t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+  };
+}
+function buildBiomeClearingSlots({ cx, cy, rx, ry, seed }, count = 14) {
+  const rng = makeClearingRng(seed);
+  const pts = new Array(count);
+  // Índice 10 (11º nó global) é a Flor Suprema: nasce no coração da clareira com offset orgânico
+  const supAngle = rng() * Math.PI * 2;
+  const supR = 0.12 + rng() * 0.24;
+  pts[10] = {
+    x: Math.round(cx + Math.cos(supAngle) * rx * supR),
+    y: Math.round(cy + Math.sin(supAngle) * ry * supR),
+  };
+  const placed = [10];
+  for (let i = 0; i < count; i++) {
+    if (i === 10) continue;
+    let bestP = null, bestScore = -1e9;
+    for (let attempt = 0; attempt < 500; attempt++) {
+      const u = rng(), v = rng();
+      const angle = u * Math.PI * 2;
+      const r = 0.24 + 0.68 * Math.sqrt(v);
+      const px = Math.round(cx + Math.cos(angle) * rx * r);
+      const py = Math.round(cy + Math.sin(angle) * ry * r);
+      let minD = 1e9, ok = true;
+      for (const j of placed) {
+        const d = Math.hypot(px - pts[j].x, py - pts[j].y);
+        const need = j === 10 ? 64 : 56;
+        if (d < need) ok = false;
+        if (d < minD) minD = d;
+      }
+      if (ok) { bestP = { x: px, y: py }; break; }
+      if (minD > bestScore) { bestScore = minD; bestP = { x: px, y: py }; }
+    }
+    pts[i] = bestP;
+    placed.push(i);
+  }
+  return pts;
+}
+export const SANTUARIO_SLOTS_BY_MAP = Object.fromEntries(
+  Object.entries(CLEARING_SEEDS).map(([map, cfg]) => [map, buildBiomeClearingSlots(cfg, 14)])
+);
+export const SANTUARIO_SLOTS = SANTUARIO_SLOTS_BY_MAP.planicie;
+export function santuarioSlotsForMap(mapId) {
+  return SANTUARIO_SLOTS_BY_MAP[mapId] || SANTUARIO_SLOTS;
+}
 export function fruitFlowerPos(fi, ni) {
   const fruit = FRUIT_TREES[fi], node = fruit?.nodes[ni];
   if (!fruit || !node || fruit.pending) return null;
-  const local = node.global ? fruit.newNodes.indexOf(node) : 10 + fruit.legacyNodes.indexOf(node);
-  return SANTUARIO_SLOTS[local] || null;
+  const local = node.global ? fruit.newNodes.indexOf(node) : fruit.newNodes.length + fruit.legacyNodes.indexOf(node);
+  const slots = santuarioSlotsForMap(fruit.map);
+  return slots[local] || null;
 }
 
 // Miniárvores mantêm coordenadas de grade LOCAIS e todos os IDs antigos.
-export function fruitGridSlot(i) { return { x: i === 9 ? 1 : i % 3, y: Math.floor(i / 3) }; }
+export function fruitGridSlot(i) { return { x: i >= 9 ? i - 8 : i % 3, y: Math.floor(Math.min(i, 9) / 3) }; }
 export function fruitNodePos(fi, ni) {
   const legacyCount = FRUIT_TREES[fi].legacyNodes.length;
   return fruitGridSlot(ni < legacyCount ? ni : ni - legacyCount);

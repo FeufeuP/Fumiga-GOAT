@@ -14,7 +14,7 @@ const near = (a, b) => assert.ok(Math.abs(a - b) < 1e-9, `${a} != ${b}`);
 const IDS = "raiz g_dan g_cri g_cad g_bomb g_vid g_arm g_esq g_esp g_grd g_alc g_fogo k_bala k_arpao k_acrobata k_cefalote t_col t_vel t_carga t_ini t_ambar t_rap t_rede t_estoque t_atalho k_prata k_mel k_cortadeira n_dig n_corr n_berco n_ovo n_fung n_eco n_desp n_zelo k_tecela k_matabele r_vida r_reg r_ovo r_casca r_xp r_regen r_essin r_pop r_ess r_ren k_dinoponera".split(" ");
 assert.deepEqual(META_NODES.map(n => n.id), IDS, "nenhum ID salvo foi removido/trocado");
 assert.equal(META_NODES.reduce((sum, n) => sum + n.cost.length, 0), 143, "143 níveis antigos preservados");
-assert.equal(TREE_ALL.length, 137);
+assert.equal(TREE_ALL.length, 144);
 assert.equal(META_STAGES.length, 7);
 assert.deepEqual(TREE_STAGE_NODES.map(ns => ns.length), [8, 7, 7, 7, 7, 7, 6]);
 for (let i = 0; i < 7; i++) {

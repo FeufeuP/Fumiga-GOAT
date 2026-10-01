@@ -47,7 +47,7 @@ try {
         assert.equal(await page.evaluate(async()=>(await M('meta.js')).treeNodePosition('v_a1')),null,'poder futuro não tem posição de compra');
         await page.screenshot({path:out+'/'+(mobile?'mobile':'pc')+'-santuario-palida.png'});
       }else{
-        assert.equal(cards.length,13,map+' mostra as 13 flores novas e legadas juntas');
+        assert.equal(cards.length,14,map+' mostra as 14 flores (13 livres + 1 Suprema) juntas');
         assert.ok(cards.every(b=>b.w>=44 && b.h>=44),'alvos invisíveis das flores com 44px lógicos');
         assert.equal(await page.evaluate(async()=>(await M('ui.js')).uiButtons().some(b=>b.id==='fruitNew'||b.id==='fruitLegacy')),false,'jardim sem abas');
         if(map==='planicie'){
@@ -134,16 +134,25 @@ try {
           // Folha flores_floresta.png (boot): 3 variações x 4 estágios, cinza sem compras.
           await page.waitForFunction(()=>performance.getEntriesByType('resource').some(e=>e.name.includes('flores_floresta.png')),'floresta');
           const info=await page.evaluate(async () => {
-            const { flowerVariant, flowerStage } = await M('meta.js');
+            const { flowerVariant, flowerStage, supremeFlowerStage } = await M('meta.js');
             const { FRUIT_TREES } = await M('config.js');
             const f = FRUIT_TREES.find(x => x.map === 'floresta');
             const variants = new Set(f.nodes.map((n, i) => flowerVariant({ ...n, _nodeIdx: i })));
             const growth = (await M('meta.js')).fruitGardenGrowth('floresta');
-            return { variants: [...variants].sort(), morto: flowerStage(0, 3), niveis: f.nodes.map(n => n.cost.length), levels: growth.levels };
+            return {
+              variants: [...variants].sort(),
+              morto: flowerStage(0, 3),
+              supMorto: supremeFlowerStage('v_f11'),
+              niveis: f.nodes.filter(n => !n.supreme).map(n => n.cost.length),
+              supNivel: f.nodes.find(n => n.supreme).cost.length,
+              levels: growth.levels,
+            };
           });
           assert.deepEqual(info.variants, [0, 1, 2], '3 variações temáticas na Floresta');
           assert.deepEqual(info.morto, { stage: 3, gray: true, name: 'BROTO MORTO' }, '0 compras = broto morto cinza');
-          assert.ok(info.niveis.every(l => l === 3), 'as 13 melhorias da Floresta têm 3 níveis de compra');
+          assert.equal(info.supMorto.phase, 0, 'Flor Suprema começa na fase 0 (broto morto)');
+          assert.ok(info.niveis.every(l => l === 3), 'as 13 melhorias regulares da Floresta têm 3 níveis de compra');
+          assert.equal(info.supNivel, 1, 'a 14ª Flor Suprema tem compra única');
           assert.equal(info.levels, 0, 'jardim da Floresta começa sem compras (só mortos)');
           await page.screenshot({path:out+'/'+(mobile?'mobile':'pc')+'-santuario-floresta-mortos.png'});
           // Sem compras: só brotos mortos em cinza. Comprando: broto, meio e florescida.
@@ -162,6 +171,45 @@ try {
           assert.equal(grown.levels,6,'seis níveis comprados contam no jardim da Floresta');
           await page.screenshot({path:out+'/'+(mobile?'mobile':'pc')+'-santuario-floresta-estagios.png'});
         }
+        if(map==='pantano'){
+          await page.waitForFunction(()=>performance.getEntriesByType('resource').some(e=>e.name.includes('flores_pantano.png')),'pantano');
+          const info=await page.evaluate(async () => {
+            const { flowerVariant, flowerStage, supremeFlowerStage } = await M('meta.js');
+            const { FRUIT_TREES } = await M('config.js');
+            const f = FRUIT_TREES.find(x => x.map === 'pantano');
+            const variants = new Set(f.nodes.map((n, i) => flowerVariant({ ...n, _nodeIdx: i })));
+            const growth = (await M('meta.js')).fruitGardenGrowth('pantano');
+            return {
+              variants: [...variants].sort(),
+              morto: flowerStage(0, 3),
+              supMorto: supremeFlowerStage('v_s11'),
+              niveis: f.nodes.filter(n => !n.supreme).map(n => n.cost.length),
+              supNivel: f.nodes.find(n => n.supreme).cost.length,
+              levels: growth.levels,
+            };
+          });
+          assert.deepEqual(info.variants, [0, 1, 2], '3 variações temáticas no Pântano');
+          assert.deepEqual(info.morto, { stage: 3, gray: true, name: 'BROTO MORTO' }, '0 compras = broto morto cinza');
+          assert.equal(info.supMorto.phase, 0, 'Flor Suprema começa na fase 0 (broto morto)');
+          assert.ok(info.niveis.every(l => l === 3), 'as 13 melhorias regulares do Pântano têm 3 níveis de compra');
+          assert.equal(info.supNivel, 1, 'a 14ª Flor Suprema tem compra única');
+          assert.equal(info.levels, 0, 'jardim do Pântano começa sem compras (só mortos)');
+          await page.screenshot({path:out+'/'+(mobile?'mobile':'pc')+'-santuario-pantano-mortos.png'});
+          await page.evaluate(async()=>{const {G}=await M('state.js');G.save.clearedMaps.pantano=true;G.save.essence=9999;});
+          const id0=cards[0].id.slice('fruitNode_'.length),id1=cards[1].id.slice('fruitNode_'.length),id2=cards[2].id.slice('fruitNode_'.length);
+          await click(cards[0].id); await click('treeBuy'); await click('treeBuy'); await click('treeBuy');
+          assert.equal(await page.evaluate(id=>FUMIGA.G.save.nodes[id],id0),3,'flor 1 florescida após 3 compras');
+          await click('treeClose');
+          await click(cards[1].id); await click('treeBuy'); await click('treeBuy');
+          assert.equal(await page.evaluate(id=>FUMIGA.G.save.nodes[id],id1),2,'flor 2 meio aberta após 2 compras');
+          await click('treeClose');
+          await click(cards[2].id); await click('treeBuy');
+          assert.equal(await page.evaluate(id=>FUMIGA.G.save.nodes[id],id2),1,'flor 3 em broto após 1 compra');
+          await click('treeClose');
+          const grown=await page.evaluate(async()=>(await M('meta.js')).fruitGardenGrowth('pantano'));
+          assert.equal(grown.levels,6,'seis níveis comprados contam no jardim do Pântano');
+          await page.screenshot({path:out+'/'+(mobile?'mobile':'pc')+'-santuario-pantano-estagios.png'});
+        }
       }
       await click('treeMiniBack');
     }
@@ -179,15 +227,46 @@ try {
       }
     }
     await page.screenshot({path:out+'/'+(mobile?'mobile':'pc')+'-detalhe.png'});
-    await page.evaluate(async()=>{ const {G}=await M('state.js');G.save.essence=50000;for(const f of (await M('config.js')).FRUIT_TREES) G.save.clearedMaps[f.map]=true; });
-    for(const id of ids.filter(id=>id.startsWith('f_') || id.startsWith('v_') && !id.startsWith('v_a'))) {
+    await page.evaluate(async()=>{ const {G}=await M('state.js');G.save.essence=500000;for(const f of (await M('config.js')).FRUIT_TREES) G.save.clearedMaps[f.map]=true; });
+    const regularFruitIds = ids.filter(id=>(id.startsWith('f_') || id.startsWith('v_') && !id.startsWith('v_a')) && !/^v_[pfsdoi]11$/.test(id));
+    const supremeFruitIds = ids.filter(id=>/^v_[pfsdoi]11$/.test(id));
+    for(const id of regularFruitIds) {
       await pick(id);await click('treeBuy');
       assert.equal(await page.evaluate(async id=>(await M('state.js')).G.save.nodes[id],id),1,id+' comprado pelo botão');
     }
+    // Maximiza os níveis restantes das flores regulares antes de comprar as 6 Flores Supremas
+    await page.evaluate(async()=>{
+      const {G}=await M('state.js');
+      const {FRUIT_TREES}=await M('config.js');
+      for(const f of FRUIT_TREES) if(!f.pending) for(const n of f.nodes) if(!n.supreme) G.save.nodes[n.id]=n.cost.length;
+    });
+    for(const id of supremeFruitIds) {
+      await pick(id);await click('treeBuy');
+      assert.equal(await page.evaluate(async id=>(await M('state.js')).G.save.nodes[id],id),1,id+' Suprema comprada pelo botão');
+    }
+    const supPhases = await page.evaluate(async () => {
+      const { G } = await M('state.js');
+      const { supremeFlowerStage } = await M('meta.js');
+      G.supremeBloomAt = { v_p11: 100 };
+      const phases = [0, 0.5, 1.0, 1.5, 2.0].map(dt => supremeFlowerStage('v_p11', 100 + dt).phase);
+      delete G.supremeBloomAt.v_p11;
+      return phases;
+    });
+    assert.deepEqual(supPhases, [1, 2, 3, 4, 5], 'Flor Suprema transiciona pelas 5 fases revivendo até florescer');
+    await page.evaluate(async () => { const { G } = await M('state.js'); G.supremeBloomAt = {}; });
+    await pick('v_p11');
+    await page.waitForTimeout(100);
+    await page.screenshot({path:out+'/'+(mobile?'mobile':'pc')+'-santuario-planicie-suprema.png'});
+    await pick('v_f11');
+    await page.waitForTimeout(100);
+    await page.screenshot({path:out+'/'+(mobile?'mobile':'pc')+'-santuario-floresta-suprema.png'});
+    await pick('v_s11');
+    await page.waitForTimeout(100);
+    await page.screenshot({path:out+'/'+(mobile?'mobile':'pc')+'-santuario-pantano-suprema.png'});
     await page.goto(page.url().replace('&limpo','')); await page.waitForFunction(()=>window.FUMIGA?.pronto);
     await page.evaluate(()=>{const root=document.querySelector('script[src*="main.js"]').src.replace(/main\.js.*$/,'');window.M=n=>import(root+n);});
     const saved=await page.evaluate(()=>FUMIGA.G.save);
-    assert.equal(Object.keys(saved.nodes).filter(id=>id.startsWith('f_') || id.startsWith('v_')).length,78,'78 compras acessíveis persistidas após reload');
+    assert.equal(Object.keys(saved.nodes).filter(id=>id.startsWith('f_') || id.startsWith('v_')).length,84,'84 compras acessíveis persistidas após reload');
     assert.equal(saved.era,1,'lendário dá uma Era só');
     await page.evaluate(()=>FUMIGA.go('TREE'));await page.waitForTimeout(200);
     await page.screenshot({path:out+'/'+(mobile?'mobile':'pc')+'-arvore.png'});
@@ -204,7 +283,7 @@ try {
       assert.equal(await page.evaluate(async()=>(await M('input.js')).keys.KeyH),false,'desligar olfato');
     }
     assert.deepEqual(errors,[]);
-    console.log((mobile?'MOBILE':'PC')+': 127 posições de flor/nó normal/grande sem colisão, 7 fundos sob demanda, compra/saves preservados');
+    console.log((mobile?'MOBILE':'PC')+': 133 posições de flor/nó normal/grande sem colisão, 7 fundos sob demanda, compra/saves preservados');
     await context.close();
   }
 } finally { await browser.close();await server.close(); }

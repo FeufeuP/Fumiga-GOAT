@@ -1,4 +1,4 @@
-// Motor dos 70 poderes. Sem IA duplicada: hooks nos consumidores do jogo.
+// Motor dos 77 poderes (70 regulares + 7 Flores Supremas). Sem IA duplicada: hooks nos consumidores do jogo.
 // Estado temporário vive na expedição, nunca no save de progressão.
 import { G } from './state.js';
 export const fruitWorld = { allies: [], foes: [], home: () => ({x:0,y:0}), freeWorker: () => false };
@@ -33,13 +33,18 @@ function secondary(t,dmg) {
 export function applyFruitBonuses(b) {
   if(has('p6')) b.rangeBonus+=45;
   if(has('p9')) {b.startWorkers+=3;b.startFood+=60;}
+  if(has('p11')) {b.allSpeed=(b.allSpeed||1)*1.25;b.workerSpeed=(b.workerSpeed||1)*1.25;b.fireRate=(b.fireRate||1)*1.2;}
+  if(has('f11')) {b.healPower*=1.4;b.allHealing=(b.allHealing||1)*1.4;}
   if(has('s4')) b.aoeMult*=1.4;
   if(has('d2')) b.hatchSpeed*=.65;
   if(has('d9')) b.critChance+=.15;
+  if(has('d11')) {b.dmgAll=(b.dmgAll||1)*1.3;b.critChance+=.2;b.popCap=(b.popCap||0)+6;}
   if(has('o8')) b.queenRegen+=3;
+  if(has('o11')) {b.hpAll=(b.hpAll||1)*1.3;b.queenHp=(b.queenHp||1)*1.3;}
   if(has('a1')) b.startEssence+=100;
   if(has('a3')) b.xpGain*=1.4;
   if(has('a4')) {b.healPower*=1.35;b.allHealing*=1.35;}
+  if(has('a11')) {b.essMult=(b.essMult||1)*2;b.xpGain*=2;b.dmgAll=(b.dmgAll||1)*1.35;b.hpAll=(b.hpAll||1)*1.35;b.queenRegen+=15;}
   return b;
 }
 export function fruitUnitStats(type,s) {
@@ -52,11 +57,16 @@ export function fruitSpeed(a) {
   let n=1;
   if(has('p1') && time()<20) n*=1.35;
   if(has('p7') && ratio(a)<.35) n*=1.6;
+  if(has('p11')) n*=1.25;
   return n;
 }
 export function fruitIgnoreSlow(a) { return has('o6') && dist(a,fruitWorld.home())<=240; }
 export function fruitGatherRate() { return has('d5') && time()<30 ? 2 : 1; }
-export function fruitAttackCd(a, cd) {return has('i7') && ratio(a)>=1 ? cd/1.3 : cd;}
+export function fruitAttackCd(a, cd) {
+  if(has('i7') && ratio(a)>=1) cd/=1.3;
+  if(has('p11')) cd/=1.2;
+  return cd;
+}
 export function fruitHealingMultiplier(target) {return has('f6') && ratio(target)<.35 ? 1.5 : 1;}
 export function fruitSight() {return has('a7') ? 1.5 : 1;}
 export function fruitOrbSpeed() {return has('s5') ? 2 : 1;}
@@ -76,6 +86,7 @@ export function fruitEnemyDamage(t,dmg,from,attacker) {
   if(has('f2') && ratio(t)>=1) dmg*=1.6;
   if(has('f9') && t.revealT>0) dmg*=1.25;
   if(has('s7') && t.burnT>0) dmg*=1.3;
+  if(has('s11') && t.burnT>0) dmg*=1.35;
   if(has('d1')) {
     r.heat = time()-(r.lastHit ?? -100)>3 ? 1 : Math.min(40,(r.heat||0)+1);
     r.lastHit=time();dmg*=1+r.heat*.01;
@@ -85,21 +96,26 @@ export function fruitEnemyDamage(t,dmg,from,attacker) {
   if(has('o3') && ratio(t)<.2) dmg*=t.isBoss?1.2:2;
   if(has('i2') && t.slowT>0) dmg*=1.6;
   if(has('i9') && t.isBoss) dmg*=1.25;
+  if(has('i11') && t.isBoss) dmg*=1.4;
   if(has('a2') && r.hits%5===0) {dmg*=2;fruitHeal(queen(),2);}
   if(has('p8') && t.slowT>0 && time()>=(r.drumAt??0)) {
     r.drumAt=time()+.4;for(const other of nearFoes(t,130,3)) secondary(other,dmg*.15);
   }
+  if(has('d11') && r.hits%3===0) for(const other of nearFoes(t,140,3)) secondary(other,dmg*.35);
   if(has('s1')) {t.burnT=Math.max(t.burnT||0,3);t.burnDps=Math.max(t.burnDps||0,6);}
+  if(has('s11')) {t.burnT=Math.max(t.burnT||0,5);t.burnDps=Math.max(t.burnDps||0,12);}
   if(has('s8') && !t.isBoss && r.hits%5===0) t.weakT=Math.max(t.weakT||0,4);
+  const slowMult=has('i5')?2:1;
+  if(has('i11') && !t.isBoss) t.slowT=Math.max(t.slowT||0,3*slowMult);
   if(!t.isBoss && r.hits%3===0) {
-    const duration=has('i5')?2:1;
-    if(has('f1')) t.slowT=Math.max(t.slowT||0,2*duration);
-    if(has('i1')) {t.slowT=Math.max(t.slowT||0,3*duration);t.stunT=Math.max(t.stunT||0,.35);}
+    if(has('f1')) t.slowT=Math.max(t.slowT||0,2*slowMult);
+    if(has('i1')) {t.slowT=Math.max(t.slowT||0,3*slowMult);t.stunT=Math.max(t.stunT||0,.35);}
   }
   if(attacker?.burnDur>0) {t.burnT=Math.max(t.burnT||0,attacker.burnDur);t.burnDps=Math.max(t.burnDps||0,attacker.burnDps||0);}
   return dmg;
 }
 export function fruitAllyDamage(a,dmg,attacker) {
+  if(has('i11')) dmg*=.75;
   if(a.type==='queen') {if(has('a9')) dmg*=.8;}
   else {
     let flatReduction=false;
@@ -125,15 +141,16 @@ export function fruitSurvive(a) {
   if(a.type==='queen') {
     if(has('o7') && !r.lastLeaf) {r.lastLeaf=true;a.hp=hp(a)*.3;return true;}
   } else {
+    if(has('f11') && !a.fruitSupremeRevive) {a.fruitSupremeRevive=true;a.hp=hp(a)*.5;return true;}
     if(has('f4') && !a.fruitCocoon) {a.fruitCocoon=true;a.hp=hp(a)*.25;return true;}
     if(has('a6') && time()>=(r.rescueAt??0)) {r.rescueAt=time()+30;a.hp=hp(a)*.1;return true;}
   }
   return false;
 }
-export function fruitQueenBorn(q) {q.fruitShield=has('i8')?hp(q)*.2:0;}
+export function fruitQueenBorn(q) {q.fruitShield=hp(q)*((has('i8')?.2:0)+(has('o11')?.35:0));}
 export function fruitBorn(a,free=false) {
   const r=state();if(!free)r.born=(r.born||0)+1;
-  a.fruitShield=hp(a)*((has('o1') ? .2 : 0)+(has('a5') && !free && r.born<=5 ? .5 : 0));
+  a.fruitShield=hp(a)*((has('o1')?.2:0)+(has('o11')?.35:0)+(has('a5') && !free && r.born<=5 ? .5 : 0));
   if(!free && has('d7') && r.born%8===0 && (r.free||0)<3) {
     // Reserva o crédito antes do spawn recursivo.
     r.free=(r.free||0)+1;if(!fruitWorld.freeWorker(a))r.free--;
@@ -143,6 +160,7 @@ export function fruitDeath() {if(has('s9') && G.run)G.run.essencePool=(G.run.ess
 export function fruitDeposit(a,amount) {
   const r=state();a.fruitDeposits=(a.fruitDeposits||0)+1;
   if(has('p5') && a.fruitDeposits<=3)amount*=2;
+  if(has('p11'))amount*=2;
   if(has('f7'))amount+=6;
   if(has('p2') && time()>=(r.dewAt??0)) {r.dewAt=time()+1;fruitHeal(queen(),8);}
   if(has('o4') && G.run)G.run.essencePool=(G.run.essencePool||0)+1;
@@ -153,6 +171,8 @@ export function fruitKill(e) {
   if(e.fruitSecondaryDeath || !G.run)return;
   const r=state();r.kills=(r.kills||0)+1;
   if(has('p10') && r.kills%20===0)healColony(.08);
+  if(has('o11') && r.kills%10===0)healColony(.12);
+  if(has('s11'))G.run.essencePool=(G.run.essencePool||0)+3;
   if(e.burnT>0 || e.fruitBurnDeath) {
     r.poisonKills=(r.poisonKills||0)+1;
     if(has('s2'))G.run.food+=4;
@@ -171,6 +191,7 @@ export function fruitKill(e) {
 export function fruitTick(dt) {
   const r=state();r.grove=(r.grove||0)+dt;
   if(has('f10') && r.grove>=12) {r.grove=0;const q=queen();if(live(q))for(const a of fruitWorld.allies)if(dist(a,q)<=300)fruitHeal(a,hp(a)*.08);}
+  if(has('f11')) healColony(.04*dt);
   const q=queen();
   if(has('a10') && live(q) && ratio(q)<.3 && !r.heart) {r.heart=true;healColony(.4);}
 }

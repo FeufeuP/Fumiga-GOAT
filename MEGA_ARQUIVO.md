@@ -29,6 +29,28 @@ repetições, datas, branches, checklists e notas históricas foram preservados.
 > Divergências permanecem visíveis, sem apagar conteúdo. O que efetivamente
 > funciona deve ser confirmado por testes e inspeção no preview.
 
+## Atualização — Clareira Orgânica por Bioma, 13 Flores Livres e 14ª Flor Suprema (2026-10-01)
+
+**Status: código, clareira, maçã reajustada e 7 poderes supremos implementados e verificados (PC e mobile).**
+
+### Escopo aprovado pelo usuário (`ask_user`)
+
+1. **13 flores regulares 100% livres (sem dependências):** todas as 10 flores globais e 3 flores legadas de cada santuário têm `requires: []` e não desenham linhas de conexão no chão — o jogador pode comprar qualquer flor livremente assim que o fruto do mundo for conquistado.
+2. **Clareira central orgânica com semente fixa por bioma (`SANTUARIO_SLOTS_BY_MAP`):** cada santuário (`planicie`, `floresta`, `pantano`, `deserto`, `outono`, `gelo`) possui seu próprio arranjo orgânico determinístico (amostragem Poisson-disk / dart-throwing com semente fixa por bioma em `game/js/tree_layout.js`), posicionando todas as 14 flores estritamente dentro do oval central de grama (`x ∈ [259..693], y ∈ [280..429]`, separação mínima ≥ 52 px) sem tocar raízes, crânios, cactos, cogumelos ou o painel lateral (`FRUIT_DETAIL`).
+3. **Maçã flutuante reajustada (`drawSanctuaryApple` em `game/js/meta.js`):** tamanho reduzido de `280 px` para `232 px` e posição elevada de `y = 205` para `y = 176`, liberando o topo da clareira central.
+4. **14ª Flor Suprema (`supreme: true`, `v_p11`, `v_f11`, `v_s11`, `v_d11`, `v_o11`, `v_i11`, `v_a11`):**
+   - Desbloqueada apenas após **todas as outras 13 flores daquele santuário atingirem o nível máximo** (`isSupremeFlowerUnlocked` / `supremeProgress` em `game/js/state.js`).
+   - Compra única lendária (`cost: [500..1000]` de essência) com bônus globais altos + efeito passivo de endgame por mundo em `game/js/fruit_skills.js` e `game/js/fruit_effects.js`:
+     - `v_p11` (*Florescência do Amanhecer*, 500 ess.): entregas rendem 2× comida, +25% velocidade global e +20% cadência de ataque.
+     - `v_f11` (*Coração do Dossel Eterno*, 580 ess.): aliadas revivem 1× com 50% da vida, +40% poder de cura e 4% de vida regenerada por segundo.
+     - `v_s11` (*Lótus Abissal da Bruma*, 660 ess.): todo golpe aplica 12 DPS de veneno por 5s, +35% dano em envenenados e +3 essência por abate.
+     - `v_d11` (*Coroa Solar da Fornalha*, 750 ess.): +30% dano global, +20% crítico, +6 população máxima e explosão solar (35% dano em até 3 vizinhos) a cada 3º golpe.
+     - `v_o11` (*Crisântemo do Rei Dourado*, 840 ess.): +30% vida máxima para colônia e rainha, +35% barreira inicial e cura 12% da colônia a cada 10 abates.
+     - `v_i11` (*Rosa Cristalina do Pico*, 920 ess.): +40% dano contra chefes, 25% menos dano recebido por toda a colônia e golpes aplicam 3s de lentidão.
+     - `v_a11` (*Semente do Formigueiro Eterno*, 1000 ess.): dobra ganho de essência e XP, +35% dano e vida global e +15 vida/s na rainha (prévia selada na Pálida).
+   - **6 fases visuais (`supremeFlowerStage` em `game/js/meta.js`):** começa na Fase 0 (`BROTO MORTO` em cinza) no coração da clareira e, ao ser comprada, transiciona por **5 fases revivendo até florescer** (`1/5 Despertar → 2/5 Seiva Viva → 3/5 Cálice Real → 4/5 Abertura Solar → 5/5 Flor Suprema`) com escala maior (`64×64`), aura dourada pulsante e partículas orbitais, suportando folha dedicada `flor_suprema_<mundo>.png` (`1152×192` RGBA, 6 células de `192×192`).
+   - **Arte integrada:** `game/assets/ui/flor_suprema_planicie.png` (*Girassol-Real do Amanhecer*), `game/assets/ui/flor_suprema_floresta.png` (*Orquídea-Rainha de Seda e Cristal*) e `game/assets/ui/flor_suprema_pantano.png` (*Lótus Abissal da Bruma* — planta carnívora botânica do Pântano), cada uma com 6 quadros (`0_morto`, `1_despertar`, `2_seiva`, `3_calice`, `4_abertura`, `5_flor`), junto com a folha regular `game/assets/ui/flores_pantano.png` (`768×576` RGBA, 3 espécies × 4 estágios: `lotus`, `carnivora`, `taboa`) e preços de 3 níveis do Pântano (`[40,60,90]`, `[55,85,120]`, `[80,115,160]` e `+40/+80`). Originais normalizados em `#1d1127` em `art-source/flores/` e espelhados em `~/art-source-backup/flores/`.
+
 ## Registro — Jogo instalável e baixável: PWA + download offline (2026-10-01, branch arena/01a0f670)
 
 **Status: implementado e verificado.** Pedido do usuário: *“Torne o jogo baixável, tanto no mobile
@@ -175,21 +197,18 @@ São exatamente os dois passos do job `navegador` do workflow mais o job `headle
   Planície, níveis 2–3 sem poder próprio, 4 PNGs `loading_*_raw.png` órfãos e `KeyB`/`KeyG` lidos
   depois dos `return` de draft/transição/pausa.
 
-## MANUAL — Fábrica de flores dos Santuários (método aprovado, 2026-09-30, v2)
+## MANUAL — Fábrica de flores dos Santuários (método aprovado, 2026-10-01, v3)
 
 **Para chats novos: leia esta seção + [`DOCUMENTO_FLORES_DOS_SANTUARIOS.md`](DOCUMENTO_FLORES_DOS_SANTUARIOS.md)
 + [`REGRAS_DE_TRABALHO.md`](REGRAS_DE_TRABALHO.md) antes de gerar qualquer imagem de flor.**
-Este manual é o estilo de trabalho **oficial**, aprovado pelo usuário na entrega da Floresta
-(abaixo) — **substitui** a cadência anterior de "uma variação por vez": agora a cadência é
-**9 sprites vivos → ⛔ → 3 brotos mortos → ⛔ → integração**.
+Este manual é o estilo de trabalho **oficial**, aprovado pelo usuário — a cadência é:
+**Leva 1: 9 sprites vivos regulares (3 espécies × 3 estágios vivos) → ⛔ PARADA 1 → Leva 2: 3 brotos mortos regulares + 6 fases da Flor Suprema (total 9 na 2ª leva) → ⛔ PARADA 2 → integração**.
 
 ### Regras invioláveis
 
-1. Cada santuário: **exatamente 3 espécies** com **4 estágios** cada = **12 sprites** (broto, meio aberto,
-   florescida, broto morto — ordem fixa das colunas: `1_broto, 2_meio, 3_flor, 0_morto`).
-2. **Cadência em duas levas com ⛔ confirmações explícitas:** Leva 1 (9 vivos numa rodada) → PARADA →
-   Leva 2 (3 mortos) → PARADA → só então código. Silêncio nunca é aprovação.
-3. **O broto morto deriva do broto vivo** (`1_broto`), nunca da flor adulta (rejeitada na Floresta).
+1. Cada santuário: **exatamente 3 espécies regulares** com **4 estágios** cada = **12 sprites** (`1_broto, 2_meio, 3_flor, 0_morto`) + **1 Flor Suprema** com **6 estágios** (`suprema_0_morto` a `suprema_5_flor`, folha `1152×192` RGBA).
+2. **Cadência em duas levas com ⛔ confirmações explícitas:** Leva 1 (9 vivos regulares numa rodada) → PARADA 1 → Leva 2 (3 mortos regulares + 6 estágios da Flor Suprema = 9 imagens) → PARADA 2 → só então código. Silêncio nunca é aprovação.
+3. **O broto morto regular deriva do broto vivo** (`1_broto`), nunca da flor adulta (rejeitada na Floresta).
 4. **Preços só entram no código com confirmação prévia** — propor 2 pacotes fechados (espelho da
    Planície × premium do mundo) e deixar o usuário escolher.
 5. **Regra 13:** todo sprite selecionado fica salvo no Arena (`art-source/flores/`) **e** no espelho
@@ -197,27 +216,18 @@ Este manual é o estilo de trabalho **oficial**, aprovado pelo usuário na entre
 
 ### Passo a passo (resumo operacional)
 
-1. **Etapa 0:** pesquisar inspirações indie (Regra 2, citar links) → `ask_user` com as 3 espécies
-   (2 conjuntos prontos + personalizado), ordem das linhas, visual do morto e escopo → ⛔ PARADA 0.
-2. **Leva 1:** florescida de cada espécie com **2 opções** (máx. 3 gerações-com-opções por resposta) →
+1. **Etapa 0:** pesquisar inspirações indie (Regra 2, citar links) → `ask_user` com as 3 espécies regulares
+   (2 conjuntos prontos + personalizado), a espécie da Flor Suprema, ordem das linhas, visual do morto e escopo → ⛔ PARADA 0.
+2. **Leva 1:** florescida de cada espécie regular com **2 opções** (máx. 3 gerações-com-opções por resposta) →
    usuário escolhe → **derivar** meio aberto e broto de cada escolhida (sem novas opções) → prévia
    lado a lado (layout 768×576 com coluna do morto pendente) + prévia 48 px (`present_file`) →
    ⛔ **PARADA 1**.
-3. **Leva 2:** 3 mortos derivando dos `1_broto`, 2 opções cada → prévia de 12 células + **tira dos
-   mortos em cinza** → conferir fundos `#1d1127` (seção 4.1 do documento: inundação pelas bordas +
-   checagem de contornos com aborto) → ⛔ **PARADA 2**.
+3. **Leva 2:** 3 brotos mortos regulares (derivando dos `1_broto`) + as 6 fases da Flor Suprema (`suprema_5_flor` → derivações `suprema_4_abertura`, `suprema_3_calice`, `suprema_2_seiva`, `suprema_1_despertar`, `suprema_0_morto`, totalizando 9 imagens na 2ª leva) → prévia de 12 células regulares + **tira dos mortos em cinza** + **prévia das 6 fases da Flor Suprema** → conferir fundos `#1d1127` (seção 4.1 do documento: inundação pelas bordas + checagem de contornos com aborto) → ⛔ **PARADA 2**.
 4. **Etapa 3 (integração):** normalizar originais pendentes + espelho → `FLORES_VARIACOES` +
-   `prepare_fruit_art.py flores <mundo> game/assets/ui/flores_<mundo>.png` (768×576 RGBA) → conferir a
-   folha achatada → `ask_user` de preços (2 pacotes) → `MANIFEST` + `ASSET_V` (`assets.js`), custos
-   legados (`config.js`), `FLOWER_STEPS` (`fruit_skills.js`) → testes: `fruit-powers.mjs`,
-   `assets.mjs`, `tree-browser.mjs` (espelhar o bloco da Floresta) → `npm run test:quick`,
-   `npm test`, `node game/test/tree-browser.mjs` (PC e mobile, ler as capturas **sem compras = só
-   mortos cinza** e **com compras = estágios coloridos**) → docs (`MEGA_ARQUIVO.md`,
-   `game/assets/ui/README.md`, `PROXIMOS_PASSOS_DA_ARVORE.md`) + `node game/test/docs.mjs` →
-   preview `npm run serve` (Regra 7) → check-in (Regra 3).
-5. **Um santuário por entrega.** Seguem pendentes: Pântano, Deserto, Outono, Gelo, Pálida —
-   sugestões de tema na seção 7 do documento. Prontos: Planície (referência 1) e Floresta
-   (referência 2, seção 10b do documento, com as lições registradas).
+   `prepare_fruit_art.py flores <mundo> game/assets/ui/flores_<mundo>.png` (768×576 RGBA) + folha `game/assets/ui/flor_suprema_<mundo>.png` (1152×192 RGBA) → conferir as folhas achatadas → `ask_user` de preços (2 pacotes) → `MANIFEST` + `ASSET_V` (`assets.js`), custos legados (`config.js`), `FLOWER_STEPS` (`fruit_skills.js`) → testes: `fruit-powers.mjs`, `assets.mjs`, `tree-browser.mjs` (espelhar o bloco da Floresta) → `npm run test:quick`, `npm test`, `node game/test/tree-browser.mjs` (PC e mobile, ler as capturas **sem compras = só mortos cinza** e **com compras = estágios coloridos + Flor Suprema**) → docs (`MEGA_ARQUIVO.md`, `game/assets/ui/README.md`, `PROXIMOS_PASSOS_DA_ARVORE.md`) + `node game/test/docs.mjs` → preview `npm run serve` (Regra 7) → check-in (Regra 3).
+5. **Um santuário por entrega.** Seguem pendentes: Deserto, Outono, Gelo, Pálida —
+   sugestões de tema na seção 7 do documento. Prontos: Planície (referência 1 + Suprema), Floresta
+   (referência 2 + Suprema) e Pântano (referência 3 + Suprema).
 
 ---
 
