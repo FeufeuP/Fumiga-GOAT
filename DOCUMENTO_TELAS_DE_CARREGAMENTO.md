@@ -5,6 +5,15 @@
 > **Status Geral**: Fase 1 e 2 Concluídas (Planície do Amanhecer e Floresta de Musgo implementadas e validadas).  
 > **Objetivo**: Mapear e detalhar todas as telas de carregamento restantes necessárias para os locais com carregamento de assets ou mecânicas pesadas de uma vez, mantendo a regra de adicionar uma por vez com validação prévia do usuário e preservação de todas as matrizes no workspace.
 
+> **Atualização 2026-10-01 (jogo instalável e baixável):** os originais brutos das telas de carga saíram de
+> `game/assets/loading/` e foram para **`art-source/loading/`** (fora do Git, preservados no workspace e no
+> espelho `~/art-source-backup/`, Regra 13): `loading_planicie_raw.png` era **byte-idêntico** ao otimizado
+> que o jogo usa (7,2 MB duplicados no repositório e no download do app) e `loading_floresta_raw.png` não era
+> lido por nenhum código. O mesmo vale para `parallax/menu/_raw_main.png` → `art-source/parallax/`. As
+> referências a esses arquivos na tabela abaixo são **históricas**; o que o jogo carrega continua sendo
+> `loading_planicie.png` e `loading_floresta.png`. Registro completo na seção “Jogo instalável e baixável —
+> PWA + download offline” do [`MEGA_ARQUIVO.md`](MEGA_ARQUIVO.md).
+
 ---
 
 ## 1. Visão Geral da Arquitetura & Diretrizes de Design

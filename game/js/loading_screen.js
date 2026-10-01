@@ -4,23 +4,34 @@
 // Suporta carregamento assincrono de assets/mecanicas pesadas com cache
 // ============================================================================
 import { VIEW_W, VIEW_H, PAL, MAPS } from "./config.js";
-import { drawText, textWidth } from "./font.js";
+import { drawText, textWidth, fontScale } from "./font.js";
 import { SFX } from "./audio.js";
 import { assetUrl, loadImage, LOAD_CFG } from "./assets.js";
 
-// Cache de imagens de carregamento por bioma
+// Cache de imagens de carregamento por bioma (apenas arquivos existentes em assets/loading/)
 const LOADING_CACHE = new Map();
+const LOADING_IMAGE_FILES = {
+  planicie: "planicie",
+  floresta: "floresta",
+  pantano: "floresta",
+  deserto: "planicie",
+  outono: "floresta",
+  gelo: "planicie",
+  palida: "floresta",
+  topo: "floresta",
+};
 
 /**
  * Carrega a arte tematica da tela de carregamento para o bioma solicitado
+ * sem gerar requisicoes 404 para biomas que compartilham a base panoramica.
  */
 export function loadLoadingImage(biome = "planicie") {
-  const canonical = biome === "topo" ? "palida" : biome;
-  if (LOADING_CACHE.has(canonical)) return LOADING_CACHE.get(canonical);
+  const fileKey = LOADING_IMAGE_FILES[biome] || "planicie";
+  if (LOADING_CACHE.has(fileKey)) return LOADING_CACHE.get(fileKey);
 
   const loadingPromise = (async () => {
     let img = null;
-    const path = `assets/loading/loading_${canonical}.png`;
+    const path = `assets/loading/loading_${fileKey}.png`;
     for (let a = 0; a < LOAD_CFG.attempts && !img; a++) {
       try {
         img = await loadImage(assetUrl(path) + (a ? `&r=${a}` : ""));
@@ -31,14 +42,14 @@ export function loadLoadingImage(biome = "planicie") {
     return img;
   })();
 
-  LOADING_CACHE.set(canonical, loadingPromise);
+  LOADING_CACHE.set(fileKey, loadingPromise);
   loadingPromise.catch(() => {
-    if (LOADING_CACHE.get(canonical) === loadingPromise) LOADING_CACHE.delete(canonical);
+    if (LOADING_CACHE.get(fileKey) === loadingPromise) LOADING_CACHE.delete(fileKey);
   });
   return loadingPromise;
 }
 
-// Definicoes tematicas por bioma estilo Dead Cells
+// Definicoes tematicas para todos os 6 biomas + telas ancestrais estilo Dead Cells
 const BIOME_LORE = {
   planicie: {
     degrau: "DEGRAU I",
@@ -58,6 +69,7 @@ const BIOME_LORE = {
     ],
     accent: "#37e6c8",
     secondary: "#ffd479",
+    tint: null,
   },
   floresta: {
     degrau: "DEGRAU II",
@@ -77,6 +89,105 @@ const BIOME_LORE = {
     ],
     accent: "#7fd6a0",
     secondary: "#ffd479",
+    tint: null,
+  },
+  pantano: {
+    degrau: "DEGRAU III",
+    title: "PÂNTANO PÚTRIDO",
+    subtitle: "ÁGUAS PARADAS, INSETOS GORDOS E FOME VELHA",
+    lores: [
+      "O BREJO É A BOCA DA NÉVOA. ATRAVESSEM DEPRESSA, IRMÃS.",
+      "A SOMBRA ALADA MERGULHA SEM AVISO. ATÉ A NÉVOA RECUA DAQUI.",
+      "ELA É PROTO-PÁLIDA: ASAS DE BRUMA E OLHOS DE MEMÓRIA.",
+      "NAS ÁGUAS TURVAS, APENAS O CHEIRO DA SEDA GUARDA O CAMINHO.",
+    ],
+    tips: [
+      "DICA: MATABELE CURA EM DOBRO QUANDO UMA IRMÃ ESTÁ FERIDA.",
+      "DICA: NA FASE 2, O GRITO DA SOMBRA INVERTE OS CONTROLES POR UM INSTANTE.",
+      "DICA: MANTENHA AS ATIRADORAS ESPALHADAS CONTRA OS MERGULHOS RASANTES.",
+      "DICA: CRISTAIS DO PÂNTANO GUARDAM MEMÓRIA ANTIGA DA COLÔNIA.",
+    ],
+    accent: "#37e6c8",
+    secondary: "#8fd3ff",
+    tint: "rgba(18, 46, 44, 0.36)",
+  },
+  deserto: {
+    degrau: "DEGRAU IV",
+    title: "DESERTO CALCINADO",
+    subtitle: "AREIA, OSSOS E O ZUMBIDO DE UMA COLÔNIA RIVAL",
+    lores: [
+      "A AREIA GUARDA UM TRATO ANTIGO: FILHAS EM TROCA DE PERDÃO.",
+      "A MATRIARCA RIVAL BEIJOU A NÉVOA PARA SOBREVIVER NO CALOR.",
+      "A COLÔNIA RIVAL NÃO É INIMIGA — É O ESPELHO DO QUE PODEMOS VIRAR.",
+      "SOB O SOL DE ÂMBAR, CADA GRÃO DE SEMENTE VALE UMA VIDA.",
+    ],
+    tips: [
+      "DICA: CEFALOTE BLOQUEIA TÚNEIS COM A CABEÇA E REDUZ O DANO PERTO DO NINHO.",
+      "DICA: NA FASE 2, A MATRIARCA COSPE EM CINCO DIREÇÕES. NÃO AGRUPE.",
+      "DICA: FORMIGA-PRATA ATRAVESSA AS DUNAS COM ARRANCADAS RELÂMPAGO.",
+      "DICA: EVOLUA O VENTRE DE ÂMBAR PARA MULTIPLICAR CADA ENTREGA DE COMIDA.",
+    ],
+    accent: "#ffb347",
+    secondary: "#ffd479",
+    tint: "rgba(68, 42, 16, 0.38)",
+  },
+  outono: {
+    degrau: "DEGRAU V",
+    title: "BOSQUE DOURADO",
+    subtitle: "UM OUTONO ETERNO. AS FOLHAS CAEM; A FOME NÃO",
+    lores: [
+      "O ÚLTIMO VERDE ANTES DO INVERNO PATRULHA EM FORMAÇÃO.",
+      "O GALHADA REAL GUARDA O BOSQUE. A COROA COBRA UM REINO.",
+      "ELE NÃO QUER LUTAR — ELE QUER QUE O BOSQUE LEMBRE DELE.",
+      "CADA FOLHA DOURADA QUE CAI ALIMENTA AS RAÍZES DA ÁRVORE ANCESTRAL.",
+    ],
+    tips: [
+      "DICA: ACROBATA ERGUE O GASTER E BORRIFA VENENO QUE CORRÓI COM O TEMPO.",
+      "DICA: FORMIGA-DE-FOGO INCENDEIA GRUPOS INTEIROS COM BRASA CONTÍNUA.",
+      "DICA: AFASTE AS OPERÁRIAS QUANDO O GALHADA REAL PREPARAR A INVESTIDA.",
+      "DICA: USE O RALI (F) PARA REAGRUPAR A GUARDA AO REDOR DA RAINHA.",
+    ],
+    accent: "#ff9a5c",
+    secondary: "#ffd479",
+    tint: "rgba(64, 32, 14, 0.36)",
+  },
+  gelo: {
+    degrau: "DEGRAU VI",
+    title: "PICO CONGELADO",
+    subtitle: "O TOPO DO MUNDO, ONDE SÓ A FOME SOBREVIVE",
+    lores: [
+      "O FRIO É SÓ O HÁLITO DELA. A NÉVOA SUBIU JUNTO ATÉ O CUME.",
+      "O DEVASTADOR É O ARAUTO DO INVERNO. ELE ABRE CAMINHO PARA ELA.",
+      "SE VENCER AQUI, A COLÔNIA ATRAVESSOU OS SEIS DEGRAUS DO MUNDO.",
+      "NO ALTO DO PICO, A NÉVOA NUNCA MORRE — ELA ESPERA POR QUEM LEMBRA.",
+    ],
+    tips: [
+      "DICA: DINOPONERA É O COLOSSO DA COLÔNIA — ATRAI A HORDA E ESMAGA A MATA.",
+      "DICA: QUEIXO-DE-ARPÃO EXECUTA INIMIGOS FERIDOS COM GOLPES EM RAJADA.",
+      "DICA: O DEVASTADOR ESMAGA OBSTÁCULOS E SALTA SOBRE AGLOMERAÇÕES.",
+      "DICA: PROTEJA A RAINHA SILENCIOSA A TODO CUSTO NO CERCO FINAL.",
+    ],
+    accent: "#e8f4ff",
+    secondary: "#7fd6ff",
+    tint: "rgba(22, 34, 58, 0.42)",
+  },
+  palida: {
+    degrau: "MEMÓRIA ANCESTRAL",
+    title: "ÁRVORE DA EVOLUÇÃO",
+    subtitle: "ONDE AS MEMÓRIAS DA COLÔNIA SE TORNAM ETERNAS",
+    lores: [
+      "ELA NÃO É INIMIGA. É A MEMÓRIA QUE A COLÔNIA ESQUECEU.",
+      "A ÁRVORE ANCESTRAL GUARDA EM SUAS RAÍZES CADA GERAÇÃO QUE PASSOU.",
+      "QUANDO A COLÔNIA LEMBRAR, A BRUMA SE ABRE E VIRA SEMENTE.",
+    ],
+    tips: [
+      "DICA: DESPERTE OS FRUTOS DA COPA VENCENDO OS CHEFÕES DE CADA BIOMA.",
+      "DICA: CADA NÓ EVOLUÍDO RESTAURA A COR VIVA DA ÁRVORE ANCESTRAL.",
+      "DICA: CUMPRIR PROFECIAS DA MATRIARCA CONCEDE ESSÊNCIA PERMANENTE.",
+    ],
+    accent: "#c77dff",
+    secondary: "#ffd479",
+    tint: "rgba(38, 20, 62, 0.38)",
   },
 };
 
@@ -115,10 +226,12 @@ export function preloadLoadingScreens(biomes = ["planicie", "floresta"]) {
  */
 export function startLoadingScreen({
   biome = "planicie",
+  degrau = null,
   title = null,
   subtitle = null,
   task = null,
-  minDuration = 2.4,
+  minDuration = 1.6,
+  autoAdvance = false,
   onFinish = null,
 } = {}) {
   const info = BIOME_LORE[biome] || BIOME_LORE.planicie;
@@ -127,30 +240,40 @@ export function startLoadingScreen({
 
   resetSpores();
 
-  // Se já estiver em cache, recupera síncrono da promessa já resolvida
-  const cachedPromise = LOADING_CACHE.get(biome === "topo" ? "palida" : biome);
-
+  // Regra 14: a tela de carregamento entra com opacidade 1.0 imediata para ocultar
+  // qualquer geracao de mundo, troca de tela ou carga pesada; a tarefa pesada roda
+  // apos o primeiro quadro pintado da tela de carregamento.
   activeLoading = {
     biome,
     info,
+    degrau: degrau || info.degrau || "DEGRAU I",
     title: title || info.title,
     subtitle: subtitle || info.subtitle,
     lore: loreText,
     tip: tipText,
     progress: 0,
-    targetProgress: 0.15,
+    targetProgress: 0.18,
     statusText: "PREPARANDO TERRENO...",
     timer: 0,
-    minDuration: Math.max(1.8, minDuration),
-    phase: "fadein", // fadein -> active -> ready -> fadeout -> done
-    alpha: 0,
-    taskDone: false,
+    minDuration: Math.max(0.8, minDuration),
+    phase: "active", // active -> ready -> fadeout -> done
+    alpha: 1,
+    framesRendered: 0,
+    taskFn: typeof task === "function" ? task : null,
+    taskStarted: false,
+    taskDone: typeof task !== "function",
     imageLoaded: false,
     taskError: null,
     image: null,
+    autoAdvance: !!autoAdvance,
     onFinish,
+    finishCalled: false,
     autoAdvanceTimer: 0,
   };
+
+  if (!activeLoading.taskFn) {
+    activeLoading.targetProgress = 1;
+  }
 
   // Carrega imagem de fundo e garante sincronização
   loadLoadingImage(biome)
@@ -170,34 +293,6 @@ export function startLoadingScreen({
       }
     });
 
-  // Executa a tarefa pesada se fornecida
-  if (typeof task === "function") {
-    const reportProgress = (p, msg) => {
-      if (!activeLoading) return;
-      activeLoading.targetProgress = Math.max(0, Math.min(1, p));
-      if (msg) activeLoading.statusText = msg;
-    };
-
-    Promise.resolve()
-      .then(() => task(reportProgress))
-      .then(() => {
-        if (!activeLoading) return;
-        activeLoading.taskDone = true;
-        activeLoading.targetProgress = 1;
-        activeLoading.statusText = "TERRENO PRONTO";
-      })
-      .catch((err) => {
-        if (!activeLoading) return;
-        activeLoading.taskDone = true;
-        activeLoading.taskError = err;
-        activeLoading.statusText = "AVISO AO CARREGAR";
-      });
-  } else {
-    // Sem tarefa externa pesada: simula preparacao suave dos sistemas
-    activeLoading.taskDone = true;
-    activeLoading.targetProgress = 1;
-  }
-
   return true;
 }
 
@@ -205,16 +300,32 @@ export function isLoadingActive() {
   return !!activeLoading;
 }
 
+export function isLoadingReady() {
+  return !!(activeLoading && activeLoading.phase === "ready");
+}
+
+export function isLoadingFadingOut() {
+  return !!(activeLoading && activeLoading.phase === "fadeout");
+}
+
 export function getLoadingProgress() {
   return activeLoading ? activeLoading.progress : 1;
 }
 
+function invokeFinishOnce() {
+  if (!activeLoading || activeLoading.finishCalled) return;
+  activeLoading.finishCalled = true;
+  const cb = activeLoading.onFinish;
+  if (typeof cb === "function") cb();
+}
+
 /**
- * Avanco manual pelo jogador (toque ou tecla) quando a carga terminar
+ * Avanco manual pelo jogador (toque ou tecla) quando a carga terminar (100%)
  */
 export function dismissLoadingScreen() {
   if (!activeLoading) return false;
   if (activeLoading.phase === "ready" || (activeLoading.taskDone && activeLoading.imageLoaded && activeLoading.timer >= activeLoading.minDuration)) {
+    invokeFinishOnce();
     activeLoading.phase = "fadeout";
     SFX.uiClick();
     return true;
@@ -230,8 +341,37 @@ export function updateLoadingScreen(dt) {
 
   activeLoading.timer += dt;
 
+  // Dispara a tarefa pesada somente depois que a cortina da tela de carregamento
+  // ja cobriu a tela (pelo menos 1 frame desenhado ou >25ms), para que o jogador
+  // nunca veja travamento, geracao de terreno ou montagem de cena.
+  if (!activeLoading.taskStarted && activeLoading.taskFn && (activeLoading.framesRendered >= 1 || activeLoading.timer >= 0.025)) {
+    activeLoading.taskStarted = true;
+    const currentLoading = activeLoading;
+    const reportProgress = (p, msg) => {
+      if (activeLoading !== currentLoading) return;
+      activeLoading.targetProgress = Math.max(0, Math.min(1, p));
+      if (msg) activeLoading.statusText = msg;
+    };
+
+    Promise.resolve()
+      .then(() => currentLoading.taskFn(reportProgress))
+      .then(() => {
+        if (activeLoading !== currentLoading) return;
+        activeLoading.taskDone = true;
+        activeLoading.targetProgress = 1;
+        activeLoading.statusText = "TERRENO PRONTO";
+      })
+      .catch((err) => {
+        if (activeLoading !== currentLoading) return;
+        activeLoading.taskDone = true;
+        activeLoading.taskError = err;
+        activeLoading.targetProgress = 1;
+        activeLoading.statusText = "AVISO AO CARREGAR";
+      });
+  }
+
   // Interpola progresso suavemente
-  const speed = activeLoading.taskDone ? 2.5 : 0.8;
+  const speed = activeLoading.taskDone ? 3.2 : 1.1;
   activeLoading.progress += (activeLoading.targetProgress - activeLoading.progress) * Math.min(1, dt * speed);
   if (activeLoading.progress > 0.99) activeLoading.progress = 1;
 
@@ -246,9 +386,9 @@ export function updateLoadingScreen(dt) {
     }
   }
 
-  // Fases de transicao (fade in / out)
+  // Fases de transicao
   if (activeLoading.phase === "fadein") {
-    activeLoading.alpha += dt * 3.5;
+    activeLoading.alpha += dt * 4.5;
     if (activeLoading.alpha >= 1) {
       activeLoading.alpha = 1;
       activeLoading.phase = "active";
@@ -256,22 +396,25 @@ export function updateLoadingScreen(dt) {
   } else if (activeLoading.phase === "active") {
     // Verifica se completou a tarefa pesada, imagem carregada e o tempo minimo de leitura
     if (activeLoading.taskDone && activeLoading.imageLoaded && activeLoading.timer >= activeLoading.minDuration && activeLoading.progress >= 0.98) {
+      activeLoading.progress = 1;
       activeLoading.phase = "ready";
       activeLoading.autoAdvanceTimer = 0;
     }
   } else if (activeLoading.phase === "ready") {
-    // Se o jogador nao tocar, avanca automaticamente apos 2.0s
-    activeLoading.autoAdvanceTimer += dt;
-    if (activeLoading.autoAdvanceTimer >= 2.0) {
-      activeLoading.phase = "fadeout";
+    // Regra 14 (escolha C): aguarda o jogador clicar/tocar ou pressionar Espaco ao chegar em 100%
+    if (activeLoading.autoAdvance) {
+      activeLoading.autoAdvanceTimer += dt;
+      if (activeLoading.autoAdvanceTimer >= 2.0) {
+        invokeFinishOnce();
+        activeLoading.phase = "fadeout";
+      }
     }
   } else if (activeLoading.phase === "fadeout") {
-    activeLoading.alpha -= dt * 3.0;
+    activeLoading.alpha -= dt * 3.5;
     if (activeLoading.alpha <= 0) {
       activeLoading.alpha = 0;
-      const cb = activeLoading.onFinish;
+      invokeFinishOnce();
       activeLoading = null;
-      if (typeof cb === "function") cb();
       return "done";
     }
   }
@@ -286,7 +429,9 @@ export function drawLoadingScreen(ctx, time) {
   if (!activeLoading) return false;
 
   const L = activeLoading;
+  L.framesRendered = (L.framesRendered || 0) + 1;
   const alpha = Math.max(0, Math.min(1, L.alpha));
+  const chrome = 1 / fontScale();
 
   ctx.save();
   ctx.globalAlpha = alpha;
@@ -305,6 +450,10 @@ export function drawLoadingScreen(ctx, time) {
     const dy = (VIEW_H - dh) / 2;
 
     ctx.drawImage(L.image, dx, dy, dw, dh);
+    if (L.info && L.info.tint) {
+      ctx.fillStyle = L.info.tint;
+      ctx.fillRect(0, 0, VIEW_W, VIEW_H);
+    }
   } else {
     // Fallback de degradê atmosférico enquanto a imagem carrega
     const rad = ctx.createRadialGradient(VIEW_W / 2, VIEW_H / 2, 60, VIEW_W / 2, VIEW_H / 2, 520);
@@ -350,12 +499,12 @@ export function drawLoadingScreen(ctx, time) {
 
   // 5. Placa de Bioma Superior (Estilo Dead Cells - Moldura e Tipografia)
   const topY = 44;
-  const degrauText = L.info.degrau || "DEGRAU I";
+  const degrauText = L.degrau || L.info.degrau || "DEGRAU I";
   const titleText = L.title;
   const subText = L.subtitle;
 
   // Moldura sutil de acento
-  const titleW = Math.max(340, textWidth(titleText, { font: "big", scale: 1.4 }) + 50);
+  const titleW = Math.max(340, Math.min(760, textWidth(titleText, { font: "big", scale: 1.4 * chrome }) + 50));
   const badgeX = VIEW_W / 2 - titleW / 2;
 
   // Linhas ornamentais laterais com losango estilo Dead Cells
@@ -381,27 +530,30 @@ export function drawLoadingScreen(ctx, time) {
   }
 
   // Degrau em destaque dourado/ciano
-  drawText(ctx, degrauText, VIEW_W / 2, topY - 14, {
+  drawText(ctx, degrauText, VIEW_W / 2, topY - 18, {
     font: "small",
-    scale: 1.1,
+    scale: 1.05 * chrome,
     color: L.info.secondary,
     align: "center",
+    maxWidth: 720,
   });
 
   // Nome do Bioma imponente
-  drawText(ctx, titleText, VIEW_W / 2, topY + 8, {
+  drawText(ctx, titleText, VIEW_W / 2, topY + 4, {
     font: "big",
-    scale: 1.5,
+    scale: 1.45 * chrome,
     color: "#ffffff",
     align: "center",
+    maxWidth: 760,
   });
 
   // Subtitulo evocativo
-  drawText(ctx, subText, VIEW_W / 2, topY + 44, {
+  drawText(ctx, subText, VIEW_W / 2, topY + 46, {
     font: "small",
-    scale: 1,
+    scale: 0.95 * chrome,
     color: "rgba(220, 215, 240, 0.75)",
     align: "center",
+    maxWidth: 820,
   });
 
   // 6. Painel Inferior de Lore e Dica (Caixa de vidro translúcido com borda mística)
@@ -432,19 +584,21 @@ export function drawLoadingScreen(ctx, time) {
   ctx.fillRect(panelX + panelW - 1, panelY + panelH - cSize, 1, cSize);
 
   // Texto de Lore misterioso (sem aspas proibidas)
-  drawText(ctx, `— ${L.lore}`, VIEW_W / 2, panelY + 12, {
+  drawText(ctx, `— ${L.lore}`, VIEW_W / 2, panelY + 10, {
     font: "small",
-    scale: 1.1,
+    scale: 1.0 * chrome,
     color: "#ffd479",
     align: "center",
+    maxWidth: panelW - 24,
   });
 
   // Dica pratica de jogo
   drawText(ctx, L.tip, VIEW_W / 2, panelY + 34, {
     font: "small",
-    scale: 0.95,
+    scale: 0.9 * chrome,
     color: "rgba(180, 235, 225, 0.9)",
     align: "center",
+    maxWidth: panelW - 24,
   });
 
   // 7. Barra de Carregamento Estilo Dead Cells (Base + brilho + cabeca de luz)
@@ -499,28 +653,57 @@ export function drawLoadingScreen(ctx, time) {
   ctx.fill();
 
   // Mensagem de Status ou Botao de Prosseguir
-  const statusY = barY - 16;
+  const statusY = barY - 18;
   if (L.phase === "ready") {
     const blink = Math.sin(time * 6) > 0;
     const promptColor = blink ? "#ffffff" : "#ffd479";
-    drawText(ctx, "▶ TOQUE OU PRESSIONE ESPAÇO PARA ENTRAR", VIEW_W / 2, statusY, {
+    drawText(ctx, "▶ CLIQUE, TOQUE OU PRESSIONE ESPAÇO PARA CONTINUAR", VIEW_W / 2, statusY, {
       font: "small",
-      scale: 1,
+      scale: 0.92 * chrome,
       color: promptColor,
       align: "center",
+      maxWidth: 680,
     });
   } else {
     const pct = Math.floor(L.progress * 100);
     drawText(ctx, `${L.statusText} (${pct}%)`, VIEW_W / 2, statusY, {
       font: "small",
-      scale: 0.9,
+      scale: 0.85 * chrome,
       color: "rgba(180, 170, 215, 0.85)",
       align: "center",
+      maxWidth: 640,
     });
   }
 
   ctx.restore();
   return true;
+}
+
+/**
+ * Regra 14: indica se a tela de carregamento deve ser exibida no ambiente atual
+ * (ativa em toda sessao real de navegador; pulada apenas nos testes headless do Node
+ * ou no modo ?debug automatizado sem &cutscene/&loading).
+ */
+export function shouldUseLoadingScreen() {
+  const isNodeTest = typeof process !== "undefined" && !!process.versions && !!process.versions.node;
+  if (isNodeTest) return false;
+  if (typeof window !== "undefined" && window.FUMIGA && typeof location !== "undefined") {
+    return location.search.includes("cutscene") || location.search.includes("loading");
+  }
+  return true;
+}
+
+/**
+ * Executa uma transicao de tela/mundo/carga pesada sob a tela de carregamento
+ * quando no jogo real, ou sincrona nos testes automatizados headless/?debug.
+ */
+export function runWithLoadingScreen(opts = {}) {
+  if (!shouldUseLoadingScreen()) {
+    if (typeof opts.task === "function") opts.task(() => {});
+    if (typeof opts.onFinish === "function") opts.onFinish();
+    return false;
+  }
+  return startLoadingScreen(opts);
 }
 
 /**

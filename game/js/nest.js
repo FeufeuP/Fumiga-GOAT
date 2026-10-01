@@ -444,16 +444,22 @@ export function nestDig(id) {
   const run = runRef();
   const def = CHAMBERS[id];
   if (!run || !def) return { ok: false, why: "SEM CAMINHO" };
-  if (nest.dig) return { ok: false, why: "JÁ ESTÃO ESCAVANDO" };
+  const tp = run.testPowers;
+  const infMoney = !!(tp && tp.infMoney);
+  const infAnts = !!(tp && tp.infAnts);
+  if (nest.dig && !infAnts) return { ok: false, why: "JÁ ESTÃO ESCAVANDO" };
   const lvl = run.chambers[id];
   if (lvl >= def.max) return { ok: false, why: "NÍVEL MÁXIMO" };
   const cost = chamberCost(id, lvl);
-  if (run.food < cost.food) return { ok: false, why: "FALTA COMIDA" };
-  if (run.essencePool < cost.ess) return { ok: false, why: "FALTA ESSÊNCIA" };
-  run.food -= cost.food;
-  run.essencePool -= cost.ess;
-  nest.dig = { id, lvl, t: 0, total: 6 + lvl * 3 };
-  SFX.buy();
+  if (!infMoney && run.food < cost.food) return { ok: false, why: "FALTA COMIDA" };
+  if (!infMoney && run.essencePool < cost.ess) return { ok: false, why: "FALTA ESSÊNCIA" };
+  if (!infMoney) {
+    run.food -= cost.food;
+    run.essencePool -= cost.ess;
+  }
+  nest.dig = { id, lvl, t: 0, total: infAnts ? 0.05 : (6 + lvl * 3) };
+  if (infAnts) finishDig();
+  else SFX.buy();
   return { ok: true };
 }
 
@@ -589,7 +595,8 @@ function chamberState(id) {
   const lvl = run && run.chambers ? run.chambers[id] : 0;
   const maxed = lvl >= def.max;
   const cost = maxed ? null : chamberCost(id, lvl);
-  const afford = !maxed && run && run.food >= cost.food && run.essencePool >= cost.ess;
+  const infMoney = !!(run && run.testPowers && run.testPowers.infMoney);
+  const afford = !maxed && run && (infMoney || (run.food >= cost.food && run.essencePool >= cost.ess));
   return { def, lvl, maxed, cost, afford };
 }
 
@@ -980,19 +987,23 @@ function drawNestHud(ctx) {
   ctx.beginPath(); ctx.moveTo(0, barH + 0.5); ctx.lineTo(VIEW_W, barH + 0.5); ctx.stroke();
 
   // linha 1: recursos medidos (os números crescem durante a partida)
+  const infMoney = !!(run && run.testPowers && run.testPowers.infMoney);
+  const infAnts = !!(run && run.testPowers && run.testPowers.infAnts);
+  const foodStr = infMoney ? "∞" : String(run ? run.food : 0);
+  const essStr = infMoney ? "∞" : String(run ? run.essencePool : 0);
   let bx = 16;
   if (IMG.i_food) ctx.drawImage(IMG.i_food, bx, y1 - 2, 18, 18);
-  drawText(ctx, String(run ? run.food : 0), bx + 24, y1, { font: "big", scale: 1, color: "#ffd479", maxWidth: 90 });
-  bx += 24 + Math.max(46, textWidth(String(run ? run.food : 0), { font: "big" })) + 16;
+  drawText(ctx, foodStr, bx + 24, y1, { font: "big", scale: 1, color: "#ffd479", maxWidth: 90 });
+  bx += 24 + Math.max(46, textWidth(foodStr, { font: "big" })) + 16;
   if (IMG.i_essence) ctx.drawImage(IMG.i_essence, bx, y1 - 2, 18, 18);
-  drawText(ctx, String(run ? run.essencePool : 0), bx + 24, y1, { font: "big", scale: 1, color: "#c77dff", maxWidth: 90 });
-  bx += 24 + Math.max(46, textWidth(String(run ? run.essencePool : 0), { font: "big" })) + 16;
+  drawText(ctx, essStr, bx + 24, y1, { font: "big", scale: 1, color: "#c77dff", maxWidth: 90 });
+  bx += 24 + Math.max(46, textWidth(essStr, { font: "big" })) + 16;
   const lvlTxt = "NÍVEL " + (run ? run.level : 0);
   drawText(ctx, lvlTxt, bx, y1, { font: "big", scale: 1, color: "#6db7ff", maxWidth: 150 });
   bx += Math.min(150, textWidth(lvlTxt, { font: "big" })) + 18;
 
   const mapTxt = "MAPA " + ((run ? run.mapIdx : 0) + 1) + "/" + MAPS.length +
-    "   ONDA " + (run ? run.wave : 0) + "   POP " + popUsed() + "/" + popCapTotal();
+    "   ONDA " + (run ? run.wave : 0) + "   POP " + popUsed() + "/" + (infAnts ? "∞" : popCapTotal());
   if (FS > 1) {
     // com FONTE GRANDE o resumo do mapa não cabe na mesma faixa dos números:
     // ele encosta na direita da linha 1 e as duas frases de status descem
@@ -1042,7 +1053,7 @@ function drawNestHud(ctx) {
     const w = 340;
     const lines = wrapText(def.tip + " " + def.per, w - 24, {});
     const step = Math.ceil(16 * FS);
-    const costTxt = st.maxed ? "" : "CUSTO: " + st.cost.food + " COMIDA" + (st.cost.ess ? " + " + st.cost.ess + " ESSÊNCIA" : "");
+    const costTxt = st.maxed ? "" : (infMoney ? "CUSTO: GRÁTIS (MODO TESTE ∞)" : "CUSTO: " + st.cost.food + " COMIDA" + (st.cost.ess ? " + " + st.cost.ess + " ESSÊNCIA" : ""));
     const h = 34 + Math.ceil(20 * FS) + lines.length * step + (costTxt ? Math.ceil(18 * FS) : 0) + 12;
     const r = roomOf(nest.hover);
     let tx = clamp(r.x + r.w / 2 - w / 2, 10, VIEW_W - w - 10);

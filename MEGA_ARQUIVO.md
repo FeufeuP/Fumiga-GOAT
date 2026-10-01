@@ -29,7 +29,7 @@ repetições, datas, branches, checklists e notas históricas foram preservados.
 > Divergências permanecem visíveis, sem apagar conteúdo. O que efetivamente
 > funciona deve ser confirmado por testes e inspeção no preview.
 
-## Atualização — Clareira Orgânica por Bioma, 13 Flores Livres e 14ª Flor Suprema (2026-09-30)
+## Atualização — Clareira Orgânica por Bioma, 13 Flores Livres e 14ª Flor Suprema (2026-10-01)
 
 **Status: código, clareira, maçã reajustada e 7 poderes supremos implementados e verificados (PC e mobile).**
 
@@ -50,6 +50,97 @@ repetições, datas, branches, checklists e notas históricas foram preservados.
      - `v_a11` (*Semente do Formigueiro Eterno*, 1000 ess.): dobra ganho de essência e XP, +35% dano e vida global e +15 vida/s na rainha (prévia selada na Pálida).
    - **6 fases visuais (`supremeFlowerStage` em `game/js/meta.js`):** começa na Fase 0 (`BROTO MORTO` em cinza) no coração da clareira e, ao ser comprada, transiciona por **5 fases revivendo até florescer** (`1/5 Despertar → 2/5 Seiva Viva → 3/5 Cálice Real → 4/5 Abertura Solar → 5/5 Flor Suprema`) com escala maior (`64×64`), aura dourada pulsante e partículas orbitais, suportando folha dedicada `flor_suprema_<mundo>.png` (`1152×192` RGBA, 6 células de `192×192`).
    - **Arte integrada:** `game/assets/ui/flor_suprema_planicie.png` (*Girassol-Real do Amanhecer*), `game/assets/ui/flor_suprema_floresta.png` (*Orquídea-Rainha de Seda e Cristal*) e `game/assets/ui/flor_suprema_pantano.png` (*Lótus Abissal da Bruma* — planta carnívora botânica do Pântano), cada uma com 6 quadros (`0_morto`, `1_despertar`, `2_seiva`, `3_calice`, `4_abertura`, `5_flor`), junto com a folha regular `game/assets/ui/flores_pantano.png` (`768×576` RGBA, 3 espécies × 4 estágios: `lotus`, `carnivora`, `taboa`) e preços de 3 níveis do Pântano (`[40,60,90]`, `[55,85,120]`, `[80,115,160]` e `+40/+80`). Originais normalizados em `#1d1127` em `art-source/flores/` e espelhados em `~/art-source-backup/flores/`.
+
+## Registro — Jogo instalável e baixável: PWA + download offline (2026-10-01, branch arena/01a0f670)
+
+**Status: implementado e verificado.** Pedido do usuário: *“Torne o jogo baixável, tanto no mobile
+quanto no PC, quero que seja possível instalar o Jogo no dispositivo”*.
+
+### Pesquisa de inspiração (Regra 2)
+
+- **PWA como caminho de instalação de web games** — [PWA e instalação para jogos](https://www.webgamedev.com/publishing/pwa):
+  instalar é o recurso mais valioso (ícone + tela cheia), e offline **não** é mais pré-requisito para instalar.
+- **Prompt nativo × iOS** — [iOS Add to Home Screen](https://openpwa.net/reference/installation/ios-add-to-home-screen/)
+  e [limitações do PWA no iOS](https://www.magicbell.com/blog/pwa-ios-limitations-safari-support-complete-guide):
+  Safari **não** tem `beforeinstallprompt`; a instalação é manual (Compartilhar → Adicionar à Tela de
+  Início) e a detecção correta é `(display-mode: standalone)` com `navigator.standalone` de reserva.
+- **Download sob demanda com barra de progresso** — [offline “baixar para jogar”](https://github.com/vy6ycr7tcc-debug/Animation/pull/64)
+  (precache de 320 MB só sob pedido, com progresso e retomada) e [Idle Ascension](https://github.com/brendanlong/idle-ascension/pull/42)
+  (`navigator.storage.persist()` para não perder cache/save, `skipWaiting`/`clientsClaim` para atualizar sem
+  interromper a partida).
+- **Instruções próprias para iOS** e sumiço do aviso em standalone — [Brackenfall](https://github.com/PirateKingInc/test-m5/issues/33).
+- **Nativo (Electron/APK) descartado** — [comparativo](https://abratabia.com/native-wrappers/): 150+ MB de
+  Chromium embutido e build por plataforma, contra a Regra 5 (JS puro, sem build).
+
+### Decisões do usuário (Regra 1 — respostas de 2026-10-01)
+
+| Pergunta | Escolha |
+|---|---|
+| Escopo | **PWA + DOWNLOAD OFFLINE** (instalável + baixar assets com progresso) |
+| Um app ou dois | **Dois apps**: “FUMIGA — Colônia Eterna (PC)” e “… (Mobile)”, com save próprio de cada versão |
+| Onde oferecer | **Fora do jogo**: a instalação/download é da **página do repositório**, não uma mecânica — nenhum botão novo dentro do canvas |
+| Página inicial | **Parar de redirecionar**: a raiz virou central com JOGAR em destaque (detecção de aparelho sugere a versão) |
+| Ícone | Rainha-formiga; após 3 rodadas de IA rejeitadas (dragão), aprovado na 4ª: **formiga em perfil osso-branco sobre halo pálido, moldura hexagonal** (arte da Pálida, Regra 8: inseto, nunca humanoide) |
+
+### Implementado
+
+- **`sw.js` (raiz do repositório).** Escopo de Service Worker = pasta onde ele mora; o **GitHub Pages não
+  permite `Service-Worker-Allowed`**, então a raiz é o único lugar que cobre `/game/` e `/game/mobile/`
+  tanto no Pages (subpasta) quanto no servidor local (raiz). Guarda tudo do próprio site em cache:
+  navegação para pasta normaliza para `…/index.html` (**sem isso o app instalado dava 504 offline**);
+  código é servido do cache e revalidado atrás (stale-while-revalidate); a cada navegação compara a versão
+  de `app/assets.json` e troca o cache sozinho quando o `ASSET_V` sobe (sem exigir editar o `sw.js`);
+  `skipWaiting` + `clients.claim`; mensagens `versao`, `baixar` (com progresso) e `limpar`.
+- **`app/assets.json` — gerado por `tools/make_assets_list.mjs`** (nunca à mão), com três grupos disjuntos
+  e `tamanhos` por arquivo; a prova de cobertura é contra a **árvore real** do repositório:
+  **shell** 52 arquivos / 1,2 MB (HTML, CSS, 34 módulos ES, ícones) · **essencial** 156 / 17,1 MB
+  (sprites, fontes, TÍTULO, telas de carga, maçãs/flores/lore) · **completo** 18 / 36,5 MB (7 santuários +
+  11 camadas da Noite Branca). Pacotes: **ESSENCIAL 18,3 MB (208 arquivos)** e **COMPLETO 54,9 MB (226)**.
+- **Página oficial (`index.html`, raiz)** — JOGAR (com a versão do aparelho detectada) + INSTALAR (prompt
+  nativo no Chromium; passo a passo ilustrado no iOS; nada em standalone) + BAIXAR PARA JOGAR OFFLINE
+  (ESSENCIAL/COMPLETO com barra, status por pacote, espaço usado e LIBERAR ESPAÇO). **Sem redirecionamento.**
+- **Três manifests** (`/manifest.webmanifest`, `game/manifest.webmanifest`, `game/mobile/manifest.webmanifest`)
+  com `start_url` → `app/online.html?v=pc|mobile`, ícones 192/512 + **maskable**, `display: standalone`,
+  `orientation: landscape`; páginas `game/` e `game/mobile/` linkando o manifest da sua versão.
+- **`app/online.html`** (start_url dos três manifests): leva para a versão certa e é a central de download
+  dentro do app instalado; **`app/offline.js`** concentra detecção de ambiente, registro do SW, download
+  com progresso, contagem do que já está no cache (lotes paralelos de 32), persistência de armazenamento e
+  limpeza; **`app/app.css`** na identidade do jogo.
+- **Ícones (`app/icons/`, 6 arquivos, 420 KB)** gerados por `tools/make_pwa_icons.sh` a partir do original
+  aprovado `art-source/pwa/icone_palida.png` (1024×1024, fora do Git — Regra 13) com espelho em
+  `~/art-source-backup/pwa/`. Inclui `apple-touch-icon-180` e favicons.
+- **Peso do repositório**: 3 artefatos brutos saíram de `game/assets/` para `art-source/` (Regra 13):
+  `loading_planicie_raw.png` (byte-idêntico ao otimizado), `loading_floresta_raw.png` e
+  `parallax/menu/_raw_main.png` (órfãos, sem referência no código). `game/` foi de 67 MB para **56 MB**.
+- **Testes**: `game/test/pwa.mjs` entrou na bateria (`npm test` → **26 testes**) — cobrança de lista em dia,
+  cobertura sem órfão, manifests (campos, ícones existentes e no tamanho declarado lido do IHDR),
+  sanidade do `sw.js`, todos os links locais dos 4 HTMLs e os exports de `offline.js`;
+  `npm run inspect:pwa` (`game/test/pwa-browser.mjs`) prova no navegador: instalabilidade via CDP,
+  download real, cache no Cache Storage e **jogo bootando com a rede desligada**.
+
+### Verificação
+
+| Comando | Resultado |
+|---|---|
+| `npm test` | **26/26 verdes** (53,6 s) — inclui o `pwa` novo |
+| `npm run inspect` | **verde** — 106,8 s: PC + mobile, 9 telas, 6 mapas, sem erro de JS/404/glifo |
+| `npm run inspect:pwa` | **verde** — instalabilidade sem erros em `/` e `/game/mobile/`; 208 arquivos baixados; status “baixado ✓ (18 MB)”; **jogo bootou offline** e a página do app roteou para a versão mobile |
+| `npm run inspect:tree` | **verde** — 548 detalhes + arte, gestos, compras e Renascimento no navegador |
+
+### Limitações e próximos passos
+
+- **iOS não tem convite de instalação** (limite da Apple): a página ensina o caminho do Safari. Também não
+  há `beforeinstallprompt` em Firefox desktop/Safari desktop — nesses casos a página explica o menu do navegador.
+- O pacote **COMPLETO** leva os santuários e a Noite Branca tal como estão (sem otimizar): são 36,5 MB, os
+  mesmos arquivos que o jogo já baixava sob demanda. Reproduzir as telas de carga no tamanho nativo
+  (como feito com `loading_planicie`) e recomprimir os santuários é o próximo corte grande de peso.
+- `npm run inspect:pwa` **ainda não roda no CI** (o agente não tem a permissão `workflows` para editar
+  `.github/workflows/`). Para ligar, o dono do repositório acrescenta um passo ao job `navegador`:
+  `- run: node game/test/pwa-browser.mjs`.
+- O Service Worker só existe em HTTPS/localhost (exigência do navegador): em servidor local use
+  `npm run serve`; um `python3 -m http.server` em `127.0.0.1` também vale, mas em `file://` não há SW.
+- Pendências do relatório anterior que continuam de pé (não fazem parte deste pedido): flores/3 estágios só
+  na Planície, níveis 2–3 sem poder próprio e `KeyB`/`KeyG` lidos depois dos `return` de draft/transição/pausa.
 
 ## Correção — CI vermelha: a tela de carregamento engolia o input do teste do HUD (2026-09-30)
 
@@ -1712,6 +1803,19 @@ Ao final de cada tarefa, apresentar um **checklist de conferência** com este fo
   original, qualquer ajuste posterior exigiria refazer a arte do zero (como ocorreu com os
   originais do Santuário da Planície).
 
+## Regra 14 — Tela de Carregamento em mudanças de telas, mundos e cargas pesadas ⏳
+
+> **Sempre que houver mudança de telas, mundos ou quando qualquer coisa pesada/demorada para carregar na hora aparecer no jogo, a tela de carregamento deve acontecer para que o jogo carregue tudo sem que o jogador veja.**
+
+- **Escopo obrigatório (`mundos_telas_pesadas`):**
+  1. **Mudança de mundos e biomas**: início/reinício de expedição (`newRun`), avanço entre mapas (`advanceMap` / transição de fim de mapa) e trocas de mapa no Modo Teste (`PRÓXIMO MAPA`, `M1..M6` e tecla `N`).
+  2. **Interior e superfície da colônia**: entrar (`openNest`) e sair (`closeNest`) do Formigueiro (`B` / botão `FORMIGUEIRO`).
+  3. **Telas pesadas e santuários**: entrada e saída da Árvore da Evolução (`TREE`, pré-assando `treeArtCanvas`), abertura dos Santuários dos Frutos (`openFruit`, baixando `loadSantuario` de ~5,1 MB e pré-assando a restauração de cor), Profecias (`PROPHECY`), Memórias (`MEMORY`) e replays de cutscenes em camadas.
+  4. **Aparições pesadas em jogo**: chegada da Onda do Chefão (pré-carregando e compondo o boss fora de vista antes do combate).
+- **Submenus leves** (`OPTIONS` e `HELP`) permanecem com transição rápida para não interromper ajustes simples de volume/acessibilidade.
+- **Execução invisível ao jogador**: a tela de carregamento (`loading_screen.js` / `runWithLoadingScreen`) cobre 100% do canvas (`alpha = 1`) **antes** de executar a tarefa pesada (no frame seguinte ao da cortina fechar), impedindo qualquer engasgo visual, pop-in de sprite ou tela incompleta.
+- **Confirmação manual ao concluir (`sempre_confirmar`)**: ao atingir 100% (`ready`), a tela de carregamento aguarda o clique/toque ou `ESPAÇO`/`ENTER` do jogador com aviso piscante (`CLIQUE, TOQUE OU PRESSIONE ESPAÇO PARA CONTINUAR`), permitindo ler a dica/lore do bioma sem pressa.
+
 ---
 
 ## 🔄 Resumo do fluxo obrigatório a cada pedido
@@ -1719,7 +1823,7 @@ Ao final de cada tarefa, apresentar um **checklist de conferência** com este fo
 ```text
 1. PESQUISAR  → inspirações em jogos indies na Web (Regra 2)
 2. PERGUNTAR  → opções de implementação (Regra 1)
-3. IMPLEMENTAR → seguindo as escolhas do usuário e a otimização (Regra 5)
+3. IMPLEMENTAR → seguindo as escolhas do usuário, otimização (Regra 5) e tela de carregamento em cargas pesadas (Regra 14)
 4. ARTE       → imagens em alta resolução, pixel art harmônico (Regra 6) + Regra 8 não-humanóide
 5. MOSTRAR    → exibir toda arte gerada para aprovação visual (Regra 10)
 6. ADAPTAR    → mobile: todo input novo vira gesto/botão de toque (Regra 9)
@@ -3375,7 +3479,7 @@ parte dos blocos originais.
 
 | Arquivo original | Bytes preservados | SHA-256 |
 |---|---:|---|
-| `REGRAS_DE_TRABALHO.md` | 14687 | `3ac6e7446c74fbaf226af91d12c17e95325f69f14283f32d484fa1a613d687db` |
+| `REGRAS_DE_TRABALHO.md` | 16637 | `d6da0d428d9c73e359fc7c461f846ac4ca36daaa52a09872cc8ce18fe2eaeb91` |
 | `LORE.md` | 15056 | `42075fe4334601f1a74834388c0155342b2a8a6c21e51afa6020e34a5260f493` |
 | `DOCUMENTO_MEGA_ATUALIZACAO_LORE_TOTAL.md` | 30473 | `c642dd06d14e527bba6566458afa5293f697b0a3b981ef6301f6fafdfb9e856e` |
 | `DOCUMENTO_DECISOES_MEGA_ATUALIZACAO.md` | 8179 | `2b05240cd9fef9fb33d8a08768164f60202437c886c1c5b83f250ee9cbb58637` |
@@ -3496,5 +3600,39 @@ Pedido: Criação da tela de carregamento temática estilo Dead Cells para o Mun
 - Validação (Regras 3, 4, 9):
   - 25 de 25 testes headless aprovados no `npm test`.
   - Inspeção visual Playwright em PC (1280×720) e Mobile (844×390): 60 FPS, sem erros no console, sem requisições 404, layout de texto impecável.
+
+## Registro — Exclusão dos Modos Secundários e Criação do Modo Teste (2026-09-30)
+
+Pedido: Excluir os modos extras de jogo e manter apenas a Campanha Principal (Modo História) e um novo Modo Teste com poderes de Dinheiro Infinito (`∞`), Formigas Infinitas (`∞`), Ondas Infinitas (`∞`) e botão novo para passar/escolher mapa a qualquer momento.
+Decisões confirmadas com o usuário (`ask_user`):
+1. Poderes ativos por padrão ao iniciar o Modo Teste, com botões no HUD para ligar/desligar cada um (`DINHEIRO ∞`, `FORMIGAS ∞`, `ONDAS ∞`).
+2. Botão novo `PRÓXIMO MAPA ▶` (e atalho `N` no PC) + grade `M1..M6` para saltar diretamente para qualquer um dos 6 biomas a qualquer momento.
+3. Formigas compradas no Modo Teste (com `FORMIGAS ∞` ativo) nascem instantaneamente ao redor do formigueiro, sem limite de população e sem limite de 1 Dinoponera por expedição; escavação de câmaras no ninho também gratuita e instantânea.
+4. Por ora o Modo Teste concede Essência, Frutos e progresso normalmente, ficando registrado que **no futuro o Modo Teste não existirá no lançamento final** — ele serve exclusivamente como ferramenta auxiliar durante o desenvolvimento do jogo.
+
+- Alterações implementadas:
+  - `game/js/game.js` e `game/js/render.js`: `GAME_MODES` reduzido aos 2 modos (`campanha` e `teste`), com cards largos centralizados (360×340 px); painel lateral de controle do Modo Teste abaixo do minimapa (`x: 784..950, y: 156..322`) contendo `PRÓXIMO MAPA ▶`, seletor `M1..M6` e interruptores `DINHEIRO ∞`, `FORMIGAS ∞` e `ONDAS ∞`; avanço/salto de mapa imediato via `advanceMap(targetIdx)`.
+  - `game/js/units.js`: suporte a `run.testPowers.infMoney` (custo zero) e `run.testPowers.infAnts` (sem teto populacional, múltiplas Dinoponeras e nascimento instantâneo sem fila de ovo).
+  - `game/js/nest.js`: câmaras gratuitas e escavação instantânea quando os poderes do Modo Teste estão ativos; exibição de `∞` no topo e nos tooltips.
+  - `game/js/state.js` e `game/js/debug.js`: suporte ao modo `teste` nas recompensas e nos parâmetros de debug.
+  - `game/test/endless.mjs`, `game/test/layout.mjs` e `game/test/layout-browser.mjs`: cobertura automatizada dos 2 modos, dos poderes `∞`, do nascimento instantâneo de múltiplas Dinoponeras, do botão `PRÓXIMO MAPA` / seletor `M1..M6` e da auditoria de layout PC/Mobile (normal e fonte grande).
+
+## Registro — Botão Pular Onda no Modo Teste e Regra 14 da Tela de Carregamento (2026-09-30)
+
+Pedido: Adicionar um botão no Modo Teste para pular a onda de inimigos e registrar/implementar a nova regra da Tela de Carregamento: sempre que houver mudança de telas, mundos ou quando qualquer coisa pesada/demorada para carregar na hora aparecer no jogo, a tela de carregamento deve acontecer para que o jogo carregue tudo sem que o jogador veja.
+Decisões confirmadas com o usuário (`ask_user`):
+1. **Botão `PULAR ONDA` (`vencer_e_avancar`)**: funciona tanto na calmaria quanto no meio da onda; elimina imediatamente todos os inimigos restantes da onda atual, concede as recompensas normais da onda (comida, essência, XP da Rainha e draft de mutação se aplicável) e já inicia a próxima onda (ou o Chefão se for a onda 5/5). Atalho `K` no PC e botão `PULAR ONDA ▶` no painel do Modo Teste (PC e mobile).
+2. **Escopo da Tela de Carregamento (`mundos_telas_pesadas`)**: Tela de Carregamento completa estilo Dead Cells em todas as mudanças de mundo/bioma (iniciar/reiniciar expedição, avançar mapa, `PRÓXIMO MAPA` e `M1..M6` no Modo Teste), entrada e saída do Formigueiro (`openNest`/`closeNest`), Árvore da Evolução (`openTreeScreen`/`backFromTree` pré-assando `treeArtCanvas`), abertura dos Santuários dos Frutos (`openFruit` baixando `loadSantuario` de ~5,1 MB e pré-assando a restauração de cor), Profecias (`PROPHECY`), Memórias (`MEMORY`), Cutscenes e chegada do Chefão (`startWave` na onda de boss), mantendo transições rápidas apenas nos submenus leves (`OPTIONS`/`HELP`).
+3. **Confirmação manual na Tela de Carregamento (`sempre_confirmar`)**: ao atingir 100% (`ready`), a tela de carregamento aguarda o clique/toque ou `ESPAÇO`/`ENTER` do jogador com aviso piscante (`CLIQUE, TOQUE OU PRESSIONE ESPAÇO PARA CONTINUAR`).
+
+- Alterações implementadas:
+  - `REGRAS_DE_TRABALHO.md` e `MEGA_ARQUIVO.md`: adicionada a **Regra 14 — Tela de Carregamento em mudanças de telas, mundos e cargas pesadas ⏳**, com sincronização integral de bytes e SHA-256.
+  - `game/js/loading_screen.js`: cobertura imediata 100% opaca (`alpha = 1`) no primeiro frame; execução diferida da tarefa pesada (`taskDeferred`) somente após a cortina estar desenhada na tela; lore, citações, dicas, paleta e tint para todos os 6 biomas + `palida`; confirmação manual (`ready` -> clique/toque/Espaço/Enter); helpers `isLoadingReady`, `isLoadingFadingOut`, `shouldUseLoadingScreen` e `runWithLoadingScreen`; escala de texto blindada contra `FONTE GRANDE` (`1 / fontScale()`).
+  - `game/js/waves.js`: nova função `skipWave()` e carregamento fora de vista na onda do Chefão (`startWave` com `runWithLoadingScreen`).
+  - `game/js/game.js` e `game/js/meta.js`: botão `PULAR ONDA (K)` / `PULAR ONDA ▶` (`id: "testSkipWave"`) no painel do Modo Teste + tecla `K`; integração de `runWithLoadingScreen` em `startRunWithLoading`, `triggerMapChange`, `openNest`, `closeNest`, `openTreeScreen`, `backFromTree`, `openProphecies`, `backFromProphecies`, `openMemories`, `backFromMemories`, replay de `MEMORY` e `openFruit`.
+  - `game/mobile/touch.js`: ocultação automática de `#touch-hud` enquanto `isLoadingActive()` estiver ativa.
+  - `game/test/endless.mjs` e `game/test/lorehud-browser.mjs`: testes automatizados do botão `PULAR ONDA` e da confirmação manual da tela de carregamento.
+
+
 
 

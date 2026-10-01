@@ -14,6 +14,7 @@ import {
 } from "./tree_layout.js";
 import { treeArtCanvas, treeGrowth } from "./tree_art.js";
 import { createColorRestorer } from "./color_restore.js";
+import { shouldUseLoadingScreen, runWithLoadingScreen } from "./loading_screen.js";
 
 export const TREE_VIEW = { x: 184, y: 100, w: 764, h: 386 };
 const DETAIL = { x: 608, y: 100, w: 340, h: 386 };
@@ -409,14 +410,36 @@ const restoreSanctuary = createColorRestorer();
 const restoreApple = createColorRestorer();
 function ensureSantuario(fruit) {
   const map = fruitAssetName(fruit), previous = SANTUARIO_IMAGES.get(map);
-  if (previous && !previous.failed) return;
+  if (previous && !previous.failed) return Promise.resolve(previous.image);
   const state = { image: null, failed: false };
   SANTUARIO_IMAGES.set(map, state);
-  loadSantuario(map).then(img => { state.image = img; }).catch(() => { state.failed = true; });
+  return loadSantuario(map).then(img => { state.image = img; return img; }).catch(() => { state.failed = true; return null; });
 }
 function openFruit(fruit) {
-  activeFruit = fruit; selectedNode = null; drag = clickTarget = null;
-  ensureSantuario(fruit);
+  if (!shouldUseLoadingScreen()) {
+    activeFruit = fruit; selectedNode = null; drag = clickTarget = null;
+    ensureSantuario(fruit);
+    return;
+  }
+  const map = fruitAssetName(fruit);
+  mouse.justDown = false;
+  runWithLoadingScreen({
+    biome: map,
+    degrau: "SANTUÁRIO ANCESTRAL",
+    title: "SANTUÁRIO • " + fruit.name,
+    subtitle: "CARREGANDO JARDIM E MEMÓRIA DE " + (fruit.bossName || "GUARDIÃO"),
+    minDuration: 1.2,
+    task: async (onProgress) => {
+      onProgress(0.35, "ABRINDO SANTUÁRIO...");
+      activeFruit = fruit; selectedNode = null; drag = clickTarget = null;
+      const img = await ensureSantuario(fruit);
+      if (img) {
+        onProgress(0.8, "RESTAURANDO CORES DO JARDIM...");
+        try { restoreSanctuary(img, fruitGardenGrowth(fruit).saturation); } catch (e) { /* ok */ }
+      }
+      onProgress(1.0, "SANTUÁRIO PRONTO");
+    },
+  });
 }
 function visibleFruitNodes() { return [...activeFruit.newNodes, ...activeFruit.legacyNodes]; }
 function flowerPosition(n) {

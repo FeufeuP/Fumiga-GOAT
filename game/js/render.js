@@ -1639,10 +1639,10 @@ export function drawModeSelect(ctx, time) {
 }
 
 export function drawModeCards(ctx, modes, hoverIdx, time, scrollOffset = 0) {
-  const cardW = 210, cardH = 340, gap = 18;
+  const cardW = modes.length <= 2 ? 360 : 210, cardH = 340, gap = modes.length <= 2 ? 40 : 18;
   const totalW = modes.length * cardW + (modes.length - 1) * gap;
-  // FASE 6 FINAL: scroll visual offset para mobile swipe - cards deslizam horizontalmente
-  const scrollVisual = scrollOffset * (cardW + gap);
+  // Com 2 modos, ambos os cards cabem na tela inteira (x: 100..460 e 500..860)
+  const scrollVisual = modes.length > 2 ? scrollOffset * (cardW + gap) : 0;
   const startX = VIEW_W/2 - totalW/2 - scrollVisual;
   const y = 116;
 

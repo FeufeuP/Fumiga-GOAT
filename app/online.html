@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>FUMIGA — Colônia Eterna</title>
+<meta name="description" content="Aplicativo do FUMIGA: jogar online ou baixar o jogo para rodar sem internet.">
+<meta name="theme-color" content="#1d1127">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="FUMIGA">
+<!-- Página inicial do app INSTALADO (start_url dos três manifests). Também serve
+     de central de download para quem chega por link direto. -->
+<link rel="manifest" href="../manifest.webmanifest">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon-180.png">
+<link rel="icon" type="image/png" sizes="32x32" href="icons/favicon-32.png">
+<link rel="stylesheet" href="app.css">
+</head>
+<body>
+<main>
+  <header class="topo">
+    <h1>FUMIGA</h1>
+    <p class="sub">Colônia Eterna — o app</p>
+    <span class="selo" id="selo">verificando o que já está baixado…</span>
+  </header>
+
+  <section class="cartao">
+    <h2>JOGAR <span class="tag" id="tagVersao"></span></h2>
+    <p id="textoJogar">Abrindo…</p>
+    <div class="linha">
+      <a class="botao grande" id="btnJogar" href="../game/">▶ JOGAR</a>
+    </div>
+    <div class="linha">
+      <a class="botao secundario" id="btnTrocar" href="#">trocar de versão (PC ↔ mobile)</a>
+      <a class="botao secundario" href="../">página do repositório (instalar em outro aparelho)</a>
+    </div>
+  </section>
+
+  <section class="cartao" id="cartaoOffline">
+    <h2>JOGAR SEM INTERNET <span class="tag">BAIXADO NO APARELHO</span></h2>
+    <p id="textoOffline">
+      Baixe o jogo uma vez e ele abre <b>sem internet</b>, direto do ícone. Se você ainda não baixou,
+      o jogo roda igual — só precisa de conexão.
+    </p>
+    <div class="linha">
+      <button class="botao" id="btnEssencial">⬇ ESSENCIAL <span class="tam" id="tamEssencial"></span></button>
+      <button class="botao ambar" id="btnCompleto">⬇ COMPLETO <span class="tam" id="tamCompleto"></span></button>
+      <button class="botao secundario" id="btnLimpar" hidden>LIBERAR ESPAÇO</button>
+    </div>
+    <div class="progresso" id="progresso" role="status" aria-live="polite">
+      <div class="barra"><i id="barra"></i></div>
+      <div class="texto"><span id="progEsq">preparando…</span><span id="progDir"></span></div>
+    </div>
+    <p class="estado" id="estadoEssencial"><span class="bolinha"></span><span>ESSENCIAL: verificando…</span></p>
+    <p class="estado" id="estadoCompleto"><span class="bolinha"></span><span>COMPLETO: verificando…</span></p>
+    <p class="fino" id="usoEspaco"></p>
+  </section>
+</main>
+
+<footer class="rodape">
+  Personagens 100% não-humanoides 🐜 · <a href="../LORE.md">lore</a> ·
+  <a href="../game/README.md">como jogar</a>
+</footer>
+
+<script type="module">
+// Página inicial do app instalado: leva para a versão certa (PC ou mobile, pelo
+// ?v= do manifest / pela detecção do aparelho) e oferece o download offline.
+import {
+  carregarLista, tamanhoDoPacote, progressoPacote, baixarPacote, limparCache,
+  registrarSW, aguardarControlador, pedirPersistencia, usarArmazenamento,
+  modoStandalone, ehToque, formatarMB, suportaCache,
+} from "./offline.js";
+
+const $ = (id) => document.getElementById(id);
+const BASE = "../";                                  // app/ está um nível abaixo da raiz
+
+// 1) para onde vai o botão JOGAR: ?v=pc / ?v=mobile vence; senão, o aparelho manda
+const param = new URLSearchParams(location.search).get("v");
+const alvoVersao = param === "pc" ? "pc" : param === "mobile" ? "mobile" : (ehToque() ? "mobile" : "pc");
+const pagina = alvoVersao === "mobile" ? "../game/mobile/" : "../game/";
+$("btnJogar").href = pagina;
+$("btnJogar").textContent = alvoVersao === "mobile" ? "▶ JOGAR (MOBILE)" : "▶ JOGAR (PC)";
+$("tagVersao").textContent = alvoVersao === "mobile" ? "VERSÃO MOBILE" : "VERSÃO PC";
+$("btnTrocar").textContent = "trocar para a versão " + (alvoVersao === "mobile" ? "PC" : "mobile");
+$("btnTrocar").href = alvoVersao === "mobile" ? "?v=pc" : "?v=mobile";
+$("btnTrocar").addEventListener("click", () => { /* navegação por ?v=, sem reload extra */ });
+
+const PROG = { essencial: null, completo: null };
+let lista = null;
+let baixando = false;
+const estados = {
+  essencial: { el: $("estadoEssencial"), nome: "ESSENCIAL" },
+  completo: { el: $("estadoCompleto"), nome: "COMPLETO" },
+};
+
+function pintarEstado(alvo, st) {
+  const { el, nome } = estados[alvo];
+  el.className = st.completo ? "estado ok" : st.feitos > 0 ? "estado espera" : "estado";
+  el.lastElementChild.textContent = st.completo
+    ? nome + ": baixado ✓ (" + formatarMB(st.bytesTotal) + ") — abre sem internet"
+    : st.feitos > 0
+      ? nome + ": " + st.feitos + "/" + st.total + " arquivos (" + Math.round(100 * st.feitos / st.total) + "%)"
+      : nome + ": não baixado (" + formatarMB(st.bytesTotal) + ")";
+}
+
+async function atualizarStatus() {
+  if (!lista) return;
+  for (const alvo of ["essencial", "completo"]) {
+    PROG[alvo] = await progressoPacote({ base: BASE, lista, alvo });
+    pintarEstado(alvo, PROG[alvo]);
+  }
+  const completo = PROG.completo.completo;
+  $("btnEssencial").disabled = completo || PROG.essencial.completo;
+  $("btnCompleto").disabled = completo;
+  $("btnLimpar").hidden = !(PROG.essencial.feitos > 0);
+  const uso = await usarArmazenamento();
+  $("usoEspaco").textContent = uso
+    ? "Espaço usado por este app: " + formatarMB(uso.uso) + " de " + formatarMB(uso.cota) + " disponíveis."
+    : "";
+
+  const pronto = completo || PROG.essencial.completo;
+  $("selo").textContent = (modoStandalone() ? "app instalado · " : "") + (pronto ? "pronto para jogar offline" : "online");
+  $("textoJogar").textContent = pronto
+    ? "Está tudo no aparelho: o jogo abre mesmo sem internet."
+    : "Dá para jogar agora com internet — e baixar abaixo para jogar sem ela.";
+  $("textoOffline").innerHTML = pronto
+    ? "O jogo já está guardado neste aparelho. Nada mais a fazer."
+    : $("textoOffline").innerHTML;
+}
+
+function pintarProgresso({ feitos, falhas, total }) {
+  const pct = total ? Math.min(100, Math.round(100 * feitos / total)) : 0;
+  $("barra").style.width = pct + "%";
+  $("progEsq").textContent = "baixando… " + pct + "%";
+  $("progDir").textContent = feitos + "/" + total + (falhas ? " · " + falhas + " falha(s), tentando de novo" : "");
+}
+
+async function baixar(alvo) {
+  if (baixando || !lista) return;
+  baixando = true;
+  $("btnEssencial").disabled = $("btnCompleto").disabled = true;
+  $("progresso").classList.add("ativo");
+  pintarProgresso({ feitos: 0, falhas: 0, total: tamanhoDoPacote(lista, alvo).arquivos });
+  try {
+    await pedirPersistencia();
+    await registrarSW(BASE);
+    await aguardarControlador(3000);
+    const r = await baixarPacote({ base: BASE, lista, alvo, aoProgresso: pintarProgresso });
+    pintarProgresso({ feitos: r.feitos, falhas: r.falhas, total: r.total });
+    $("progEsq").textContent = r.falhas
+      ? "terminou com " + r.falhas + " arquivo(s) faltando — toque de novo para completar"
+      : "pronto! " + r.feitos + " arquivos guardados no aparelho";
+    $("progDir").textContent = "";
+  } catch (e) {
+    $("progEsq").textContent = "não deu para baixar: " + (e && e.message ? e.message : e);
+    $("progDir").textContent = "";
+  } finally {
+    baixando = false;
+    await atualizarStatus();
+  }
+}
+
+$("btnEssencial").addEventListener("click", () => baixar("essencial"));
+$("btnCompleto").addEventListener("click", () => baixar("completo"));
+$("btnLimpar").addEventListener("click", async () => {
+  await limparCache(lista);
+  $("progresso").classList.remove("ativo");
+  await atualizarStatus();
+});
+
+(async function inicio() {
+  if (suportaCache()) {
+    try {
+      lista = await carregarLista(BASE);
+      const ess = tamanhoDoPacote(lista, "essencial");
+      $("tamEssencial").textContent = "· " + formatarMB(ess.bytes);
+      $("tamCompleto").textContent = "· " + formatarMB(tamanhoDoPacote(lista, "completo").bytes);
+      await atualizarStatus();
+    } catch (e) {
+      $("cartaoOffline").hidden = true;
+    }
+  } else {
+    $("cartaoOffline").hidden = true;
+  }
+  await registrarSW(BASE);
+  await aguardarControlador(3000);
+  await atualizarStatus();
+})();
+</script>
+</body>
+</html>

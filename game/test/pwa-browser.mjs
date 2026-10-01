@@ -1,0 +1,192 @@
+// INSPEÇÃO DO APP INSTALÁVEL NO NAVEGADOR — a Regra 4 aplicada ao download.
+// Uso: node game/test/pwa-browser.mjs          (= npm run inspect:pwa)
+//      BASE_URL=http://host:porta  ·  PWA_SHOTS=/pasta  (capturas fora do Git)
+//
+// O que ele faz de verdade, num Chromium:
+//   1. abre a página oficial (raiz) e confere que ela diz os tamanhos certos;
+//   2. clica em BAIXAR ESSENCIAL, acompanha a barra até 100% e confere no
+//      Cache Storage que os arquivos chegaram;
+//   3. DESLIGA A REDE e recarrega: a página tem que abrir mesmo assim;
+//   4. com a rede desligada, entra em /game/ e espera o jogo BOOTAR (G.screen
+//      diferente de BOOT, sem 404 e sem erro de JS) — é o teste que prova que
+//      "baixado" é "jogável sem internet", não só "arquivos no cache";
+//   5. abre a página do app (?v=mobile) offline e confere o botão JOGAR.
+import fs from "node:fs";
+import { startServer } from "./lib/server.mjs";
+import { launchBrowser, watchPage } from "./lib/browser.mjs";
+
+const OUT = process.env.PWA_SHOTS || "/tmp/fumiga-pwa";
+fs.mkdirSync(OUT, { recursive: true });
+
+const server = process.env.BASE_URL ? null : await startServer();
+const BASE = (process.env.BASE_URL || server.url).replace(/\/$/, "");
+const browser = await launchBrowser();
+const problemas = [];
+const passos = [];
+const t0 = Date.now();
+
+const ctx = await browser.newContext({ viewport: { width: 420, height: 900 }, isMobile: true, hasTouch: true });
+const page = await ctx.newPage();
+watchPage(page, problemas);
+
+const dizer = (msg) => { passos.push(msg); console.log("  " + msg); };
+
+// ---------------------------------------------------------------- 1) página --
+await page.goto(BASE + "/", { waitUntil: "load" });
+await page.waitForFunction(() => {
+  const t = document.getElementById("tamEssencial");
+  const e = document.getElementById("estadoEssencial");
+  return t && t.textContent.includes("MB") && e && !e.textContent.includes("verificando");
+}, null, { timeout: 30000 });
+const tamanhos = await page.evaluate(() => ({
+  essencial: document.getElementById("tamEssencial").textContent,
+  completo: document.getElementById("tamCompleto").textContent,
+  jogar: document.getElementById("btnJogar").getAttribute("href"),
+  estadoEssencial: document.getElementById("estadoEssencial").textContent,
+}));
+dizer("página oficial: essencial" + tamanhos.essencial.replace("·", "") + " · completo" + tamanhos.completo.replace("·", ""));
+dizer("estado inicial: " + tamanhos.estadoEssencial.trim());
+if (!/^\d+,\d+ MB · \d+ arquivos$/.test(tamanhos.essencial.replace("· ", "·").replace(" · ", " · ").trim())) {
+  // formato tolerante: o essencial precisa ao menos citar MB e a contagem
+  if (!/MB/.test(tamanhos.essencial) || !/arquivos/.test(tamanhos.essencial)) problemas.push("tamanho do pacote essencial não foi preenchido");
+}
+if (!/game\/mobile\/$/.test(tamanhos.jogar)) problemas.push("JOGAR deveria apontar para a versão mobile num aparelho de toque (foi " + tamanhos.jogar + ")");
+
+// o manifest da raiz responde e é válido?
+const manifest = await page.evaluate(async () => {
+  const href = document.querySelector('link[rel="manifest"]').href;
+  const r = await fetch(href);
+  const j = await r.json();
+  return { status: r.status, nome: j.name, inicio: j.start_url, icones: j.icons.length };
+});
+if (manifest.status !== 200 || !manifest.nome || manifest.icones < 3) problemas.push("manifest da raiz inválido: " + JSON.stringify(manifest));
+dizer("manifest: " + manifest.nome + " (start_url " + manifest.inicio + ", " + manifest.icones + " ícones)");
+
+// INSTALABILIDADE: é o próprio Chromium quem responde se o convite nativo
+// ("Instalar FUMIGA") aparece — lista vazia = nenhum erro de instalabilidade.
+// É a prova objetiva de que o jogo é instalável, não só que tem um manifest.
+const instalabilidade = async (alvo) => {
+  const c = await ctx.newPage();
+  const cdp = await ctx.newCDPSession(c);
+  await c.goto(BASE + alvo, { waitUntil: "load" });
+  await c.waitForTimeout(2000);                 // o Chrome avalia depois do load
+  const r = await cdp.send("Page.getInstallabilityErrors");
+  const m = await cdp.send("Page.getAppManifest");
+  await c.close();
+  return { erros: (r.installabilityErrors || []).map((e) => e.errorId + (e.errorArguments ? " " + JSON.stringify(e.errorArguments) : "")), manifest: m.errors || [] };
+};
+for (const alvo of ["/", "/game/mobile/"]) {
+  const t = await instalabilidade(alvo);
+  dizer("instalabilidade " + alvo + ": " + (t.erros.length ? t.erros.join(", ") : "sem erros (o navegador oferece INSTALAR)"));
+  if (t.erros.length) problemas.push("o navegador recusaria instalar em " + alvo + ": " + JSON.stringify(t.erros));
+}
+
+// Service Worker instalou e assumiu?
+const sw = await page.evaluate(async () => {
+  if (!("serviceWorker" in navigator)) return { suporta: false };
+  const reg = await navigator.serviceWorker.ready;
+  return { suporta: true, ativo: !!reg.active, controla: !!navigator.serviceWorker.controller };
+});
+if (!sw.suporta || !sw.ativo) problemas.push("Service Worker não ficou ativo: " + JSON.stringify(sw));
+dizer("service worker: ativo=" + sw.ativo + " controlando=" + sw.controla);
+
+// -------------------------------------------------------------- 2) download --
+const versao = await page.evaluate(async () => (await (await fetch("app/assets.json", { cache: "no-store" })).json()).version);
+
+await page.click("#btnEssencial");
+await page.waitForFunction(() => {
+  const t = document.getElementById("progEsq");
+  return t && (t.textContent.includes("pronto!") || t.textContent.includes("faltando") || t.textContent.includes("não deu"));
+}, null, { timeout: 180000 });
+await page.waitForFunction(() => {
+  const e = document.getElementById("estadoEssencial");
+  return e && e.textContent.includes("baixado ✓");
+}, null, { timeout: 120000 }).catch(() => {});
+const depois = await page.evaluate(() => ({
+  progresso: document.getElementById("progEsq").textContent,
+  essencial: document.getElementById("estadoEssencial").textContent,
+  completo: document.getElementById("estadoCompleto").textContent,
+}));
+dizer("download: " + depois.progresso.trim());
+dizer("estado: " + depois.essencial.trim());
+if (depois.progresso.includes("não deu") || depois.progresso.includes("faltando")) problemas.push("download do pacote essencial falhou: " + depois.progresso);
+if (!depois.essencial.includes("baixado ✓")) problemas.push("status do essencial não ficou completo: " + depois.essencial);
+if (!depois.completo.includes("arquivos") && !depois.completo.includes("baixado")) problemas.push("status do pacote completo não indicou parcial: " + depois.completo);
+await page.screenshot({ path: OUT + "/1-baixado.png", fullPage: true });
+
+const cache = await page.evaluate(async (v) => {
+  const nome = "fumiga-" + v;
+  const nomes = await caches.keys();
+  if (!nomes.includes(nome)) return { existe: false, nomes };
+  const c = await caches.open(nome);
+  const chaves = await c.keys();
+  return { existe: true, quantos: chaves.length, amostra: chaves.slice(0, 3).map((r) => r.url) };
+}, versao);
+if (!cache.existe) problemas.push("cache fumiga-" + versao + " não existe (achei: " + JSON.stringify(cache.nomes) + ")");
+dizer("cache " + "fumiga-" + versao + ": " + (cache.quantos || 0) + " arquivos guardados");
+
+// ------------------------------------------------------- 3) offline: página --
+await ctx.setOffline(true);
+await page.reload({ waitUntil: "load" });
+await page.waitForFunction(() => {
+  const e = document.getElementById("estadoEssencial");
+  return e && !e.textContent.includes("verificando");
+}, null, { timeout: 60000 }).catch(() => {});
+const offlinePagina = await page.evaluate(() => {
+  const selo = document.getElementById("selo");
+  const ess = document.getElementById("estadoEssencial");
+  return { selo: selo && selo.textContent, essencial: ess && ess.textContent };
+});
+dizer("offline: a página abriu — " + (offlinePagina.essencial || "").trim());
+if (!offlinePagina.essencial || !offlinePagina.essencial.includes("baixado ✓")) {
+  problemas.push("com a rede desligada a página não reconheceu o download: " + JSON.stringify(offlinePagina));
+}
+
+// -------------------------------------------------- 4) offline: o jogo roda --
+const gp = await ctx.newPage();
+watchPage(gp, problemas);
+await gp.goto(BASE + "/game/mobile/", { waitUntil: "load" });
+try {
+  await gp.waitForFunction(async () => {
+    const js = document.querySelector('script[src*="main.js"]').src.replace(/main\.js.*$/, "");
+    const { G } = await import(js + "state.js");
+    return G.screen !== "BOOT";
+  }, null, { timeout: 60000, polling: 120 });
+  dizer("offline: o jogo BOOTOU na versão mobile (tela " + await gp.evaluate(async () => {
+    const js = document.querySelector('script[src*="main.js"]').src.replace(/main\.js.*$/, "");
+    return (await import(js + "state.js")).G.screen;
+  }) + ")");
+} catch (e) {
+  problemas.push("o jogo NÃO bootou com a rede desligada: " + (e.message || e).split("\n")[0]);
+}
+await gp.screenshot({ path: OUT + "/2-jogo-offline.png" });
+
+// ------------------------------------------- 5) offline: página do app (app) --
+const ap = await ctx.newPage();
+watchPage(ap, problemas);
+await ap.goto(BASE + "/app/online.html?v=mobile", { waitUntil: "load" });
+await ap.waitForFunction(() => {
+  const b = document.getElementById("btnJogar");
+  const e = document.getElementById("estadoEssencial");
+  return b && /game\/mobile\//.test(b.getAttribute("href") || "") && e && !e.textContent.includes("verificando");
+}, null, { timeout: 60000 });
+const appPagina = await ap.evaluate(() => ({
+  jogar: document.getElementById("btnJogar").getAttribute("href"),
+  selo: document.getElementById("selo").textContent,
+  texto: document.getElementById("textoJogar").textContent,
+}));
+dizer("app (?v=mobile): JOGAR → " + appPagina.jogar + " · " + appPagina.selo);
+if (!/game\/mobile\/$/.test(appPagina.jogar)) problemas.push("página do app não levou para a versão mobile: " + appPagina.jogar);
+await ap.screenshot({ path: OUT + "/3-app-offline.png", fullPage: true });
+
+// ------------------------------------------------------------------ veredito --
+await browser.close();
+if (server) await server.close();
+
+const segundos = ((Date.now() - t0) / 1000).toFixed(1);
+if (problemas.length) {
+  console.error("\n✗ PWA NO NAVEGADOR FALHOU\n" + problemas.map((p) => "  - " + p).join("\n"));
+  process.exit(1);
+}
+console.log("\n✓ PWA OK — instalável, baixado e JOGÁVEL COM A REDE DESLIGADA (" + segundos + "s)");
+console.log("  capturas em " + OUT);

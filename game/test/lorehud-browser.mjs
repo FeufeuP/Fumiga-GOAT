@@ -29,11 +29,17 @@ await click(480,270);await click(200,275);await click(114,282);
 async function settleIntro(){
   let calmo=0;
   for(let i=0;i<240 && calmo<3;i++){
-    const abertura=await page.evaluate(async()=>({
-      carga:(await import('./js/loading_screen.js')).isLoadingActive(),
-      hq:(await import('./js/cutscenes.js')).isCutsceneActive(),
-    }));
-    if(abertura.hq){await page.keyboard.press('Escape');calmo=0;}      // pula a HQ
+    const abertura=await page.evaluate(async()=>{
+      const ls = await import('./js/loading_screen.js');
+      const cs = await import('./js/cutscenes.js');
+      return {
+        carga: ls.isLoadingActive(),
+        pronta: ls.isLoadingReady(),
+        hq: cs.isCutsceneActive(),
+      };
+    });
+    if(abertura.pronta){await page.keyboard.press('Space');calmo=0;}
+    else if(abertura.hq){await page.keyboard.press('Escape');calmo=0;} // pula a HQ
     else calmo=abertura.carga?0:calmo+1;                                // carga em curso: espera
     await page.waitForTimeout(100);
   }
@@ -88,9 +94,11 @@ await page.waitForTimeout(250);
 await page.screenshot({path:shots+'/mobile-portrait.png'});
 await page.setViewportSize({width:1280,height:720});
 await page.evaluate(async()=>{const {G}=await import('./js/state.js');G.save.accessibility.bigFont=false;});
-await page.keyboard.press('b');await page.waitForTimeout(200);
+await page.keyboard.press('b');
+await settleIntro();
 assert.equal(await page.evaluate(async()=>(await import('./js/state.js')).G.run.baseOpen),true,'B abre formigueiro');
-await page.keyboard.press('Escape');await page.waitForTimeout(200);
+await page.keyboard.press('Escape');
+await settleIntro();
 await page.keyboard.press('g');await page.waitForTimeout(200);
 assert.equal(await page.evaluate(async()=>(await import('./js/waves.js')).director.phase),'wave','G inicia onda');
 console.log('FPS headless H (diagnóstico, não benchmark de hardware):',perf);
