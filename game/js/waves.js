@@ -10,6 +10,7 @@ import { spawnEnemy, unlockedTypes, foes, boss, spawnBoss, clearFoes } from "./e
 import { floatText, ring } from "./particles.js";
 import { SFX, setCombat } from "./audio.js";
 import { tutEvent } from "./tutorial.js";
+import { runWithLoadingScreen } from "./loading_screen.js";
 
 export const director = {
   phase: "calm",       // calm | wave | mapClear | done
@@ -81,6 +82,42 @@ export function skipPeace() {
   return bonus;
 }
 
+/**
+ * Conclui imediatamente a onda atual (ou a onda prestes a iniciar se na calmaria),
+ * concedendo todas as recompensas de abates, essência, XP, frutos e mutações,
+ * e já inicia a próxima onda (ou o Chefão).
+ */
+export function skipWave() {
+  const run = G.run;
+  if (!run || run.status !== "running") return false;
+  if (director.phase === "calm") {
+    startWave({ silentLoad: true });
+  }
+  if (director.phase !== "wave") return false;
+
+  director.budget = 0;
+  for (const f of foes.slice()) {
+    if (!f.dead && !f.dying) {
+      f.takeDamage(999999, "ally");
+    }
+  }
+  if (boss) {
+    if (!boss.dead && !boss.dying) boss.takeDamage(999999, "ally");
+    run.bossDefeated = boss.kind;
+  }
+  clearFoes();
+  endWave();
+
+  if (director.phase === "calm" && !run.transition && run.status === "running") {
+    if (director.pendingDrafts > 0) {
+      director.timer = Math.min(director.timer, 0.05);
+    } else {
+      startWave();
+    }
+  }
+  return true;
+}
+
 export function updateDirector(dt) {
   const run = G.run;
   if (run.status !== "running") return;
@@ -113,7 +150,7 @@ export function updateDirector(dt) {
   }
 }
 
-function startWave() {
+function startWave(opts = {}) {
   const run = G.run;
   director.waveInMap++;
   run.wave++;
@@ -135,9 +172,26 @@ function startWave() {
   tutEvent("waveStart");
   if (w.boss && !director.bossSpawned) {
     director.bossSpawned = true;
-    spawnBoss(m.boss, run.wave);
     run.banner.title = "CHEFÃO DE MAPA — " + w.title;
     run.banner.sub = w.tip || "Algo imenso se aproxima...";
+    if (opts.silentLoad) {
+      spawnBoss(m.boss, run.wave);
+    } else {
+      const bossWave = run.wave;
+      const bossKind = m.boss;
+      runWithLoadingScreen({
+        biome: m.id,
+        degrau: "CHEFÃO DE MAPA",
+        title: w.title,
+        subtitle: (w.tip || "ALGO IMENSO SE APROXIMA...").toUpperCase(),
+        minDuration: 1.4,
+        task: (onProgress) => {
+          onProgress(0.4, "DESPERTANDO CHEFÃO DE MAPA...");
+          spawnBoss(bossKind, bossWave);
+          onProgress(1.0, "ARENA PRONTA");
+        },
+      });
+    }
   }
 }
 

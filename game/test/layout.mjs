@@ -454,6 +454,16 @@ clickAt(56, 540 - 64 + 32);
 auditFrame("RUN formigas abertas", frame(), { uiStart: "auto" });
 clickAt(56, 540 - 64 + 32);   // fecha de novo
 
+// MODO TESTE: painel de poderes e seletor de mapas (normal e FONTE GRANDE)
+G.run.testMode = true;
+G.run.testPowers = { infMoney: true, infAnts: true, infWaves: true };
+auditFrame("RUN modo teste", frame(), { uiStart: "auto" });
+G.save.accessibility.bigFont = true;
+auditFrame("RUN modo teste (fonte grande)", frame(), { uiStart: "auto" });
+G.save.accessibility.bigFont = false;
+G.run.testMode = false;
+G.run.testPowers = null;
+
 // GIGANTE em campo: colosso de 20x a soldado, arte assada 5x e ampliada no
 // desenho. Fica com comida sobrando para a loja mostrar o slot habilitado.
 const { spawnAnt } = await import(BASE + "units.js");

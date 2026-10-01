@@ -11,7 +11,7 @@
 // Parâmetros (combináveis):
 //   ?debug                      liga o overlay (FPS, ms/frame, entidades) e window.FUMIGA
 //   &tela=TITLE|MODE|TREE|OPTIONS|HELP|PROPHECY|MEMORY|RUN|NINHO
-//   &mapa=1..6  &modo=campanha|sobrevivencia|enxame|cacada  &seed=123
+//   &mapa=1..6  &modo=campanha|teste  &seed=123
 //   &invencivel  &essencia=9999  &velocidade=2
 //   &cutscene   (por padrão cutscenes e tutorial são pulados no debug)
 //   &limpo      (zera o save de debug antes de aplicar o resto)

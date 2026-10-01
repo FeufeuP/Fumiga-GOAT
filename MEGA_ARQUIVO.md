@@ -1702,6 +1702,19 @@ Ao final de cada tarefa, apresentar um **checklist de conferência** com este fo
   original, qualquer ajuste posterior exigiria refazer a arte do zero (como ocorreu com os
   originais do Santuário da Planície).
 
+## Regra 14 — Tela de Carregamento em mudanças de telas, mundos e cargas pesadas ⏳
+
+> **Sempre que houver mudança de telas, mundos ou quando qualquer coisa pesada/demorada para carregar na hora aparecer no jogo, a tela de carregamento deve acontecer para que o jogo carregue tudo sem que o jogador veja.**
+
+- **Escopo obrigatório (`mundos_telas_pesadas`):**
+  1. **Mudança de mundos e biomas**: início/reinício de expedição (`newRun`), avanço entre mapas (`advanceMap` / transição de fim de mapa) e trocas de mapa no Modo Teste (`PRÓXIMO MAPA`, `M1..M6` e tecla `N`).
+  2. **Interior e superfície da colônia**: entrar (`openNest`) e sair (`closeNest`) do Formigueiro (`B` / botão `FORMIGUEIRO`).
+  3. **Telas pesadas e santuários**: entrada e saída da Árvore da Evolução (`TREE`, pré-assando `treeArtCanvas`), abertura dos Santuários dos Frutos (`openFruit`, baixando `loadSantuario` de ~5,1 MB e pré-assando a restauração de cor), Profecias (`PROPHECY`), Memórias (`MEMORY`) e replays de cutscenes em camadas.
+  4. **Aparições pesadas em jogo**: chegada da Onda do Chefão (pré-carregando e compondo o boss fora de vista antes do combate).
+- **Submenus leves** (`OPTIONS` e `HELP`) permanecem com transição rápida para não interromper ajustes simples de volume/acessibilidade.
+- **Execução invisível ao jogador**: a tela de carregamento (`loading_screen.js` / `runWithLoadingScreen`) cobre 100% do canvas (`alpha = 1`) **antes** de executar a tarefa pesada (no frame seguinte ao da cortina fechar), impedindo qualquer engasgo visual, pop-in de sprite ou tela incompleta.
+- **Confirmação manual ao concluir (`sempre_confirmar`)**: ao atingir 100% (`ready`), a tela de carregamento aguarda o clique/toque ou `ESPAÇO`/`ENTER` do jogador com aviso piscante (`CLIQUE, TOQUE OU PRESSIONE ESPAÇO PARA CONTINUAR`), permitindo ler a dica/lore do bioma sem pressa.
+
 ---
 
 ## 🔄 Resumo do fluxo obrigatório a cada pedido
@@ -1709,7 +1722,7 @@ Ao final de cada tarefa, apresentar um **checklist de conferência** com este fo
 ```text
 1. PESQUISAR  → inspirações em jogos indies na Web (Regra 2)
 2. PERGUNTAR  → opções de implementação (Regra 1)
-3. IMPLEMENTAR → seguindo as escolhas do usuário e a otimização (Regra 5)
+3. IMPLEMENTAR → seguindo as escolhas do usuário, otimização (Regra 5) e tela de carregamento em cargas pesadas (Regra 14)
 4. ARTE       → imagens em alta resolução, pixel art harmônico (Regra 6) + Regra 8 não-humanóide
 5. MOSTRAR    → exibir toda arte gerada para aprovação visual (Regra 10)
 6. ADAPTAR    → mobile: todo input novo vira gesto/botão de toque (Regra 9)
@@ -3365,7 +3378,7 @@ parte dos blocos originais.
 
 | Arquivo original | Bytes preservados | SHA-256 |
 |---|---:|---|
-| `REGRAS_DE_TRABALHO.md` | 14687 | `3ac6e7446c74fbaf226af91d12c17e95325f69f14283f32d484fa1a613d687db` |
+| `REGRAS_DE_TRABALHO.md` | 16637 | `d6da0d428d9c73e359fc7c461f846ac4ca36daaa52a09872cc8ce18fe2eaeb91` |
 | `LORE.md` | 15056 | `42075fe4334601f1a74834388c0155342b2a8a6c21e51afa6020e34a5260f493` |
 | `DOCUMENTO_MEGA_ATUALIZACAO_LORE_TOTAL.md` | 30473 | `c642dd06d14e527bba6566458afa5293f697b0a3b981ef6301f6fafdfb9e856e` |
 | `DOCUMENTO_DECISOES_MEGA_ATUALIZACAO.md` | 8179 | `2b05240cd9fef9fb33d8a08768164f60202437c886c1c5b83f250ee9cbb58637` |
@@ -3486,5 +3499,39 @@ Pedido: Criação da tela de carregamento temática estilo Dead Cells para o Mun
 - Validação (Regras 3, 4, 9):
   - 25 de 25 testes headless aprovados no `npm test`.
   - Inspeção visual Playwright em PC (1280×720) e Mobile (844×390): 60 FPS, sem erros no console, sem requisições 404, layout de texto impecável.
+
+## Registro — Exclusão dos Modos Secundários e Criação do Modo Teste (2026-09-30)
+
+Pedido: Excluir os modos extras de jogo e manter apenas a Campanha Principal (Modo História) e um novo Modo Teste com poderes de Dinheiro Infinito (`∞`), Formigas Infinitas (`∞`), Ondas Infinitas (`∞`) e botão novo para passar/escolher mapa a qualquer momento.
+Decisões confirmadas com o usuário (`ask_user`):
+1. Poderes ativos por padrão ao iniciar o Modo Teste, com botões no HUD para ligar/desligar cada um (`DINHEIRO ∞`, `FORMIGAS ∞`, `ONDAS ∞`).
+2. Botão novo `PRÓXIMO MAPA ▶` (e atalho `N` no PC) + grade `M1..M6` para saltar diretamente para qualquer um dos 6 biomas a qualquer momento.
+3. Formigas compradas no Modo Teste (com `FORMIGAS ∞` ativo) nascem instantaneamente ao redor do formigueiro, sem limite de população e sem limite de 1 Dinoponera por expedição; escavação de câmaras no ninho também gratuita e instantânea.
+4. Por ora o Modo Teste concede Essência, Frutos e progresso normalmente, ficando registrado que **no futuro o Modo Teste não existirá no lançamento final** — ele serve exclusivamente como ferramenta auxiliar durante o desenvolvimento do jogo.
+
+- Alterações implementadas:
+  - `game/js/game.js` e `game/js/render.js`: `GAME_MODES` reduzido aos 2 modos (`campanha` e `teste`), com cards largos centralizados (360×340 px); painel lateral de controle do Modo Teste abaixo do minimapa (`x: 784..950, y: 156..322`) contendo `PRÓXIMO MAPA ▶`, seletor `M1..M6` e interruptores `DINHEIRO ∞`, `FORMIGAS ∞` e `ONDAS ∞`; avanço/salto de mapa imediato via `advanceMap(targetIdx)`.
+  - `game/js/units.js`: suporte a `run.testPowers.infMoney` (custo zero) e `run.testPowers.infAnts` (sem teto populacional, múltiplas Dinoponeras e nascimento instantâneo sem fila de ovo).
+  - `game/js/nest.js`: câmaras gratuitas e escavação instantânea quando os poderes do Modo Teste estão ativos; exibição de `∞` no topo e nos tooltips.
+  - `game/js/state.js` e `game/js/debug.js`: suporte ao modo `teste` nas recompensas e nos parâmetros de debug.
+  - `game/test/endless.mjs`, `game/test/layout.mjs` e `game/test/layout-browser.mjs`: cobertura automatizada dos 2 modos, dos poderes `∞`, do nascimento instantâneo de múltiplas Dinoponeras, do botão `PRÓXIMO MAPA` / seletor `M1..M6` e da auditoria de layout PC/Mobile (normal e fonte grande).
+
+## Registro — Botão Pular Onda no Modo Teste e Regra 14 da Tela de Carregamento (2026-09-30)
+
+Pedido: Adicionar um botão no Modo Teste para pular a onda de inimigos e registrar/implementar a nova regra da Tela de Carregamento: sempre que houver mudança de telas, mundos ou quando qualquer coisa pesada/demorada para carregar na hora aparecer no jogo, a tela de carregamento deve acontecer para que o jogo carregue tudo sem que o jogador veja.
+Decisões confirmadas com o usuário (`ask_user`):
+1. **Botão `PULAR ONDA` (`vencer_e_avancar`)**: funciona tanto na calmaria quanto no meio da onda; elimina imediatamente todos os inimigos restantes da onda atual, concede as recompensas normais da onda (comida, essência, XP da Rainha e draft de mutação se aplicável) e já inicia a próxima onda (ou o Chefão se for a onda 5/5). Atalho `K` no PC e botão `PULAR ONDA ▶` no painel do Modo Teste (PC e mobile).
+2. **Escopo da Tela de Carregamento (`mundos_telas_pesadas`)**: Tela de Carregamento completa estilo Dead Cells em todas as mudanças de mundo/bioma (iniciar/reiniciar expedição, avançar mapa, `PRÓXIMO MAPA` e `M1..M6` no Modo Teste), entrada e saída do Formigueiro (`openNest`/`closeNest`), Árvore da Evolução (`openTreeScreen`/`backFromTree` pré-assando `treeArtCanvas`), abertura dos Santuários dos Frutos (`openFruit` baixando `loadSantuario` de ~5,1 MB e pré-assando a restauração de cor), Profecias (`PROPHECY`), Memórias (`MEMORY`), Cutscenes e chegada do Chefão (`startWave` na onda de boss), mantendo transições rápidas apenas nos submenus leves (`OPTIONS`/`HELP`).
+3. **Confirmação manual na Tela de Carregamento (`sempre_confirmar`)**: ao atingir 100% (`ready`), a tela de carregamento aguarda o clique/toque ou `ESPAÇO`/`ENTER` do jogador com aviso piscante (`CLIQUE, TOQUE OU PRESSIONE ESPAÇO PARA CONTINUAR`).
+
+- Alterações implementadas:
+  - `REGRAS_DE_TRABALHO.md` e `MEGA_ARQUIVO.md`: adicionada a **Regra 14 — Tela de Carregamento em mudanças de telas, mundos e cargas pesadas ⏳**, com sincronização integral de bytes e SHA-256.
+  - `game/js/loading_screen.js`: cobertura imediata 100% opaca (`alpha = 1`) no primeiro frame; execução diferida da tarefa pesada (`taskDeferred`) somente após a cortina estar desenhada na tela; lore, citações, dicas, paleta e tint para todos os 6 biomas + `palida`; confirmação manual (`ready` -> clique/toque/Espaço/Enter); helpers `isLoadingReady`, `isLoadingFadingOut`, `shouldUseLoadingScreen` e `runWithLoadingScreen`; escala de texto blindada contra `FONTE GRANDE` (`1 / fontScale()`).
+  - `game/js/waves.js`: nova função `skipWave()` e carregamento fora de vista na onda do Chefão (`startWave` com `runWithLoadingScreen`).
+  - `game/js/game.js` e `game/js/meta.js`: botão `PULAR ONDA (K)` / `PULAR ONDA ▶` (`id: "testSkipWave"`) no painel do Modo Teste + tecla `K`; integração de `runWithLoadingScreen` em `startRunWithLoading`, `triggerMapChange`, `openNest`, `closeNest`, `openTreeScreen`, `backFromTree`, `openProphecies`, `backFromProphecies`, `openMemories`, `backFromMemories`, replay de `MEMORY` e `openFruit`.
+  - `game/mobile/touch.js`: ocultação automática de `#touch-hud` enquanto `isLoadingActive()` estiver ativa.
+  - `game/test/endless.mjs` e `game/test/lorehud-browser.mjs`: testes automatizados do botão `PULAR ONDA` e da confirmação manual da tela de carregamento.
+
+
 
 

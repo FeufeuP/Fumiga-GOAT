@@ -111,7 +111,7 @@ export function isFruitUnlocked(mapId) {
 }
 export function unlockFruitForBoss(mapId, bossId, mode) {
   const f = FRUIT_TREES.find(f => f.map === mapId);
-  if(mode !== "campanha" || !f || f.pending || f.boss !== bossId || isFruitUnlocked(mapId)) return false;
+  if((mode !== "campanha" && mode !== "teste") || !f || f.pending || f.boss !== bossId || isFruitUnlocked(mapId)) return false;
   G.save.clearedMaps ||= {}; G.save.clearedMaps[mapId] = true;
   persistSave(); return true;
 }
@@ -277,7 +277,7 @@ export function checkProphecies(run, won, info = {}) {
     earned.push(pr);
   };
   if (run && won) {
-    if (run.mode === "campanha") {
+    if (run.mode === "campanha" || run.mode === "teste") {
       grant("p_primeira");
       if (run.ascension >= 5) grant("p_asc5");
       if (run.ascension >= 10) grant("p_asc10");
@@ -288,9 +288,9 @@ export function checkProphecies(run, won, info = {}) {
       if ((run.queenMinHp ?? 1) >= 0.5) grant("p_rainha");
       if (!(run.deaths > 0)) grant("p_imacula");
     }
-    if (run.mode === "cacada") grant("p_cacada");
+    if (run.mode === "cacada" || (run.mode === "teste" && (run.mapsCleared || 0) >= 6)) grant("p_cacada");
   }
-  if (run && run.mode === "sobrevivencia" && (info.cycle || 0) >= 2) grant("p_ciclo3");
+  if (run && (run.mode === "sobrevivencia" || run.mode === "teste") && (info.cycle || 0) >= 2) grant("p_ciclo3");
   if (run && (run.wave || 0) >= 25) grant("p_ondas25");
   // de estado (valem em qualquer chamada: fim de run ou tela de profecias)
   if (G.save.best.kills >= 1000) grant("p_mil");

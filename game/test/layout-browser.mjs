@@ -66,6 +66,11 @@ const S = {
     await new Promise((r) => setTimeout(r, 50));
     const { G } = await M("state.js"); G.run.banner = null;
   },
+  runTeste: async (M) => {
+    window.FUMIGA.go("RUN", { modo: "teste", mapa: 0, seed: 7 });
+    await new Promise((r) => setTimeout(r, 50));
+    const { G } = await M("state.js"); G.run.banner = null;
+  },
   runExpandido: async (M) => {
     window.FUMIGA.go("RUN", { mapa: 0, seed: 7 });
     await new Promise((r) => setTimeout(r, 900));
@@ -170,13 +175,13 @@ const STATES = [
   ["MEMORIAS-P2", pagedState("MEMORY", "memory", 1)],
   ...[1, 2, 3].map(p => ["PROFECIAS-P" + (p + 1), pagedState("PROPHECY", "prophecy", p)]),
   ...[0, 1, 2, 3, 4].flatMap((t) => [["OPCOES-ABA" + t, S.opcoes(t, false)], ["OPCOES-ABA" + t + "-FIM", S.opcoes(t, true)]]),
-  ["RUN-FAIXA", S.run, 1200], ["RUN", S.runLimpo], ["RUN-EXPANDIDO", S.runExpandido], ["RUN-FORMIGAS", S.runFormigas],
+  ["RUN-FAIXA", S.run, 1200], ["RUN", S.runLimpo], ["RUN-TESTE", S.runTeste], ["RUN-EXPANDIDO", S.runExpandido], ["RUN-FORMIGAS", S.runFormigas],
   ["RUN-TUTORIAL", S.tutorial], ["RUN-CHEFE", S.chefe], ["RUN-DRAFT", S.draft], ["RUN-PAUSA", S.pausa],
   ["RUN-TRANSICAO", S.transicao], ["RUN-DERROTA", S.fim(false)], ["RUN-VITORIA", S.fim(true)],
   ["NINHO", S.ninho], ["CUTSCENE", S.cutscene, 2600],
 ];
 // fonte grande (acessibilidade) nas telas que mais têm texto
-const BIG = new Set(["ARVORE", "ARVORE-DICA", "TITULO", "AJUDA", "MODO", "OPCOES-ABA0", "OPCOES-ABA3", "RUN", "RUN-EXPANDIDO", "RUN-PAUSA", "RUN-DRAFT", "RUN-DERROTA", "NINHO", "MEMORIAS", "PROFECIAS", "RUN-TUTORIAL"]);
+const BIG = new Set(["ARVORE", "ARVORE-DICA", "TITULO", "AJUDA", "MODO", "OPCOES-ABA0", "OPCOES-ABA3", "RUN", "RUN-TESTE", "RUN-EXPANDIDO", "RUN-PAUSA", "RUN-DRAFT", "RUN-DERROTA", "NINHO", "MEMORIAS", "PROFECIAS", "RUN-TUTORIAL"]);
 
 fs.mkdirSync(OUT, { recursive: true });
 const server = process.env.BASE_URL ? null : await startServer();

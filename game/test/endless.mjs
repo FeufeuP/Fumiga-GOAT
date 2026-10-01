@@ -73,14 +73,19 @@ async function click(x, y) {
 let winCount = 0;
 SFX.win = () => { winCount++; };
 
-// ---- boot -> título -> modos -> SOBREVIVÊNCIA (card 2) ----------------------
+// ---- boot -> título -> modos -> MODO TESTE (card 2) -------------------------
 expect(G.screen === "PRETITLE", "boot em PRETITLE");
 await click(480, 270);
 await click(200, 275); // botão JOGAR do título
 expect(G.screen === "MODE", "chegou na tela de modos");
-await click(366, 286); // card SOBREVIVÊNCIA (x 261..471, y 116..456)
-expect(G.screen === "RUN", "entrou no RUN via card SOBREVIVÊNCIA");
-expect(G.run && G.run.endless === true, "run.endless = true");
+const { __debug } = await import(BASE + "/game.js");
+expect(JSON.stringify(__debug.modes()) === JSON.stringify(["campanha", "teste"]),
+  "apenas 2 modos no jogo: campanha e teste (" + __debug.modes().join(", ") + ")");
+await click(680, 286); // card MODO TESTE (x 500..860, y 116..456)
+expect(G.screen === "RUN", "entrou no RUN via card MODO TESTE");
+expect(G.run && G.run.testMode === true && G.run.endless === true, "run.testMode = true e run.endless = true");
+expect(G.run.testPowers && G.run.testPowers.infMoney && G.run.testPowers.infAnts && G.run.testPowers.infWaves,
+  "poderes do Modo Teste (Dinheiro ∞, Formigas ∞, Ondas ∞) ligados por padrão");
 
 // ESC pula a introdução sem pausar o gameplay que vem depois.
 const { isCutsceneActive } = await import(BASE + "/cutscenes.js");
@@ -89,6 +94,13 @@ pressed.Escape = true;
 await wait(100);
 pressed.Escape = false;
 expect(!isCutsceneActive(), "ESC libera o gameplay da introdução");
+
+// Testa compra instantânea sem limite de população e múltiplas Dinoponeras no Modo Teste
+const g1 = units.buyUnit("giant");
+const g2 = units.buyUnit("giant");
+expect(g1.ok && g2.ok && units.allies.filter(a => a.type === "giant" && !a.dead).length >= 2,
+  "Formigas ∞: múltiplas Dinoponeras nascem instantaneamente sem ovo e sem custo");
+expect(G.run.food >= 9999, "Dinheiro ∞ mantém comida >= 9999");
 
 // exército para o chefão cair rápido
 for (let i = 0; i < 8; i++) units.spawnAnt("soldier", world.anthill.x + (i - 4) * 30, world.anthill.y + 60);
@@ -172,15 +184,37 @@ expect(waves.director.budgetMax === expectedBudget2,
   "orçamento do ciclo 3 escalado: " + waves.director.budgetMax + " (base x1.6)");
 expect(G.run.essencePool > essBefore2, "bônus do ciclo 2 creditado");
 
+// Testa o botão novo de passar de mapa (PRÓXIMO MAPA ▶) e o seletor direto (M1..M6)
+const { uiButtons } = await import(BASE + "/ui.js");
+const nextBtn = uiButtons().find(b => b.id === "testNextMap");
+expect(!!nextBtn, "botão PRÓXIMO MAPA presente no HUD do Modo Teste");
+await click(nextBtn.x + nextBtn.w / 2, nextBtn.y + nextBtn.h / 2);
+expect(waves.director.mapIdx === 1 && G.run.mapIdx === 1, "botão PRÓXIMO MAPA avançou para o Mapa 2 (Floresta)");
+
+const map4Btn = uiButtons().find(b => b.id === "testMap4");
+expect(!!map4Btn, "botão M4 do seletor direto de biomas presente no HUD");
+await click(map4Btn.x + map4Btn.w / 2, map4Btn.y + map4Btn.h / 2);
+expect(waves.director.mapIdx === 3 && G.run.mapIdx === 3, "seletor direto M4 pulou imediatamente para o Mapa 4 (Deserto)");
+
+// Testa o botão novo de PULAR ONDA (testSkipWave): conclui a onda atual com recompensas e já inicia a próxima
+const skipWaveBtn = uiButtons().find(b => b.id === "testSkipWave");
+expect(!!skipWaveBtn, "botão PULAR ONDA presente no HUD do Modo Teste");
+const waveBeforeSkip = G.run.wave;
+const essBeforeSkip = G.run.essencePool;
+await click(skipWaveBtn.x + skipWaveBtn.w / 2, skipWaveBtn.y + skipWaveBtn.h / 2);
+expect(G.run.wave >= waveBeforeSkip + 2, "botão PULAR ONDA concluiu a onda 1 e já iniciou a onda 2 (run.wave=" + G.run.wave + ")");
+expect(G.run.essencePool > essBeforeSkip, "botão PULAR ONDA concedeu a recompensa de essência da onda concluída");
+expect(waves.director.phase === "wave" && waves.director.waveInMap === 2, "próxima onda (2) já em andamento após PULAR ONDA");
+
 // 3s de jogo corrido: nenhuma exceção (o handler de uncaught mata o processo)
 await wait(3000);
 expect(G.run.status === "running", "run segue viva e jogável ao fim do teste");
 
 console.log("");
 if (problems.length) {
-  console.log("TESTE DO MODO SOBREVIVÊNCIA FALHOU: " + problems.length + " problema(s)");
+  console.log("TESTE DO MODO TESTE FALHOU: " + problems.length + " problema(s)");
   process.exit(1);
 }
 console.log("===========================================================");
-console.log("MODO SOBREVIVÊNCIA OK — ciclos de chefão sem travar, orçamento escalando");
+console.log("MODO TESTE OK — poderes ∞, ciclos infinitos e botão de passar mapa funcionando");
 process.exit(0);
