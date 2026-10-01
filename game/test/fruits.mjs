@@ -51,7 +51,7 @@ for (const f of FRUIT_TREES) {
   G.save.nodes={}; G.save.clearedMaps={}; G.save.essence=1000;
   assert.equal(metaCanBuy(f.nodes[0].id).ok,false);
   G.save.clearedMaps[f.map]=true;
-  assert.equal(metaBuy(f.nodes[2].id),false,'pré-requisitos');
+  assert.equal(metaCanBuy(f.nodes[2].id).ok,true,'flores legadas livres sem pré-requisitos');
   for(const n of f.nodes) {
     G.save.essence=n.cost[0]-1;
     assert.equal(metaBuy(n.id),false,'saldo insuficiente');

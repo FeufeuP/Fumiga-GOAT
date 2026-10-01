@@ -19,6 +19,10 @@ const MANIFEST = {
   // 4 estágios (broto, broto meio aberto, flor florescida, broto morto).
   flores_planicie: "ui/flores_planicie.png",
   flores_floresta: "ui/flores_floresta.png",
+  flores_pantano: "ui/flores_pantano.png",
+  flor_suprema_planicie: "ui/flor_suprema_planicie.png",
+  flor_suprema_floresta: "ui/flor_suprema_floresta.png",
+  flor_suprema_pantano: "ui/flor_suprema_pantano.png",
   // Sem correntes/cadeados: a Árvore não desenha mais cadeado sobre o fruto
   // bloqueado nem tranca sobre a Pálida (decisão do usuário, 2026-09-29) — os
   // três PNGs saíram do repositório e do boot. O estado bloqueado se lê pela
@@ -179,7 +183,7 @@ const WROT = {};         // silhuetas brancas rotacionadas (hit flash)
 // ANTIGA nos mesmos nomes de arquivo (foi assim que o rework dos inimigos da
 // Fase 2 "não apareceu" para quem já tinha jogado antes dele).
 // ---------------------------------------------------------------------------
-export const ASSET_V = "20260930-flores-floresta";
+export const ASSET_V = "20261001-flores-pantano";
 
 /**
  * URL final de um asset do jogo: base certa para a página atual + anti-cache.

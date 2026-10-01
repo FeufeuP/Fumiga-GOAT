@@ -1,9 +1,10 @@
-// 70 habilidades NOVAS. Os 18 nós anteriores são preservados como legado.
+// 77 habilidades NOVAS (10 livres + 1 Flor Suprema por fruto). Os 18 nós anteriores são preservados como legado.
 // IDs estáveis e custos de nível único (exceto mundos com santuário de flores:
-// passos de preço por mundo em FLOWER_STEPS); três caminhos se unem em um ápice.
-// Santuários com folha de flores própria ganham 3 níveis de compra por nó.
-// Passos aprovados: planície +30/+60 (2026-09-29), floresta +35/+70 (2026-09-30).
-const FLOWER_STEPS = { planicie: [0, 30, 60], floresta: [0, 35, 70] };
+// passos de preço por mundo em FLOWER_STEPS); a 14ª flor é a Flor Suprema de compra única.
+// Santuários com folha de flores própria ganham 3 níveis de compra por nó regular.
+// Passos aprovados: planície +30/+60 (2026-09-29), floresta +35/+70 (2026-09-30), pântano +40/+80 (2026-10-01).
+const FLOWER_STEPS = { planicie: [0, 30, 60], floresta: [0, 35, 70], pantano: [0, 40, 80] };
+const SUPREME_COSTS = [500, 580, 660, 750, 840, 920, 1000];
 export const FRUIT_SKILLS = {
   planicie: [
     ['p1','Corrida do Amanhecer','Nos primeiros 20s da expedição, irmãs se movem 35% mais rápido.','bolt'],
@@ -16,6 +17,7 @@ export const FRUIT_SKILLS = {
     ['p8','Tambor Compartilhado','Golpear um alvo lento espalha 15% do dano a até três vizinhos em 130. Máximo uma vez a cada 0,4s.','sk_fury'],
     ['p9','Caravana do Orvalho','Cada expedição começa com três operárias extras e 60 de comida adicional.','egg'],
     ['p10','Novo Amanhecer','A cada 20 abates diretos ou por veneno, toda a colônia recupera 8% da vida máxima.','sun'],
+    ['p11','Florescência do Amanhecer','FLOR SUPREMA — Entregas rendem o dobro de comida, +25% velocidade global e +20% cadência de ataque.','crown'],
   ],
   floresta: [
     ['f1','Teia de Caça','Cada terceiro golpe direto aplica 2s de lentidão a inimigos comuns.','spider'],
@@ -28,6 +30,7 @@ export const FRUIT_SKILLS = {
     ['f8','Tecelagem Expedita','Tecelãs ganham 80% de velocidade e duas unidades de capacidade de carga.','bolt'],
     ['f9','Cheiro da Caçadora','Alvos já revelados por um golpe recebem 25% de dano direto adicional.','sk_slash'],
     ['f10','Ninho Vivo','A cada 12s, irmãs a até 300 da rainha recuperam 8% da vida máxima.','crown'],
+    ['f11','Coração do Dossel Eterno','FLOR SUPREMA — Irmãs revivem uma vez com 50% da vida, +40% poder de cura e 4% de vida regenerada por segundo.','crown'],
   ],
   pantano: [
     ['s1','Mandíbulas Sépticas','Golpes diretos envenenam: seis de dano por segundo durante 3s. Não acumula consigo mesmo.','fungo'],
@@ -40,6 +43,7 @@ export const FRUIT_SKILLS = {
     ['s8','Grito Roubado','Cada quinto golpe direto enfraquece o alvo por 4s. Inimigos comuns causam 15% menos dano.','sk_fury'],
     ['s9','Barqueiras da Memória','Cada irmã perdida devolve cinco de essência à reserva da expedição.','hourglass'],
     ['s10','Ciclo do Lodo','A cada dez abates de envenenados, a rainha recupera 15% da vida máxima.','crown'],
+    ['s11','Lótus Abissal da Bruma','FLOR SUPREMA — Golpes aplicam 12 de veneno/s por 5s, +35% dano contra envenenados e +3 essência por abate.','crown'],
   ],
   deserto: [
     ['d1','Calor Crescente','Golpes em sequência ganham 1% de dano por acerto, até 40%. Esfria após 3s sem acertar.','fire_sword'],
@@ -52,6 +56,7 @@ export const FRUIT_SKILLS = {
     ['d8','Miragem Defensiva','Cada terceiro projétil recebido por uma irmã é evitado completamente.','sk_frost'],
     ['d9','Mandíbula de Vidro','Chance de crítico das irmãs aumenta em 15 pontos percentuais.','sk_slash'],
     ['d10','Forno do Enxame','Matar um inimigo em chamas ou envenenado causa 20 de dano a até três vizinhos em 130. Explosões não geram outras explosões.','sun'],
+    ['d11','Coroa Solar da Fornalha','FLOR SUPREMA — +30% dano global, +20% crítico, +6 limite de população e explosão solar a cada terceiro golpe.','crown'],
   ],
   outono: [
     ['o1','Manto de Folhas','Cada irmã nasce com uma barreira igual a 20% da vida máxima. Não se regenera.','shield'],
@@ -64,6 +69,7 @@ export const FRUIT_SKILLS = {
     ['o8','Jardim de Seiva','A rainha regenera três de vida por segundo, somando às outras fontes.','heal'],
     ['o9','Chamado Dourado','Um rali bem-sucedido cura 25% da vida das irmãs chamadas. Recarga de 15s.','sk_fury'],
     ['o10','Estação da Abundância','A cada 50 abates diretos ou por veneno, recebe 30 de comida e 15 de essência na expedição.','food'],
+    ['o11','Crisântemo do Rei Dourado','FLOR SUPREMA — +30% vida máxima para colônia e rainha, +35% barreira inicial e cura 12% da colônia a cada 10 abates.','crown'],
   ],
   gelo: [
     ['i1','Mandíbulas de Geada','Cada terceiro golpe direto causa 3s de lentidão e 0,35s de atordoamento em inimigos comuns.','sk_frost'],
@@ -76,6 +82,7 @@ export const FRUIT_SKILLS = {
     ['i8','Coração sob o Gelo','A rainha começa a expedição com uma barreira de 20% da vida máxima.','crown'],
     ['i9','Caça ao Colosso','Golpes diretos causam 25% mais dano contra chefes de qualquer mapa.','fire_sword'],
     ['i10','Solo Perene','A cada 15 abates diretos ou por veneno, atordoa até seis inimigos comuns a até 250 do último alvo por 1s.','sk_frost'],
+    ['i11','Rosa Cristalina do Pico','FLOR SUPREMA — +40% dano contra chefes, 25% menos dano recebido por toda a colônia e golpes aplicam 3s de lentidão.','crown'],
   ],
   topo: [
     ['a1','Memória Herdada','Começa cada expedição com 100 de essência na reserva.','wing_gem'],
@@ -88,15 +95,17 @@ export const FRUIT_SKILLS = {
     ['a8','Fome de Memórias','Cada unidade de cristal recolhida concede duas essências extras.','wing_gem'],
     ['a9','Coroa de Bruma','A rainha recebe 20% menos dano de todos os golpes.','crown'],
     ['a10','Coração da Colônia Eterna','Uma vez por expedição, ao cair abaixo de 30% de vida, a rainha restaura 40% da vida máxima de toda a colônia.','sun'],
+    ['a11','Semente do Formigueiro Eterno','FLOR SUPREMA — Dobra o ganho de essência e XP, +35% dano e vida global e +15 vida/s na rainha.','crown'],
   ],
 };
 export const NEW_FRUIT_NODES = Object.entries(FRUIT_SKILLS).flatMap(([map, rows], mi) => rows.map(([key,name,desc,icon], i) => {
+  const isSupreme = i === 10;
   const c0 = 60 + mi*15 + Math.floor(i/3)*45 + (i===9?120:0);
   const steps = FLOWER_STEPS[map];
   return {
     id:'v_'+key, key, name:name.toUpperCase(), desc:'GLOBAL: '+desc, map, fruit:'fruit_'+map,
-    cost: steps ? steps.map(s => c0 + s) : [c0],
-    requires:i<3?[]:(i===9?[6,7,8]:[i-3]).map(j=>'v_'+rows[j][0]),
-    tier:i===9?2:i>=3?1:0, br:['G','C','H'][i%3], icon, global:true,
+    cost: isSupreme ? [SUPREME_COSTS[mi]] : (steps ? steps.map(s => c0 + s) : [c0]),
+    requires: [],
+    tier: isSupreme ? 3 : (i===9?2:i>=3?1:0), br:['G','C','H'][i%3], icon, global:true, supreme: isSupreme,
   };
 }));
