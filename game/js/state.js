@@ -1,4 +1,7 @@
 import { applyFruitBonuses } from "./fruit_effects.js";
+// DIÁRIO DE PLAYTEST: as compras de poder entram no relatório do teste de campo
+// (o módulo é local, sem PII e nunca interfere no save — ver playtest.js).
+import { ptEvento } from "./playtest.js";
 // ============================================================================
 // FUMIGA-GOAT — estado global do jogo + persistência
 // ============================================================================
@@ -60,38 +63,77 @@ export function muted() { return G.muted; }
 export function toggleMute() { G.muted = !G.muted; return G.muted; }
 
 // ------------------------------------------------------------------ saves ---
+// Schema interno; as chaves v1 de PC/mobile/debug e os IDs antigos não mudam.
+const record = value => !!value && typeof value === "object" && !Array.isArray(value);
+const safeKey = key => !["__proto__", "constructor", "prototype"].includes(key);
+const nonNegativeInt = (value, max = Number.MAX_SAFE_INTEGER) =>
+  typeof value === "number" && Number.isFinite(value) ? Math.max(0, Math.min(max, Math.floor(value))) : 0;
+function flags(value) {
+  return Object.fromEntries(record(value) ? Object.entries(value)
+    .filter(([key, v]) => safeKey(key) && (v === true || v === 1)).map(([key]) => [key, true]) : []);
+}
+
 export function loadSave() {
   try {
     const raw = localStorage.getItem(SAVE_KEY);
-    if (raw) {
-      const data = JSON.parse(raw);
-      if (data && typeof data === "object") {
-        G.save.essence = Math.max(0, data.essence | 0);
-        G.save.nodes = data.nodes && typeof data.nodes === "object" ? data.nodes : {};
-        G.save.best = Object.assign({ wave: 0, kills: 0, wins: 0, runs: 0, maps: 0 }, data.best || {});
-        G.save.ascension = Math.max(0, data.ascension | 0 || 0);
-        G.save.era = Math.max(0, data.era | 0 || 0);
-        G.save.prophecies = data.prophecies && typeof data.prophecies === "object" ? data.prophecies : {};
-        G.save.cutscenes = data.cutscenes && typeof data.cutscenes === "object" ? data.cutscenes : {};
-        G.save.clearedMaps = data.clearedMaps && typeof data.clearedMaps === "object" ? data.clearedMaps : {};
-        G.save.tutorial = data.tutorial ? 1 : 0;
-        if (data.accessibility && typeof data.accessibility === "object") {
-          G.save.accessibility = Object.assign(G.save.accessibility, data.accessibility);
-        }
-        if (data.settings && typeof data.settings === "object") {
-          G.save.settings = Object.assign(G.save.settings, data.settings);
-        }
+    if (!raw) return false;
+    const data = JSON.parse(raw);
+    if (!record(data)) return false;
+    const nodes = {};
+    if (record(data.nodes)) {
+      for (const [id, value] of Object.entries(data.nodes)) {
+        if (!safeKey(id)) continue;
+        // Preserva IDs desconhecidos de saves antigos; só os nós conhecidos
+        // produzem bônus, e estes são limitados aos seus níveis existentes.
+        nodes[id] = nonNegativeInt(value, metaNode(id)?.cost.length ?? Number.MAX_SAFE_INTEGER);
       }
     }
-  } catch (e) { /* armazenamento indisponível: segue sem persistência */ }
+    G.save.schemaVersion = 1;
+    G.save.essence = nonNegativeInt(data.essence);
+    G.save.nodes = nodes;
+    G.save.best = Object.fromEntries(["wave", "kills", "wins", "runs", "maps"]
+      .map(key => [key, nonNegativeInt(record(data.best) ? data.best[key] : 0)]));
+    G.save.ascension = nonNegativeInt(data.ascension, 20);
+    G.save.era = nonNegativeInt(data.era);
+    G.save.prophecies = flags(data.prophecies);
+    G.save.cutscenes = flags(data.cutscenes);
+    G.save.clearedMaps = flags(data.clearedMaps);
+    G.save.tutorial = data.tutorial === true || data.tutorial === 1 ? 1 : 0;
+    if (record(data.accessibility)) {
+      for (const key of Object.keys(G.save.accessibility)) {
+        if (typeof data.accessibility[key] === "boolean") G.save.accessibility[key] = data.accessibility[key];
+      }
+    }
+    if (record(data.settings)) {
+      for (const key of ["particles", "screenshake", "scanline"]) {
+        if (typeof data.settings[key] === "boolean") G.save.settings[key] = data.settings[key];
+      }
+      for (const key of ["musicVol", "sfxVol", "gameSpeed"]) {
+        const value = data.settings[key];
+        if (typeof value === "number" && Number.isFinite(value)) {
+          G.save.settings[key] = Math.max(key === "gameSpeed" ? .5 : 0, Math.min(key === "gameSpeed" ? 2 : 1, value));
+        }
+      }
+      if (["pt-BR", "en-US", "es"].includes(data.settings.language)) G.save.settings.language = data.settings.language;
+    }
+    return true;
+  } catch (e) { return false; /* JSON/armazenamento indisponível: não destrói o estado em memória */ }
 }
 
 export function persistSave() {
-  try { localStorage.setItem(SAVE_KEY, JSON.stringify(G.save)); } catch (e) { /* ok */ }
+  try {
+    if (!Number.isSafeInteger(G.save.essence) || G.save.essence < 0) return false;
+    G.save.schemaVersion = 1;
+    localStorage.setItem(SAVE_KEY, JSON.stringify(G.save));
+    return true;
+  } catch (e) { return false; }
 }
 
 // ------------------------------------------------------------------- meta ---
-export function metaLevel(id) { return G.save.nodes[id] | 0; }
+export function metaLevel(id) {
+  const value = G.save.nodes?.[id];
+  return Number.isSafeInteger(value) && value >= 0 ? Math.min(value, metaNode(id)?.cost.length ?? value) : 0;
+}
 
 // Índices imutáveis: consultas de bônus não percorrem os 18 frutos por frame.
 const META_INDEX = new Map(META_NODES.map(n => [n.id, n]));
@@ -141,6 +183,9 @@ export function metaCanBuy(id) {
     if (metaLevel(req) <= 0) return { ok: false, why: "REQUER " + metaNode(req).name };
   }
   const price = node.cost[lvl];
+  if (!Number.isSafeInteger(price) || price < 0 || !Number.isSafeInteger(G.save.essence) || G.save.essence < 0) {
+    return { ok: false, why: "DADOS INVÁLIDOS" };
+  }
   if (G.save.essence < price) return { ok: false, why: "SEM ESSÊNCIA" };
   return { ok: true, why: "", price };
 }
@@ -154,6 +199,9 @@ export function metaBuy(id) {
   if (id === "f_g_3") {
     G.save.era = (G.save.era || 0) + 1;
   }
+  // PLAYTEST: id, nível alcançado e preço pago — a base para medir a adoção
+  // dos níveis 2 e 3 dos poderes (A3) no relatório de campo.
+  ptEvento("poder_comprado", { id, nivel: G.save.nodes[id], custo: chk.price, essencia: G.save.essence });
   persistSave();
   return true;
 }

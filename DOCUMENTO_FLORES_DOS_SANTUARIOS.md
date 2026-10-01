@@ -141,13 +141,18 @@ obrigatórios.
    segurança** (Regra 13, seção 4.2).
 2. **Montar a folha** (seção 5) e conferi-la sobre fundo escuro abrindo com `read_file`: 12 células
    preenchidas, nada cortado, contorno contínuo.
-3. **Preços (Regra 1, sempre antes de gravar):** propor **2 pacotes fechados** (ex.: "espelho da
+3. **Valores-base dos poderes globais (motor de níveis):** ao integrar um mundo novo, registre
+   `POWER_BASE` (em `game/js/fruit_skills.js`) para as 10 habilidades: os níveis 2 e 3 multiplicam o
+   **bônus** em 1,25× e 1,5× (decisão do usuário em 2026-10-01), nunca os fatores de multiplicação,
+   limiares, intervalos, alvos ou usos. `rankedDescription` gera o texto dos três níveis e a UI mostra
+   "PRÓXIMO NÍVEL n"; `game/test/fruit-powers.mjs` é o modelo de teste (0/1/2/3 por efeito).
+4. **Preços (Regra 1, sempre antes de gravar):** propor **2 pacotes fechados** (ex.: "espelho da
    Planície" e "premium do mundo N ~+15%") com os números exatos das 3 legadas e das globais, e pedir
    confirmação com `ask_user`. Régua: 2º nível ≈ 1,5× o 1º, 3º ≈ 2–2,25×; globais em passos tipo
    `[c0, c0+Δ, c0+2Δ]`. Precedentes: Planície `20/30/45 · 35/50/70 · 50/75/100` e globais `+30/+60`;
    Floresta `35/50/75 · 50/75/105 · 70/100/140` e globais `+35/+70`.
-4. **Integrar no código** (seção 6).
-5. Rodar os testes e **jogar no navegador** (Regra 4): `node game/test/tree-browser.mjs` em PC e
+5. **Integrar no código** (seção 6).
+6. Rodar os testes e **jogar no navegador** (Regra 4): `node game/test/tree-browser.mjs` em PC e
    mobile, abrindo as capturas do santuário com `read_file` — uma **sem compras** (só mortos em
    cinza) e uma **com compras** (estágios coloridos).
 6. Atualizar a documentação, incluindo o `MEGA_ARQUIVO.md` (Regra 12) e conferir

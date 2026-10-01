@@ -46,8 +46,12 @@ const TESTS = [
   { name: "nestmap", file: "nestmap.mjs", env: { NESTMAP_OUT: path.join(tmpdir(), "formigueiro-layout.png") } },
   { name: "attack", file: "attack.mjs" },
   { name: "prophecy", file: "prophecy.mjs" },
+  { name: "regressions", file: "regressions.mjs" },
   { name: "docs", file: "docs.mjs" },
   { name: "pwa", file: "pwa.mjs" },
+  { name: "playtest", file: "playtest.mjs" },
+  { name: "pwa-worker", file: "pwa-worker.mjs" },
+  { name: "regressions-browser", file: "regressions-browser.mjs", slow: true },
 ];
 
 const args = process.argv.slice(2);

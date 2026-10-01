@@ -24,7 +24,7 @@ npm run test:quick          # ~10 s: confirma que a base está verde
 | Comando | Para quê | Tempo |
 |---|---|---|
 | `npm run test:quick` | enquanto implementa (sem uitest/endless/mobile) | ~10 s |
-| `npm test` | bateria completa em paralelo (a mesma do CI) | ~45 s |
+| `npm test` | bateria completa em paralelo (a mesma do CI) — inclui `regressions`, `pwa-worker`, `playtest` e `regressions-browser` | ~50 s |
 | `node game/test/run-all.mjs --only=sim,tree` | só alguns testes | — |
 | `npm run inspect` | **joga no navegador**: PC + mobile, todas as telas, 6 mapas; erros JS, 404, glifos “?”, FPS | ~100 s |
 | `node game/test/inspect.mjs --pc --telas=TREE,RUN-MAPA3` | inspeção focada | ~10 s |
@@ -32,7 +32,8 @@ npm run test:quick          # ~10 s: confirma que a base está verde
 | `npm run inspect:ui` | cliques/toques reais: páginas de Memórias/Profecias, replay, ninho, pausa e invocar | ~15 s |
 | `npm run inspect:hud` | HUD orgânico nos 6 biomas, tecla H, acessibilidade | ~40 s |
 | `npm run inspect:layout` | **auditoria de layout**: todas as telas PC + mobile, com e sem FONTE GRANDE — texto fora da tela, colidindo, vazando da caixa, botões sobrepostos, toque cobrindo o canvas | ~4 min |
-| `npm run inspect:pwa` | **app instalável**: instalabilidade (CDP), download do pacote essencial no cache, e o jogo bootando com a **rede desligada** | ~10 s |
+| `npm run inspect:pwa` | **app instalável**: instalabilidade (CDP), download do pacote essencial no cache, **reinício do worker com a rede desligada**, update que falha de propósito (a cópia anterior tem que sobreviver), timeout e boot offline em PC + mobile | ~20 s |
+| `npm run playtest` | lê os JSONs de teste de campo (pasta `playtest/` ou caminhos) e gera o relatório de balanceamento/PWA | ~1 s |
 | `npm run serve` | servidor do preview **sem cache**, 0.0.0.0:8000 (use com `start_process`) | — |
 
 As capturas do `inspect` vão para `/tmp/fumiga-inspect/*.png` (fora do Git): **abra-as com
@@ -81,11 +82,17 @@ faltando e o último erro. No console: `FUMIGA.ajuda()`, `FUMIGA.go('RUN', {mapa
 | `cutscenes.js` | cutscenes em camadas (Noite Branca etc.), biblioteca MEMÓRIAS |
 | `tutorial.js` · `ui.js` · `font.js` | tutorial em cartões · primitivos de UI em canvas · fonte bitmap (atlas) |
 | `camera.js` · `input.js` · `fog.js` · `audio.js` · `utils.js` | câmera/zoom/shake · teclado+mouse em coords 960×540 · névoa de guerra · áudio procedural WebAudio · RNG/matemática |
+| `playtest.js` | **diário de campo 100% local** (sem PII): sessões, expedições, poderes, erros e PWA; exporta em OPÇÕES → aba TESTE (`tools/playtest.mjs` gera o relatório) |
 | `debug.js` | modo debug (seção 2) — ferramenta, não é jogo |
 | `mobile/touch.js` | **única** camada exclusiva do mobile: gestos e botões virtuais → teclas/mouse do motor |
 
 ## 4. Receitas (onde mexer)
 
+- **Novo poder global de 3 níveis (flores)** → registre os valores-base em `POWER_BASE`
+  (`game/js/fruit_skills.js`): os níveis 2 e 3 multiplicam o **bônus** (1× / 1,25× / 1,5×), não os
+  multiplicadores inteiros (fatores como 1,5× de velocidade, limiares e intervalos). As descrições
+  por nível saem de `rankedDescription` e a UI mostra "PRÓXIMO NÍVEL n". Contagens são arredondadas;
+  gatilhos, alvos e usos (quantas vezes por expedição/recarga) **não** crescem.
 - **Nova casta / inimigo / chefe / mutação / nó da árvore / câmara / mapa** → dados em
   `config.js`; comportamento em `units.js` / `enemies.js` / `mutations.js`; sprite novo no
   `MANIFEST` de `assets.js` (o `test/assets.mjs` acusa se faltar).
@@ -98,6 +105,10 @@ faltando e o último erro. No console: `FUMIGA.ajuda()`, `FUMIGA.go('RUN', {mapa
 - **Tela nova** → `update*`/`render*` em `game.js` (switch de `G.screen`), entrada por
   `startTransition`; acrescente em `__debug.openScreen` e na lista `SCENES` do `test/inspect.mjs`.
 - **Balanceamento** → `config.js`; valide com `FORCE=3 node game/test/sim.mjs` e `npm test`.
+- **Eventos de playtest (diário de campo)** → `ptEvento("tipo", {...})` nos pontos discretos
+  (nunca por frame) e o consumo em `tools/playtest.mjs` (`resumir` + `alertas`). O diário vive em
+  `localStorage["fumiga_playtest_v1"]`, separado dos saves; teto de 4.000 eventos e nunca derruba
+  o jogo. Teste: `game/test/playtest.mjs`.
 
 ## 5. Armadilhas conhecidas
 
@@ -110,13 +121,27 @@ faltando e o último erro. No console: `FUMIGA.ajuda()`, `FUMIGA.go('RUN', {mapa
   `npm run serve` (sem cache).
 - **Árvore por mundos**: `META_STAGES`/`stage`/`META_POWER` em `config.js`; `treeStageRequirement` em `state.js`. Abrir galho exige os mapas anteriores; o fruto exige o próprio chefe. Compras antigas ficam ativas; Pálida segue futura. `tree-progression.mjs` protege gates, preços e valores.
 - **Save**: PC `fumiga_goat_save_v1`, mobile `fumiga_goat_mobile_save_v1`, debug `…_debug`.
-- **Cache do app instalável**: quem já jogou recebe o código do cache do Service Worker (`sw.js`).
-  Ele entrega o guardado e revalida atrás (stale-while-revalidate) e, a cada navegação, compara a
-  versão em `app/assets.json` — trocar `ASSET_V` já invalida o cache, sem precisar editar o `sw.js`.
-  Navegar para pasta vale `…/index.html` (normalização em `chaveDe`): sem ela, abrir o app sem
-  internet dava 504. O `?v=` do motor e o download do app usam a MESMA versão por isso.
+- **Cache do app instalável (`sw.js`)**: a versão ativa e a de cada cliente ficam **persistidas no
+  Cache Storage** — terminar/reiniciar o worker **não** perde o pacote baixado (era o 504 offline da
+  auditoria). Atualização é preparada e **verificada** antes de promover; versão anterior e snapshots
+  de abas abertas não são apagados por download falho/quota. Navegar para pasta vale `…/index.html`
+  (normalização em `chaveDe`). Trocar `ASSET_V` invalida o cache sem editar o `sw.js`; o `?v=` do
+  motor, dos assets e do download usam a MESMA versão. Testes: `pwa-worker.mjs` (VM, com rede/quota
+  simuladas) e o bloco novo do `pwa-browser.mjs`.
+- **Tela de carregamento**: a tarefa pesada é **essencial**. Se ela falhar (ou o `onFinish`), a tela
+  entra em `error` com **TENTAR NOVAMENTE / VOLTAR AO MENU** — nunca mostra 100% e nunca libera o
+  jogo num mundo pela metade. Arte panorâmica ausente continua sendo fallback silencioso. Regressão em
+  `game/test/regressions.mjs` + `regressions-browser.mjs`.
+- **Fim de partida**: `checkRunOutcome()` roda **antes** de curas e **depois** de cada `worldTick`,
+  no formigueiro e na superfície; por isso a Rainha morta encerra a partida mesmo com a cena de dentro
+  aberta (mutação morta por escudo/resgate continua sendo curada depois, no mesmo quadro).
 - **Testes headless** simulam DOM/canvas com Proxy: código novo que usa uma API de DOM
-  diferente pode precisar de guarda (`typeof document !== "undefined"`).
+  diferente pode precisar de guarda (`typeof document !== "undefined"`). Em especial, módulo
+  importado em teste de Node pode não ter `window` (ver a guarda da sessão do playtest em
+  `app/offline.js`).
+- **Diário de playtest**: chave própria (`fumiga_playtest_v1`), não misturar com os saves; a
+  confirmação de APAGAR é em dois toques — dois cliques no MESMO quadro viram um só (o teste usa
+  `__ptArmed()` para sincronizar; não troque por `waitForTimeout`).
 - **Capturas no sandbox**: não há fonte de emoji, então os ícones emoji dos botões de toque
   (🏠 🎯 ⏸) saem vazios nas capturas. No celular aparecem normalmente.
 - `docs.mjs` exige que os 6 documentos originais estejam **byte a byte** dentro do

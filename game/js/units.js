@@ -282,6 +282,13 @@ function rotationTick(dt, foes) {
 export { PACIFIC };
 
 // ------------------------------------------------------------------ rainha --
+// Registra o vale de HP ANTES de cura/resgate: recuperar a vida depois não
+// apaga a queda que invalida SANGUE FRIO. Também cobre alterações diretas de HP.
+function recordQueenHealth(q) {
+  if (q && G.run && q.maxHp > 0) {
+    G.run.queenMinHp = Math.min(G.run.queenMinHp ?? 1, clamp(q.hp / q.maxHp, 0, 1));
+  }
+}
 export function spawnQueen() {
   const m = mods();
   const A = world.anthill;
@@ -297,6 +304,7 @@ export function spawnQueen() {
       dmg *= mm.muts.dmgTaken * (1 - mm.queenArmor);
       dmg = fruitAllyDamage(this, dmg, attacker);
       this.hp -= dmg;
+      recordQueenHealth(this);
       fruitSurvive(this);
       this.flash = 0.14;
       SFX.queenHit();
@@ -422,8 +430,6 @@ export function spawnAnt(typeId, x, y, opts = {}) {
       this.hp -= dmg;
       fruitSurvive(this);
       this.hitT = 0.12;
-      // PROFECIA: SANGUE FRIO — o run lembra o pior momento da rainha
-      if (this.type === "queen" && G.run) G.run.queenMinHp = Math.min(G.run.queenMinHp ?? 1, Math.max(0, this.hp) / this.maxHp);
       // QUEIXO-DE-ARPÃO: escape jump - o coice da mandíbula a arremessa
       // longe do perigo (como a formiga real foge saltando)
       if (this.type === "trapjaw" && this.hp > 0 && attacker && Math.random() < 0.3) {
@@ -581,12 +587,13 @@ function hatchTick(dt) {
 
 // ----------------------------------------------------------------- update ---
 export function updateAllies(dt, foes) {
+  const q = allies.queen;
+  recordQueenHealth(q);
   fruitTick(dt);
   const m = mods();
   const run = G.run;
 
   // rainha
-  const q = allies.queen;
   if (q && !q.dead) {
     q.bob += dt;
     q.flash = Math.max(0, q.flash - dt);

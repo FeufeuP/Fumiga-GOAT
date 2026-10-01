@@ -73,7 +73,7 @@ entregam comida, cuidam das larvas e a Rainha põe ovos.
 A bateria headless do projeto roda sem navegador e sem dependências:
 
 ```bash
-npm test              # os 19 testes EM PARALELO, com resumo e tempos (~45 s)
+npm test              # os 30 testes EM PARALELO, com resumo e tempos (~50 s)
 npm run test:quick    # só os rápidos, para iterar (~10 s)
 node game/test/run-all.mjs --only=sim,tree   # só alguns
 
@@ -90,8 +90,19 @@ npm run inspect:layout    # auditoria de layout: todas as telas, com e sem FONTE
                           # texto fora da tela, colidindo, vazando da caixa, botões sobrepostos
 ```
 
-O **CI** (GitHub Actions) está pronto em [`tools/ci/testes.yml`](tools/ci/testes.yml): copiado para
-`.github/workflows/`, ele roda as duas coisas em todo push e guarda as capturas como artefato.
+**Playtest de campo** (aparelho real + balanceamento): o jogo grava um diário **local, sem PII**
+(expedições, poderes, falhas e o boot offline) e exporta em **OPÇÕES → aba TESTE → EXPORTAR DADOS**.
+O roteiro está em [`PLAYTEST.md`](PLAYTEST.md); os arquivos recebidos viram relatório com:
+
+```bash
+npm run playtest -- ~/Downloads/fumiga-playtest-*.json   # ou a pasta playtest/ do repo
+```
+
+O **CI** (GitHub Actions) está **ATIVO** em [`.github/workflows/testes.yml`](.github/workflows/testes.yml):
+roda a bateria headless e a inspeção no Chromium em todo push e guarda as capturas como artefato
+(o `main` ainda **não** tem proteção de branch/ruleset: exigir os checks antes do merge é um passo
+manual de quem publica). O modelo do workflow continua versionado em
+[`tools/ci/testes.yml`](tools/ci/testes.yml) para consulta.
 Para depurar, abra o jogo com **`?debug`** (ex.: `game/?debug&tela=RUN&mapa=3&seed=42&invencivel`):
 save separado, atalhos direto para qualquer tela e overlay de FPS (F3). Detalhes em
 [`AGENTS.md`](AGENTS.md).

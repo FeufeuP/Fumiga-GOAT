@@ -12,6 +12,7 @@
 //      "baixado" é "jogável sem internet", não só "arquivos no cache";
 //   5. abre a página do app (?v=mobile) offline e confere o botão JOGAR.
 import fs from "node:fs";
+import assert from "node:assert/strict";
 import { startServer } from "./lib/server.mjs";
 import { launchBrowser, watchPage } from "./lib/browser.mjs";
 
@@ -25,6 +26,7 @@ const problemas = [];
 const passos = [];
 const t0 = Date.now();
 
+try {
 const ctx = await browser.newContext({ viewport: { width: 420, height: 900 }, isMobile: true, hasTouch: true });
 const page = await ctx.newPage();
 watchPage(page, problemas);
@@ -127,6 +129,13 @@ dizer("cache " + "fumiga-" + versao + ": " + (cache.quantos || 0) + " arquivos g
 
 // ------------------------------------------------------- 3) offline: página --
 await ctx.setOffline(true);
+// O navegador termina workers ociosos; retomada não dispara install/activate.
+const swCdp = await ctx.newCDPSession(page);
+await swCdp.send("ServiceWorker.enable");
+await swCdp.send("ServiceWorker.stopAllWorkers");
+const retomada = await page.evaluate(async () => (await import("./app/offline.js")).mensagemSW({ type: "versao" }, { timeout: 10000 }));
+assert.equal(retomada.versao, versao, "worker retomado offline recupera a versão persistida");
+dizer("worker reiniciado offline: versão preservada " + retomada.versao);
 await page.reload({ waitUntil: "load" });
 await page.waitForFunction(() => {
   const e = document.getElementById("estadoEssencial");
@@ -179,9 +188,78 @@ dizer("app (?v=mobile): JOGAR → " + appPagina.jogar + " · " + appPagina.selo)
 if (!/game\/mobile\/$/.test(appPagina.jogar)) problemas.push("página do app não levou para a versão mobile: " + appPagina.jogar);
 await ap.screenshot({ path: OUT + "/3-app-offline.png", fullPage: true });
 
+// PC usa o MESMO pacote, com shell/save próprios, ainda sem conexão.
+const pc = await ctx.newPage();
+await pc.setViewportSize({ width: 1280, height: 720 });
+watchPage(pc, problemas);
+await pc.goto(BASE + "/game/", { waitUntil: "load" });
+await pc.waitForFunction(async () => (await import("./js/state.js")).G.screen !== "BOOT", null, { timeout: 60000 });
+await pc.screenshot({ path: OUT + "/4-pc-offline.png" });
+dizer("offline: boot do shell PC também OK");
+
+// Falhas deliberadas ficam em contexto separado: não contam como 404/console
+// inesperados da inspeção normal. Exercita o cliente e o Worker reais.
+const faultCtx = await browser.newContext({ viewport: { width: 1280, height: 720 } });
+const fp = await faultCtx.newPage();
+fp.on("pageerror", e => problemas.push("JS inesperado em regressão PWA: " + e.message));
+await fp.goto(BASE + "/", { waitUntil: "load" });
+await fp.waitForFunction(() => !!navigator.serviceWorker.controller, null, { timeout: 30000 });
+const before = await fp.evaluate(async () => {
+  const O = await import("./app/offline.js");
+  const lista = await O.carregarLista("");
+  const r = await O.baixarPacote({ lista });
+  return { lista, r };
+});
+assert.equal(before.r.falhas, 0);
+const next = { ...before.lista, version: before.lista.version + "-teste-falha" };
+await faultCtx.route("**/app/assets.json", route => route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify(next) }));
+await faultCtx.route("**/*", route => route.request().url().includes("v=" + next.version) ? route.abort("failed") : route.fallback());
+const failed = await fp.evaluate(async lista => {
+  const O = await import("./app/offline.js");
+  const r = await O.baixarPacote({ lista });
+  const version = await O.mensagemSW({ type: "versao" }, { timeout: 10000 });
+  const old = await O.progressoPacote({ lista: { ...lista, version: lista.version.replace(/-teste-falha$/, "") } });
+  return { r, version, old };
+}, next);
+assert.equal(failed.r.feitos, 0); assert.equal(failed.r.falhas, failed.r.total);
+assert.equal(failed.version.versao, before.lista.version);
+assert.equal(failed.old.completo, true, "update malsucedido mantém pacote anterior completo");
+dizer("update com " + failed.r.falhas + " falhas: cópia anterior preservada");
+
+const timedOut = await fp.evaluate(async () => {
+  const O = await import("./app/offline.js");
+  const reg = await navigator.serviceWorker.ready;
+  const post = reg.active.postMessage;
+  reg.active.postMessage = () => {}; // worker que não responde
+  let message = null;
+  try { await O.baixarPacote({ lista: await O.carregarLista(""), timeout: 30 }); }
+  catch (err) { message = err.message; }
+  finally { reg.active.postMessage = post; }
+  return message;
+});
+assert.match(timedOut, /tempo/, "timeout rejeita, nunca anuncia pacote completo");
+dizer("timeout: erro explícito, sem sucesso falso");
+await faultCtx.setOffline(true);
+const restart = await faultCtx.newCDPSession(fp);
+await restart.send("ServiceWorker.enable"); await restart.send("ServiceWorker.stopAllWorkers");
+assert.equal((await fp.reload({ waitUntil: "load" })).status(), 200);
+const rollbackVersion = await fp.evaluate(async () => (await import("./app/offline.js")).mensagemSW({ type: "versao" }, { timeout: 10000 }));
+assert.equal(rollbackVersion.versao, before.lista.version);
+const recovered = await faultCtx.newPage();
+await recovered.goto(BASE + "/game/mobile/", { waitUntil: "load" });
+await recovered.waitForFunction(async () => (await import("../js/state.js")).G.screen !== "BOOT", null, { timeout: 60000 });
+await recovered.screenshot({ path: OUT + "/5-update-falho-offline.png" });
+dizer("depois do update falho + restart: boot offline continua OK");
+await faultCtx.close();
+
+} catch (err) {
+  problemas.push(err.stack || String(err));
+} finally {
+  await browser.close();
+  if (server) await server.close();
+}
+
 // ------------------------------------------------------------------ veredito --
-await browser.close();
-if (server) await server.close();
 
 const segundos = ((Date.now() - t0) / 1000).toFixed(1);
 if (problemas.length) {

@@ -39,9 +39,14 @@ do canvas.
   Service Worker) guarda o que o jogo pede e recebe os pacotes por mensagem; a lista do que baixar é
   `app/assets.json`, **gerada** por `tools/make_assets_list.mjs` (nunca escrita à mão) com a versão do
   `ASSET_V` do jogo. Ícones em `app/icons/` (regeneráveis por `tools/make_pwa_icons.sh`).
+- **Robustez da atualização:** a versão ativa e a de cada cliente são persistidas no Cache Storage —
+  reiniciar o worker offline continua servindo o pacote baixado; a atualização é preparada e verificada
+  antes de promover, e a cópia anterior sobrevive a download falho, interrupção ou quota.
 - **Validar:** `npm run inspect:pwa` baixa o pacote essencial num Chromium, confere o Cache Storage,
-  **desliga a rede** e exige que a página abra e o jogo boote offline; `node game/test/pwa.mjs`
-  (dentro do `npm test`) protege a lista, os três manifests, o `sw.js` e todos os links das páginas.
+  **reinicia o worker com a rede desligada**, simula um update que falha de propósito, corta a resposta
+  do worker (timeout) e exige boot offline em PC + mobile; `node game/test/pwa.mjs` e
+  `node game/test/pwa-worker.mjs` (dentro do `npm test`) protegem a lista, os manifests, o `sw.js`, a
+  retomada e o rollback.
 
 > ⚠️ **Ao adicionar assets novos:** rode `node tools/make_assets_list.mjs` — o `test/pwa.mjs` compara
 > o arquivo versionado com a árvore real do repositório e falha se um sprite novo ficar fora do
@@ -289,12 +294,15 @@ defender a onda, coletar essência). `T` pula, e a preferência fica salva.
 ## Desenvolvimento
 
 - `js/` — módulos ES (game, units, enemies, waves, world, render, combat, particles,
-  tutorial, meta, nest, audio, config, state, ui, font, input, camera, utils)
+  tutorial, meta, nest, audio, config, state, ui, font, input, camera, utils, playtest)
 - `js/nest.js` — a cena de dentro do formigueiro (salas, túneis, IA das formigas: carregar,
   escavar, cuidar das larvas). Os bônus do grupo **CRIAÇÃO** da árvore entram aqui: escavação,
   berçário, despensa, postura da rainha, custo das câmaras.
 - `assets/` — sprites e fontes bitmap processados
 - `tools/prepare_assets.sh` — regenera os sprites a partir das fontes
+- `js/playtest.js` — diário de campo **local e sem PII**: sessões, expedições, compras, erros e o
+  comportamento do app instalável. O tester exporta em **OPÇÕES → aba TESTE**; os arquivos viram
+  relatório com `node ../tools/playtest.mjs <arquivos>` (roteiro em [`../PLAYTEST.md`](../PLAYTEST.md)).
 - TITLE: quatro PNGs com +128 px pintados por lado, desenhados em escala 1:1.
   Céu e cenário principal preservam o centro original; vegetação frontal e
   montanhas foram refeitas com aprovação visual. Principal e frente possuem
@@ -342,8 +350,24 @@ defender a onda, coletar essência). `T` pula, e a preferência fica salva.
   com orçamento +30% por ciclo (`director.cycle` em `js/waves.js`). Regressão de um bug em que a
   phase travava em `mapClear` para sempre no modo infinito (som de vitória em loop, controles
   bloqueados).
+- `test/regressions.mjs` — as regressões da auditoria de 2026-10-01 pelo **fluxo real**:
+  fim de partida com o ninho aberto/fechado (inclusive Renascimento, modo acessível e chefe final),
+  SANGUE FRIO com o dano real da Rainha (cura e resgate não apagam o vale), saves inválidos
+  (nível negativo/huge, tipos errados, `__proto__`, saldo não finito, quota) e o ciclo
+  erro → tentar novamente → voltar ao menu da tela de carregamento.
+- `test/pwa-worker.mjs` — o `sw.js` de verdade numa VM: reinício offline, migração do cache antigo,
+  staging que não vira fallback, falha de rede/quota, retomada, snapshots por cliente, pacotes
+  preservados na atualização automática e `limpar`.
+- `test/regressions-browser.mjs` — os mesmos temas em Chromium PC + mobile: proporção 16:9 e
+  scanlines em janela estreita com clique real, níveis de poder + reload, profecia, save, a tela
+  de erro do carregamento com fonte normal/grande (clique em TENTAR NOVAMENTE e VOLTAR AO MENU) e a
+  aba TESTE (exportação do diário com download real, APAGAR em dois toques e auditoria de layout).
+- `test/playtest.mjs` — o **diário de playtest** (`js/playtest.js`) e o relatório
+  (`tools/playtest.mjs`): gravação por padrão, teto de 4.000 eventos, ligar/desligar, apagar,
+  sessão com a rede desligada (A1), redes de erro e a agregação do arquivo exportado (funil por
+  mapa, poderes, economia, PWA e alertas), incluindo o CLI lendo uma pasta.
 
-Cheque tudo antes de subir (é o que o CI local usa):
+Cheque tudo antes de subir (é o que o CI usa):
 
 ```bash
 node test/run-all.mjs            # tudo em paralelo (= npm test na raiz)
