@@ -1,0 +1,21 @@
+{
+  "id": "fumiga/colonia-eterna-mobile",
+  "name": "FUMIGA — Colônia Eterna (Mobile)",
+  "short_name": "FUMIGA",
+  "description": "A versão de toque do FUMIGA: roguelite de colônia de formigas em pixel art, com controles de toque, instalável e jogável sem internet.",
+  "lang": "pt-BR",
+  "dir": "ltr",
+  "start_url": "../../app/online.html?v=mobile",
+  "scope": "../../",
+  "display": "standalone",
+  "display_override": ["fullscreen", "standalone"],
+  "orientation": "landscape",
+  "background_color": "#0a0812",
+  "theme_color": "#1d1127",
+  "categories": ["games", "entertainment"],
+  "icons": [
+    { "src": "../../app/icons/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "../../app/icons/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "../../app/icons/icon-512-maskable.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}

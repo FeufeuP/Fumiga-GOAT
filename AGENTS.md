@@ -32,6 +32,7 @@ npm run test:quick          # ~10 s: confirma que a base está verde
 | `npm run inspect:ui` | cliques/toques reais: páginas de Memórias/Profecias, replay, ninho, pausa e invocar | ~15 s |
 | `npm run inspect:hud` | HUD orgânico nos 6 biomas, tecla H, acessibilidade | ~40 s |
 | `npm run inspect:layout` | **auditoria de layout**: todas as telas PC + mobile, com e sem FONTE GRANDE — texto fora da tela, colidindo, vazando da caixa, botões sobrepostos, toque cobrindo o canvas | ~4 min |
+| `npm run inspect:pwa` | **app instalável**: instalabilidade (CDP), download do pacote essencial no cache, e o jogo bootando com a **rede desligada** | ~10 s |
 | `npm run serve` | servidor do preview **sem cache**, 0.0.0.0:8000 (use com `start_process`) | — |
 
 As capturas do `inspect` vão para `/tmp/fumiga-inspect/*.png` (fora do Git): **abra-as com
@@ -88,6 +89,10 @@ faltando e o último erro. No console: `FUMIGA.ajuda()`, `FUMIGA.go('RUN', {mapa
 - **Nova casta / inimigo / chefe / mutação / nó da árvore / câmara / mapa** → dados em
   `config.js`; comportamento em `units.js` / `enemies.js` / `mutations.js`; sprite novo no
   `MANIFEST` de `assets.js` (o `test/assets.mjs` acusa se faltar).
+- **Arte nova, arquivo movido ou qualquer byte mudado em `game/` ou `app/`** → rodar
+  `node tools/make_assets_list.mjs`. A lista `app/assets.json` alimenta o download offline (e o
+  `test/pwa.mjs` compara com a árvore real: esquecer quebra a bateria). Arquivo de arte que deixou de
+  ser usado pelo jogo vai para `art-source/` (Regra 13), não fica em `game/assets/`.
 - **Novo atalho de teclado** → trate em `game.js` **e** crie o botão/gesto em `mobile/touch.js`
   (Regra 9) + texto em `HELP_CONTROLS_TOUCH`.
 - **Tela nova** → `update*`/`render*` em `game.js` (switch de `G.screen`), entrada por
@@ -105,6 +110,11 @@ faltando e o último erro. No console: `FUMIGA.ajuda()`, `FUMIGA.go('RUN', {mapa
   `npm run serve` (sem cache).
 - **Árvore por mundos**: `META_STAGES`/`stage`/`META_POWER` em `config.js`; `treeStageRequirement` em `state.js`. Abrir galho exige os mapas anteriores; o fruto exige o próprio chefe. Compras antigas ficam ativas; Pálida segue futura. `tree-progression.mjs` protege gates, preços e valores.
 - **Save**: PC `fumiga_goat_save_v1`, mobile `fumiga_goat_mobile_save_v1`, debug `…_debug`.
+- **Cache do app instalável**: quem já jogou recebe o código do cache do Service Worker (`sw.js`).
+  Ele entrega o guardado e revalida atrás (stale-while-revalidate) e, a cada navegação, compara a
+  versão em `app/assets.json` — trocar `ASSET_V` já invalida o cache, sem precisar editar o `sw.js`.
+  Navegar para pasta vale `…/index.html` (normalização em `chaveDe`): sem ela, abrir o app sem
+  internet dava 504. O `?v=` do motor e o download do app usam a MESMA versão por isso.
 - **Testes headless** simulam DOM/canvas com Proxy: código novo que usa uma API de DOM
   diferente pode precisar de guarda (`typeof document !== "undefined"`).
 - **Capturas no sandbox**: não há fonte de emoji, então os ícones emoji dos botões de toque

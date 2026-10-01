@@ -29,6 +29,97 @@ repetições, datas, branches, checklists e notas históricas foram preservados.
 > Divergências permanecem visíveis, sem apagar conteúdo. O que efetivamente
 > funciona deve ser confirmado por testes e inspeção no preview.
 
+## Registro — Jogo instalável e baixável: PWA + download offline (2026-10-01, branch arena/01a0f670)
+
+**Status: implementado e verificado.** Pedido do usuário: *“Torne o jogo baixável, tanto no mobile
+quanto no PC, quero que seja possível instalar o Jogo no dispositivo”*.
+
+### Pesquisa de inspiração (Regra 2)
+
+- **PWA como caminho de instalação de web games** — [PWA e instalação para jogos](https://www.webgamedev.com/publishing/pwa):
+  instalar é o recurso mais valioso (ícone + tela cheia), e offline **não** é mais pré-requisito para instalar.
+- **Prompt nativo × iOS** — [iOS Add to Home Screen](https://openpwa.net/reference/installation/ios-add-to-home-screen/)
+  e [limitações do PWA no iOS](https://www.magicbell.com/blog/pwa-ios-limitations-safari-support-complete-guide):
+  Safari **não** tem `beforeinstallprompt`; a instalação é manual (Compartilhar → Adicionar à Tela de
+  Início) e a detecção correta é `(display-mode: standalone)` com `navigator.standalone` de reserva.
+- **Download sob demanda com barra de progresso** — [offline “baixar para jogar”](https://github.com/vy6ycr7tcc-debug/Animation/pull/64)
+  (precache de 320 MB só sob pedido, com progresso e retomada) e [Idle Ascension](https://github.com/brendanlong/idle-ascension/pull/42)
+  (`navigator.storage.persist()` para não perder cache/save, `skipWaiting`/`clientsClaim` para atualizar sem
+  interromper a partida).
+- **Instruções próprias para iOS** e sumiço do aviso em standalone — [Brackenfall](https://github.com/PirateKingInc/test-m5/issues/33).
+- **Nativo (Electron/APK) descartado** — [comparativo](https://abratabia.com/native-wrappers/): 150+ MB de
+  Chromium embutido e build por plataforma, contra a Regra 5 (JS puro, sem build).
+
+### Decisões do usuário (Regra 1 — respostas de 2026-10-01)
+
+| Pergunta | Escolha |
+|---|---|
+| Escopo | **PWA + DOWNLOAD OFFLINE** (instalável + baixar assets com progresso) |
+| Um app ou dois | **Dois apps**: “FUMIGA — Colônia Eterna (PC)” e “… (Mobile)”, com save próprio de cada versão |
+| Onde oferecer | **Fora do jogo**: a instalação/download é da **página do repositório**, não uma mecânica — nenhum botão novo dentro do canvas |
+| Página inicial | **Parar de redirecionar**: a raiz virou central com JOGAR em destaque (detecção de aparelho sugere a versão) |
+| Ícone | Rainha-formiga; após 3 rodadas de IA rejeitadas (dragão), aprovado na 4ª: **formiga em perfil osso-branco sobre halo pálido, moldura hexagonal** (arte da Pálida, Regra 8: inseto, nunca humanoide) |
+
+### Implementado
+
+- **`sw.js` (raiz do repositório).** Escopo de Service Worker = pasta onde ele mora; o **GitHub Pages não
+  permite `Service-Worker-Allowed`**, então a raiz é o único lugar que cobre `/game/` e `/game/mobile/`
+  tanto no Pages (subpasta) quanto no servidor local (raiz). Guarda tudo do próprio site em cache:
+  navegação para pasta normaliza para `…/index.html` (**sem isso o app instalado dava 504 offline**);
+  código é servido do cache e revalidado atrás (stale-while-revalidate); a cada navegação compara a versão
+  de `app/assets.json` e troca o cache sozinho quando o `ASSET_V` sobe (sem exigir editar o `sw.js`);
+  `skipWaiting` + `clients.claim`; mensagens `versao`, `baixar` (com progresso) e `limpar`.
+- **`app/assets.json` — gerado por `tools/make_assets_list.mjs`** (nunca à mão), com três grupos disjuntos
+  e `tamanhos` por arquivo; a prova de cobertura é contra a **árvore real** do repositório:
+  **shell** 52 arquivos / 1,2 MB (HTML, CSS, 34 módulos ES, ícones) · **essencial** 156 / 17,1 MB
+  (sprites, fontes, TÍTULO, telas de carga, maçãs/flores/lore) · **completo** 18 / 36,5 MB (7 santuários +
+  11 camadas da Noite Branca). Pacotes: **ESSENCIAL 18,3 MB (208 arquivos)** e **COMPLETO 54,9 MB (226)**.
+- **Página oficial (`index.html`, raiz)** — JOGAR (com a versão do aparelho detectada) + INSTALAR (prompt
+  nativo no Chromium; passo a passo ilustrado no iOS; nada em standalone) + BAIXAR PARA JOGAR OFFLINE
+  (ESSENCIAL/COMPLETO com barra, status por pacote, espaço usado e LIBERAR ESPAÇO). **Sem redirecionamento.**
+- **Três manifests** (`/manifest.webmanifest`, `game/manifest.webmanifest`, `game/mobile/manifest.webmanifest`)
+  com `start_url` → `app/online.html?v=pc|mobile`, ícones 192/512 + **maskable**, `display: standalone`,
+  `orientation: landscape`; páginas `game/` e `game/mobile/` linkando o manifest da sua versão.
+- **`app/online.html`** (start_url dos três manifests): leva para a versão certa e é a central de download
+  dentro do app instalado; **`app/offline.js`** concentra detecção de ambiente, registro do SW, download
+  com progresso, contagem do que já está no cache (lotes paralelos de 32), persistência de armazenamento e
+  limpeza; **`app/app.css`** na identidade do jogo.
+- **Ícones (`app/icons/`, 6 arquivos, 420 KB)** gerados por `tools/make_pwa_icons.sh` a partir do original
+  aprovado `art-source/pwa/icone_palida.png` (1024×1024, fora do Git — Regra 13) com espelho em
+  `~/art-source-backup/pwa/`. Inclui `apple-touch-icon-180` e favicons.
+- **Peso do repositório**: 3 artefatos brutos saíram de `game/assets/` para `art-source/` (Regra 13):
+  `loading_planicie_raw.png` (byte-idêntico ao otimizado), `loading_floresta_raw.png` e
+  `parallax/menu/_raw_main.png` (órfãos, sem referência no código). `game/` foi de 67 MB para **56 MB**.
+- **Testes**: `game/test/pwa.mjs` entrou na bateria (`npm test` → **26 testes**) — cobrança de lista em dia,
+  cobertura sem órfão, manifests (campos, ícones existentes e no tamanho declarado lido do IHDR),
+  sanidade do `sw.js`, todos os links locais dos 4 HTMLs e os exports de `offline.js`;
+  `npm run inspect:pwa` (`game/test/pwa-browser.mjs`) prova no navegador: instalabilidade via CDP,
+  download real, cache no Cache Storage e **jogo bootando com a rede desligada**.
+
+### Verificação
+
+| Comando | Resultado |
+|---|---|
+| `npm test` | **26/26 verdes** (53,6 s) — inclui o `pwa` novo |
+| `npm run inspect` | **verde** — 106,8 s: PC + mobile, 9 telas, 6 mapas, sem erro de JS/404/glifo |
+| `npm run inspect:pwa` | **verde** — instalabilidade sem erros em `/` e `/game/mobile/`; 208 arquivos baixados; status “baixado ✓ (18 MB)”; **jogo bootou offline** e a página do app roteou para a versão mobile |
+| `npm run inspect:tree` | **verde** — 548 detalhes + arte, gestos, compras e Renascimento no navegador |
+
+### Limitações e próximos passos
+
+- **iOS não tem convite de instalação** (limite da Apple): a página ensina o caminho do Safari. Também não
+  há `beforeinstallprompt` em Firefox desktop/Safari desktop — nesses casos a página explica o menu do navegador.
+- O pacote **COMPLETO** leva os santuários e a Noite Branca tal como estão (sem otimizar): são 36,5 MB, os
+  mesmos arquivos que o jogo já baixava sob demanda. Reproduzir as telas de carga no tamanho nativo
+  (como feito com `loading_planicie`) e recomprimir os santuários é o próximo corte grande de peso.
+- `npm run inspect:pwa` **ainda não roda no CI** (o agente não tem a permissão `workflows` para editar
+  `.github/workflows/`). Para ligar, o dono do repositório acrescenta um passo ao job `navegador`:
+  `- run: node game/test/pwa-browser.mjs`.
+- O Service Worker só existe em HTTPS/localhost (exigência do navegador): em servidor local use
+  `npm run serve`; um `python3 -m http.server` em `127.0.0.1` também vale, mas em `file://` não há SW.
+- Pendências do relatório anterior que continuam de pé (não fazem parte deste pedido): flores/3 estágios só
+  na Planície, níveis 2–3 sem poder próprio e `KeyB`/`KeyG` lidos depois dos `return` de draft/transição/pausa.
+
 ## Correção — CI vermelha: a tela de carregamento engolia o input do teste do HUD (2026-09-30)
 
 **Status: implementado e verificado. Correção de teste — nenhum comportamento do jogo mudou.**

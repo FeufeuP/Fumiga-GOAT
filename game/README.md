@@ -6,8 +6,9 @@ Arte inspirada em **Dead Cells** e **Celeste**; sprites do próprio repositório
 
 ## Como jogar
 
-**No navegador, sem instalar nada:** <https://feufeup.github.io/Fumiga-GOAT/> — o endereço acima
-cai direto no jogo.
+**No navegador:** <https://feufeup.github.io/Fumiga-GOAT/> — a página oficial abre com
+**JOGAR**, **INSTALAR O APP** e **BAIXAR PARA JOGAR OFFLINE** (a detecção de aparelho já sugere a
+versão certa: PC ou mobile).
 
 Ou sirva a pasta `game/` por HTTP (módulos ES exigem servidor; abrir o arquivo direto não funciona):
 
@@ -16,6 +17,35 @@ cd game
 python3 -m http.server 8080
 # abra http://localhost:8080
 ```
+
+## 📲 Instalar e jogar sem internet (app instalável)
+
+O FUMIGA é um **app web instalável** (PWA): vive no endereço oficial, mas ganha ícone próprio no
+aparelho e roda **sem internet** depois de baixado. Nada disso é mecânica de jogo — a instalação e o
+download ficam na página oficial (raiz do site) e na página do app (`app/online.html`), nunca dentro
+do canvas.
+
+- **Instalar:** no Android/Chrome e no Windows/macOS/Linux (Chrome/Edge) o botão **INSTALAR** abre o
+  convite nativo; no **iPhone/iPad** a Apple não oferece convite — a página mostra o passo a passo
+  (Safari → Compartilhar → **Adicionar à Tela de Início**).
+- **Dois apps, duas versões:** `/game/` instala **“FUMIGA — Colônia Eterna (PC)”** e `/game/mobile/`
+  instala **“FUMIGA — Colônia Eterna (Mobile)”**; a raiz instala só **FUMIGA** e, ao abrir, leva para
+  a versão do aparelho. Os saves continuam separados (PC e mobile não se conectam).
+- **Baixar offline:** dois pacotes, com barra de progresso e status do que já está no aparelho —
+  **ESSENCIAL (~18 MB, 208 arquivos)**: o jogo todo, os 6 biomas e a árvore; **COMPLETO (~55 MB)**:
+  soma os 7 santuários dos frutos e a cutscene da Noite Branca. O botão **LIBERAR ESPAÇO** apaga os
+  caches.
+- **Como funciona:** `sw.js` (raiz do repositório — o GitHub Pages não permite ampliar escopo de
+  Service Worker) guarda o que o jogo pede e recebe os pacotes por mensagem; a lista do que baixar é
+  `app/assets.json`, **gerada** por `tools/make_assets_list.mjs` (nunca escrita à mão) com a versão do
+  `ASSET_V` do jogo. Ícones em `app/icons/` (regeneráveis por `tools/make_pwa_icons.sh`).
+- **Validar:** `npm run inspect:pwa` baixa o pacote essencial num Chromium, confere o Cache Storage,
+  **desliga a rede** e exige que a página abra e o jogo boote offline; `node game/test/pwa.mjs`
+  (dentro do `npm test`) protege a lista, os três manifests, o `sw.js` e todos os links das páginas.
+
+> ⚠️ **Ao adicionar assets novos:** rode `node tools/make_assets_list.mjs` — o `test/pwa.mjs` compara
+> o arquivo versionado com a árvore real do repositório e falha se um sprite novo ficar fora do
+> download (e o `ASSET_V` de `js/assets.js` define a versão do cache).
 
 ## 📱 Versão mobile (paralela)
 
@@ -318,6 +348,12 @@ Cheque tudo antes de subir (é o que o CI local usa):
 ```bash
 node test/run-all.mjs            # tudo em paralelo (= npm test na raiz)
 node test/run-all.mjs --quick    # só os rápidos
+```
+
+Para o app instalável (download offline de verdade, num Chromium):
+
+```bash
+npm run inspect:pwa     # baixa, confere o cache e reabre com a REDE DESLIGADA
 ```
 
 Para inspeção visual do layout das telas internas (gera PNG fora do repo):
