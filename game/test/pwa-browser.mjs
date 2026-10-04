@@ -3,9 +3,8 @@
 //      BASE_URL=http://host:porta  ·  PWA_SHOTS=/pasta  (capturas fora do Git)
 //
 // O que ele faz de verdade, num Chromium:
-//   1. abre a página oficial (raiz) e confere que ela diz os tamanhos certos;
-//   2. clica em BAIXAR ESSENCIAL, acompanha a barra até 100% e confere no
-//      Cache Storage que os arquivos chegaram;
+//   1. abre a página oficial (raiz) e confere o tamanho do pacote completo;
+//   2. clica em BAIXAR JOGO COMPLETO, acompanha a barra e confere no Cache Storage;
 //   3. DESLIGA A REDE e recarrega: a página tem que abrir mesmo assim;
 //   4. com a rede desligada, entra em /game/ e espera o jogo BOOTAR (G.screen
 //      diferente de BOOT, sem 404 e sem erro de JS) — é o teste que prova que
@@ -36,22 +35,20 @@ const dizer = (msg) => { passos.push(msg); console.log("  " + msg); };
 // ---------------------------------------------------------------- 1) página --
 await page.goto(BASE + "/", { waitUntil: "load" });
 await page.waitForFunction(() => {
-  const t = document.getElementById("tamEssencial");
-  const e = document.getElementById("estadoEssencial");
+  const t = document.getElementById("tamCompleto");
+  const e = document.getElementById("estadoCompleto");
   return t && t.textContent.includes("MB") && e && !e.textContent.includes("verificando");
 }, null, { timeout: 30000 });
 const tamanhos = await page.evaluate(() => ({
-  essencial: document.getElementById("tamEssencial").textContent,
   completo: document.getElementById("tamCompleto").textContent,
   jogar: document.getElementById("btnJogar").getAttribute("href"),
-  estadoEssencial: document.getElementById("estadoEssencial").textContent,
+  estado: document.getElementById("estadoCompleto").textContent,
+  parcial: !!document.getElementById("btnEssencial"),
 }));
-dizer("página oficial: essencial" + tamanhos.essencial.replace("·", "") + " · completo" + tamanhos.completo.replace("·", ""));
-dizer("estado inicial: " + tamanhos.estadoEssencial.trim());
-if (!/^\d+,\d+ MB · \d+ arquivos$/.test(tamanhos.essencial.replace("· ", "·").replace(" · ", " · ").trim())) {
-  // formato tolerante: o essencial precisa ao menos citar MB e a contagem
-  if (!/MB/.test(tamanhos.essencial) || !/arquivos/.test(tamanhos.essencial)) problemas.push("tamanho do pacote essencial não foi preenchido");
-}
+dizer("página oficial: pacote completo" + tamanhos.completo.replace("·", ""));
+dizer("estado inicial: " + tamanhos.estado.trim());
+if (!/MB/.test(tamanhos.completo) || !/arquivos/.test(tamanhos.completo)) problemas.push("tamanho do pacote completo não foi preenchido");
+if (tamanhos.parcial) problemas.push("a página ainda oferece um botão parcial ESSENCIAL");
 if (!/game\/mobile\/$/.test(tamanhos.jogar)) problemas.push("JOGAR deveria apontar para a versão mobile num aparelho de toque (foi " + tamanhos.jogar + ")");
 
 // o manifest da raiz responde e é válido?
@@ -95,25 +92,23 @@ dizer("service worker: ativo=" + sw.ativo + " controlando=" + sw.controla);
 // -------------------------------------------------------------- 2) download --
 const versao = await page.evaluate(async () => (await (await fetch("app/assets.json", { cache: "no-store" })).json()).version);
 
-await page.click("#btnEssencial");
+await page.click("#btnCompleto");
 await page.waitForFunction(() => {
   const t = document.getElementById("progEsq");
-  return t && (t.textContent.includes("pronto!") || t.textContent.includes("faltando") || t.textContent.includes("não deu"));
+  return t && (t.textContent.includes("pronto!") || t.textContent.includes("faltam") || t.textContent.includes("não deu"));
 }, null, { timeout: 180000 });
 await page.waitForFunction(() => {
-  const e = document.getElementById("estadoEssencial");
+  const e = document.getElementById("estadoCompleto");
   return e && e.textContent.includes("baixado ✓");
 }, null, { timeout: 120000 }).catch(() => {});
 const depois = await page.evaluate(() => ({
   progresso: document.getElementById("progEsq").textContent,
-  essencial: document.getElementById("estadoEssencial").textContent,
-  completo: document.getElementById("estadoCompleto").textContent,
+  estado: document.getElementById("estadoCompleto").textContent,
 }));
 dizer("download: " + depois.progresso.trim());
-dizer("estado: " + depois.essencial.trim());
-if (depois.progresso.includes("não deu") || depois.progresso.includes("faltando")) problemas.push("download do pacote essencial falhou: " + depois.progresso);
-if (!depois.essencial.includes("baixado ✓")) problemas.push("status do essencial não ficou completo: " + depois.essencial);
-if (!depois.completo.includes("arquivos") && !depois.completo.includes("baixado")) problemas.push("status do pacote completo não indicou parcial: " + depois.completo);
+dizer("estado: " + depois.estado.trim());
+if (depois.progresso.includes("não deu") || depois.progresso.includes("faltam")) problemas.push("download do pacote completo falhou: " + depois.progresso);
+if (!depois.estado.includes("baixado ✓")) problemas.push("status do pacote completo não ficou completo: " + depois.estado);
 await page.screenshot({ path: OUT + "/1-baixado.png", fullPage: true });
 
 const cache = await page.evaluate(async (v) => {
@@ -138,17 +133,17 @@ assert.equal(retomada.versao, versao, "worker retomado offline recupera a versã
 dizer("worker reiniciado offline: versão preservada " + retomada.versao);
 await page.reload({ waitUntil: "load" });
 await page.waitForFunction(() => {
-  const e = document.getElementById("estadoEssencial");
+  const e = document.getElementById("estadoCompleto");
   return e && !e.textContent.includes("verificando");
 }, null, { timeout: 60000 }).catch(() => {});
 const offlinePagina = await page.evaluate(() => {
   const selo = document.getElementById("selo");
-  const ess = document.getElementById("estadoEssencial");
-  return { selo: selo && selo.textContent, essencial: ess && ess.textContent };
+  const status = document.getElementById("estadoCompleto");
+  return { selo: selo && selo.textContent, completo: status && status.textContent };
 });
-dizer("offline: a página abriu — " + (offlinePagina.essencial || "").trim());
-if (!offlinePagina.essencial || !offlinePagina.essencial.includes("baixado ✓")) {
-  problemas.push("com a rede desligada a página não reconheceu o download: " + JSON.stringify(offlinePagina));
+dizer("offline: a página abriu — " + (offlinePagina.completo || "").trim());
+if (!offlinePagina.completo || !offlinePagina.completo.includes("baixado ✓")) {
+  problemas.push("com a rede desligada a página não reconheceu o pacote completo: " + JSON.stringify(offlinePagina));
 }
 
 // -------------------------------------------------- 4) offline: o jogo roda --
@@ -176,7 +171,7 @@ watchPage(ap, problemas);
 await ap.goto(BASE + "/app/online.html?v=mobile", { waitUntil: "load" });
 await ap.waitForFunction(() => {
   const b = document.getElementById("btnJogar");
-  const e = document.getElementById("estadoEssencial");
+  const e = document.getElementById("estadoCompleto");
   return b && /game\/mobile\//.test(b.getAttribute("href") || "") && e && !e.textContent.includes("verificando");
 }, null, { timeout: 60000 });
 const appPagina = await ap.evaluate(() => ({

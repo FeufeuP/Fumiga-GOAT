@@ -34,6 +34,8 @@ function listaValida(lista) {
   } catch { return false; }
 }
 const urlsGrupo = (lista, id) => (lista.grupos.find(g => g.id === id)?.files || []).map(f => urlLocal(f, lista.version));
+const urlsRecursos = lista => lista.grupos.filter(g => g.id !== "shell")
+  .flatMap(g => g.files.map(f => urlLocal(f, lista.version)));
 const jsonResponse = value => new Response(JSON.stringify(value), { headers: { "Content-Type": "application/json; charset=utf-8" } });
 async function lerJSON(cache, url) {
   try { const r = await cache.match(url, { ignoreSearch: true }); return r?.ok ? await r.json() : null; }
@@ -160,9 +162,9 @@ async function atualizar(lista) {
     const antiga = await caches.open(CACHE);
     const listaAntiga = await lerJSON(antiga, LISTA_URL);
     if (listaValida(listaAntiga)) {
-      for (const id of ["essencial", "completo"]) {
-        if (await verificar(antiga, urlsGrupo(listaAntiga, id))) urls.push(...urlsGrupo(lista, id));
-      }
+      // Só migra o pacote de recursos se a versão anterior tinha TODOS os
+      // assets. Também reconhece a lista antiga (grupos essencial + completo).
+      if (await verificar(antiga, urlsRecursos(listaAntiga))) urls.push(...urlsRecursos(lista));
     }
   }
   const r = await preparar(lista, urls);

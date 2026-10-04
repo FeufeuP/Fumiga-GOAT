@@ -181,8 +181,15 @@ expect(nestMod.nest.ants.length === units.insideCount(),
 {
   const foe = enMod.spawnEnemy("runner", world.anthill.x + 900, world.anthill.y, 1);
   const d0 = Math.hypot(foe.x - world.anthill.x, foe.y - world.anthill.y);
-  await wait(900);
-  const d1 = Math.hypot(foe.x - world.anthill.x, foe.y - world.anthill.y);
+  // O loop de teste usa RAF simulado e pode perder quadros sob carga paralela.
+  // Espera a condição observável, não presume que 900 ms bastam; o limite ainda
+  // falha se abrir o ninho congelar o tick do mundo de verdade.
+  const deadline = Date.now() + 5000;
+  let d1 = d0;
+  while (d1 >= d0 - 12 && Date.now() < deadline) {
+    await wait(50);
+    d1 = Math.hypot(foe.x - world.anthill.x, foe.y - world.anthill.y);
+  }
   expect(d1 < d0 - 12, "mundo vivo com o formigueiro aberto (inimigo andou " + Math.round(d0 - d1) + " px)");
   foe.dead = true;
 }

@@ -24,7 +24,7 @@ npm run test:quick          # ~10 s: confirma que a base está verde
 | Comando | Para quê | Tempo |
 |---|---|---|
 | `npm run test:quick` | enquanto implementa (sem uitest/endless/mobile) | ~10 s |
-| `npm test` | bateria completa em paralelo (a mesma do CI) — inclui `regressions`, `pwa-worker`, `playtest` e `regressions-browser` | ~50 s |
+| `npm test` | bateria completa em paralelo (a mesma do CI) — inclui `regressions`, `pwa-worker`, `native-packages`, `playtest` e `regressions-browser` | ~55 s |
 | `node game/test/run-all.mjs --only=sim,tree` | só alguns testes | — |
 | `npm run inspect` | **joga no navegador**: PC + mobile, todas as telas, 6 mapas; erros JS, 404, glifos “?”, FPS | ~100 s |
 | `node game/test/inspect.mjs --pc --telas=TREE,RUN-MAPA3` | inspeção focada | ~10 s |
@@ -32,7 +32,8 @@ npm run test:quick          # ~10 s: confirma que a base está verde
 | `npm run inspect:ui` | cliques/toques reais: páginas de Memórias/Profecias, replay, ninho, pausa e invocar | ~15 s |
 | `npm run inspect:hud` | HUD orgânico nos 6 biomas, tecla H, acessibilidade | ~40 s |
 | `npm run inspect:layout` | **auditoria de layout**: todas as telas PC + mobile, com e sem FONTE GRANDE — texto fora da tela, colidindo, vazando da caixa, botões sobrepostos, toque cobrindo o canvas | ~4 min |
-| `npm run inspect:pwa` | **app instalável**: instalabilidade (CDP), download do pacote essencial no cache, **reinício do worker com a rede desligada**, update que falha de propósito (a cópia anterior tem que sobreviver), timeout e boot offline em PC + mobile | ~20 s |
+| `npm run inspect:pwa` | **app instalável**: pacote único completo (231 arquivos), **reinício do worker com a rede desligada**, update que falha de propósito (a cópia anterior tem que sobreviver), timeout e boot offline em PC + mobile | ~20 s |
+| `node game/test/native-packages.mjs` | Android GeckoView embutido + loopback/CSP + Electron/NSIS x64: sem rede externa no runtime e cobertura integral dos assets | ~1 s |
 | `npm run playtest` | lê os JSONs de teste de campo (pasta `playtest/` ou caminhos) e gera o relatório de balanceamento/PWA | ~1 s |
 | `npm run serve` | servidor do preview **sem cache**, 0.0.0.0:8000 (use com `start_process`) | — |
 
@@ -96,10 +97,10 @@ faltando e o último erro. No console: `FUMIGA.ajuda()`, `FUMIGA.go('RUN', {mapa
 - **Nova casta / inimigo / chefe / mutação / nó da árvore / câmara / mapa** → dados em
   `config.js`; comportamento em `units.js` / `enemies.js` / `mutations.js`; sprite novo no
   `MANIFEST` de `assets.js` (o `test/assets.mjs` acusa se faltar).
-- **Arte nova, arquivo movido ou qualquer byte mudado em `game/` ou `app/`** → rodar
-  `node tools/make_assets_list.mjs`. A lista `app/assets.json` alimenta o download offline (e o
-  `test/pwa.mjs` compara com a árvore real: esquecer quebra a bateria). Arquivo de arte que deixou de
-  ser usado pelo jogo vai para `art-source/` (Regra 13), não fica em `game/assets/`.
+- **Arte nova, arquivo movido ou qualquer byte mudado em `game/` ou `app/`** → subir `ASSET_V`, rodar
+  `node tools/make_assets_list.mjs` e sincronizar os shells nativos com `node tools/sync-native-assets.mjs`.
+  `app/assets.json` alimenta o único download offline completo (231 arquivos, ~55,8 MiB); `test/pwa.mjs`
+  compara a lista com a árvore real. Arquivo de arte não usado vai para `art-source/` (Regra 13).
 - **Novo atalho de teclado** → trate em `game.js` **e** crie o botão/gesto em `mobile/touch.js`
   (Regra 9) + texto em `HELP_CONTROLS_TOUCH`.
 - **Tela nova** → `update*`/`render*` em `game.js` (switch de `G.screen`), entrada por
@@ -122,12 +123,10 @@ faltando e o último erro. No console: `FUMIGA.ajuda()`, `FUMIGA.go('RUN', {mapa
 - **Árvore por mundos**: `META_STAGES`/`stage`/`META_POWER` em `config.js`; `treeStageRequirement` em `state.js`. Abrir galho exige os mapas anteriores; o fruto exige o próprio chefe. Compras antigas ficam ativas; Pálida segue futura. `tree-progression.mjs` protege gates, preços e valores.
 - **Save**: PC `fumiga_goat_save_v1`, mobile `fumiga_goat_mobile_save_v1`, debug `…_debug`.
 - **Cache do app instalável (`sw.js`)**: a versão ativa e a de cada cliente ficam **persistidas no
-  Cache Storage** — terminar/reiniciar o worker **não** perde o pacote baixado (era o 504 offline da
-  auditoria). Atualização é preparada e **verificada** antes de promover; versão anterior e snapshots
-  de abas abertas não são apagados por download falho/quota. Navegar para pasta vale `…/index.html`
-  (normalização em `chaveDe`). Trocar `ASSET_V` invalida o cache sem editar o `sw.js`; o `?v=` do
-  motor, dos assets e do download usam a MESMA versão. Testes: `pwa-worker.mjs` (VM, com rede/quota
-  simuladas) e o bloco novo do `pwa-browser.mjs`.
+  Cache Storage**; atualização só migra recursos quando a cópia anterior tinha todos os assets. Há um
+  único botão de download completo na PWA. Os shells Android/Electron, por sua vez, trazem os arquivos
+  dentro do APK/instalador e não pedem rede. Testes: `pwa-worker.mjs`, `pwa-browser.mjs` e
+  `native-packages.mjs`.
 - **Tela de carregamento**: a tarefa pesada é **essencial**. Se ela falhar (ou o `onFinish`), a tela
   entra em `error` com **TENTAR NOVAMENTE / VOLTAR AO MENU** — nunca mostra 100% e nunca libera o
   jogo num mundo pela metade. Arte panorâmica ausente continua sendo fallback silencioso. Regressão em
@@ -153,19 +152,16 @@ faltando e o último erro. No console: `FUMIGA.ajuda()`, `FUMIGA.go('RUN', {mapa
 
 **O merge só acontece com os testes verdes** (decisão do usuário, 2026-09-23).
 
-O workflow está pronto em `tools/ci/testes.yml` (bateria headless + inspeção no Chromium, com
-capturas como artefato). Ele **só liga** quando estiver em `.github/workflows/testes.yml`, e o app
-do GitHub do agente **não pode** criar arquivos ali (falta a permissão `workflows`: o push é
-recusado). Não coloque o arquivo em `.github/workflows/` pelo agente, porque isso trava todo push.
+- `.github/workflows/testes.yml` executa a bateria e inspeção do navegador.
+- `.github/workflows/pacotes-nativos.yml` compila APK debug temporário + instalador Windows x64
+  no push da branch Arena; o APK debug não é para distribuição. O acionamento manual e a Release
+  compilam APK assinado e exigem os quatro Actions secrets descritos em `installers/README.md`.
+  Só a Release publicada recebe APK assinado, EXE e checksums; nunca publicar APK release sem assinatura.
+- Se `gh secret set` responder `403 Resource not accessible by integration`, login GitHub pode
+  estar ativo sem permissão de escrita para Actions secrets. Não exponha a chave nem publique uma
+  Release vazia; peça para o usuário habilitar essa permissão na conexão do Arena ou configurar os
+  secrets em GitHub Settings → Secrets and variables → Actions. Nunca peça token/senha no chat.
 
-Enquanto o CI não estiver ativo, a trava é local:
-```bash
-npm test && npm run inspect                # os dois precisam passar
-git push origin <branch-da-sessão>
-gh pr create --base main --fill && gh pr merge --merge
-```
-Com o CI ativo (arquivo em `.github/workflows/`), troque a última linha por:
-```bash
-gh pr create --base main --fill && gh pr checks --watch --fail-fast && gh pr merge --merge
-```
-Se algo falhar: corrija e repita. Não delete o branch.
+Enquanto o CI de pacotes estiver bloqueado, não anunciar downloads funcionais no site; só criar a
+Release depois que os dois builds tiverem passado e os três anexos (APK, EXE e checksums) estiverem
+confirmados.

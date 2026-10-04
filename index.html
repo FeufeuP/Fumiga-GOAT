@@ -4,14 +4,12 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <title>FUMIGA — Colônia Eterna</title>
-<meta name="description" content="Roguelite de colônia de formigas em pixel art. Jogue no navegador, instale como aplicativo e baixe para jogar sem internet.">
+<meta name="description" content="Roguelite de colônia de formigas em pixel art. Baixe os instaladores completos para Android e Windows, ou jogue no navegador.">
 <meta name="theme-color" content="#1d1127">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="FUMIGA">
-<!-- Instalável: o manifest da raiz. Quem instala daqui escolhe a versão ao
-     abrir o app (a página detecta o aparelho e leva para a certa). -->
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="apple-touch-icon" href="app/icons/apple-touch-icon-180.png">
 <link rel="icon" type="image/png" sizes="32x32" href="app/icons/favicon-32.png">
@@ -26,72 +24,50 @@
     <span class="selo" id="selo">carregando…</span>
   </header>
 
-  <!-- ------------------------------------------------------------------ 1 --- -->
   <section class="cartao" id="cartaoJogar">
-    <h2>JOGAR AGORA <span class="tag">SEM INSTALAR</span></h2>
-    <p>Direto no navegador, com a versão certa para o seu aparelho. Não precisa baixar nada.</p>
+    <h2>JOGAR AGORA <span class="tag">NO NAVEGADOR</span></h2>
+    <p>Abra direto, sem instalar. No computador use teclado e mouse; no celular use os controles de toque.</p>
     <div class="linha">
       <a class="botao grande" id="btnJogar" href="game/">▶ JOGAR</a>
     </div>
     <div class="linha">
-      <a class="botao secundario" id="btnPc" href="game/">🖥 versão PC (teclado e mouse)</a>
-      <a class="botao secundario" id="btnMobile" href="game/mobile/">📱 versão mobile (toque)</a>
+      <a class="botao secundario" id="btnPc" href="game/">🖥 versão PC</a>
+      <a class="botao secundario" id="btnMobile" href="game/mobile/">📱 versão mobile</a>
     </div>
-    <p class="fino">As duas versões usam o mesmo motor e têm saves separados: o progresso de uma não aparece na outra.</p>
+    <p class="fino">As duas versões usam o mesmo motor e têm saves separados.</p>
   </section>
 
-  <!-- ------------------------------------------------------------------ 2 --- -->
   <section class="cartao" id="cartaoInstalar">
-    <h2>INSTALAR O APP <span class="tag" id="tagInstalar">ADICIONA UM ÍCONE NO APARELHO</span></h2>
-    <p id="textoInstalar">Abre em tela cheia, com ícone próprio — como um aplicativo de verdade.</p>
+    <h2>INSTALADORES COMPLETOS <span class="tag">OFFLINE · SEM LOJA</span></h2>
+    <p>Os instaladores completos estão em preparação. Quando publicados, vão incluir todos os 6 biomas, sprites, santuários e cutscenes para jogar sem internet.</p>
     <div class="linha">
-      <button class="botao ambar" id="btnInstalar" hidden>⬇ INSTALAR</button>
-      <button class="botao secundario" id="btnMostrarPassos" hidden>VER COMO INSTALAR NO IPHONE/iPAD</button>
+      <button class="botao ambar" type="button" disabled>APK ANDROID — EM PREPARAÇÃO</button>
+      <button class="botao" type="button" disabled>INSTALADOR WINDOWS 64-BIT (.EXE) — EM PREPARAÇÃO</button>
     </div>
-    <ul class="passos" id="passosIOS">
-      <li><span class="num">1</span><span>Abra esta página no <b>Safari</b> (no iPhone e no iPad a instalação só funciona por ele).</span></li>
-      <li><span class="num">2</span><span>Toque no botão <b>Compartilhar</b> — o quadrado com a seta para cima, na barra de baixo.</span></li>
-      <li><span class="num">3</span><span>Role a lista e toque em <b>Adicionar à Tela de Início</b>.</span></li>
-      <li><span class="num">4</span><span>Confirme em <b>Adicionar</b>: o ícone da formiga aparece junto dos seus apps.</span></li>
-    </ul>
-    <p class="fino" id="avisoInstalar">No Windows, macOS e Linux o mesmo botão instala pelo Chrome ou Edge (menu <b>⋮ → Instalar FUMIGA</b>).</p>
+    <p class="fino">Android 8+: o APK incorpora GeckoView e o jogo, sem Chrome, Android System WebView, Play Store ou Play Services; a permissão de rede será usada apenas para servir os arquivos em localhost, sem chamadas externas. A primeira instalação pode pedir autorização para instalar o APK. Windows: o instalador inclui runtime e jogo completos; sem Authenticode comercial, o SmartScreen pode exibir um aviso.</p>
+    <p class="fino">Para obter o arquivo pela primeira vez, baixe-o com internet ou transfira por USB/cartão/rede local. Depois de instalado, o jogo abre sem conexão.</p>
+    <p class="fino" id="avisoIOS" hidden>No iPhone/iPad não é possível instalar APK; abra no Safari e use Compartilhar → Adicionar à Tela de Início.</p>
   </section>
 
-  <!-- ------------------------------------------------------------------ 3 --- -->
   <section class="cartao" id="cartaoOffline">
-    <h2>BAIXAR PARA JOGAR OFFLINE <span class="tag">DIRETO DO REPOSITÓRIO</span></h2>
-    <p>
-      Guarda os arquivos do jogo <b>no próprio aparelho</b> (cache do navegador). Depois disso, o FUMIGA abre e
-      roda <b>sem internet</b> — e o download é feito do endereço oficial do repositório.
-    </p>
+    <h2>BAIXAR O JOGO COMPLETO PARA OFFLINE <span class="tag">NO NAVEGADOR</span></h2>
+    <p>Guarda o jogo inteiro no cache deste navegador — <b id="tamanhoPacote">calculando tamanho…</b>. Depois, você pode jogar sem internet. Quando publicados, os instaladores Android e Windows também incluirão o pacote completo.</p>
     <div class="linha">
-      <button class="botao" id="btnEssencial">⬇ ESSENCIAL <span class="tam" id="tamEssencial"></span></button>
-      <button class="botao ambar" id="btnCompleto">⬇ COMPLETO <span class="tam" id="tamCompleto"></span></button>
+      <button class="botao ambar" id="btnCompleto">⬇ BAIXAR JOGO COMPLETO <span class="tam" id="tamCompleto"></span></button>
       <button class="botao secundario" id="btnLimpar" hidden>LIBERAR ESPAÇO</button>
     </div>
     <div class="progresso" id="progresso" role="status" aria-live="polite">
       <div class="barra"><i id="barra"></i></div>
       <div class="texto"><span id="progEsq">preparando…</span><span id="progDir"></span></div>
     </div>
-    <p class="estado" id="estadoEssencial"><span class="bolinha"></span><span>ESSENCIAL: verificando…</span></p>
-    <p class="estado" id="estadoCompleto"><span class="bolinha"></span><span>COMPLETO: verificando…</span></p>
-    <p class="fino">
-      O <b>ESSENCIAL</b> tem o jogo todo — os 6 biomas, chefes, árvore, modos. O <b>COMPLETO</b> soma os sete
-      santuários dos frutos e a cutscene da Noite Branca, que abrem sob demanda durante a jogatina.
-    </p>
+    <p class="estado" id="estadoCompleto"><span class="bolinha"></span><span>JOGO COMPLETO: verificando…</span></p>
     <p class="fino" id="usoEspaco"></p>
   </section>
 
-  <!-- ------------------------------------------------------------------ 4 --- -->
   <section class="cartao">
     <h2>RODAR DO CÓDIGO-FONTE</h2>
-    <p>
-      O jogo é JavaScript puro, sem build. Módulos ES precisam de um servidor (abrir o arquivo direto não funciona):
-    </p>
-    <p class="fino">
-      <code>npm run serve</code> → <code>http://localhost:8000</code> &nbsp;·&nbsp;
-      ou <code>python3 -m http.server 8080</code> dentro de <code>game/</code>.
-    </p>
+    <p>O jogo é JavaScript puro, sem build. Módulos ES precisam de um servidor (abrir o arquivo direto não funciona):</p>
+    <p class="fino"><code>npm run serve</code> → <code>http://localhost:8000</code> &nbsp;·&nbsp; ou <code>python3 -m http.server 8080</code> dentro de <code>game/</code>.</p>
   </section>
 </main>
 
@@ -101,141 +77,69 @@
 </footer>
 
 <script type="module">
-// ---------------------------------------------------------------------------
-// Página oficial do FUMIGA: jogar, instalar como app e baixar para offline.
-// Não há redirecionamento automático (decisão de 2026-10-01): quem quiser o
-// jogo em tela cheia instala; quem só quer jogar clica em JOGAR.
-// ---------------------------------------------------------------------------
 import {
   carregarLista, tamanhoDoPacote, progressoPacote, baixarPacote, limparCache,
   registrarSW, aguardarControlador, pedirPersistencia, usarArmazenamento,
-  modoStandalone, ehIOS, ehChromium, ehToque, formatarMB, suportaSW, suportaCache,
+  ehIOS, ehToque, formatarMB, suportaSW, suportaCache,
 } from "./app/offline.js";
 
 const $ = (id) => document.getElementById(id);
-const BASE = "";                                  // esta página está na raiz do site
-
-// --------------------------------------------------------------- ambiente ---
+const BASE = "";
 const toque = ehToque();
 $("btnJogar").href = toque ? "game/mobile/" : "game/";
 $("btnJogar").textContent = toque ? "▶ JOGAR (MOBILE)" : "▶ JOGAR (PC)";
 $("selo").textContent = toque ? "versão mobile detectada" : "versão PC detectada";
+if (ehIOS()) $("avisoIOS").hidden = false;
 
-// -------------------------------------------------- instalação (PWA) -------
-let convite = null;                               // beforeinstallprompt guardado
-
-window.addEventListener("beforeinstallprompt", (e) => {
-  e.preventDefault();
-  convite = e;
-  $("btnInstalar").hidden = false;
-  $("btnMostrarPassos").hidden = true;
-  $("textoInstalar").textContent = "Toque em INSTALAR: o navegador coloca o FUMIGA junto dos seus aplicativos.";
-});
-window.addEventListener("appinstalled", () => {
-  convite = null;
-  marcarInstalado();
-});
-
-function marcarInstalado() {
-  $("btnInstalar").hidden = true;
-  $("btnMostrarPassos").hidden = true;
-  $("tagInstalar").textContent = "INSTALADO";
-  $("textoInstalar").textContent = "O FUMIGA já está instalado neste aparelho. Abra pelo ícone da formiga.";
-  $("avisoInstalar").hidden = true;
-}
-
-if (modoStandalone()) {
-  // Já está rodando como app: nada de oferecer instalação de novo.
-  marcarInstalado();
-  $("cartaoInstalar").hidden = true;
-} else if (ehIOS()) {
-  $("btnMostrarPassos").hidden = false;
-  $("textoInstalar").textContent = "No iPhone e no iPad a instalação é pelo menu Compartilhar do Safari.";
-} else if (!ehChromium()) {
-  $("textoInstalar").textContent = "Este navegador não oferece o convite de instalação — use o menu dele (ou o Chrome/Edge) para adicionar o FUMIGA à tela inicial.";
-  $("avisoInstalar").hidden = true;
-}
-
-$("btnMostrarPassos").addEventListener("click", () => $("passosIOS").classList.toggle("ativo"));
-$("btnInstalar").addEventListener("click", async () => {
-  if (!convite) return;
-  $("btnInstalar").disabled = true;
-  try {
-    convite.prompt();
-    const escolha = await convite.userChoice;
-    if (escolha && escolha.outcome === "accepted") marcarInstalado();
-    else $("btnInstalar").disabled = false;
-  } catch (e) {
-    $("btnInstalar").disabled = false;
-  }
-});
-
-// --------------------------------------------------- download offline ------
-const PROG = { essencial: null, completo: null };  // status de cada pacote
 let lista = null;
 let baixando = false;
+let statusCompleto = null;
 
-const estados = {
-  essencial: { el: $("estadoEssencial"), nome: "ESSENCIAL" },
-  completo: { el: $("estadoCompleto"), nome: "COMPLETO" },
-};
-
-function pintarEstado(alvo, st) {
-  const { el, nome } = estados[alvo];
-  const classe = st.completo ? "estado ok" : st.feitos > 0 ? "estado espera" : "estado";
-  el.className = classe;
+function pintarEstado(st) {
+  const el = $("estadoCompleto");
+  el.className = st.completo ? "estado ok" : st.feitos > 0 ? "estado espera" : "estado";
   el.lastElementChild.textContent = st.completo
-    ? nome + ": baixado ✓ (" + formatarMB(st.bytesTotal) + ") — pronto para jogar sem internet"
+    ? "JOGO COMPLETO: baixado ✓ (" + formatarMB(st.bytesTotal) + ") — pronto para jogar sem internet"
     : st.feitos > 0
-      ? nome + ": " + st.feitos + "/" + st.total + " arquivos (" + Math.round(100 * st.feitos / st.total) + "%)"
-      : nome + ": ainda não baixado (" + formatarMB(st.bytesTotal) + ")";
+      ? "JOGO COMPLETO: " + st.feitos + "/" + st.total + " arquivos (" + Math.round(100 * st.feitos / st.total) + "%)"
+      : "JOGO COMPLETO: ainda não baixado (" + formatarMB(st.bytesTotal) + ")";
 }
 
 async function atualizarStatus() {
   if (!lista) return;
-  for (const alvo of ["essencial", "completo"]) {
-    PROG[alvo] = await progressoPacote({ base: BASE, lista, alvo });
-    pintarEstado(alvo, PROG[alvo]);
-  }
-  // o pacote completo já inclui o essencial: se completo está ok, o card inteiro está
-  const completo = PROG.completo.completo;
-  $("btnEssencial").disabled = completo || PROG.essencial.completo;
-  $("btnCompleto").disabled = completo;
-  $("btnLimpar").hidden = !(PROG.essencial.feitos > 0);
+  statusCompleto = await progressoPacote({ base: BASE, lista, alvo: "completo" });
+  pintarEstado(statusCompleto);
+  $("btnCompleto").disabled = baixando || statusCompleto.completo;
+  $("btnLimpar").hidden = !(statusCompleto.feitos > 0);
   const uso = await usarArmazenamento();
   $("usoEspaco").textContent = uso
     ? "Espaço usado por este site: " + formatarMB(uso.uso) + " de " + formatarMB(uso.cota) + " disponíveis."
     : "";
 }
 
-function mostrarProgresso(ligado) {
-  $("progresso").classList.toggle("ativo", ligado);
-}
-
+function mostrarProgresso(ligado) { $("progresso").classList.toggle("ativo", ligado); }
 function pintarProgresso({ feitos, falhas, total }) {
   const pct = total ? Math.min(100, Math.round(100 * feitos / total)) : 0;
   $("barra").style.width = pct + "%";
-  $("progEsq").textContent = "baixando… " + pct + "%";
+  $("progEsq").textContent = "baixando o jogo inteiro… " + pct + "%";
   $("progDir").textContent = feitos + "/" + total + (falhas ? " · " + falhas + " falha(s), tentando de novo" : "");
 }
 
-async function baixar(alvo) {
+async function baixarCompleto() {
   if (baixando || !lista) return;
   baixando = true;
-  $("btnEssencial").disabled = $("btnCompleto").disabled = true;
+  $("btnCompleto").disabled = true;
   mostrarProgresso(true);
-  pintarProgresso({ feitos: 0, falhas: 0, total: tamanhoDoPacote(lista, alvo).arquivos });
+  pintarProgresso({ feitos: 0, falhas: 0, total: tamanhoDoPacote(lista, "completo").arquivos });
   try {
-    // 1) pede armazenamento persistente (senão o navegador pode apagar o cache)
-    // 2) garante o Service Worker no controle, para o download seguir em segundo plano
     await pedirPersistencia();
     await registrarSW(BASE);
     await aguardarControlador(3000);
-    const r = await baixarPacote({ base: BASE, lista, alvo, aoProgresso: pintarProgresso });
+    const r = await baixarPacote({ base: BASE, lista, alvo: "completo", aoProgresso: pintarProgresso });
     pintarProgresso({ feitos: r.feitos, falhas: r.falhas, total: r.total });
     $("progEsq").textContent = r.falhas
-      ? "terminou com " + r.falhas + " arquivo(s) faltando — toque de novo para completar"
-      : "pronto! " + r.feitos + " arquivos guardados no aparelho";
+      ? "faltam " + r.falhas + " arquivo(s) — toque novamente para completar"
+      : "pronto! " + r.feitos + " arquivos completos guardados no aparelho";
     $("progDir").textContent = "";
   } catch (e) {
     $("progEsq").textContent = "não deu para baixar: " + (e && e.message ? e.message : e);
@@ -246,18 +150,16 @@ async function baixar(alvo) {
   }
 }
 
-$("btnEssencial").addEventListener("click", () => baixar("essencial"));
-$("btnCompleto").addEventListener("click", () => baixar("completo"));
+$("btnCompleto").addEventListener("click", baixarCompleto);
 $("btnLimpar").addEventListener("click", async () => {
   await limparCache(lista);
   mostrarProgresso(false);
   await atualizarStatus();
 });
 
-// ------------------------------------------------------------------ início --
 (async function inicio() {
   if (!suportaCache()) {
-    $("cartaoOffline").hidden = true;             // navegador sem Cache Storage
+    $("cartaoOffline").hidden = true;
     return;
   }
   try {
@@ -267,20 +169,14 @@ $("btnLimpar").addEventListener("click", async () => {
     $("selo").textContent = "lista de download indisponível";
     return;
   }
-  const ess = tamanhoDoPacote(lista, "essencial");
-  const cmp = tamanhoDoPacote(lista, "completo");
-  $("tamEssencial").textContent = "· " + formatarMB(ess.bytes) + " · " + ess.arquivos + " arquivos";
-  $("tamCompleto").textContent = "· " + formatarMB(cmp.bytes);
+  const pacote = tamanhoDoPacote(lista, "completo");
+  const peso = formatarMB(pacote.bytes);
+  $("tamCompleto").textContent = "· " + peso + " · " + pacote.arquivos + " arquivos";
+  $("tamanhoPacote").textContent = peso + " e " + pacote.arquivos + " arquivos";
   await atualizarStatus();
-
-  // Service Worker já no primeiro acesso: é ele que guarda o jogo offline.
   if (suportaSW()) {
     const reg = await registrarSW(BASE);
     if (reg) await aguardarControlador(3000);
-  }
-  if (modoStandalone() && PROG.essencial && PROG.essencial.completo) {
-    $("cartaoOffline").querySelector("p").textContent =
-      "Jogo baixado neste aparelho: você pode jogar sem internet a qualquer momento.";
   }
 })();
 </script>

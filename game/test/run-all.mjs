@@ -57,6 +57,7 @@ const TESTS = [
   { name: "regressions", file: "regressions.mjs" },
   { name: "docs", file: "docs.mjs" },
   { name: "pwa", file: "pwa.mjs" },
+  { name: "native-packages", file: "native-packages.mjs" },
   { name: "playtest", file: "playtest.mjs" },
   { name: "pwa-worker", file: "pwa-worker.mjs" },
   { name: "regressions-browser", file: "regressions-browser.mjs", slow: true, browser: true },

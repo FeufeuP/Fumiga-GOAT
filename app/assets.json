@@ -1,10 +1,10 @@
 {
-  "version": "20261001-playtest-flores",
+  "version": "20261004-native-offline",
   "geradoPor": "tools/make_assets_list.mjs",
   "grupos": [
     {
       "id": "shell",
-      "titulo": "Código do jogo",
+      "titulo": "Código e páginas do jogo",
       "files": [
         "app/app.css",
         "app/icons/apple-touch-icon-180.png",
@@ -68,11 +68,11 @@
         46151,
         129561,
         228010,
-        14782,
-        8453,
+        14916,
+        7089,
         2314,
         1379,
-        20970,
+        20969,
         11449,
         21721,
         2553,
@@ -112,15 +112,26 @@
         945,
         7490,
         19399,
-        13328,
+        8826,
         899
       ],
-      "bytes": 1326127
+      "bytes": 1320394
     },
     {
-      "id": "essencial",
-      "titulo": "Sprites, telas e títulos",
+      "id": "assets",
+      "titulo": "Todos os recursos do jogo",
       "files": [
+        "game/assets/cutscenes/noite_branca/panel1/0_sky.png",
+        "game/assets/cutscenes/noite_branca/panel1/1_distant.png",
+        "game/assets/cutscenes/noite_branca/panel1/2_mid.png",
+        "game/assets/cutscenes/noite_branca/panel1/3_ground.png",
+        "game/assets/cutscenes/noite_branca/panel1/4_foreground.png",
+        "game/assets/cutscenes/noite_branca/panel1/5_particles.png",
+        "game/assets/cutscenes/noite_branca/panel1/6_vfx.png",
+        "game/assets/cutscenes/noite_branca/panel1/7_vignette.png",
+        "game/assets/cutscenes/noite_branca/panel2_conflito/0_sky.png",
+        "game/assets/cutscenes/noite_branca/panel2_conflito/1_distant.png",
+        "game/assets/cutscenes/noite_branca/panel2_conflito/2_mid.png",
         "game/assets/font/font_big.png",
         "game/assets/font/font_small.png",
         "game/assets/loading/loading_floresta.png",
@@ -280,9 +291,27 @@
         "game/assets/ui/maca_pantano.png",
         "game/assets/ui/maca_planicie.png",
         "game/assets/ui/README.md",
+        "game/assets/ui/santuario_deserto.png",
+        "game/assets/ui/santuario_floresta.png",
+        "game/assets/ui/santuario_gelo.png",
+        "game/assets/ui/santuario_outono.png",
+        "game/assets/ui/santuario_palida.png",
+        "game/assets/ui/santuario_pantano.png",
+        "game/assets/ui/santuario_planicie.png",
         "game/assets/ui/tree_ancestral.png"
       ],
       "tamanhos": [
+        8799346,
+        1488248,
+        2317310,
+        3475959,
+        2690442,
+        1682773,
+        2961968,
+        2721124,
+        2477710,
+        1911407,
+        2695854,
         2647,
         2075,
         1777165,
@@ -442,54 +471,16 @@
         580045,
         628252,
         9857,
-        656076
-      ],
-      "bytes": 18887311
-    },
-    {
-      "id": "completo",
-      "titulo": "Santuários dos frutos e Noite Branca",
-      "files": [
-        "game/assets/cutscenes/noite_branca/panel1/0_sky.png",
-        "game/assets/cutscenes/noite_branca/panel1/1_distant.png",
-        "game/assets/cutscenes/noite_branca/panel1/2_mid.png",
-        "game/assets/cutscenes/noite_branca/panel1/3_ground.png",
-        "game/assets/cutscenes/noite_branca/panel1/4_foreground.png",
-        "game/assets/cutscenes/noite_branca/panel1/5_particles.png",
-        "game/assets/cutscenes/noite_branca/panel1/6_vfx.png",
-        "game/assets/cutscenes/noite_branca/panel1/7_vignette.png",
-        "game/assets/cutscenes/noite_branca/panel2_conflito/0_sky.png",
-        "game/assets/cutscenes/noite_branca/panel2_conflito/1_distant.png",
-        "game/assets/cutscenes/noite_branca/panel2_conflito/2_mid.png",
-        "game/assets/ui/santuario_deserto.png",
-        "game/assets/ui/santuario_floresta.png",
-        "game/assets/ui/santuario_gelo.png",
-        "game/assets/ui/santuario_outono.png",
-        "game/assets/ui/santuario_palida.png",
-        "game/assets/ui/santuario_pantano.png",
-        "game/assets/ui/santuario_planicie.png"
-      ],
-      "tamanhos": [
-        8799346,
-        1488248,
-        2317310,
-        3475959,
-        2690442,
-        1682773,
-        2961968,
-        2721124,
-        2477710,
-        1911407,
-        2695854,
         615281,
         615627,
         598319,
         620959,
         896781,
         914291,
-        839032
+        839032,
+        656076
       ],
-      "bytes": 38322431
+      "bytes": 57209742
     }
   ]
 }
