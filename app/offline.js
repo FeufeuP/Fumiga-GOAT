@@ -5,10 +5,10 @@
 // (index.html) e pela página do app instalado (app/online.html). Ele resolve
 // três coisas, nos dois ambientes (GitHub Pages e servidor local):
 //
-//   • detectar o ambiente (instalado? iOS? suporta Service Worker?);
+//   • detectar o ambiente e o suporte a Service Worker;
 //   • registrar o Service Worker da raiz do repositório;
-//   • baixar um pacote de assets para o Cache Storage com progresso, e dizer
-//     o que já está baixado.
+//   • baixar o pacote COMPLETO de assets para o Cache Storage com progresso,
+//     e dizer o que já está baixado.
 //
 // A verdade sobre o que baixar é `app/assets.json` (gerada + testada).
 //
@@ -39,13 +39,15 @@ export async function carregarLista(base = "") {
 }
 
 /**
- * Expande um alvo ("essencial" | "completo" | ["shell", ...]) na lista de
- * arquivos, cada um com caminho relativo à raiz e tamanho.
+ * Expande o pacote completo (ou apenas o shell para a atualização inicial) na
+ * lista de arquivos, cada um com caminho relativo à raiz e tamanho.
  */
-export function arquivosDoPacote(lista, alvo = "essencial") {
-  const alvos = alvo === "completo" ? ["shell", "essencial", "completo"]
-    : alvo === "essencial" ? ["shell", "essencial"]
-      : Array.isArray(alvo) ? alvo : ["shell"];
+export function arquivosDoPacote(lista, alvo = "completo") {
+  // "completo" é o único pacote público. "essencial" continua sendo tratado
+  // como completo para que clientes/marcadores antigos nunca baixem um recorte.
+  const alvos = Array.isArray(alvo) ? alvo
+    : alvo === "shell" ? ["shell"]
+      : lista.grupos.map((g) => g.id);
   const out = [];
   for (const g of lista.grupos || []) {
     if (!alvos.includes(g.id)) continue;
@@ -69,8 +71,8 @@ function bytesDe(lista, rel) {
 }
 
 /** Tamanho do pacote sem baixar nada: { arquivos, bytes }. */
-export function tamanhoDoPacote(lista, alvo) {
-  const gs = (lista.grupos || []).filter((g) => alvo === "completo" ? true : g.id !== "completo");
+export function tamanhoDoPacote(lista, alvo = "completo") {
+  const gs = alvo === "shell" ? (lista.grupos || []).filter((g) => g.id === "shell") : (lista.grupos || []);
   return {
     arquivos: gs.reduce((s, g) => s + g.files.length, 0),
     bytes: gs.reduce((s, g) => s + g.bytes, 0),
@@ -189,7 +191,7 @@ export function mensagemSW(msg, { aoProgresso, timeout = 15 * 60 * 1000 } = {}) 
  */
 export async function baixarPacote(opts = {}) {
   const t0 = Date.now();
-  const alvo = opts.alvo || "essencial";
+  const alvo = opts.alvo || "completo";
   try {
     const r = await baixarPacoteInterno(opts);
     ptEvento("pwa_pacote", { ok: r.falhas === 0, ms: Date.now() - t0, arquivos: r.feitos, total: r.total, alvo });
@@ -200,7 +202,7 @@ export async function baixarPacote(opts = {}) {
   }
 }
 
-async function baixarPacoteInterno({ base = "", lista, alvo = "essencial", aoProgresso, timeout } = {}) {
+async function baixarPacoteInterno({ base = "", lista, alvo = "completo", aoProgresso, timeout } = {}) {
   const arquivos = arquivosDoPacote(lista, alvo);
   const urls = arquivos.map((a) => urlDoArquivo(base, a.rel, lista.version));
   const total = urls.length;
@@ -238,7 +240,7 @@ async function baixarPacoteInterno({ base = "", lista, alvo = "essencial", aoPro
 }
 
 /** O que já está guardado neste pacote: {feitos, total, bytes, bytesTotal, completo}. */
-export async function progressoPacote({ base = "", lista, alvo = "essencial" } = {}) {
+export async function progressoPacote({ base = "", lista, alvo = "completo" } = {}) {
   const arquivos = arquivosDoPacote(lista, alvo);
   const total = arquivos.length;
   const bytesTotal = arquivos.reduce((s, a) => s + a.bytes, 0);

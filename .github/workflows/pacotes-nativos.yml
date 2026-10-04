@@ -1,0 +1,146 @@
+name: Pacotes nativos completos
+
+on:
+  push:
+    branches: [arena/01a0fc42-fumiga-goat]
+  workflow_dispatch:
+  release:
+    types: [published]
+
+permissions:
+  contents: write
+
+jobs:
+  android:
+    if: github.event_name != 'push'
+    name: APK Android offline assinado
+    runs-on: ubuntu-latest
+    steps:
+      - name: Código-fonte
+        uses: actions/checkout@v4
+      - name: Java 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+      - name: Node 22
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - name: Android SDK
+        uses: android-actions/setup-android@v3
+      - name: Instalar plataforma Android 36
+        run: sdkmanager "platforms;android-36" "build-tools;35.0.0"
+      - name: Preparar assinatura de release
+        env:
+          KEYSTORE_B64: ${{ secrets.FUMIGA_KEYSTORE_BASE64 }}
+          KEYSTORE_PASSWORD: ${{ secrets.FUMIGA_KEYSTORE_PASSWORD }}
+          KEY_ALIAS: ${{ secrets.FUMIGA_KEY_ALIAS }}
+          KEY_PASSWORD: ${{ secrets.FUMIGA_KEY_PASSWORD }}
+        run: |
+          set -euo pipefail
+          test -n "$KEYSTORE_B64" || { echo 'Falta o segredo FUMIGA_KEYSTORE_BASE64.' >&2; exit 1; }
+          test -n "$KEYSTORE_PASSWORD" || { echo 'Falta o segredo FUMIGA_KEYSTORE_PASSWORD.' >&2; exit 1; }
+          test -n "$KEY_ALIAS" || { echo 'Falta o segredo FUMIGA_KEY_ALIAS.' >&2; exit 1; }
+          test -n "$KEY_PASSWORD" || { echo 'Falta o segredo FUMIGA_KEY_PASSWORD.' >&2; exit 1; }
+          echo "$KEYSTORE_B64" | base64 --decode > "$RUNNER_TEMP/fumiga-release.p12"
+          chmod 600 "$RUNNER_TEMP/fumiga-release.p12"
+          {
+            echo "FUMIGA_KEYSTORE=$RUNNER_TEMP/fumiga-release.p12"
+            echo "FUMIGA_KEYSTORE_PASSWORD=$KEYSTORE_PASSWORD"
+            echo "FUMIGA_KEY_ALIAS=$KEY_ALIAS"
+            echo "FUMIGA_KEY_PASSWORD=$KEY_PASSWORD"
+          } >> "$GITHUB_ENV"
+      - name: Compilar APK completo e assinado
+        run: bash tools/build-android.sh release
+      - name: Publicar artefato assinado da compilação
+        uses: actions/upload-artifact@v4
+        with:
+          name: apk-android
+          path: installers/android/dist/FUMIGA-Android.apk
+          if-no-files-found: error
+          retention-days: 7
+
+  android-prevalidacao:
+    if: github.event_name == 'push'
+    name: APK Android de pré-validação (debug)
+    runs-on: ubuntu-latest
+    steps:
+      - name: Código-fonte
+        uses: actions/checkout@v4
+      - name: Java 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+      - name: Node 22
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - name: Android SDK
+        uses: android-actions/setup-android@v3
+      - name: Instalar plataforma Android 36
+        run: sdkmanager "platforms;android-36" "build-tools;35.0.0"
+      - name: Compilar APK completo de pré-validação
+        run: bash tools/build-android.sh debug
+      - name: Publicar artefato temporário de pré-validação
+        uses: actions/upload-artifact@v4
+        with:
+          name: apk-android-prevalidacao-debug
+          path: installers/android/dist/FUMIGA-Android-DEBUG.apk
+          if-no-files-found: error
+          retention-days: 7
+
+  windows:
+    name: Instalador Windows x64 completo
+    runs-on: windows-latest
+    steps:
+      - name: Código-fonte
+        uses: actions/checkout@v4
+      - name: Node 22
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+          cache-dependency-path: installers/windows/package-lock.json
+      - name: Dependências
+        run: npm ci --prefix installers/windows
+      - name: Compilar instalador NSIS x64
+        run: npm --prefix installers/windows run dist:win
+      - name: Publicar artefato da compilação
+        uses: actions/upload-artifact@v4
+        with:
+          name: instalador-windows-x64
+          path: installers/windows/dist/FUMIGA-Setup-Windows-x64.exe
+          if-no-files-found: error
+          retention-days: 7
+
+  anexar-release:
+    if: github.event_name == 'release'
+    name: Anexar instaladores à GitHub Release
+    needs: [android, windows]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Baixar os dois artefatos
+        uses: actions/download-artifact@v4
+        with:
+          path: release-assets
+          merge-multiple: true
+      - name: Conferir e gerar checksums
+        working-directory: release-assets
+        run: |
+          set -euo pipefail
+          test -s FUMIGA-Android.apk
+          test -s FUMIGA-Setup-Windows-x64.exe
+          sha256sum FUMIGA-Android.apk FUMIGA-Setup-Windows-x64.exe > SHA256SUMS.txt
+          cat SHA256SUMS.txt
+      - name: Anexar APK, EXE e checksums à Release publicada
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+        run: |
+          gh release upload "$GITHUB_REF_NAME" \
+            release-assets/FUMIGA-Android.apk \
+            release-assets/FUMIGA-Setup-Windows-x64.exe \
+            release-assets/SHA256SUMS.txt \
+            --clobber

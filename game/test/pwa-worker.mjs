@@ -10,8 +10,7 @@ function environment(path) {
   const state = { version: 'v1', offline: false, failVersion: null, failPath: null, quota: null, calls: [], windows: new Map() };
   const list = version => ({ version, grupos: [
     { id: 'shell', files: ['index.html', 'game/index.html', 'game/mobile/index.html', 'game/js/main.js', 'app/offline.js'], tamanhos: [1,1,1,1,1], bytes: 5 },
-    { id: 'essencial', files: ['game/assets/a.png', 'game/assets/b.png'], tamanhos: [1,1], bytes: 2 },
-    { id: 'completo', files: ['game/assets/gallery.png'], tamanhos: [1], bytes: 1 },
+    { id: 'assets', files: ['game/assets/a.png', 'game/assets/b.png', 'game/assets/gallery.png'], tamanhos: [1,1,1], bytes: 3 },
   ] });
   const url = input => new URL(typeof input === 'string' ? input : input.url, base).href;
   const plain = input => { const u = new URL(url(input)); u.search = ''; return u.href; };
@@ -71,8 +70,8 @@ function environment(path) {
       },
     };
   }
-  const urls = (version, complete = false) => list(version).grupos.filter(g => complete || g.id !== 'completo').flatMap(g => g.files.map(f => new URL(f + '?v=' + version, base).href));
-  const download = async (w, version, complete = false) => (await w.message({ type: 'baixar', versao: version, lista: list(version), urls: urls(version, complete) })).at(-1);
+  const urls = version => list(version).grupos.flatMap(g => g.files.map(f => new URL(f + '?v=' + version, base).href));
+  const download = async (w, version) => (await w.message({ type: 'baixar', versao: version, lista: list(version), urls: urls(version) })).at(-1);
   const current = async w => (await w.message({ type: 'versao' })).at(-1).versao;
   return { state, base, list, caches, fetch, worker, download, current };
 }
@@ -83,7 +82,7 @@ for (const path of ['/', '/Fumiga-GOAT/']) {
   await w.install(); await w.activate();
   assert.equal(await env.current(w), 'v1');
   let r = await env.download(w, 'v1');
-  assert.equal(r.type, 'fim'); assert.equal(r.feitos, 7); assert.equal(r.falhas, 0);
+  assert.equal(r.type, 'fim'); assert.equal(r.feitos, 8); assert.equal(r.falhas, 0);
   assert.ok(r.requestId); assert.equal(r.protocol, 2);
   assert.match(await (await w.get('', 'old', true)).text(), /snapshot:v1:/);
   state.offline = true;
@@ -99,7 +98,7 @@ for (const path of ['/', '/Fumiga-GOAT/']) {
 
   state.offline = false; state.version = 'v2'; state.failVersion = 'v2';
   r = await env.download(w, 'v2');
-  assert.equal(r.type, 'fim'); assert.equal(r.feitos, 0); assert.equal(r.falhas, 7);
+  assert.equal(r.type, 'fim'); assert.equal(r.feitos, 0); assert.equal(r.falhas, 8);
   assert.equal(await env.current(w), 'v1');
   assert.ok((await caches.keys()).includes('fumiga-v1'));
   state.failVersion = null; state.failPath = '/game/assets/b.png';
@@ -115,8 +114,8 @@ for (const path of ['/', '/Fumiga-GOAT/']) {
   assert.equal(await env.current(w), 'v1');
   assert.ok(await (await caches.open('fumiga-v1')).match(base + 'game/js/main.js', { ignoreSearch: true }));
   state.quota = null; state.version = 'v2';
-  r = await env.download(w, 'v2'); assert.equal(r.feitos, 7); assert.equal(r.falhas, 0);
-  assert.ok(r.novos < 7, 'retoma arquivos da tentativa interrompida');
+  r = await env.download(w, 'v2'); assert.equal(r.feitos, 8); assert.equal(r.falhas, 0);
+  assert.ok(r.novos < 8, 'retoma arquivos da tentativa interrompida');
   assert.equal(await env.current(w), 'v2');
   assert.ok((await caches.keys()).includes('fumiga-v1'));
   assert.match(await (await w.get('game/js/main.js', 'old')).text(), /snapshot:v1:/, 'aba antiga não mistura módulos novos');
@@ -131,7 +130,7 @@ for (const path of ['/', '/Fumiga-GOAT/']) {
   state.failPath = null;
   await w.get('', 'refresh2', true); assert.equal(await env.current(w), 'v3');
   assert.ok(await (await caches.open('fumiga-v3')).match(base + 'game/assets/b.png', { ignoreSearch: true }));
-  await env.download(w, 'v3', true);
+  await env.download(w, 'v3');
   state.version = 'v4'; await w.get('', 'refresh3', true);
   assert.equal(await env.current(w), 'v4');
   assert.ok(await (await caches.open('fumiga-v4')).match(base + 'game/assets/gallery.png', { ignoreSearch: true }), 'preserva pacote completo na atualização automática');
@@ -164,7 +163,7 @@ assert.equal(listeners.size, 0, 'timeout remove listeners');
 behavior = m => queueMicrotask(() => {
   emit({ type: 'versao', versao: 'consulta' }, m.requestId);
   emit({ type: 'progresso', feitos: 999 }, 'id-de-outra-operação');
-  emit({ type: m.type === 'baixar' ? 'fim' : 'versao', feitos: 7, falhas: 0, total: 7, versao: 'v1' }, m.requestId);
+  emit({ type: m.type === 'baixar' ? 'fim' : 'versao', feitos: 8, falhas: 0, total: 8, versao: 'v1' }, m.requestId);
 });
 let progresses = 0;
 const [dl, info] = await Promise.all([
@@ -175,10 +174,10 @@ assert.equal(dl.type, 'fim'); assert.equal(info.type, 'versao'); assert.equal(pr
 assert.equal(listeners.size, 0);
 // Worker mentiroso não transforma cache vazio em "pronto".
 const real = await O.baixarPacote({ lista: env.list('v1'), timeout: 100 });
-assert.equal(real.feitos, 0); assert.equal(real.falhas, 7);
+assert.equal(real.feitos, 0); assert.equal(real.falhas, 8);
 behavior = m => queueMicrotask(() => emit({ type: 'erro', message: 'quota' }, m.requestId));
 await assert.rejects(O.baixarPacote({ lista: env.list('v1'), timeout: 100 }), /quota/);
-behavior = m => queueMicrotask(() => emit({ type: 'fim', feitos: 8, falhas: -1, total: 7 }, m.requestId));
+behavior = m => queueMicrotask(() => emit({ type: 'fim', feitos: 8, falhas: -1, total: 8 }, m.requestId));
 await assert.rejects(O.baixarPacote({ lista: env.list('v1'), timeout: 100 }), /inválida/);
 behavior = () => {};
 await assert.rejects(O.baixarPacote({ lista: env.list('v1'), timeout: 15 }), /tempo/);

@@ -13,12 +13,10 @@
 //   node tools/make_assets_list.mjs          grava app/assets.json
 //   node tools/make_assets_list.mjs --check  só compara (usado pelo teste)
 //
-// Três grupos, na mesma divisão que a página de download mostra ao jogador:
-//   shell     — código do jogo, CSS, ícones e a página do app (base dos dois pacotes)
-//   essencial — o jogo jogável: sprites, fontes, TELA DE TÍTULO, telas de carga,
-//               maçãs/flores/lore da Árvore e dos menus
-//   completo  — o que só o pacote grande traz: santuários dos frutos e a
-//               cutscene Noite Branca (camadas grandes, abertas sob demanda)
+// Dois grupos internos, sem pacotes parciais para o jogador:
+//   shell  — código, CSS, ícones e páginas (pré-requisito do app)
+//   assets — TODOS os sprites, biomas, santuários e camadas de cutscene.
+// A única ação pública de download combina shell + assets em um pacote completo.
 //
 // Determinismo: nada de data/hora no arquivo — mesma árvore, mesmos bytes.
 import fs from "node:fs";
@@ -29,7 +27,7 @@ const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const GAME = path.join(ROOT, "game");
 export const LIST_PATH = path.join(ROOT, "app", "assets.json");
 
-/** Arquivos de código e ícones: base dos dois pacotes. */
+/** Arquivos de código e ícones: base do pacote completo. */
 const SHELL_FIXOS = [
   "index.html",
   "manifest.webmanifest",
@@ -80,13 +78,11 @@ export function buildList() {
   const jsCss = walk(path.join(GAME, "js")).map((f) => "game/js/" + f).filter(ehCodigo);
   const shell = [...new Set([...SHELL_FIXOS, ...jsCss])].sort();
 
-  // 2. assets: o que o jogo carrega em tempo de execução
+  // 2. assets: TODOS os recursos do jogo, sem classificação parcial
   const assets = walk(path.join(GAME, "assets"), "assets").map((f) => "game/" + f);
-  const completo = assets.filter((f) => f.startsWith("game/assets/cutscenes/") || /^game\/assets\/ui\/santuario_.*\.png$/.test(f));
-  const essencial = assets.filter((f) => !completo.includes(f));
 
-  // `files` em ordem + `tamanhos` na MESMA ordem: a página soma bytes exatos
-  // ao mostrar "63% • 12,4 MB de 18,3 MB" sem baixar nada.
+  // `files` em ordem + `tamanhos` na MESMA ordem: a página mostra o tamanho
+  // total e o progresso do pacote inteiro sem baixar nada.
   const grupo = (id, titulo, files) => ({
     id, titulo, files,
     tamanhos: files.map((f) => bytes(f)),
@@ -97,9 +93,8 @@ export function buildList() {
     version: lerVersao(),
     geradoPor: "tools/make_assets_list.mjs",
     grupos: [
-      grupo("shell", "Código do jogo", shell),
-      grupo("essencial", "Sprites, telas e títulos", essencial),
-      grupo("completo", "Santuários dos frutos e Noite Branca", completo),
+      grupo("shell", "Código e páginas do jogo", shell),
+      grupo("assets", "Todos os recursos do jogo", assets),
     ],
   };
 }
@@ -112,16 +107,11 @@ function lerVersao() {
   return m[1];
 }
 
-/** Tocos de download (o que a página do app soma e exibe). */
-export function pacotes(list = buildList()) {
-  const g = Object.fromEntries(list.grupos.map((x) => [x.id, x]));
-  const soma = (...ids) => ids.reduce((s, id) => s + (g[id]?.bytes || 0), 0);
+/** O único pacote visível ao jogador contém shell + todos os assets. */
+export function pacoteCompleto(list = buildList()) {
   return {
-    essencial: { arquivos: g.shell.files.length + g.essencial.files.length, bytes: soma("shell", "essencial") },
-    completo: {
-      arquivos: g.shell.files.length + g.essencial.files.length + g.completo.files.length,
-      bytes: soma("shell", "essencial", "completo"),
-    },
+    arquivos: list.grupos.reduce((s, g) => s + g.files.length, 0),
+    bytes: list.grupos.reduce((s, g) => s + g.bytes, 0),
   };
 }
 
@@ -136,7 +126,7 @@ if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.me
   const check = process.argv.includes("--check");
   const atual = fs.existsSync(LIST_PATH) ? fs.readFileSync(LIST_PATH, "utf8") : "";
   const mb = (b) => (b / 1048576).toFixed(1) + " MB";
-  const p = pacotes(list);
+  const p = pacoteCompleto(list);
 
   if (check) {
     if (texto === atual) console.log("assets.json em dia — " + list.version);
@@ -147,5 +137,5 @@ if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.me
     console.log("escrito " + path.relative(ROOT, LIST_PATH) + "  (versão " + list.version + ")");
   }
   for (const g of list.grupos) console.log("  " + g.id.padEnd(10) + String(g.files.length).padStart(4) + " arquivos  " + mb(g.bytes).padStart(9) + "  " + g.titulo);
-  console.log("  " + "pacote".padEnd(10) + "essencial".padEnd(12) + mb(p.essencial.bytes) + " · completo " + mb(p.completo.bytes));
+  console.log("  pacote completo  " + p.arquivos + " arquivos  " + mb(p.bytes));
 }

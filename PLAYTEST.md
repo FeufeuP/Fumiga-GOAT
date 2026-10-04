@@ -38,6 +38,13 @@ aparelho**, criado localmente, só para separar os arquivos de cada tester no re
 No jogo: **OPÇÕES → aba TESTE** mostra o resumo, permite **desligar** a gravação, **exportar** e
 **apagar tudo**. Apagar é em dois toques (confirmação).
 
+### Referência visual da aba TESTE
+
+A captura abaixo mostra onde ficam o status do diário, o resumo e os botões de exportação/apagamento.
+Os números e o ID são demonstrativos; no aparelho, o resumo reflete o diário local daquele tester.
+
+![Aba TESTE nas opções do FUMIGA](playtest/aba-teste.png)
+
 ---
 
 ## 1. Antes de começar

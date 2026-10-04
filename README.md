@@ -12,6 +12,28 @@ O endereço acima detecta o aparelho: **PC cai na versão de teclado+mouse** ([`
 paralelas sobre o mesmo motor, atualizadas juntas, cada uma com seu save independente.
 Para jogar no seu computador, veja [Rodar localmente](#-rodar-localmente) abaixo.
 
+## 📦 Instaladores offline
+
+Os instaladores de distribuição estão preparados no código, mas **ainda não há binários finais publicados**: a
+primeira [GitHub Release pública](https://github.com/FeufeuP/Fumiga-GOAT/releases) será liberada
+após validar os builds e a assinatura do APK. Ela anexará o APK Android e o instalador Windows
+64-bit (`.exe`), cada um com o **jogo completo** (231 arquivos, cerca de 55,8 MiB de recursos) e
+sem baixar assets depois da instalação. O Windows leva Electron/Chromium; o APK incorpora o
+mecanismo GeckoView da Mozilla, sem exigir Chrome ou Android System WebView. Depois de instalados,
+nenhum dos dois precisa de internet, Play Store ou Play Services para jogar.
+
+No Android 8 ou superior, o APK único inclui os motores ARM64 e ARMv7 e pede a permissão `INTERNET`
+apenas para servir os próprios arquivos em `localhost` (loopback); o jogo não faz chamadas externas.
+A primeira instalação por APK pode pedir autorização para instalar arquivos baixados. O instalador
+Windows não tem assinatura comercial e pode exibir o aviso de reputação do SmartScreen.
+
+Para obter o arquivo pela primeira vez, é preciso baixá-lo com internet em algum dispositivo ou
+recebê-lo por USB/cartão/rede local. Depois de transferido e instalado, pode jogar sem conexão.
+
+O botão de download offline da página web/PWA também oferece **um único pacote completo**; não há
+opção ESSENCIAL/parcial. Instruções de build, assinatura e publicação ficam em
+[`installers/README.md`](installers/README.md).
+
 ## 🐜 O jogo
 
 A Rainha vive dentro do formigueiro e a colônia migra por **6 biomas**, estilo *Dead Cells*:
@@ -73,7 +95,7 @@ entregam comida, cuidam das larvas e a Rainha põe ovos.
 A bateria headless do projeto roda sem navegador e sem dependências:
 
 ```bash
-npm test              # os 30 testes EM PARALELO, com resumo e tempos (~50 s)
+npm test              # os 31 testes EM PARALELO, com resumo e tempos (~55 s)
 npm run test:quick    # só os rápidos, para iterar (~10 s)
 node game/test/run-all.mjs --only=sim,tree   # só alguns
 

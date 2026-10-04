@@ -1,0 +1,55 @@
+{
+  "name": "fumiga-windows-installer",
+  "version": "1.0.0",
+  "private": true,
+  "description": "FUMIGA — Colônia Eterna (Windows x64, completo e offline)",
+  "main": "main.cjs",
+  "license": "MIT",
+  "scripts": {
+    "prepare:game": "node ../../tools/sync-native-assets.mjs",
+    "start": "npm run prepare:game && electron .",
+    "dist:win": "npm run prepare:game && electron-builder --win nsis --x64 --publish never"
+  },
+  "devDependencies": {
+    "electron": "44.5.1",
+    "electron-builder": "26.15.3"
+  },
+  "build": {
+    "appId": "com.feufeup.fumigagoat",
+    "productName": "FUMIGA",
+    "asar": true,
+    "directories": {
+      "output": "dist"
+    },
+    "files": [
+      "main.cjs",
+      "package.json"
+    ],
+    "extraResources": [
+      {
+        "from": "web",
+        "to": "web",
+        "filter": ["**/*"]
+      }
+    ],
+    "win": {
+      "icon": "icon.ico",
+      "target": [
+        {
+          "target": "nsis",
+          "arch": ["x64"]
+        }
+      ],
+      "artifactName": "FUMIGA-Setup-Windows-x64.${ext}"
+    },
+    "nsis": {
+      "oneClick": false,
+      "perMachine": false,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true,
+      "shortcutName": "FUMIGA — Colônia Eterna",
+      "deleteAppDataOnUninstall": false
+    }
+  }
+}

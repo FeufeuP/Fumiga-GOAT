@@ -3820,3 +3820,103 @@ preservando as DUAS decisões:
 Verificação depois do merge: **30/30 testes** (45,6 s) e inspeções `inspect`, `inspect:pwa`,
 `inspect:ui`, `inspect:hud`, `inspect:tree` e `inspect:layout` todas verdes — nenhum erro de JS,
 404 ou glifo faltando, e layout limpo nos 118 estados.
+
+## Registro — Estabilidade do UI test e captura da aba TESTE (2026-10-02, branch arena/01a0fc42-fumiga-goat)
+
+**Status: implementado e verificado.** Pedido: *“Resolva”* as duas observações da rodada anterior: uma falha ocasional por timing no passo “mundo vivo” do `uitest` e a falta de uma captura visual da aba TESTE no roteiro de campo.
+
+### O que mudou
+
+- `game/test/uitest.mjs`: o passo do mundo vivo deixou de depender de uma pausa única de 900 ms. Agora observa a distância do inimigo a cada 50 ms e espera até 5 s que ele avance mais de 12 px. Sob carga do `run-all`, o loop pode perder quadros; o teste espera a condição observável, mas continua falhando com diagnóstico se o mundo realmente congelar.
+- `game/test/regressions-browser.mjs`: a regressão do diário agora registra uma amostra limpa e determinística (uma sessão, uma expedição vencida, zero erros), captura a própria aba TESTE em PC e mobile no diretório `REGRESSION_SHOTS` e continua verificando exportação real, JSON válido, layout e apagamento em dois toques.
+- `playtest/aba-teste.png`: captura PC 1280×720, 82.137 bytes, adicionada ao `PLAYTEST.md` como referência. O texto esclarece que o resumo e o ID da imagem são demonstrativos; os do tester vêm do diário local.
+- Nenhuma alteração de gameplay, asset do jogo ou `ASSET_V`; os dados do aparelho real continuam locais.
+
+### Verificação
+
+| Comando | Resultado |
+|---|---|
+| `node game/test/regressions-browser.mjs` | **PC + mobile passaram**; captura da aba TESTE nos dois perfis e fluxo exportar/apagar verificados |
+| `npm test` | **30/30 passaram** (54,7 s); `uitest` passou na bateria paralela (33,7 s) e `regressions-browser` passou (25,3 s) |
+| `git diff --check` | sem erros de whitespace |
+
+A limitação restante é intencional: se o mundo não avançar em até 5 s, `uitest` falha para sinalizar congelamento real. A imagem do roteiro é uma referência desktop sintética; teste físico de PWA em Android/iOS continua sendo a etapa de campo descrita no próprio `PLAYTEST.md`.
+
+## Registro — Distribuição nativa offline completa (2026-10-02, branch arena/01a0fc42-fumiga-goat)
+
+**Status: implementação e testes concluídos; builds/publicação ainda bloqueados pela permissão de Actions secrets.** Pedido do usuário: APK instalável diretamente no Android, instalador Windows 64-bit `.exe`, sempre com o jogo inteiro e publicação em GitHub Release pública. Não publicar pacote sem assinatura nem release sem os dois instaladores.
+
+### Decisões de distribuição
+
+1. **Android:** APK de sideload com os assets dentro do pacote e WebViewAssetLoader servindo-os de forma local. Sem `INTERNET`, Play Store, Play Services ou Chrome no fluxo. Dependência explicitada: o aparelho ainda precisa de um provedor Android System WebView habilitado; é parte do runtime Android em aparelhos compatíveis. GeckoView (maior) ficou como alternativa somente para ROMs sem WebView.
+2. **Windows:** instalador NSIS x64 por Electron. O Chromium/runtime e o jogo completo ficam no instalador; protocolo local `fumiga://`, isolamento de contexto e bloqueio das requisições HTTP(S)/WebSocket externas. Sem dependência de Chrome/internet. Sem certificado Authenticode comercial; o SmartScreen pode alertar “editor desconhecido”.
+3. **Pacote web/PWA:** removida a escolha ESSENCIAL/COMPLETO das páginas e API. Um único download inclui **231 arquivos / 55,8 MiB** (`shell` + todos os assets, inclusive santuários e Noite Branca). Migração automática do cache antigo só preserva os assets quando a versão anterior tinha o conjunto inteiro.
+4. **Chave APK:** PKCS#12 aleatória criada em `.signing/`, ignorada pelo Git, e jamais anexada à Release. Atualizações precisam da mesma chave; manter backup privado. O workflow exige os Actions secrets descritos em `installers/README.md`.
+5. **Release:** workflow `pacotes-nativos.yml` dispara quando uma GitHub Release é publicada; Linux compila APK assinado, Windows gera NSIS x64, e o job final anexa APK, EXE e `SHA256SUMS.txt`.
+
+### Implementação
+
+- `installers/android/`: projeto Gradle + Wrapper, `MainActivity` landscape/immersive, WebViewAssetLoader, armazenamento local dos saves, bloqueio de requests remotas, ícone e signing PKCS#12.
+- `installers/windows/`: Electron com protocolo local seguro, runtime Electron/Chromium e config NSIS x64; lockfile e ícone `.ico`.
+- `tools/sync-native-assets.mjs`: gera as árvores de runtime sem testes/dev assets e confere que cada destino contém todos os caminhos de `app/assets.json`.
+- `tools/build-android.sh` / `tools/create-android-signing-key.sh`: build assinado e criação inicial da chave privada.
+- `index.html`, `app/online.html`, `app/offline.js`, `sw.js`, `tools/make_assets_list.mjs`: central de downloads e PWA atualizadas para pacote único; `ASSET_V = "20261002-installers"`.
+- `game/test/native-packages.mjs` adicionado à bateria para verificar os 231 caminhos em ambos os shells, política sem rede e configuração NSIS/Release.
+
+### Testes e resultados
+
+| Verificação | Resultado |
+|---|---|
+| `npm test` | **31/31 passaram** (46,4 s) |
+| `npm run inspect:pwa` | pacote completo (231 arquivos) baixado, Cache Storage verificado, reload e boot PC/mobile com rede desligada, update falho preservando cópia anterior (18,5 s) |
+| `node game/test/native-packages.mjs` | **OK**; Android e Windows incluem todos os 231 caminhos esperados |
+| `node tools/make_assets_list.mjs --check` | em dia — `20261002-installers`, shell 53 + assets 178, 55,8 MiB |
+| `node --check` nos módulos alterados, `bash -n` nos scripts e `git diff --check` | OK |
+| YAML do workflow (`prettier --check`) | válido; formatação aplicada |
+
+### Bloqueios / próximos passos
+
+- `gh secret set FUMIGA_KEYSTORE_BASE64 ...` foi negado pela API: **HTTP 403 `Resource not accessible by integration`** no endpoint de Actions secrets. Nenhum segredo foi enviado/configurado e a chave privada continua somente em `.signing/` ignorada.
+- Sandbox Debian não tem JDK, Android SDK, Gradle nem Wine; `apt-get update` falhou porque os espelhos Debian HTTP não são alcançáveis. Portanto nenhum APK/EXE foi compilado localmente.
+- **Nenhuma GitHub Release foi criada e nenhum artefato foi publicado.** Antes de criar a Release: usuário deve reconectar GitHub no Arena com permissão para Actions secrets, então configurar os quatro secrets usando a chave `.signing/` já criada; verificar se a integração também permite publicar o workflow. Depois rodar os builds CI e só considerar concluído quando APK assinado, EXE e checksums estiverem anexados.
+- Guardar backup privado de `.signing/fumiga-release.p12` e `.signing/signing.env`; a perda da chave impede atualizações compatíveis do APK.
+
+### Atualização — preservação segura da chave (2026-10-04)
+
+O usuário pediu para embutir a chave no APK e guardá-la numa pasta do GitHub. **Não embutir nem versionar a chave privada**: ela pode ser extraída e permitiria que terceiros assinassem APKs falsos que aparentassem ser atualizações oficiais. A assinatura do APK já inclui o certificado público; o certificado público (que não pode assinar) está em `installers/android/keys/fumiga-release-public.pem`, junto de fingerprint SHA-256 e explicação. O arquivo `installers/android/keys/README.md` documenta a política.
+
+Depois da reconexão do GitHub informada pelo usuário, `gh auth status` confirmou login, mas `gh secret set FUMIGA_KEYSTORE_BASE64` continuou recebendo **HTTP 403 `Resource not accessible by integration`** no endpoint de Actions secrets. Nenhum secret foi configurado. A chave privada atual foi gerada de novo em `.signing/` (a cópia temporária ignorada da sessão anterior não sobreviveu à virada de turno); ela ainda não está protegida por um Actions secret ou backup remoto. **Não criar Release, não publicar o APK e não commitar `.p12`/`signing.env`.** Próximo passo seguro: o usuário habilitar permissão de escrita para Actions secrets/workflows na conexão do Arena ou configurar os quatro secrets pelo painel `Settings → Secrets and variables → Actions`; manter também um backup privado da keystore e da senha em password manager/cofre offline. Só então seguir com build e Release.
+
+**Continuação (2026-10-04):** após o usuário informar que reconectou, `gh secret set` foi tentado novamente e continuou negado pelo mesmo HTTP 403. Certificado público/fingerprint e aviso de segurança criados em `installers/android/keys/`; adicionada a ferramenta `tools/configure-github-android-secrets.sh` para configurar valores sem imprimi-los quando houver permissão. O keystore PKCS#12 local foi aberto no viewer para backup privado do usuário; salvar também `.signing/signing.env` fora do repositório. `npm test`: **30 executados, todos passaram; 1 browser-test pulado** porque Playwright não está instalado neste turno; `prettier --check`, `git diff --check` e `make_assets_list --check` passaram. Ainda sem push, build nativo ou Release.
+
+**Correção de continuidade (2026-10-04):** após abrir o PKCS#12 no viewer, a última checagem confirmou que `.signing/` e `signing.env` já não existem no workspace. Logo, o arquivo que apareceu no viewer **não deve ser tratado como backup usável sem a senha**; nenhum APK/release depende dele. O certificado público versionado é provisório e deve ser substituído por `tools/export-android-public-cert.sh` depois de gerar uma chave nova e guardar a keystore imediatamente num Actions secret/backup privado. O usuário escolheu habilitar a permissão, mas o 403 ainda não foi resolvido nesta sessão.
+
+## Continuação — Android sem WebView externo (2026-10-04)
+
+**Novo requisito do usuário:** após transferir/instalar, jogar no Android e no PC sem internet nem navegador/app adicional. A decisão Android anterior (WebView do sistema) foi substituída: o APK deve levar seu próprio motor Gecko.
+
+### Solução no código
+
+- Android usa GeckoView embutido no APK (`153.0.20260810162159`), sem Android System WebView/Chrome. Um APK para ARM64 + ARMv7, mínimo Android 8 / API 26; WebAuthn não é usado e o runtime transitivo `play-services-fido` foi excluído para não depender de Play Services.
+- GeckoView recebe a página por um servidor somente leitura ligado apenas a `127.0.0.1:43177`. A porta/host fixos dão uma origem HTTP estável para persistir `localStorage` entre partidas. `INTERNET` é declarado somente para o socket local; NavigationDelegate nega navegação externa, CSP restringe recursos e conexões à própria origem e `network_security_config.xml` permite HTTP claro apenas para `localhost`.
+- Assets completos (231 caminhos / 55,8 MiB), runtime e textos MPL-2.0/MIT entram nos shells. Windows continua com Electron/Chromium local e bloqueio de rede externa.
+- A página de downloads deixa APK/EXE desativados enquanto não há Release; README deixa claro que nenhum artefato foi publicado.
+- GeckoView 153 foi escolhido para compilar com Android SDK 36 estável: versões 154+ consultadas passam a exigir AndroidX `core 1.19`/`lifecycle 2.11`, que exigem compileSdk 37 (ainda preview no toolchain consultado). Toolchain preparada: AGP 8.10.1, Gradle 8.11.1, JDK 17. AARs v153: 85,8 MB arm64, 83,2 MB armeabi-v7a, 229,5 MB todas as arquiteturas; tamanho final do APK ainda não medido.
+- Licenças/avisos do GeckoView incluídos; revisão Mozilla referenciada em `installers/THIRD_PARTY_NOTICES.md`.
+
+### Validação desta atualização
+
+- `npm test -- -j 2`: **30/30 passaram**; `regressions-browser` pulado porque Playwright não está instalado. Um `npm test` padrão sob carga paralela teve falha transitória em `regressions` (a Rainha permaneceu `running`); `node game/test/regressions.mjs` isolado e a nova bateria com 2 workers passaram.
+- `node game/test/pwa.mjs`: passou; download PWA segue único/completo e links nativos permanecem desativados até Release.
+- `node game/test/native-packages.mjs`: passou; todos os 231 arquivos e licenças presentes, GeckoView/ABIs e bloqueios locais verificados estruturalmente.
+- `node tools/make_assets_list.mjs --check`: passou (`20261004-native-offline`, 231 arquivos / 55,8 MiB).
+- `bash -n`, `node --check`, XML parse e `git diff --check`: passaram.
+- **Não houve build Android nem teste em aparelho/emulador:** sandbox ainda não tem `java`/`javac` nem Android SDK. O build Gradle do Android precisa validar as assinaturas da API GeckoView e a inicialização real/offline.
+
+### Ainda bloqueado
+
+Nenhum APK/EXE/Release foi produzido. `.signing/` não existe, o certificado público versionado continua provisório e `gh secret set` continua bloqueado por HTTP 403 (permissão de Actions secrets). Depois de criar uma nova keystore e guardá-la imediatamente em Actions secret + backup privado, executar o workflow, instalar/abrir o APK Android 8+ e verificar partida/save com a rede desligada, compilar Windows x64 e então publicar APK, EXE e checksums na Release pública.
+
+**Ajuste de pré-validação (2026-10-04):** `.github/workflows/pacotes-nativos.yml` agora também compila em push para a branch `arena/01a0fc42-fumiga-goat` e aceita `workflow_dispatch`; nesses eventos, APK/EXE ficam apenas como artifacts temporários do Actions e o job de anexar à Release é pulado. Só o evento `release.published` publica os três anexos. Assim, com os secrets já configurados, é possível testar os binários antes de publicar a Release pública.
+
+**Pré-validação sem compartilhar chave (2026-10-04):** como `.signing/` e Actions secrets continuam ausentes, o push para a branch Arena usa `bash tools/build-android.sh debug` para compilar um APK Android completo assinado somente com a chave debug descartável do Gradle; o nome `FUMIGA-Android-DEBUG.apk` e o artifact `apk-android-prevalidacao-debug` deixam explícito que não é para distribuição. O instalador Windows x64 também é artifact temporário. Acionamento manual e Release continuam exigindo a keystore privada estável e geram APK release assinado; somente `release.published` anexa APK, EXE e checksums à Release. `native-packages.mjs` verifica essa separação. `npm test -- -j 2` passou nos 30 testes locais, com regressão de navegador pulada por falta de Playwright; build Gradle real e Windows ficam para o CI, porque este sandbox não contém JDK/Android SDK nem Windows.

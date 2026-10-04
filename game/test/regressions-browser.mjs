@@ -198,6 +198,19 @@ try {
     await go('OPTIONS');
     await click('tab5');
     await page.waitForFunction(async () => (await M('ui.js')).uiButtons().some(b => b.id === 'ptExport'));
+    // Deixa a captura estável e útil como exemplo, sem os erros que este teste
+    // provoca intencionalmente nas regressões anteriores.
+    await page.evaluate(async () => {
+      const P = await M('playtest.js');
+      P.ptApagar();
+      P.ptSessao({ fonte: 'jogo', v: '20261002-playtest' });
+      P.ptEvento('expedicao_inicio', { modo: 'campanha', mapa: 0 });
+      P.ptEvento('expedicao_fim', { venceu: true, modo: 'campanha', mapa: 0, onda: 3 });
+    });
+    // Além do fluxo funcional, guardar uma captura da própria aba para o
+    // roteiro de campo e para o artefato de revisão do CI (PC + mobile).
+    await page.evaluate(() => new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve))));
+    await page.screenshot({ path: OUT + '/' + name + '-playtest-teste.png' });
     const esperaDownload = page.waitForEvent('download', { timeout: 10000 }).catch(() => null);
     await click('ptExport');
     const download = await esperaDownload;
