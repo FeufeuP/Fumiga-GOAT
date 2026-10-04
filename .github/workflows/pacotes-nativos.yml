@@ -28,7 +28,7 @@ jobs:
         with:
           node-version: "22"
       - name: Android SDK
-        uses: android-actions/setup-android@v3
+        uses: android-actions/setup-android@v4.0.4
       - name: Instalar plataforma Android 36
         run: sdkmanager "platforms;android-36" "build-tools;35.0.0"
       - name: Preparar assinatura de release
@@ -78,7 +78,7 @@ jobs:
         with:
           node-version: "22"
       - name: Android SDK
-        uses: android-actions/setup-android@v3
+        uses: android-actions/setup-android@v4.0.4
       - name: Instalar plataforma Android 36
         run: sdkmanager "platforms;android-36" "build-tools;35.0.0"
       - name: Compilar APK completo de pré-validação

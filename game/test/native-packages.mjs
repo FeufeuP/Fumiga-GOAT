@@ -79,5 +79,6 @@ for (const marker of ["release:", "published", "workflow_dispatch:", "arena/01a0
   assert.ok(workflow.includes(marker), "workflow de Release inclui " + marker);
 }
 assert.match(workflow, /android:\n\s+if: github\.event_name != 'push'/, "APK release não depende de segredo no build de push");
+assert.equal((workflow.match(/android-actions\/setup-android@v4\.0\.4/g) || []).length, 2, "ambos os jobs Android usam setup-android corrigido");
 assert.match(workflow, /android-prevalidacao:\n\s+if: github\.event_name == 'push'[\s\S]*bash tools\/build-android\.sh debug[\s\S]*apk-android-prevalidacao-debug/, "push gera apenas artefato Android debug temporário");
 console.log("NATIVE PACKAGES OK — APK com GeckoView ARM64/ARMv7 e instalador Windows x64 recebem o jogo completo; rede externa não é necessária.");
