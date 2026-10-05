@@ -1,5 +1,5 @@
 {
-  "version": "20261005-cutscene-4x4",
+  "version": "20261005-kiwisoda-font-theme",
   "geradoPor": "tools/make_assets_list.mjs",
   "grupos": [
     {
@@ -71,9 +71,9 @@
         228010,
         14916,
         7089,
-        2314,
+        2313,
         1379,
-        20967,
+        20974,
         11449,
         21721,
         2553,
@@ -81,25 +81,25 @@
         8208,
         53674,
         23041,
-        14574,
+        14561,
         38797,
         3248,
-        9813,
+        14617,
         10280,
         14824,
-        136916,
+        137680,
         4785,
         27441,
         23168,
         13052,
-        11634,
+        11572,
         46646,
         1342,
         43782,
         15085,
         14081,
         4494,
-        81713,
+        81768,
         18916,
         6938,
         7119,
@@ -112,12 +112,12 @@
         911,
         2460,
         945,
-        7490,
+        7486,
         19399,
         8826,
         899
       ],
-      "bytes": 1338832
+      "bytes": 1344382
     },
     {
       "id": "assets",
@@ -135,8 +135,7 @@
         "game/assets/cutscenes/noite_branca/panel3_gancho/2_mid.png",
         "game/assets/cutscenes/noite_branca/panel3_gancho/4_foreground.png",
         "game/assets/cutscenes/noite_branca/panel3_gancho/5_particles.png",
-        "game/assets/font/font_big.png",
-        "game/assets/font/font_small.png",
+        "game/assets/font/KiwiSoda.ttf",
         "game/assets/loading/loading_floresta.png",
         "game/assets/loading/loading_planicie.png",
         "game/assets/parallax/menu/layer1_foreground_vines.png",
@@ -316,8 +315,7 @@
         21156,
         24085,
         3600,
-        2647,
-        2075,
+        49292,
         1777165,
         7533004,
         426677,
@@ -484,7 +482,7 @@
         839032,
         656076
       ],
-      "bytes": 24659468
+      "bytes": 24704038
     }
   ]
 }

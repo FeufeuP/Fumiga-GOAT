@@ -31,7 +31,7 @@ do canvas.
 - **Dois apps, duas versões:** `/game/` instala **“FUMIGA — Colônia Eterna (PC)”** e `/game/mobile/`
   instala **“FUMIGA — Colônia Eterna (Mobile)”**; a raiz instala só **FUMIGA** e, ao abrir, leva para
   a versão do aparelho. Os saves continuam separados (PC e mobile não se conectam).
-- **Baixar offline:** um pacote único com o jogo completo (**~24,8 MB, 233 arquivos**), com barra de
+- **Baixar offline:** um pacote único com o jogo completo (**~24,8 MB, 232 arquivos**), com barra de
   progresso e status do que já está no aparelho: os 6 biomas, a árvore, a cutscene da Noite Branca e os
   7 santuários dos frutos. O botão **LIBERAR ESPAÇO** apaga os caches.
 - **Como funciona:** `sw.js` (raiz do repositório — o GitHub Pages não permite ampliar escopo de
@@ -298,7 +298,7 @@ defender a onda, coletar essência). `T` pula, e a preferência fica salva.
 - `js/nest.js` — a cena de dentro do formigueiro (salas, túneis, IA das formigas: carregar,
   escavar, cuidar das larvas). Os bônus do grupo **CRIAÇÃO** da árvore entram aqui: escavação,
   berçário, despensa, postura da rainha, custo das câmaras.
-- `assets/` — sprites e fontes bitmap processados
+- `assets/` — sprites processados e cópia runtime local da Kiwi Soda (`font/KiwiSoda.ttf`)
 - `tools/prepare_assets.sh` — regenera os sprites a partir das fontes
 - `js/playtest.js` — diário de campo **local e sem PII**: sessões, expedições, compras, erros e o
   comportamento do app instalável. O tester exporta em **OPÇÕES → aba TESTE**; os arquivos viram
@@ -325,11 +325,10 @@ defender a onda, coletar essência). `T` pula, e a preferência fica salva.
 - `test/docs.mjs` — integridade do [`MEGA_ARQUIVO.md`](../MEGA_ARQUIVO.md): seis documentos originais preservados byte a byte, com SHA-256
 - `test/uitest.mjs` — boot → título → introdução → expedição → câmaras → pausa → troca de mapa (DOM simulado)
 - `test/assets.mjs` — integridade de sprites e de texto: todo nome de imagem usado pelo jogo
-  (props de cada bioma, unidades, inimigos, chefes, ícones) precisa estar no `MANIFEST`, e todo
-  caractere dos textos precisa existir no atlas da fonte (senão o jogo desenha `?`). Também
-  confere que a lista/ordem de glifos do `js/font.js` bate com o array `CHS` de
-  `tools/prepare_assets.sh` — se divergirem, o índice da célula pinta o glifo errado. Rode depois
-  de mexer em `js/config.js`, `js/assets.js`, `js/font.js` ou de regerar as fontes.
+  (props de cada bioma, unidades, inimigos, chefes, ícones) precisa estar no `MANIFEST`; valida
+  que a cópia runtime da Kiwi Soda coincide com `fonte/kiwisoda/KiwiSoda.ttf`, cobre acentos e
+  pontuação do conteúdo, e que símbolos sem glifo usam fallback explícito. Rode depois de mexer
+  em `js/config.js`, `js/assets.js`, `js/font.js` ou de regerar os assets.
 - `test/tree.mjs` — auditor da ÁRVORE DA EVOLUÇÃO: confere que todo nó tem pré-requisito
   existente, caminho até a raiz e um bônus de verdade em `metaBonus()` (nó decorativo = erro),
   além de comprar **todos** os níveis de **todos** os nós e conferir que os bônus chegam nas
@@ -340,7 +339,7 @@ defender a onda, coletar essência). `T` pula, e a preferência fica salva.
   formigueiro, nenhuma operária fica presa no `goto` com alvo inalcançável, e a **bombeira
   explode de verdade** (área + queimadura em vários inimigos de uma vez).
 - `test/layout.mjs` — auditor de layout headless: roda o jogo com um canvas de mentira que grava
-  todas as operações de desenho, reconstrói o texto desenhado (glifo a glifo, a partir do atlas) e
+  todas as operações de desenho, reconstrói as linhas cacheadas da Kiwi Soda e
   acusa texto fora do canvas, texto encoberto por painel pintado depois, textos colidindo e botões
   sobrepostos em todas as telas (título, ajuda, árvore, HUD, tutorial, chefe, draft, câmara, pausa,
   transição, fim, mapa 6). Imprime quantos textos auditou em cada cenário: um verde com cobertura

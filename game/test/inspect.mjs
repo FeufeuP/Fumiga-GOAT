@@ -1,6 +1,6 @@
 // INSPEÇÃO NO NAVEGADOR — a Regra 4 automatizada: abre o jogo num Chromium de
 // verdade (PC e mobile), passa por todas as telas e pelos 6 mapas, e acusa
-// erros de JS, arquivos 404, glifos que viram "?" e queda de desempenho.
+// erros de JS, arquivos 404, caracteres fora do conjunto e queda de desempenho.
 // As capturas ficam FORA do Git para revisão visual.
 //
 //   bash tools/setup-dev.sh            (uma vez por sessão)
@@ -107,7 +107,7 @@ for (const profile of profiles) {
     await page.screenshot({ path: file });
     const expected = name.startsWith("RUN") || name === "NINHO" ? "RUN" : name;
     if (st.tela !== expected) errs.push("esperava a tela " + expected + ", está em " + st.tela);
-    for (const g of st.glifosFaltando) errs.push("glifo fora do atlas (vira ?): " + g);
+    for (const g of st.glifosFaltando) errs.push("caractere fora da lista de glifos: " + g);
     for (const e of st.erros) errs.push("erro capturado: " + e);
     report.push({ perfil: profile.id, cena: name, ok: !errs.length, ...(perf || {}), cpuMs: st.trabalhoMs,
       entidades: st.tela === "RUN" ? st.aliadas + st.inimigas + st.particulas : undefined, erros: errs });

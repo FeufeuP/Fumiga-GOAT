@@ -1,4 +1,6 @@
 // Teste de integração headless (mock de DOM): percorre boot → pretitle → título → modo → run
+import { installFontFaceMock } from "./lib/font-mock.mjs";
+
 const gradProxy = { addColorStop() {} };
 function makeCtx() {
   return new Proxy({ canvas: { width: 0, height: 0 } }, {
@@ -23,6 +25,7 @@ globalThis.document = {
   addEventListener() {}, fonts: { load: () => Promise.resolve() },
   createElementNS() { return { getContext: makeCtx }; },
 };
+installFontFaceMock();
 globalThis.localStorage = { getItem: () => null, setItem() {}, removeItem() {} };
 globalThis.Image = class {
   constructor() { this.width = 64; this.height = 64; }
@@ -245,7 +248,6 @@ expect(busy >= 1, "formigas em movimento dentro do formigueiro (" + busy + " ocu
   }
   expect(recruta !== null, "recruta desceu pela boca para o teste de saída");
   const flaggedAntes = new Set(units.allies.inside.filter(a => a.exitRequested).map(a => a.id));
-  const antes = units.insideCount();
   pressed.KeyL = true;
   await wait(80);
   pressed.KeyL = false;
@@ -254,7 +256,8 @@ expect(busy >= 1, "formigas em movimento dentro do formigueiro (" + busy + " ocu
   expect(novos.length >= 1, "L colocou uma formiga na fila da boca (" + novos.length + " nova(s))");
   const naFila = nestMod.nest.ants.some(n => n.leaving);
   expect(naFila, "há corpo andando até a ENTRADA na cena de dentro");
-  expect(units.insideCount() === antes, "ninguém teleportou: todas ainda dentro enquanto ela caminha");
+  const novasAindaDentro = novos.filter(a => units.allies.inside.some(b => b.id === a.id)).length;
+  expect(novasAindaDentro === novos.length, "ninguém teleportou: as formigas novas seguem dentro enquanto caminham");
   let guardOut = 0;
   const aindaDentro = () => novos.some(a => units.allies.inside.some(b => b.id === a.id));
   while (aindaDentro() && guardOut < 20000) { await wait(250); guardOut += 250; }

@@ -32,7 +32,7 @@ npm run test:quick          # ~10 s: confirma que a base está verde
 | `npm run inspect:ui` | cliques/toques reais: páginas de Memórias/Profecias, replay, ninho, pausa e invocar | ~15 s |
 | `npm run inspect:hud` | HUD orgânico nos 6 biomas, tecla H, acessibilidade | ~40 s |
 | `npm run inspect:layout` | **auditoria de layout**: todas as telas PC + mobile, com e sem FONTE GRANDE — texto fora da tela, colidindo, vazando da caixa, botões sobrepostos, toque cobrindo o canvas | ~4 min |
-| `npm run inspect:pwa` | **app instalável**: pacote único completo (233 arquivos), **reinício do worker com a rede desligada**, update que falha de propósito (a cópia anterior tem que sobreviver), timeout e boot offline em PC + mobile; passo 6: atualização real (versão velha → nova) exige **uma** recarga automática do jogo, nunca com expedição em andamento | ~25 s |
+| `npm run inspect:pwa` | **app instalável**: pacote único completo (232 arquivos), **reinício do worker com a rede desligada**, update que falha de propósito (a cópia anterior tem que sobreviver), timeout e boot offline em PC + mobile; passo 6: atualização real (versão velha → nova) exige **uma** recarga automática do jogo, nunca com expedição em andamento | ~25 s |
 | `npm run inspect:preload` | **pré-carregamento do TITLE** (Regra 14): boot leve, tudo pronto parado no TITLE, árvore → 7 santuários → replay → profecias sem tela de carregamento, clique cedo com CPU 4× mais lenta, sem rede, pixels idênticos | ~45 s |
 | `node game/test/native-packages.mjs` | Android GeckoView embutido + loopback/CSP + Electron/NSIS x64: sem rede externa no runtime e cobertura integral dos assets | ~1 s |
 | `npm run playtest` | lê os JSONs de teste de campo (pasta `playtest/` ou caminhos) e gera o relatório de balanceamento/PWA | ~1 s |
@@ -83,7 +83,7 @@ faltando e o último erro. No console: `FUMIGA.ajuda()`, `FUMIGA.go('RUN', {mapa
 | `lore_hud.js` | HUD orgânico por bioma, barra-gaster da rainha, visão de feromônio (H) |
 | `cutscenes.js` | cutscenes em camadas (Noite Branca etc.), biblioteca MEMÓRIAS (o replay toca dentro dela) |
 | `preload.js` | **pré-carregamento do TITLE** (Regra 14): árvore, maçãs, flores, 7 santuários e Noite Branca preparados em fatias de poucos ms por quadro (geradores), sem tela de carregamento |
-| `tutorial.js` · `ui.js` · `font.js` | tutorial em cartões · primitivos de UI em canvas · fonte bitmap (atlas) |
+| `tutorial.js` · `ui.js` · `font.js` | tutorial em cartões · primitivos de UI em canvas · tipografia Kiwi Soda (TTF), métricas e cores por tela |
 | `camera.js` · `input.js` · `fog.js` · `audio.js` · `utils.js` | câmera/zoom/shake · teclado+mouse em coords 960×540 · névoa de guerra · áudio procedural WebAudio · RNG/matemática |
 | `playtest.js` | **diário de campo 100% local** (sem PII): sessões, expedições, poderes, erros e PWA; exporta em OPÇÕES → aba TESTE (`tools/playtest.mjs` gera o relatório) |
 | `debug.js` | modo debug (seção 2) — ferramenta, não é jogo |
@@ -101,7 +101,7 @@ faltando e o último erro. No console: `FUMIGA.ajuda()`, `FUMIGA.go('RUN', {mapa
   `MANIFEST` de `assets.js` (o `test/assets.mjs` acusa se faltar).
 - **Arte nova, arquivo movido ou qualquer byte mudado em `game/` ou `app/`** → subir `ASSET_V`, rodar
   `node tools/make_assets_list.mjs` e sincronizar os shells nativos com `node tools/sync-native-assets.mjs`.
-  `app/assets.json` alimenta o único download offline completo (233 arquivos, ~24,8 MB); `test/pwa.mjs`
+  `app/assets.json` alimenta o único download offline completo (232 arquivos, ~24,8 MB); `test/pwa.mjs`
   compara a lista com a árvore real. Arquivo de arte não usado vai para `art-source/` (Regra 13).
 - **Novo atalho de teclado** → trate em `game.js` **e** crie o botão/gesto em `mobile/touch.js`
   (Regra 9) + texto em `HELP_CONTROLS_TOUCH`.
@@ -119,9 +119,11 @@ faltando e o último erro. No console: `FUMIGA.ajuda()`, `FUMIGA.go('RUN', {mapa
 
 ## 5. Armadilhas conhecidas
 
-- **Fonte bitmap**: só existem os glifos de `FONT_CHARS` (`font.js`). Qualquer outro caractere
-  vira “?”. `test/assets.mjs` checa os literais e o modo debug/`inspect` checa em tempo real.
-  Para símbolos (setas, ícones), desenhe com `fillRect` ou use um sprite.
+- **Fonte Kiwi Soda**: a origem é `fonte/kiwisoda/KiwiSoda.ttf`; o runtime usa a cópia
+  `game/assets/font/KiwiSoda.ttf`, carregada por `FontFace` para Canvas e HUD mobile. `font.js`
+  mede a TTF, mantém cache de linhas e aplica paletas neutras por tela; cores semânticas
+  (recursos, perigo, vida) permanecem intactas. `test/assets.mjs` valida o cmap e os textos;
+  símbolos ausentes no arquivo TTF (• ▶ ✓ ∞) usam fallback do navegador.
 - **Cache de assets**: as imagens são pedidas com `?v=ASSET_V` (`assets.js`). Trocou um PNG
   que já existia? Suba `ASSET_V`, senão celulares continuam com o antigo.
 - **Preview velho**: `python3 -m http.server` deixa o navegador guardar módulos ES em cache. Use

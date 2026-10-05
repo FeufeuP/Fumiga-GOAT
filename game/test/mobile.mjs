@@ -11,6 +11,7 @@ import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import { spawnSync } from "node:child_process";
 import { fileURLToPath } from "node:url";
+import { installFontFaceMock } from "./lib/font-mock.mjs";
 import { setImmediate as nextTurn } from "node:timers/promises";
 
 const SELF = fileURLToPath(import.meta.url);
@@ -93,6 +94,7 @@ function baseGlobals() {
     addEventListener() {},
     fonts: { load: () => Promise.resolve() },
   };
+  installFontFaceMock();
   globalThis.addEventListener = (t, fn) => { (winListeners[t] = winListeners[t] || []).push(fn); };
   globalThis.requestAnimationFrame = (cb) => { frames.push(cb); return frames.length; };
   globalThis.localStorage = { getItem: () => null, setItem() {}, removeItem() {} };

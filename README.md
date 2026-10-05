@@ -17,7 +17,7 @@ Para jogar no seu computador, veja [Rodar localmente](#-rodar-localmente) abaixo
 Os instaladores de distribuição estão preparados no código, mas **ainda não há binários finais publicados**: a
 primeira [GitHub Release pública](https://github.com/FeufeuP/Fumiga-GOAT/releases) será liberada
 após validar os builds e a assinatura do APK. Ela anexará o APK Android e o instalador Windows
-64-bit (`.exe`), cada um com o **jogo completo** (233 arquivos, cerca de 24,8 MB de recursos) e
+64-bit (`.exe`), cada um com o **jogo completo** (232 arquivos, cerca de 24,8 MB de recursos) e
 sem baixar assets depois da instalação. O Windows leva Electron/Chromium; o APK incorpora o
 mecanismo GeckoView da Mozilla, sem exigir Chrome ou Android System WebView. Depois de instalados,
 nenhum dos dois precisa de internet, Play Store ou Play Services para jogar.
