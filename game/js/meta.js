@@ -7,14 +7,13 @@ import { IMG, loadSantuario } from "./assets.js";
 import { panel, button, hitArea, pointInRect, isTouchUI } from "./ui.js";
 import { mouse } from "./input.js";
 import { SFX } from "./audio.js";
-import { clamp, TAU } from "./utils.js";
+import { clamp, TAU, drainSteps, offThreadDecode, releaseDecoded } from "./utils.js";
 import {
   TREE_ART, TREE_NODES, TREE_BY_ID, TREE_ALL, TREE_STAGE_NODES, TREE_STAGE_BOUNDS,
   TREE_NODE_RADII, fruitCenter, fruitFlowerPos, fruitAssetName,
 } from "./tree_layout.js";
 import { treeArtCanvas, treeGrowth } from "./tree_art.js";
 import { createColorRestorer } from "./color_restore.js";
-import { shouldUseLoadingScreen, runWithLoadingScreen } from "./loading_screen.js";
 
 export const TREE_VIEW = { x: 184, y: 100, w: 764, h: 386 };
 const DETAIL = { x: 608, y: 100, w: 340, h: 386 };
@@ -64,13 +63,17 @@ export function treeFit() {
   drag = clickTarget = null;
 }
 export function enterTree() {
-  activeFruit = null; hoverNode = hoverFruit = null;
+  leaveFruit(); hoverNode = hoverFruit = null;
   treeFit();
+  treeOpenedAt = G.time;
+  // Pronta no TITLE (preload.js). Se o clique veio antes, termina AGORA, no
+  // clique — nunca no meio da transição de zoom.
+  treeArtCanvas(treeGrowth());
 }
 export function treeFocusStage(stage) {
   const b = TREE_STAGE_BOUNDS[stage - 1];
   if (!b) return;
-  activeFruit = selectedNode = null; focusedStage = stage;
+  leaveFruit(); selectedNode = null; focusedStage = stage;
   zoom = clamp(Math.min((TREE_VIEW.w - 60) / (b.maxX - b.minX),
     (TREE_VIEW.h - 70) / (b.maxY - b.minY)), .32, .80);
   pan.x = (b.minX + b.maxX) / 2; pan.y = (b.minY + b.maxY) / 2;
@@ -233,30 +236,49 @@ function drawNode(ctx, n) {
 // segue na lista de patamares).
 const FRUIT_FRAME = 450;
 const FRUIT_GRAY = new Map();
+const GRAY_SLICE = 1 << 15;   // pixels por fatia do pré-carregamento
+// Maçãs conquistadas já decodificadas pelo pré-carregamento (ImageBitmap): o
+// 1º quadro da árvore não decodifica PNG de 960 px na thread principal.
+const FRUIT_COLOR = new Map();
+// Maçãs cinza que o pré-carregamento ainda vai assar: a árvore aberta antes do
+// fim não as calcula de uma vez (engasgo longo no celular) — entram com fade.
+const FRUIT_PENDING = new Set();
+const FRUIT_READY_AT = new Map();
+let treeOpenedAt = 0;
 
 /** Versão acromática da maçã, assada UMA vez e cacheada — mesmo critério do
  *  `tree_art.js`: sem cor = mundo ainda não conquistado. Só muda o RGB dos
- *  pixels opacos; o alfa (e a silhueta) ficam intocados. */
-function fruitGray(key) {
-  let g = FRUIT_GRAY.get(key);
-  if (!g) {
-    const src = IMG[key];
-    g = document.createElement("canvas");
-    g.width = src.width; g.height = src.height;
-    const c = g.getContext("2d");
-    c.imageSmoothingEnabled = false;
-    c.drawImage(src, 0, 0);
-    const d = c.getImageData(0, 0, g.width, g.height);
-    const px = d.data;
-    for (let i = 0; i < px.length; i += 4) {
+ *  pixels opacos; o alfa (e a silhueta) ficam intocados. Em fatias para o
+ *  pré-carregamento do TITLE; `fruitGray` termina na hora o que faltar. */
+function* grayAppleSteps(key, drawSource = IMG[key]) {
+  const src = IMG[key];
+  if (!src) return;
+  const g = document.createElement("canvas");
+  g.width = src.width; g.height = src.height;
+  const c = g.getContext("2d");
+  c.imageSmoothingEnabled = false;
+  c.drawImage(drawSource || src, 0, 0);
+  const d = c.getImageData(0, 0, g.width, g.height);
+  const px = d.data;
+  for (let i0 = 0; i0 < px.length; i0 += GRAY_SLICE * 4) {
+    yield;
+    const i1 = Math.min(px.length, i0 + GRAY_SLICE * 4);
+    for (let i = i0; i < i1; i += 4) {
       if (!px[i + 3]) continue;
       const l = Math.round(px[i] * .2126 + px[i + 1] * .7152 + px[i + 2] * .0722);
       px[i] = px[i + 1] = px[i + 2] = l;
     }
-    c.putImageData(d, 0, 0);
-    FRUIT_GRAY.set(key, g);
   }
-  return g;
+  if (FRUIT_GRAY.has(key)) return;   // o desenho já terminou esta maçã
+  c.putImageData(d, 0, 0);
+  FRUIT_GRAY.set(key, g);
+}
+function fruitGray(key) {
+  const ready = FRUIT_GRAY.get(key);
+  if (ready) return ready;
+  if (FRUIT_PENDING.has(key)) return null;   // sai do forno em instantes, com fade
+  drainSteps(grayAppleSteps(key));
+  return FRUIT_GRAY.get(key) || IMG[key];
 }
 
 function drawFruit(ctx, fruit, i) {
@@ -293,7 +315,13 @@ function drawFruit(ctx, fruit, i) {
     // fruto bloqueado é a maçã acinzentada com o rótulo FRUTO BLOQUEADO e o
     // painel dizendo o pré-requisito; a Pálida (futura) é a maçã branca com o
     // rótulo FRUTO FUTURO. A arte nunca é coberta por símbolo algum.
-    ctx.drawImage(locked ? fruitGray(key) : img, Math.round(p.x - s / 2), Math.round(p.y - s / 2), s, s);
+    const art = locked ? fruitGray(key) : FRUIT_COLOR.get(key) || img;
+    if (art) {
+      const at = FRUIT_READY_AT.get(key), alpha = ctx.globalAlpha;
+      if (at > treeOpenedAt) ctx.globalAlpha = alpha * Math.min(1, (G.time - at) / .35);
+      ctx.drawImage(art, Math.round(p.x - s / 2), Math.round(p.y - s / 2), s, s);
+      ctx.globalAlpha = alpha;
+    }
   }
   if (zoom >= .32 && (focusedStage === i + 1 || hot)) {
     const label = fruit.pending ? "FRUTO FUTURO" : unlocked ? "ABRIR FRUTO" : "FRUTO BLOQUEADO";
@@ -406,40 +434,60 @@ function drawNodeTip(ctx, n) {
   if (button(ctx, { x: closeX, y: actionY, w: closeW, h: 44, compact: true, label: "FECHAR", id: "treeClose", scale: activeFruit ? .72 : .85 })) selectedNode = null;
 }
 const SANTUARIO_IMAGES = new Map();
-const restoreSanctuary = createColorRestorer();
-const restoreApple = createColorRestorer();
+// Um restaurador ENXUTO por santuário: depois de assado só o canvas 960×540
+// fica vivo (~2 MB cada), então trocar de fruto não reprocessa pixels. Cor
+// nova (compra) re-assa só aquele santuário. Pré-assados no TITLE (preload.js).
+const SANCTUARY_ART = new Map();
+function sanctuaryRestorer(map) {
+  let restore = SANCTUARY_ART.get(map);
+  if (!restore) SANCTUARY_ART.set(map, restore = createColorRestorer({ lean: true }));
+  return restore;
+}
+// A maçã do santuário é desenhada SEMPRE em 232×232, sem suavização e em
+// coordenada inteira: reduzir antes (vizinho mais próximo) e restaurar a cor
+// nesse tamanho dá os mesmos pixels com 1/17 do trabalho e da memória.
+const APPLE_SIZE = 232;
+const APPLE_ART = new Map();
+function appleArt(key, drawSource = IMG[key]) {
+  const img = IMG[key];
+  let art = APPLE_ART.get(key);
+  if (art && art.img === img) return art;
+  let src = img;
+  if (img?.width && typeof document !== "undefined") {
+    const cv = document.createElement("canvas");
+    cv.width = cv.height = APPLE_SIZE;
+    const c = cv.getContext("2d");
+    if (c) { c.imageSmoothingEnabled = false; c.drawImage(drawSource || img, 0, 0, APPLE_SIZE, APPLE_SIZE); src = cv; }
+  }
+  APPLE_ART.set(key, art = { img, src, restore: createColorRestorer({ lean: true }) });
+  return art;
+}
+let fruitOpenedAt = 0;
 function ensureSantuario(fruit) {
   const map = fruitAssetName(fruit), previous = SANTUARIO_IMAGES.get(map);
-  if (previous && !previous.failed) return Promise.resolve(previous.image);
-  const state = { image: null, failed: false };
+  // Quem chega durante o download recebe a MESMA promessa (não um null).
+  if (previous && !previous.failed) return previous.promise;
+  const state = { image: null, failed: false, readyAt: 0, promise: null };
   SANTUARIO_IMAGES.set(map, state);
-  return loadSantuario(map).then(img => { state.image = img; return img; }).catch(() => { state.failed = true; return null; });
+  state.promise = loadSantuario(map)
+    .then(img => { state.image = img; state.readyAt = G.time; return img; })
+    .catch(() => { state.failed = true; return null; });
+  return state.promise;
 }
 function openFruit(fruit) {
-  if (!shouldUseLoadingScreen()) {
-    activeFruit = fruit; selectedNode = null; drag = clickTarget = null;
-    ensureSantuario(fruit);
-    return;
-  }
-  const map = fruitAssetName(fruit);
-  mouse.justDown = false;
-  runWithLoadingScreen({
-    biome: map,
-    degrau: "SANTUÁRIO ANCESTRAL",
-    title: "SANTUÁRIO • " + fruit.name,
-    subtitle: "CARREGANDO JARDIM E MEMÓRIA DE " + (fruit.bossName || "GUARDIÃO"),
-    minDuration: 1.2,
-    task: async (onProgress) => {
-      onProgress(0.35, "ABRINDO SANTUÁRIO...");
-      activeFruit = fruit; selectedNode = null; drag = clickTarget = null;
-      const img = await ensureSantuario(fruit);
-      if (img) {
-        onProgress(0.8, "RESTAURANDO CORES DO JARDIM...");
-        try { restoreSanctuary(img, fruitGardenGrowth(fruit).saturation); } catch (e) { /* ok */ }
-      }
-      onProgress(1.0, "SANTUÁRIO PRONTO");
-    },
-  });
+  // Regra 14: santuário baixado e assado no TITLE — abre na hora, sem tela.
+  // Se o download ainda não terminou, a arte entra com fade quando chegar.
+  leaveFruit();
+  activeFruit = fruit; selectedNode = null; drag = clickTarget = null;
+  fruitOpenedAt = G.time;
+  // Aberto: guarda os buffers para compras seguidas recolorirem rápido.
+  sanctuaryRestorer(fruitAssetName(fruit)).lean(false);
+  ensureSantuario(fruit);
+}
+/** Fecha o santuário aberto (se houver) e libera os buffers de pixels dele. */
+function leaveFruit() {
+  if (activeFruit) sanctuaryRestorer(fruitAssetName(activeFruit)).lean(true);
+  activeFruit = null;
 }
 function visibleFruitNodes() { return [...activeFruit.newNodes, ...activeFruit.legacyNodes]; }
 function flowerPosition(n) {
@@ -465,12 +513,16 @@ function gardenColor(hex, saturation) {
   return "rgb(" + rgb.map(c => Math.round(gray + (c - gray) * saturation)).join(",") + ")";
 }
 function drawSanctuaryBackground(ctx, fruit, saturation) {
-  const state = SANTUARIO_IMAGES.get(fruitAssetName(fruit));
+  const map = fruitAssetName(fruit), state = SANTUARIO_IMAGES.get(map);
   ctx.fillStyle = "#17121f"; ctx.fillRect(0, 0, 960, 540);
   if (state?.image) {
     ctx.imageSmoothingEnabled = false;
-    const art = restoreSanctuary(state.image, saturation) || state.image;
+    const art = sanctuaryRestorer(map)(state.image, saturation) || state.image;
+    // Arte que chegou com o santuário já aberto entra suave, sem estalo.
+    const alpha = ctx.globalAlpha;
+    if (state.readyAt > fruitOpenedAt) ctx.globalAlpha = alpha * Math.min(1, (G.time - state.readyAt) / .35);
     ctx.drawImage(art, 0, 0, 960, 540);
+    ctx.globalAlpha = alpha;
   } else {
     drawText(ctx, "SANTUÁRIO • " + fruit.name, 480, 250,
       { align: "center", scale: .9, color: "#d4c8d6", maxWidth: 820 });
@@ -481,7 +533,7 @@ function drawSanctuaryBackground(ctx, fruit, saturation) {
 function drawSanctuaryApple(ctx, fruit, saturation) {
   const key = "maca_" + fruitAssetName(fruit), img = IMG[key];
   const bob = reduced() ? 0 : Math.sin(time() * 1.1) * 6;
-  const x = 480, y = 176 + bob, size = 232;
+  const x = 480, y = 176 + bob, size = APPLE_SIZE;
   ctx.save();
   ctx.globalAlpha = .34 + (reduced() ? 0 : .08 * Math.sin(time() * 1.4));
   ctx.strokeStyle = gardenColor(fruit.color, saturation); ctx.lineWidth = 2;
@@ -498,7 +550,8 @@ function drawSanctuaryApple(ctx, fruit, saturation) {
   ctx.restore();
   if (img) {
     ctx.imageSmoothingEnabled = false;
-    const art = restoreApple(img, saturation) || img;
+    const apple = appleArt(key);
+    const art = apple.restore(apple.src, saturation) || apple.src;
     ctx.drawImage(art, Math.round(x - size / 2), Math.round(y - size / 2), size, size);
   }
 }
@@ -550,7 +603,7 @@ export function supremeFlowerStage(nodeId, now = G.time) {
   return SUPREME_PHASE_META[phase];
 }
 
-function supremeSheet(key) {
+function supremeSheet(key, drawSource = IMG[key]) {
   let cached = SUPREME_SHEETS.get(key);
   const src = IMG[key];
   if (cached && cached.src === src) return cached;
@@ -561,7 +614,7 @@ function supremeSheet(key) {
   const cc = color.getContext("2d", { willReadFrequently: true });
   if (!cc) return null;
   cc.imageSmoothingEnabled = true;
-  cc.drawImage(src, 0, 0, w, h);
+  cc.drawImage(drawSource || src, 0, 0, w, h);
   const d = cc.getImageData(0, 0, w, h);
   if (!d || d.data.length !== w * h * 4 || typeof cc.putImageData !== "function") {
     cached = { src, color: src, gray: src, cell: Math.floor(src.width / SUPREME_COLS) || SUPREME_CELL };
@@ -598,7 +651,7 @@ function supremeSheet(key) {
   return cached;
 }
 
-function flowerSheet(key) {
+function flowerSheet(key, drawSource = IMG[key]) {
   let cached = FLOWER_SHEETS.get(key);
   const src = IMG[key];
   if (cached && cached.src === src) return cached;
@@ -609,7 +662,7 @@ function flowerSheet(key) {
   const cc = color.getContext("2d", { willReadFrequently: true });
   if (!cc) return null;
   cc.imageSmoothingEnabled = true;
-  cc.drawImage(src, 0, 0, w, h);
+  cc.drawImage(drawSource || src, 0, 0, w, h);
   const d = cc.getImageData(0, 0, w, h);
   if (!d || d.data.length !== w * h * 4 || typeof cc.putImageData !== "function") {
     cached = { src, color: src, gray: src, cell: Math.floor(src.width / FLOWER_COLS) || FLOWER_CELL };
@@ -648,6 +701,72 @@ function flowerSheet(key) {
   cached = { src, color, gray, cell: FLOWER_CELL };
   FLOWER_SHEETS.set(key, cached);
   return cached;
+}
+
+// ------------------------------------------------ Regra 14: pré-carregamento --
+// Passos fatiados que o preload.js roda no TITLE. Cada `yield` devolve o quadro;
+// `yield promessa` espera rede/decodificação sem ocupar a thread principal. Os
+// PNGs são decodificados fora dela (ImageBitmap temporário, liberado no fim) e
+// os caches continuam chaveados pela imagem original: o desenho reaproveita.
+
+/** Maçã do fruto: a da árvore (cinza se bloqueado; decodificada se conquistado)
+ *  e a do santuário (232 px), com UMA decodificação. `null` = nada a fazer. */
+export function fruitAppleSteps(fruit) {
+  const key = "maca_" + fruitAssetName(fruit), img = IMG[key];
+  if (!img) return null;
+  const locked = !fruit.pending && !isFruitUnlocked(fruit.map);
+  if (locked && !FRUIT_GRAY.has(key)) FRUIT_PENDING.add(key);
+  return appleJob(fruit, key, img, locked);
+}
+function* appleJob(fruit, key, img, locked) {
+  try {
+    const src = (yield offThreadDecode(img)) || img;
+    if (locked && !FRUIT_GRAY.has(key)) {
+      yield* grayAppleSteps(key, src);
+      FRUIT_READY_AT.set(key, G.time);
+    }
+    const apple = appleArt(key, src);
+    apple.restore(apple.src, fruitGardenGrowth(fruit).saturation);
+    if (!locked && src !== img) FRUIT_COLOR.set(key, src);   // fica para o desenho
+    else releaseDecoded(src, img);
+  } finally {
+    FRUIT_PENDING.delete(key);
+  }
+}
+
+/** Flores e Flor Suprema do santuário (só frutos com arte própria). */
+export function* fruitFlowerSteps(fruit) {
+  const name = fruitAssetName(fruit);
+  for (const key of ["flores_" + name, "flor_suprema_" + name]) {
+    const img = IMG[key];
+    if (!img) continue;
+    const src = (yield offThreadDecode(img)) || img;
+    if (key.startsWith("flores_")) flowerSheet(key, src); else supremeSheet(key, src);
+    releaseDecoded(src, img);
+    yield;
+  }
+}
+
+/** Santuário do fruto: espera o download e assa a cor do jardim em fatias. */
+export function* sanctuarySteps(fruit) {
+  const img = yield ensureSantuario(fruit);
+  if (!img) return;
+  const src = (yield offThreadDecode(img)) || img;
+  yield* sanctuaryRestorer(fruitAssetName(fruit)).steps(img, fruitGardenGrowth(fruit).saturation, src);
+  releaseDecoded(src, img);
+}
+
+/** Diagnóstico (testes): o que já está pronto para abrir sem espera. */
+export function fruitArtInfo() {
+  let images = 0, baked = 0, bakes = 0;
+  for (const st of SANTUARIO_IMAGES.values()) if (st.image) images++;
+  for (const restore of SANCTUARY_ART.values()) {
+    const n = restore.info().bakes;
+    if (n) baked++;
+    bakes += n;
+  }
+  return { sanctuaryImages: images, sanctuaryBaked: baked, sanctuaryBakes: bakes, grayApples: FRUIT_GRAY.size,
+    sanctuaryApples: APPLE_ART.size, flowerSheets: FLOWER_SHEETS.size + SUPREME_SHEETS.size };
 }
 
 function drawSupremeAura(ctx, p, fruit, st) {
@@ -783,7 +902,7 @@ function drawFruitMini(ctx) {
     "GALHO " + stage + " • ESSÊNCIA " + G.save.essence + " • COR " + garden.restoredPercent + "% • " + garden.levels + "/" + garden.total + " MELHORIAS",
     26, 75, { scale: .63, color: "#ffd479", maxWidth: 660 });
   if (button(ctx, { x: 700, y: 13, w: 236, h: 44, compact: true, label: "VOLTAR À ÁRVORE", id: "treeMiniBack", scale: .78 })) {
-    activeFruit = selectedNode = null; return null;
+    leaveFruit(); selectedNode = null; return null;
   }
   drawText(ctx, f.pending ? "FRUTO FUTURO • NENHUMA MELHORIA DISPONÍVEL" :
     "SELECIONE UMA FLOR PARA LER • SELECIONAR NÃO GASTA ESSÊNCIA • EVOLUIR CONFIRMA A COMPRA", 480, 520,
@@ -795,7 +914,7 @@ function drawFruitMini(ctx) {
 
 export function treeBack() {
   if (selectedNode) { selectedNode = null; return true; }
-  if (activeFruit) { activeFruit = null; return true; }
+  if (activeFruit) { leaveFruit(); return true; }
   return false;
 }
 // Diagnóstico utiliza as mesmas coordenadas do desenho e do clique/toque.
@@ -808,7 +927,7 @@ export function treeFocusNode(id) {
   if (!n) return;
   if (n._fruit) openFruit(n._fruit);
   else {
-    activeFruit = selectedNode = null; focusedStage = n.stage;
+    leaveFruit(); selectedNode = null; focusedStage = n.stage;
     pan.x = n.x; pan.y = n.y; zoom = 1; clampPan();
   }
 }

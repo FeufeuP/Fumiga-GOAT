@@ -32,15 +32,17 @@ do canvas.
   instala **“FUMIGA — Colônia Eterna (Mobile)”**; a raiz instala só **FUMIGA** e, ao abrir, leva para
   a versão do aparelho. Os saves continuam separados (PC e mobile não se conectam).
 - **Baixar offline:** dois pacotes, com barra de progresso e status do que já está no aparelho —
-  **ESSENCIAL (~18 MB, 208 arquivos)**: o jogo todo, os 6 biomas e a árvore; **COMPLETO (~55 MB)**:
-  soma os 7 santuários dos frutos e a cutscene da Noite Branca. O botão **LIBERAR ESPAÇO** apaga os
+  **ESSENCIAL (~20 MB, 227 arquivos)**: o jogo todo, os 6 biomas, a árvore e a cutscene da Noite
+  Branca; **COMPLETO (~25 MB)**: soma os 7 santuários dos frutos. O botão **LIBERAR ESPAÇO** apaga os
   caches.
 - **Como funciona:** `sw.js` (raiz do repositório — o GitHub Pages não permite ampliar escopo de
   Service Worker) guarda o que o jogo pede e recebe os pacotes por mensagem; a lista do que baixar é
   `app/assets.json`, **gerada** por `tools/make_assets_list.mjs` (nunca escrita à mão) com a versão do
   `ASSET_V` do jogo. Ícones em `app/icons/` (regeneráveis por `tools/make_pwa_icons.sh`).
 - **Validar:** `npm run inspect:pwa` baixa o pacote essencial num Chromium, confere o Cache Storage,
-  **desliga a rede** e exige que a página abra e o jogo boote offline; `node game/test/pwa.mjs`
+  **desliga a rede** e exige que a página abra e o jogo boote offline; desde 2026-10-05 também simula
+  uma atualização (serve uma versão velha, depois a nova) e exige **uma** recarga automática do jogo,
+  terminando na versão nova — e nenhuma recarga com expedição em andamento; `node game/test/pwa.mjs`
   (dentro do `npm test`) protege a lista, os três manifests, o `sw.js` e todos os links das páginas.
 
 > ⚠️ **Ao adicionar assets novos:** rode `node tools/make_assets_list.mjs` — o `test/pwa.mjs` compara

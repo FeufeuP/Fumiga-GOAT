@@ -33,6 +33,7 @@ npm run test:quick          # ~10 s: confirma que a base está verde
 | `npm run inspect:hud` | HUD orgânico nos 6 biomas, tecla H, acessibilidade | ~40 s |
 | `npm run inspect:layout` | **auditoria de layout**: todas as telas PC + mobile, com e sem FONTE GRANDE — texto fora da tela, colidindo, vazando da caixa, botões sobrepostos, toque cobrindo o canvas | ~4 min |
 | `npm run inspect:pwa` | **app instalável**: instalabilidade (CDP), download do pacote essencial no cache, e o jogo bootando com a **rede desligada** | ~10 s |
+| `npm run inspect:preload` | **pré-carregamento do TITLE** (Regra 14): boot leve, tudo pronto parado no TITLE, árvore → 7 santuários → replay → profecias sem tela de carregamento, clique cedo com CPU 4× mais lenta, sem rede, pixels idênticos | ~45 s |
 | `npm run serve` | servidor do preview **sem cache**, 0.0.0.0:8000 (use com `start_process`) | — |
 
 As capturas do `inspect` vão para `/tmp/fumiga-inspect/*.png` (fora do Git): **abra-as com
@@ -78,7 +79,8 @@ faltando e o último erro. No console: `FUMIGA.ajuda()`, `FUMIGA.go('RUN', {mapa
 | `mutations.js` | draft 1-de-3 |
 | `combat.js` · `particles.js` · `lore_vfx.js` | projéteis/orbes · partículas com pooling · VFX por casta (orçamento `vfxAllow`) |
 | `lore_hud.js` | HUD orgânico por bioma, barra-gaster da rainha, visão de feromônio (H) |
-| `cutscenes.js` | cutscenes em camadas (Noite Branca etc.), biblioteca MEMÓRIAS |
+| `cutscenes.js` | cutscenes em camadas (Noite Branca etc.), biblioteca MEMÓRIAS (o replay toca dentro dela) |
+| `preload.js` | **pré-carregamento do TITLE** (Regra 14): árvore, maçãs, flores, 7 santuários e Noite Branca preparados em fatias de poucos ms por quadro (geradores), sem tela de carregamento |
 | `tutorial.js` · `ui.js` · `font.js` | tutorial em cartões · primitivos de UI em canvas · fonte bitmap (atlas) |
 | `camera.js` · `input.js` · `fog.js` · `audio.js` · `utils.js` | câmera/zoom/shake · teclado+mouse em coords 960×540 · névoa de guerra · áudio procedural WebAudio · RNG/matemática |
 | `debug.js` | modo debug (seção 2) — ferramenta, não é jogo |
@@ -97,6 +99,10 @@ faltando e o último erro. No console: `FUMIGA.ajuda()`, `FUMIGA.go('RUN', {mapa
   (Regra 9) + texto em `HELP_CONTROLS_TOUCH`.
 - **Tela nova** → `update*`/`render*` em `game.js` (switch de `G.screen`), entrada por
   `startTransition`; acrescente em `__debug.openScreen` e na lista `SCENES` do `test/inspect.mjs`.
+- **Conteúdo pesado novo acessível pelo TITLE** (arte grande, assado de pixels) → escreva o
+  trabalho como gerador fatiado (`yield` a cada ~1 ms; `yield promessa` para rede/decodificação)
+  e ponha na fila do `preload.js`, com o caminho síncrono de reserva (`drainSteps`) para quem
+  chegar antes. Tela de carregamento é só para **troca de mundo** (Regra 14).
 - **Balanceamento** → `config.js`; valide com `FORCE=3 node game/test/sim.mjs` e `npm test`.
 
 ## 5. Armadilhas conhecidas
@@ -115,14 +121,35 @@ faltando e o último erro. No console: `FUMIGA.ajuda()`, `FUMIGA.go('RUN', {mapa
   versão em `app/assets.json` — trocar `ASSET_V` já invalida o cache, sem precisar editar o `sw.js`.
   Navegar para pasta vale `…/index.html` (normalização em `chaveDe`): sem ela, abrir o app sem
   internet dava 504. O `?v=` do motor e o download do app usam a MESMA versão por isso.
+  **Versão nova (2026-10-05):** como a 1ª abertura depois de uma atualização ainda roda o código
+  guardado, `game/js/main.js` pergunta a versão (`versao-atual`) e o `sw.js` avisa `versao-nova` quando
+  o cache troca; se o que está rodando não é o `ASSET_V` atual, o jogo **recarrega uma vez** — só no
+  carregamento/PRETITLE/TÍTULO, nunca em expedição (pendente até voltar ao título; `sessionStorage`
+  impede laço). Teste: passo 6 do `inspect:pwa`. **Limite conhecido:** offline **depois de fechar o
+  navegador** ainda falha — ao ser desligado o worker perde `CACHE`/`VERSAO` e responde com o cache
+  `fumiga-dev`; decisão do usuário pendente (registro de 2026-10-05 no MEGA_ARQUIVO).
 - **Testes headless** simulam DOM/canvas com Proxy: código novo que usa uma API de DOM
   diferente pode precisar de guarda (`typeof document !== "undefined"`).
 - **Capturas no sandbox**: não há fonte de emoji, então os ícones emoji dos botões de toque
   (🏠 🎯 ⏸) saem vazios nas capturas. No celular aparecem normalmente.
 - `docs.mjs` exige que os 6 documentos originais estejam **byte a byte** dentro do
   `MEGA_ARQUIVO.md`: editou um deles, atualize o bloco e o hash no registro de integridade.
-- Cutscene Noite Branca: as camadas são PNGs grandes (~25 MB), reduzidas para 320×180 no
-  carregamento. Ficam assim por decisão do usuário (2026-09-23).
+- Cutscene Noite Branca: as camadas já vêm do disco em 320×180 RGBA (o tamanho desenhado,
+  ampliado 3× sem suavização; 14 camadas, ~0,7 MB no total), geradas por `tools/fix_noite_branca.py` a
+  partir dos originais (painéis 1–2: 1672×941, histórico do git em `645dc68`; painel 3: arte nova de
+  2026-10-04 sobre preto liso, recortada pelo brilho; cópias em `art-source/` e no espelho). Os
+  originais tinham um xadrez de "transparência" PINTADO no lugar do alfa — `game/test/cutscene-art.mjs`
+  barra camada sem alfa, fora de 320×180 ou com xadrez. Decisão do usuário de 2026-10-02 (substitui a
+  de 2026-09-23, que mantinha os PNGs grandes reduzidos no carregamento). Cada painel lista as camadas
+  que tem em `layers` (slot 3, o chão, ficou fora do painel 1; o painel 3 usa `[0, 2, 4, 5]`). Desde
+  2026-10-01 são pré-carregadas no TITLE (Blob → `createImageBitmap`, decodificação fora da thread
+  principal); desde 2026-10-04 vão no pacote offline **ESSENCIAL** (tocam sozinhas na 1ª expedição) e a
+  caixa de texto da cutscene usa opacidade 0,7.
+- **Testes de navegador**: `page.waitForFunction` precisa de predicado **síncrono** — um `async`
+  devolve uma Promise (sempre "verdadeira") e o Playwright não espera nada. Importe os módulos
+  antes com `importGameModules(page, { ui: "ui.js" })` (de `game/test/lib/browser.mjs`, guarda em
+  `window.MOD`) e use `() => MOD.ui...`. A guarda `game/test/browser-waits.mjs` (no `npm test`/CI)
+  reprova qualquer `waitForFunction(async …` em `game/test/` e `tools/`.
 
 ## 6. Salvar no GitHub (Regra 11 + CI)
 

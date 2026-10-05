@@ -34,6 +34,7 @@ const TESTS = [
   { name: "assets", file: "assets.mjs" },
   { name: "stuck", file: "stuck.mjs" },
   { name: "title-parallax", file: "title-parallax.mjs" },
+  { name: "cutscene-art", file: "cutscene-art.mjs" },
   { name: "lorehud", file: "lorehud.mjs" },
   { name: "tree", file: "tree.mjs" },
   { name: "tree-progression", file: "tree-progression.mjs" },
@@ -48,6 +49,7 @@ const TESTS = [
   { name: "prophecy", file: "prophecy.mjs" },
   { name: "docs", file: "docs.mjs" },
   { name: "pwa", file: "pwa.mjs" },
+  { name: "browser-waits", file: "browser-waits.mjs" },
 ];
 
 const args = process.argv.slice(2);

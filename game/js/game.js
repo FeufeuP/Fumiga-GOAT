@@ -40,7 +40,7 @@ import {
   transitionFx, notePointer, drawTitleLogo
 } from "./render.js";
 import { enterTree, updateTree, drawTree, treeClick, treeBack } from "./meta.js";
-import { treeGrowth, treeArtCanvas } from "./tree_art.js";
+import { startTitlePreload, pumpPreload } from "./preload.js";
 import { colony, foodTrailAt, dangerAt } from "./brain.js";
 import { BIOME_HUD, drawBiomeTexture, drawGasterBar, drawPheromoneOverlay, drawPheromoneLegend, drawFoodIcon, drawEssenceCrystal, drawTrailAnt, trailProgress, drawTreeRings, drawScentMinimap, drawWoodBanner, drawKitIcon, hudBiome } from "./lore_hud.js";
 import { startCutscene, updateCutscene, drawCutscene, handleCutsceneInput, isCutsceneActive, startLoadingCutscene, getCutsceneDefs } from "./cutscenes.js";
@@ -538,7 +538,7 @@ export function update(dt) {
 
   switch (G.screen) {
     case "PRETITLE": updatePreTitle(dt); break;
-    case "TITLE": break;
+    case "TITLE": startTitlePreload(); break;
     case "MODE": updateMode(dt); break;
     case "OPTIONS": updateOptions(dt); break;
     case "TREE": updateTreeScreen(dt); break;
@@ -554,7 +554,16 @@ export function update(dt) {
     G.slowMo -= dt;
     if (G.slowMo <= 0) G.timeScale = 1;
   }
+
+  // Regra 14: o que os botões do TITLE abrem é preparado por trás, em fatias.
+  // Na expedição em andamento a CPU é do jogo; no menu de pausa, volta a andar.
+  // Árvore aberta antes do fim: fatia maior, para o que falta entrar logo.
+  if (G.screen !== "RUN" || paused) pumpPreload(TREE_SCREENS.has(G.screen) ? PRELOAD_BOOST_MS : PRELOAD_SLICE_MS);
 }
+
+/** Orçamento do pré-carregamento por quadro: sobra folga para os 60 FPS. */
+const PRELOAD_SLICE_MS = 5, PRELOAD_BOOST_MS = 10;
+const TREE_SCREENS = new Set(["TREE", "PROPHECY", "MEMORY"]);
 
 function updatePreTitle(dt) {
   if (mouse.justDown || pressed.Enter || pressed.Space) {
@@ -1728,64 +1737,18 @@ let lastDt = 1 / 60;
 export function setLastDt(v) { lastDt = v; }
 function dtClampForAnim() { return lastDt; }
 
+// Regra 14: o Formigueiro é leve (reinicia a cena e sincroniza as formigas) —
+// entrar e sair é instantâneo, sem tela de carregamento no meio do combate.
 function openNest(run) {
-  if (!shouldUseLoadingScreen()) {
-    run.baseOpen = true;
-    nestEnter();
-    SFX.uiClick();
-    return;
-  }
-  const m = mapDef();
-  const biomeId = m ? m.id : "planicie";
-  const nestNames = {
-    planicie: "VENTRE ÂMBAR",
-    floresta: "JARDIM ETERNO",
-    pantano: "CÂMARA SILENCIOSA",
-    deserto: "FORNALHA REAL",
-    outono: "BERÇO DOURADO",
-    gelo: "GASTER DE GELO",
-  };
-  mouse.justDown = false; pressed.KeyB = false; pressed.Space = false; pressed.Enter = false;
-  runWithLoadingScreen({
-    biome: biomeId,
-    degrau: "INTERIOR DA COLÔNIA",
-    title: nestNames[biomeId] || "FORMIGUEIRO",
-    subtitle: "DESCENDO PELOS TÚNEIS E CÂMARAS REAIS",
-    minDuration: 1.2,
-    task: (onProgress) => {
-      onProgress(0.45, "PREPARANDO CÂMARAS DO NINHO...");
-      run.baseOpen = true;
-      nestEnter();
-      SFX.uiClick();
-      onProgress(1.0, "FORMIGUEIRO PRONTO");
-    },
-  });
+  run.baseOpen = true;
+  nestEnter();
+  SFX.uiClick();
 }
 
 function closeNest(run, click) {
-  if (!shouldUseLoadingScreen()) {
-    run.baseOpen = false;
-    nestExit();
-    if (click) SFX.uiClick();
-    return;
-  }
-  const m = mapDef();
-  const biomeId = m ? m.id : "planicie";
-  mouse.justDown = false; pressed.KeyB = false; pressed.Escape = false; pressed.Space = false; pressed.Enter = false;
-  runWithLoadingScreen({
-    biome: biomeId,
-    degrau: "SUPERFÍCIE DO MUNDO",
-    title: m ? m.name : "EXPEDIÇÃO",
-    subtitle: "RETORNANDO À TRILHA DA SUPERFÍCIE",
-    minDuration: 1.2,
-    task: (onProgress) => {
-      onProgress(0.45, "SUBINDO PELA BOCA DO NINHO...");
-      run.baseOpen = false;
-      nestExit();
-      if (click) SFX.uiClick();
-      onProgress(1.0, "TERRENO PRONTO");
-    },
-  });
+  run.baseOpen = false;
+  nestExit();
+  if (click) SFX.uiClick();
 }
 
 function drawNestScreen(run) {
@@ -2661,51 +2624,18 @@ function settleAbandon() {
 let helpReturn = "TITLE";
 let treeReturn = "TITLE";
 
+// Regra 14: árvore, santuários, profecias e memórias foram preparados no TITLE
+// (preload.js). Entrar e voltar dessas telas é só a transição rápida.
 function openTreeScreen(fromScreen = "TITLE") {
   treeReturn = fromScreen;
-  if (!shouldUseLoadingScreen()) {
-    enterTree();
-    startTransition("auto", fromScreen, "TREE", 0, () => { G.screen = "TREE"; });
-    return;
-  }
-  mouse.justDown = false; pressed.Space = false; pressed.Enter = false;
-  runWithLoadingScreen({
-    biome: "palida",
-    degrau: "MEMÓRIA ANCESTRAL",
-    title: "ÁRVORE DA EVOLUÇÃO",
-    subtitle: "DESPERTANDO RAÍZES, GALHOS E FRUTOS DA COLÔNIA",
-    minDuration: 1.3,
-    task: (onProgress) => {
-      onProgress(0.4, "RESTAURANDO SEIVA E GALHOS...");
-      enterTree();
-      try { treeArtCanvas(treeGrowth()); } catch (e) { /* ok */ }
-      G.screen = "TREE";
-      onProgress(1.0, "ÁRVORE PRONTA");
-    },
-  });
+  enterTree();
+  startTransition("auto", fromScreen, "TREE", 0, () => { G.screen = "TREE"; });
 }
 
 function backFromTree() {
   notePointer(mouse.x, mouse.y);
   const to = treeReturn;
-  if (!shouldUseLoadingScreen()) {
-    startTransition("auto", "TREE", to, 0, () => { G.screen = to; });
-    return;
-  }
-  const bId = to === "RUN" && G.run ? (MAPS[G.run.mapIdx]?.id || "planicie") : "planicie";
-  mouse.justDown = false; pressed.Escape = false; pressed.Space = false; pressed.Enter = false;
-  runWithLoadingScreen({
-    biome: bId,
-    degrau: to === "RUN" ? "EXPEDIÇÃO EM CURSO" : "COLÔNIA ETERNA",
-    title: to === "RUN" && G.run ? MAPS[G.run.mapIdx].name : "MENU PRINCIPAL",
-    subtitle: "RETORNANDO DAS RAÍZES ANCESTRAIS",
-    minDuration: 1.1,
-    task: (onProgress) => {
-      onProgress(0.5, "PREPARANDO RETORNO...");
-      G.screen = to;
-      onProgress(1.0, "PRONTO");
-    },
-  });
+  startTransition("auto", "TREE", to, 0, () => { G.screen = to; });
 }
 
 // ------------------------------------------- PÓS-FINAL: tela de PROFECIAS ----
@@ -2714,49 +2644,15 @@ function openProphecies() {
   prophecyPage = 0;
   notePointer(mouse.x, mouse.y);
   SFX.uiClick();
-  if (!shouldUseLoadingScreen()) {
-    checkProphecies(null, false, null);   // concede as de estado acumulado
-    persistSave();
-    startTransition("auto", "TREE", "PROPHECY", 0, () => { G.screen = "PROPHECY"; });
-    return;
-  }
-  mouse.justDown = false; pressed.Space = false; pressed.Enter = false;
-  runWithLoadingScreen({
-    biome: "palida",
-    degrau: "VATICÍNIOS DA MATRIARCA",
-    title: "PROFECIAS DA COLÔNIA",
-    subtitle: "DECIFRANDO AS PROMESSAS GRAVADAS NA BRUMA",
-    minDuration: 1.1,
-    task: (onProgress) => {
-      onProgress(0.5, "CONFERINDO PROFECIAS...");
-      checkProphecies(null, false, null);
-      persistSave();
-      G.screen = "PROPHECY";
-      onProgress(1.0, "PRONTO");
-    },
-  });
+  checkProphecies(null, false, null);   // concede as de estado acumulado
+  persistSave();
+  startTransition("auto", "TREE", "PROPHECY", 0, () => { G.screen = "PROPHECY"; });
 }
 
 function backFromProphecies() {
   notePointer(mouse.x, mouse.y);
   SFX.uiClick();
-  if (!shouldUseLoadingScreen()) {
-    startTransition("auto", "PROPHECY", "TREE", 0, () => { G.screen = "TREE"; });
-    return;
-  }
-  mouse.justDown = false; pressed.Escape = false; pressed.Space = false; pressed.Enter = false;
-  runWithLoadingScreen({
-    biome: "palida",
-    degrau: "MEMÓRIA ANCESTRAL",
-    title: "ÁRVORE DA EVOLUÇÃO",
-    subtitle: "RETORNANDO À COPA DA ÁRVORE",
-    minDuration: 1.1,
-    task: (onProgress) => {
-      onProgress(0.5, "RETORNANDO À ÁRVORE...");
-      G.screen = "TREE";
-      onProgress(1.0, "PRONTO");
-    },
-  });
+  startTransition("auto", "PROPHECY", "TREE", 0, () => { G.screen = "TREE"; });
 }
 
 function updateProphecyScreen(dt) {
@@ -2934,81 +2830,35 @@ function openMemories() {
   notePointer(mouse.x, mouse.y);
   SFX.uiClick();
   memoryHover = -1;
-  if (!shouldUseLoadingScreen()) {
-    startTransition("auto", "TREE", "MEMORY", 0, () => { G.screen = "MEMORY"; });
-    return;
-  }
-  mouse.justDown = false; pressed.Space = false; pressed.Enter = false;
-  runWithLoadingScreen({
-    biome: "palida",
-    degrau: "ARQUIVO DA COLÔNIA",
-    title: "MEMÓRIAS DA COLÔNIA",
-    subtitle: "REUNINDO RELATOS E VISÕES DOS SEIS DEGRAUS",
-    minDuration: 1.1,
-    task: (onProgress) => {
-      onProgress(0.5, "ABRINDO ARQUIVO DE MEMÓRIAS...");
-      G.screen = "MEMORY";
-      onProgress(1.0, "PRONTO");
-    },
-  });
+  startTransition("auto", "TREE", "MEMORY", 0, () => { G.screen = "MEMORY"; });
 }
 
 function backFromMemories() {
   notePointer(mouse.x, mouse.y);
   SFX.uiClick();
-  if (!shouldUseLoadingScreen()) {
-    startTransition("auto", "MEMORY", "TREE", 0, () => { G.screen = "TREE"; });
-    return;
-  }
-  mouse.justDown = false; pressed.Escape = false; pressed.Space = false; pressed.Enter = false;
-  runWithLoadingScreen({
-    biome: "palida",
-    degrau: "MEMÓRIA ANCESTRAL",
-    title: "ÁRVORE DA EVOLUÇÃO",
-    subtitle: "RETORNANDO À COPA DA ÁRVORE",
-    minDuration: 1.1,
-    task: (onProgress) => {
-      onProgress(0.5, "RETORNANDO À ÁRVORE...");
-      G.screen = "TREE";
-      onProgress(1.0, "PRONTO");
-    },
-  });
+  startTransition("auto", "MEMORY", "TREE", 0, () => { G.screen = "TREE"; });
 }
 
 function updateMemoryScreen(dt) {
-  const defs = getCutsceneDefs();
+  // A memória toca DENTRO da biblioteca: sem expedição por trás (antes ia para
+  // RUN e, sem G.run, voltava ao TITLE com a cutscene invisível) e, ao fim, o
+  // jogador continua em MEMÓRIAS. Camadas pré-carregadas no TITLE (Regra 14).
+  if (isCutsceneActive()) {
+    updateCutscene(dt);
+    handleCutsceneInput(pressed, mouse);
+    return;
+  }
   memoryHover = -1;
   for (let i=0;i<memoryRects.length;i++) {
     const r = memoryRects[i];
     if (pointInRect(mouse.x, mouse.y, r.x, r.y, r.w, r.h)) { memoryHover = i; break; }
   }
-  if (mouse.justDown && memoryHover >= 0) {
+  if (mouse.justDown && memoryHover >= 0 && !hasTransition()) {
     const id = memoryRects[memoryHover].id;
-    const def = defs[id];
     SFX.uiClick();
-    if (!shouldUseLoadingScreen()) {
-      startTransition("auto", "MEMORY", "RUN", 0, () => {
-        G.screen = "RUN";
-        setTimeout(() => startCutscene(id, { fromLibrary: true, force: true }), 400);
-      });
-      return;
-    }
-    mouse.justDown = false; pressed.Space = false; pressed.Enter = false;
-    runWithLoadingScreen({
-      biome: (def && def.biome) || "planicie",
-      degrau: "MEMÓRIA DA COLÔNIA",
-      title: def ? def.title : "MEMÓRIA",
-      subtitle: def && def.subtitle ? def.subtitle.toUpperCase() : "RECORDANDO O PASSADO...",
-      minDuration: 1.2,
-      task: (onProgress) => {
-        onProgress(0.5, "PREPARANDO PAINÉIS DA MEMÓRIA...");
-        G.screen = "RUN";
-        onProgress(1.0, "MEMÓRIA PRONTA");
-      },
-      onFinish: () => {
-        startCutscene(id, { fromLibrary: true, force: true });
-      },
-    });
+    notePointer(mouse.x, mouse.y);
+    startTransition("auto", "MEMORY", "MEMORY", 0, () => startCutscene(id, { fromLibrary: true, force: true }));
+    return;
   }
   if (pressed.Escape) {
     backFromMemories();
@@ -3023,6 +2873,7 @@ function drawPageControls(id, page, pages, y) {
 }
 
 function renderMemoryScreen() {
+  if (isCutsceneActive()) { drawCutscene(ctx, G.time); return; }
   drawSolidMenuBg(ctx, "#0a0812");
   ctx.fillStyle = "rgba(10,8,16,0.78)";
   ctx.fillRect(0,0,VIEW_W,VIEW_H);

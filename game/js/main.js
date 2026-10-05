@@ -4,13 +4,13 @@
 // ============================================================================
 import { VIEW_W, VIEW_H, PAL, GIANT_SCALE, ANT_SIZES, GATHERER_SIZE } from "./config.js";
 import { G, loadSave } from "./state.js";
-import { loadAll, bakeRot, dupSprite, setRotDrawScale, LOAD } from "./assets.js";
+import { loadAll, bakeRot, dupSprite, setRotDrawScale, LOAD, ASSET_V } from "./assets.js";
 import { loadFonts, drawText } from "./font.js";
 import { initAudio } from "./audio.js";
 import { endTick } from "./input.js";
 import { boot, update, render, setLastDt } from "./game.js";
 import { loadLoreHUD } from "./lore_hud.js";
-import { bakeBossSheets } from "./render.js";
+import { bakeBossSheets, hasTransition } from "./render.js";
 import { preloadLoadingScreens } from "./loading_screen.js";
 
 const canvas = document.getElementById("game");
@@ -167,6 +167,7 @@ function loop(t) {
   prev = t;
   if (dt <= 0) return;
   if (dt > 0.1) dt = 0.1;
+  if (newVersion) reloadForNewVersion();
 
   if (!ready) { drawLoading(); return; }
   const t0 = dbg ? performance.now() : 0;
@@ -189,7 +190,37 @@ async function installDebugMode() {
   } catch (e) { console.error("modo debug falhou:", e); }
 }
 
+// ------------------------------------------------------ versão nova do app --
+// O sw.js entrega o código guardado na hora e só atualiza por trás: quem volta
+// depois de uma atualização abriria a versão ANTERIOR (ex.: painel 3 da Noite
+// Branca sem a arte). Decisão do usuário (2026-10-05, opção B): sabendo que o
+// cache já tem outra versão, recarrega UMA vez — durante o carregamento, no
+// PRETITLE ou no TÍTULO; nunca no meio de uma expedição (fica pendente até o
+// jogador voltar ao título). Uma recarga por versão, para nunca entrar em laço.
+let newVersion = null;
+function watchNewVersion() {
+  const sw = typeof navigator !== "undefined" ? navigator.serviceWorker : null;
+  if (!sw || !sw.controller) return;                 // sem app offline: o código já veio da rede
+  sw.addEventListener("message", (e) => {
+    const m = e.data || {};
+    if ((m.type === "versao-atual" || m.type === "versao-nova") && m.versao && m.versao !== "dev" && m.versao !== ASSET_V) newVersion = m.versao;
+  });
+  sw.controller.postMessage({ type: "versao-atual" });
+}
+function reloadForNewVersion() {
+  if (ready && G.screen !== "PRETITLE" && G.screen !== "TITLE") return;
+  if (ready && hasTransition()) return;
+  const v = newVersion;
+  newVersion = null;
+  try {
+    if (sessionStorage.getItem("fumiga-recarregou") === v) return;
+    sessionStorage.setItem("fumiga-recarregou", v);
+    location.reload();
+  } catch (e) { /* sem sessionStorage/location (testes headless): não recarrega */ }
+}
+
 async function bootAll() {
+  watchNewVersion();
   loadSave();
   await loadFonts();
   await loadAll((p) => { progress = p * 0.9; lastProgressAt = performance.now(); });

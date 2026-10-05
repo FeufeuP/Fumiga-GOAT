@@ -31,6 +31,39 @@ export function angLerp(a, b, t) {
   return a + d * t;
 }
 
+/**
+ * Trabalho pesado escrito como gerador (cada `yield` é uma fatia): o
+ * pré-carregamento do TITLE (preload.js) avança alguns ms por quadro; quem
+ * precisa do resultado JÁ chama esta função e termina o que faltar na hora.
+ */
+export function drainSteps(it) { while (!it.next().done) { /* fatia seguinte */ } }
+
+/**
+ * Decodifica uma imagem FORA da thread principal para o pré-carregamento
+ * desenhar e ler pixels sem engasgo. `img.decode()` não serve ao canvas de
+ * leitura (o PNG seria decodificado de novo no getImageData) e
+ * `createImageBitmap(<img>)` decodifica aqui mesmo; a partir de um Blob o
+ * navegador decodifica numa thread de fundo. O Blob vem do cache HTTP/do app
+ * (`force-cache`: o <img> acabou de baixar o arquivo). Sem suporte ou com
+ * falha, cai para o bitmap do <img> e, por fim, para a própria imagem.
+ */
+export function offThreadDecode(img) {
+  if (!img || typeof createImageBitmap !== "function") return Promise.resolve(img);
+  const fromImage = () => createImageBitmap(img).catch(() => img);
+  const url = img.currentSrc || img.src;
+  // Sem rede, nada de pedido que pode falhar: decodifica a partir do próprio <img>.
+  const offline = typeof navigator !== "undefined" && navigator.onLine === false;
+  if (!url || offline || typeof fetch !== "function") return fromImage();
+  return fetch(url, { cache: "force-cache" })
+    .then((r) => (r.ok ? r.blob() : Promise.reject(new Error("HTTP " + r.status))))
+    .then((blob) => createImageBitmap(blob))
+    .catch(fromImage);
+}
+/** Libera o bitmap temporário de `offThreadDecode` (nunca a imagem original). */
+export function releaseDecoded(src, img) {
+  if (src && src !== img && typeof src.close === "function") src.close();
+}
+
 export function easeOutCubic(t) { return 1 - Math.pow(1 - t, 3); }
 export function easeOutBack(t) { const c = 1.70158; return 1 + (c + 1) * Math.pow(t - 1, 3) + c * Math.pow(t - 1, 2); }
 

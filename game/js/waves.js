@@ -10,7 +10,6 @@ import { spawnEnemy, unlockedTypes, foes, boss, spawnBoss, clearFoes } from "./e
 import { floatText, ring } from "./particles.js";
 import { SFX, setCombat } from "./audio.js";
 import { tutEvent } from "./tutorial.js";
-import { runWithLoadingScreen } from "./loading_screen.js";
 
 export const director = {
   phase: "calm",       // calm | wave | mapClear | done
@@ -91,7 +90,7 @@ export function skipWave() {
   const run = G.run;
   if (!run || run.status !== "running") return false;
   if (director.phase === "calm") {
-    startWave({ silentLoad: true });
+    startWave();
   }
   if (director.phase !== "wave") return false;
 
@@ -150,7 +149,7 @@ export function updateDirector(dt) {
   }
 }
 
-function startWave(opts = {}) {
+function startWave() {
   const run = G.run;
   director.waveInMap++;
   run.wave++;
@@ -174,24 +173,9 @@ function startWave(opts = {}) {
     director.bossSpawned = true;
     run.banner.title = "CHEFÃO DE MAPA — " + w.title;
     run.banner.sub = w.tip || "Algo imenso se aproxima...";
-    if (opts.silentLoad) {
-      spawnBoss(m.boss, run.wave);
-    } else {
-      const bossWave = run.wave;
-      const bossKind = m.boss;
-      runWithLoadingScreen({
-        biome: m.id,
-        degrau: "CHEFÃO DE MAPA",
-        title: w.title,
-        subtitle: (w.tip || "ALGO IMENSO SE APROXIMA...").toUpperCase(),
-        minDuration: 1.4,
-        task: (onProgress) => {
-          onProgress(0.4, "DESPERTANDO CHEFÃO DE MAPA...");
-          spawnBoss(bossKind, bossWave);
-          onProgress(1.0, "ARENA PRONTA");
-        },
-      });
-    }
+    // Regra 14: o chefe já foi assado no boot (bakeBossSheets) — entra na hora,
+    // anunciado pelo banner acima, sem tela de carregamento no meio da onda.
+    spawnBoss(m.boss, run.wave);
   }
 }
 

@@ -15,7 +15,11 @@
 //   3. FRESCOR — código é servido do cache e revalidado atrás (stale-while-
 //      revalidate); navegação confere a versão em app/assets.json. Sem isso,
 //      quem instalou continuaria rodando o motor VELHO para sempre (o cache
-//      só seria trocado quando o próprio sw.js mudasse).
+//      só seria trocado quando o próprio sw.js mudasse). Como a 1ª abertura
+//      depois de uma atualização ainda roda o código guardado, o jogo pergunta
+//      a versão (`versao-atual`) e recebe `versao-nova` quando o cache troca:
+//      se o que está rodando é de outra versão, recarrega UMA vez no PRETITLE/
+//      TÍTULO (game/js/main.js; decisão do usuário de 2026-10-05).
 //
 // A lista do que baixar é `app/assets.json` (gerada por tools/make_assets_list.mjs,
 // com teste que impede sair de sincronia). A versão no nome do cache vem do
@@ -76,7 +80,16 @@ async function usarVersao(versao, lista) {
   for (const nome of await caches.keys()) {
     if (nome.startsWith(PREFIXO) && nome !== CACHE) await caches.delete(nome);
   }
+  // só agora (shell novo já gravado): quem recarregar pega o código novo inteiro
+  if (trocou) avisarVersaoNova();
   return trocou;
+}
+
+/** Conta às páginas abertas qual versão o cache passou a guardar. */
+async function avisarVersaoNova() {
+  try {
+    for (const c of await self.clients.matchAll({ type: "window" })) c.postMessage({ type: "versao-nova", versao: VERSAO });
+  } catch (e) { /* sem páginas abertas: nada a avisar */ }
 }
 
 // ---------------------------------------------------- versão em segundo plano --
@@ -171,6 +184,12 @@ self.addEventListener("message", (event) => {
 
   if (msg.type === "versao") {
     responder({ type: "versao", versao: VERSAO, cache: CACHE });
+    return;
+  }
+  if (msg.type === "versao-atual") {
+    // o jogo pergunta ao abrir: confere a lista na rede (e troca o cache, se
+    // for o caso) ANTES de responder; sem rede, responde o que já tem
+    event.waitUntil(sincronizarVersao().then(() => responder({ type: "versao-atual", versao: VERSAO })));
     return;
   }
   if (msg.type === "baixar") {

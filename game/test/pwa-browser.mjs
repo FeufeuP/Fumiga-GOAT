@@ -5,15 +5,21 @@
 // O que ele faz de verdade, num Chromium:
 //   1. abre a página oficial (raiz) e confere que ela diz os tamanhos certos;
 //   2. clica em BAIXAR ESSENCIAL, acompanha a barra até 100% e confere no
-//      Cache Storage que os arquivos chegaram;
+//      Cache Storage que os arquivos chegaram — inclusive as 14 camadas da
+//      Noite Branca, que tocam sozinhas na 1ª expedição;
 //   3. DESLIGA A REDE e recarrega: a página tem que abrir mesmo assim;
 //   4. com a rede desligada, entra em /game/ e espera o jogo BOOTAR (G.screen
 //      diferente de BOOT, sem 404 e sem erro de JS) — é o teste que prova que
 //      "baixado" é "jogável sem internet", não só "arquivos no cache";
-//   5. abre a página do app (?v=mobile) offline e confere o botão JOGAR.
+//   5. abre a página do app (?v=mobile) offline e confere o botão JOGAR;
+//   6. ATUALIZAÇÃO: uma "rede" com atraso serve uma versão velha (o SW guarda)
+//      e depois a atual — o jogo tem que recarregar UMA vez sozinho e terminar
+//      na versão nova, e com uma expedição em andamento só recarregar quando o
+//      jogador voltar ao título (decisão de 2026-10-05).
 import fs from "node:fs";
+import http from "node:http";
 import { startServer } from "./lib/server.mjs";
-import { launchBrowser, watchPage } from "./lib/browser.mjs";
+import { launchBrowser, watchPage, importGameModules } from "./lib/browser.mjs";
 
 const OUT = process.env.PWA_SHOTS || "/tmp/fumiga-pwa";
 fs.mkdirSync(OUT, { recursive: true });
@@ -120,10 +126,22 @@ const cache = await page.evaluate(async (v) => {
   if (!nomes.includes(nome)) return { existe: false, nomes };
   const c = await caches.open(nome);
   const chaves = await c.keys();
-  return { existe: true, quantos: chaves.length, amostra: chaves.slice(0, 3).map((r) => r.url) };
+  // Noite Branca no ESSENCIAL (decisão 2026-10-04): ela toca sozinha na 1ª
+  // expedição, então baixar só o pacote básico já tem que trazer as camadas.
+  const lista = await (await fetch("app/assets.json", { cache: "no-store" })).json();
+  const ehNoite = (u) => u.includes("cutscenes/noite_branca/");
+  return {
+    existe: true, quantos: chaves.length, amostra: chaves.slice(0, 3).map((r) => r.url),
+    noite: new Set(chaves.map((r) => new URL(r.url).pathname).filter(ehNoite)).size,
+    noiteLista: lista.grupos.find((g) => g.id === "essencial").files.filter(ehNoite).length,
+  };
 }, versao);
 if (!cache.existe) problemas.push("cache fumiga-" + versao + " não existe (achei: " + JSON.stringify(cache.nomes) + ")");
 dizer("cache " + "fumiga-" + versao + ": " + (cache.quantos || 0) + " arquivos guardados");
+dizer("Noite Branca no pacote essencial: " + cache.noite + " de " + cache.noiteLista + " camadas no cache");
+if (cache.existe && (!cache.noiteLista || cache.noite < cache.noiteLista)) {
+  problemas.push("as camadas da Noite Branca não vieram com o pacote essencial (" + cache.noite + "/" + cache.noiteLista + ")");
+}
 
 // ------------------------------------------------------- 3) offline: página --
 await ctx.setOffline(true);
@@ -147,15 +165,11 @@ const gp = await ctx.newPage();
 watchPage(gp, problemas);
 await gp.goto(BASE + "/game/mobile/", { waitUntil: "load" });
 try {
-  await gp.waitForFunction(async () => {
-    const js = document.querySelector('script[src*="main.js"]').src.replace(/main\.js.*$/, "");
-    const { G } = await import(js + "state.js");
-    return G.screen !== "BOOT";
-  }, null, { timeout: 60000, polling: 120 });
-  dizer("offline: o jogo BOOTOU na versão mobile (tela " + await gp.evaluate(async () => {
-    const js = document.querySelector('script[src*="main.js"]').src.replace(/main\.js.*$/, "");
-    return (await import(js + "state.js")).G.screen;
-  }) + ")");
+  // predicado SÍNCRONO lendo MOD: o async antigo voltava na hora e dava
+  // "bootou" mesmo com o jogo parado no BOOT
+  await importGameModules(gp, { state: "state.js" });
+  await gp.waitForFunction(() => MOD.state.G.screen !== "BOOT", null, { timeout: 60000, polling: 120 });
+  dizer("offline: o jogo BOOTOU na versão mobile (tela " + await gp.evaluate(() => MOD.state.G.screen) + ")");
 } catch (e) {
   problemas.push("o jogo NÃO bootou com a rede desligada: " + (e.message || e).split("\n")[0]);
 }
@@ -178,6 +192,118 @@ const appPagina = await ap.evaluate(() => ({
 dizer("app (?v=mobile): JOGAR → " + appPagina.jogar + " · " + appPagina.selo);
 if (!/game\/mobile\/$/.test(appPagina.jogar)) problemas.push("página do app não levou para a versão mobile: " + appPagina.jogar);
 await ap.screenshot({ path: OUT + "/3-app-offline.png", fullPage: true });
+
+// ------------------------------------- 6) atualização: quem volta depois --
+// O bug que um teste de uma passada só não vê: com o código guardado, a 1ª
+// abertura depois de uma atualização rodava a versão ANTERIOR (o painel 3 da
+// Noite Branca saía sem a arte). A "rede" abaixo atrasa cada pedido (como a
+// internet) e, quando `falsa` está ligada, troca a versão em assets.js e em
+// app/assets.json — é assim que o navegador fica com uma versão velha guardada.
+if (!process.env.BASE_URL) {
+  const real = await startServer();
+  let falsa = null;
+  const ATRASO = 200;
+  const reescreve = { "/game/js/assets.js": [/ASSET_V = "[^"]*"/, (v) => 'ASSET_V = "' + v + '"'],
+                      "/app/assets.json": [/"version": "[^"]*"/, (v) => '"version": "' + v + '"'] };
+  const rede = http.createServer((req, res) => setTimeout(() => {
+    const regra = falsa && reescreve[req.url.split("?")[0]];
+    const up = http.request({ host: "127.0.0.1", port: real.port, path: req.url, method: req.method, headers: req.headers }, (r) => {
+      if (!regra) { res.writeHead(r.statusCode, r.headers); r.pipe(res); return; }
+      const partes = [];
+      r.on("data", (c) => partes.push(c));
+      r.on("end", () => {
+        const corpo = Buffer.from(Buffer.concat(partes).toString("utf8").replace(regra[0], regra[1](falsa)));
+        const h = { ...r.headers, "content-length": corpo.length };
+        res.writeHead(r.statusCode, h); res.end(corpo);
+      });
+    });
+    up.on("error", () => res.writeHead(502).end());
+    req.pipe(up);
+  }, ATRASO));
+  await new Promise((ok) => rede.listen(0, "127.0.0.1", ok));
+  const URL_REDE = "http://127.0.0.1:" + rede.address().port;
+  const versaoReal = (fs.readFileSync(new URL("../js/assets.js", import.meta.url), "utf8").match(/ASSET_V = "([^"]*)"/) || [])[1];
+
+  const cu = await browser.newContext({ viewport: { width: 960, height: 540 } });
+  const up = await cu.newPage();
+  watchPage(up, problemas);
+  // conta NAVEGAÇÕES, não "load": a recarga pode vir ainda no carregamento,
+  // e aí o 1º documento nem chega a disparar o load
+  let navegacoes = 0;
+  up.on("framenavigated", (f) => { if (f === up.mainFrame()) navegacoes++; });
+  // qual versão a 1ª página RECEBEU: se o SW tinha acabado de reiniciar, o código
+  // já vem da rede e não há o que corrigir — aí o certo é não recarregar
+  let primeiraVersao = null;
+  up.on("response", async (r) => {
+    if (primeiraVersao !== null || !/\/game\/js\/assets\.js(\?|$)/.test(r.url())) return;
+    primeiraVersao = "?";
+    try { primeiraVersao = ((await r.text()).match(/ASSET_V = "([^"]*)"/) || [])[1] || "?"; } catch (e) { /* corpo indisponível */ }
+  });
+  const versaoRodando = async () => {
+    await importGameModules(up, { assets: "assets.js", state: "state.js" });
+    await up.waitForFunction(() => MOD.state.G.screen === "PRETITLE", null, { timeout: 90000 });
+    return up.evaluate(() => MOD.assets.ASSET_V);
+  };
+  const esperaNavegacoes = async (n, ms) => {
+    const fim = Date.now() + ms;
+    while (navegacoes < n && Date.now() < fim) await up.waitForTimeout(200);
+    await up.waitForLoadState("load");
+    return navegacoes >= n;
+  };
+  try {
+    // a) versão velha: a página oficial registra o SW; o jogo é aberto e guardado
+    falsa = "teste-velha";
+    await up.goto(URL_REDE + "/", { waitUntil: "load" });
+    await up.evaluate(async () => { await navigator.serviceWorker.ready; });
+    await up.reload({ waitUntil: "load" });
+    await up.goto(URL_REDE + "/game/", { waitUntil: "load" });
+    const velha = await versaoRodando();
+    if (velha !== "teste-velha") problemas.push("atualização: não consegui montar a versão velha (rodando " + velha + ")");
+
+    // b) sai a versão nova: a 1ª abertura roda o código guardado e tem que se corrigir sozinha
+    falsa = null;
+    navegacoes = 0;
+    primeiraVersao = null;
+    await up.goto(URL_REDE + "/game/", { waitUntil: "commit" });
+    const velhaNaAbertura = await (async () => {
+      const fim = Date.now() + 15000;
+      while ((primeiraVersao === null || primeiraVersao === "?") && Date.now() < fim) await up.waitForTimeout(100);
+      return primeiraVersao === "teste-velha";
+    })();
+    await esperaNavegacoes(velhaNaAbertura ? 2 : 1, 30000);
+    const depois = await versaoRodando();
+    await up.waitForTimeout(3000);                              // e não pode virar laço
+    dizer("atualização: 1ª abertura depois da versão nova " + (velhaNaAbertura ? "rodou o código GUARDADO (velho)" : "já veio da rede") +
+          " → " + (navegacoes - 1) + " recarga automática, terminou rodando " + depois);
+    if (depois !== versaoReal) problemas.push("atualização: a 1ª abertura ficou na versão " + depois + " (esperado " + versaoReal + ")");
+    if (velhaNaAbertura && navegacoes !== 2) problemas.push("atualização: esperado 1 recarga automática, houve " + (navegacoes - 1));
+    if (!velhaNaAbertura && navegacoes !== 1) problemas.push("atualização: recarregou sem precisar (" + (navegacoes - 1) + "x)");
+
+    // c) versão nova saindo com uma expedição DE VERDADE em andamento (?debug&tela=RUN):
+    //    não recarrega; quando o jogador volta ao título, recarrega
+    await up.goto(URL_REDE + "/game/?debug&tela=RUN&mapa=1&seed=7&hud=0", { waitUntil: "load" });
+    await importGameModules(up, { state: "state.js" });
+    await up.waitForFunction(() => MOD.state.G.screen === "RUN" && !!MOD.state.G.run, null, { timeout: 90000 });
+    falsa = "teste-outra";
+    navegacoes = 0;
+    const outra = await cu.newPage();                           // outra aba navega: o SW troca o cache e avisa
+    await outra.goto(URL_REDE + "/", { waitUntil: "load" });
+    await up.waitForTimeout(6000);
+    const durante = navegacoes;
+    await up.evaluate(() => FUMIGA.go("TITLE"));
+    const noTitulo = await esperaNavegacoes(1, 20000);
+    dizer("atualização: com expedição em andamento " + (durante ? "RECARREGOU (errado)" : "não recarregou") +
+          "; ao voltar ao título " + (noTitulo ? "recarregou" : "NÃO recarregou"));
+    if (durante) problemas.push("atualização: recarregou no meio de uma expedição");
+    if (!noTitulo) problemas.push("atualização: não recarregou ao voltar ao título com versão nova pendente");
+    await outra.close();
+  } catch (e) {
+    problemas.push("atualização: " + (e.message || e).split("\n")[0]);
+  }
+  await cu.close();
+  rede.close();
+  await real.close();
+}
 
 // ------------------------------------------------------------------ veredito --
 await browser.close();

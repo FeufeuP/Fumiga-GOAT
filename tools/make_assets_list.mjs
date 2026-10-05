@@ -16,9 +16,11 @@
 // Três grupos, na mesma divisão que a página de download mostra ao jogador:
 //   shell     — código do jogo, CSS, ícones e a página do app (base dos dois pacotes)
 //   essencial — o jogo jogável: sprites, fontes, TELA DE TÍTULO, telas de carga,
-//               maçãs/flores/lore da Árvore e dos menus
-//   completo  — o que só o pacote grande traz: santuários dos frutos e a
-//               cutscene Noite Branca (camadas grandes, abertas sob demanda)
+//               maçãs/flores/lore da Árvore e dos menus e a cutscene Noite
+//               Branca (14 camadas 320×180, ~0,7 MB: toca sozinha na 1ª
+//               expedição, então offline ela tem que estar no pacote básico)
+//   completo  — o que só o pacote grande traz: santuários dos frutos (e as
+//               cutscenes futuras, até alguém decidir o contrário)
 //
 // Determinismo: nada de data/hora no arquivo — mesma árvore, mesmos bytes.
 import fs from "node:fs";
@@ -82,7 +84,9 @@ export function buildList() {
 
   // 2. assets: o que o jogo carrega em tempo de execução
   const assets = walk(path.join(GAME, "assets"), "assets").map((f) => "game/" + f);
-  const completo = assets.filter((f) => f.startsWith("game/assets/cutscenes/") || /^game\/assets\/ui\/santuario_.*\.png$/.test(f));
+  const noiteBranca = (f) => f.startsWith("game/assets/cutscenes/noite_branca/");
+  const completo = assets.filter((f) => (f.startsWith("game/assets/cutscenes/") && !noiteBranca(f)) ||
+    /^game\/assets\/ui\/santuario_.*\.png$/.test(f));
   const essencial = assets.filter((f) => !completo.includes(f));
 
   // `files` em ordem + `tamanhos` na MESMA ordem: a página soma bytes exatos
@@ -98,8 +102,8 @@ export function buildList() {
     geradoPor: "tools/make_assets_list.mjs",
     grupos: [
       grupo("shell", "Código do jogo", shell),
-      grupo("essencial", "Sprites, telas e títulos", essencial),
-      grupo("completo", "Santuários dos frutos e Noite Branca", completo),
+      grupo("essencial", "Sprites, telas, títulos e Noite Branca", essencial),
+      grupo("completo", "Santuários dos frutos", completo),
     ],
   };
 }

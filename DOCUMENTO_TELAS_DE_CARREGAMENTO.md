@@ -14,6 +14,14 @@
 > `loading_planicie.png` e `loading_floresta.png`. Registro completo na seção “Jogo instalável e baixável —
 > PWA + download offline” do [`MEGA_ARQUIVO.md`](MEGA_ARQUIVO.md).
 
+> **Atualização 2026-10-01 (quando a tela aparece — Regra 14 revista):** a tela de carregamento temática
+> aparece **somente na troca de mundo** — início/reinício de expedição, avanço entre mapas e trocas de mapa
+> no Modo Teste. Tudo o que os botões do TITLE abrem (Árvore, 7 santuários, Profecias, Memórias e seus
+> replays, Opções, Como Jogar) é **pré-carregado no TITLE** por `game/js/preload.js` e abre sem tela;
+> entrar/sair do Formigueiro e a chegada do Chefão ficaram instantâneos. Por isso a tela **9
+> (Profundezas do Ninho)** foi cancelada e as telas de bioma 3–7 seguem valendo só para a troca de mundo.
+> Registro completo no topo do [`MEGA_ARQUIVO.md`](MEGA_ARQUIVO.md).
+
 ---
 
 ## 1. Visão Geral da Arquitetura & Diretrizes de Design
@@ -54,7 +62,7 @@ Inspirado nas transições de bioma de **Dead Cells** e **Hollow Knight**, cada 
 | **6** | **Degrau 6: Pico Congelado** | ⏳ **Pendente** | A criar via validação | Silhueta do **Devastador (Javali da Neve)** com presas massivas em tempestade de neve e cristais congelados de essência. |
 | **7** | **O Topo / A Pálida** | ⏳ **Pendente** | A criar via validação | Silhueta etérea da **A Pálida (Rainha Ancestral de Névoa)** com coroa de fungos e fios de bruma no ápice do mundo. |
 | **8** | **Boot Inicial / Colônia Eterna** | ⏳ **Pendente** | A criar via validação | Abertura do jogo: o Formigueiro Ancestral monumental sob a lua e a névoa roxa, substituindo a tela preta com barra simples do boot. |
-| **9** | **Profundezas do Ninho (Formigueiro)** | ⏳ **Pendente** | A criar via validação | Câmaras subterrâneas esculpidas: fungos bioluminescentes, berçário de larvas e o abdômen monumental da Rainha. |
+| **9** | **Profundezas do Ninho (Formigueiro)** | ❌ **Cancelada (2026-10-01)** — o Formigueiro entra na hora | — | Câmaras subterrâneas esculpidas: fungos bioluminescentes, berçário de larvas e o abdômen monumental da Rainha. |
 
 ---
 
@@ -139,6 +147,9 @@ Inspirado nas transições de bioma de **Dead Cells** e **Hollow Knight**, cada 
 ---
 
 ### 3.7. Câmaras Profundas do Ninho
+> **Cancelada em 2026-10-01 (Regra 14 revista):** entrar e sair do Formigueiro é instantâneo, sem tela de
+> carregamento. O planejamento abaixo fica como histórico.
+
 * **Local de Exibição**: Carregamento assíncrono ao entrar no Formigueiro (`nestEnter`) ou ao expandir novas câmaras subterrâneas (berçário, despensa, refinaria, câmara de fungos).
 * **Cenário**: Túneis subterrâneos orgânicos esculpidos na terra preta, paredes cobertas por fungos bioluminescentes dourados e esmeraldas, ovos translúcidos e o gaster imponente da Rainha Silenciosa ao fundo.
 

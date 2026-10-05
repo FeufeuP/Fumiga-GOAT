@@ -2,7 +2,7 @@
 // node game/test/ui-navigation-browser.mjs (tools/setup-dev.sh primeiro)
 import assert from 'node:assert/strict';
 import { startServer } from './lib/server.mjs';
-import { launchBrowser, watchPage } from './lib/browser.mjs';
+import { launchBrowser, watchPage, importGameModules } from './lib/browser.mjs';
 
 const server = await startServer();
 const browser = await launchBrowser();
@@ -13,11 +13,10 @@ try {
     watchPage(page, errors);
     await page.goto(server.url + (mobile ? '/game/mobile/' : '/game/') + '?debug&limpo&hud=0');
     await page.waitForFunction(() => window.FUMIGA?.pronto);
-    await page.evaluate(() => {
-      const root = document.querySelector('script[src*="main.js"]').src.replace(/main\.js.*$/, '');
-      window.M = name => import(root + name);
-      window.FUMIGA_DUMP_TEXTS = true;
-    });
+    // waitForFunction precisa de predicado SÍNCRONO lendo MOD (lib/browser.mjs);
+    // window.M(arquivo) fica para os imports avulsos abaixo.
+    await importGameModules(page, { ui: 'ui.js', cs: 'cutscenes.js', render: 'render.js' });
+    await page.evaluate(() => { window.FUMIGA_DUMP_TEXTS = true; });
     async function tap(x, y) {
       const r = await page.locator('#game').boundingBox();
       const px = r.x + x * r.width / 960, py = r.y + y * r.height / 540;
@@ -27,7 +26,7 @@ try {
     async function button(id) {
       // Aguarda o quadro que publica o controle, não um prazo fixo: sob carga
       // o render/transição pode levar mais que o sleep anterior.
-      const handle = await page.waitForFunction(async id => (await M('ui.js')).uiButtons().find(b => b.id === id), id, { timeout: 5000 });
+      const handle = await page.waitForFunction(id => MOD.ui.uiButtons().find(b => b.id === id), id, { timeout: 5000 });
       const b = await handle.jsonValue(); await handle.dispose();
       assert.ok(b, 'botão acessível: ' + id);
       await tap(b.x + b.w/2, b.y + b.h/2);
@@ -57,21 +56,27 @@ try {
     await page.waitForTimeout(200);
     await button('memoryNext');
     await tap(180, 185);
-    await page.waitForFunction(async () => (await M('cutscenes.js')).isCutsceneActive());
+    // Regra 14: a memória toca DENTRO da biblioteca, sem expedição por trás, e
+    // ao fim o jogador continua em MEMÓRIAS (antes ia ao TITLE com a HQ invisível).
+    await page.waitForFunction(() => MOD.cs.isCutsceneActive() && FUMIGA.G.screen === 'MEMORY' && !MOD.render.hasTransition(), null, { timeout: 5000 });
+    assert.equal(await page.evaluate(() => FUMIGA.G.run), null, 'replay sem expedição');
+    await page.keyboard.press('Escape');
+    await page.waitForFunction(() => !MOD.cs.isCutsceneActive() && FUMIGA.G.screen === 'MEMORY', null, { timeout: 5000 });
     console.log((mobile ? 'mobile' : 'PC') + ': todas as páginas, fonte normal/grande, anterior/próxima e replay por toque/clique OK');
     if (mobile) {
       // A fixture do HUD não reutiliza timers/estado transitório do replay.
       // Navegar invalida os callbacks da página anterior, inclusive sob carga.
       await page.goto(server.url + '/game/mobile/?debug&limpo&hud=0&tela=RUN&seed=7');
       await page.waitForFunction(() => window.FUMIGA?.pronto);
-      await page.evaluate(() => {
+      await page.evaluate(async () => {
         const root = document.querySelector('script[src*="main.js"]').src.replace(/main\.js.*$/, '');
         window.M = name => import(root + name);
+        window.MOD = { ui: await M('ui.js'), cs: await M('cutscenes.js'), render: await M('render.js') };
         FUMIGA.G.save.accessibility.bigFont = true;
         FUMIGA.G.run.banner = null;
       });
-      await page.waitForFunction(async () => FUMIGA.G.screen === 'RUN' &&
-        !(await M('render.js')).hasTransition() && !(await M('cutscenes.js')).isCutsceneActive());
+      await page.waitForFunction(() => FUMIGA.G.screen === 'RUN' &&
+        !MOD.render.hasTransition() && !MOD.cs.isCutsceneActive(), null, { timeout: 5000 });
       assert.equal(await page.locator('#touch-hud button').count(), 3, 'sem seis botões redundantes');
       await button('nestBtn');
       assert.equal(await page.evaluate(async () => (await M('state.js')).G.run.baseOpen), true);
