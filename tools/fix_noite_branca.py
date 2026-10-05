@@ -69,19 +69,28 @@ ORIG_REV = "645dc68018961b8a96a6059a94d69df2264df255"  # último commit com os P
 ORIG_GIT = "game/assets/cutscenes/noite_branca"
 OUT_W, OUT_H = 320, 180   # o que drawCutscene desenha (baseW × baseH, ampliado 3×)
 
-# Receita de cada camada. kind: opaque | solid | mist | light | haze | glow | frame | drop
+# Receita de cada camada. kind: opaque | solid | mist | light | haze | glow | frame | drop | gen
+#
+# Igualdade de painéis (decisão do usuário, 2026-10-05): os três painéis ficam
+# com EXATAS 4 camadas. O painel 1 perdeu 1_distant, 6_vfx e 7_vignette (drop);
+# o painel 2 ganhou 4_foreground = ARTE NOVA aprovada pelo usuário entre 2
+# opções (Regra 6), não derivável dos originais — kind "gen" pula o processo.
+# Receita que gerou o PNG versionado do painel 2 (ImageMagick):
+#   convert art-source/cutscenes/noite_branca/panel2_conflito/foreground_escolhida.png \
+#     -fuzz 12% -transparent "#ffffff" -scale 320x180! PNG32:4_foreground.png
 LAYERS = [
     ("panel1", "0_sky", dict(kind="opaque", crop_top=0.0)),
-    ("panel1", "1_distant", dict(kind="solid", keep_rows=(0, 650))),   # 2ª faixa repetida fica de fora
+    ("panel1", "1_distant", dict(kind="drop")),    # 2026-10-05: igualdade 4+4+4
     ("panel1", "2_mid", dict(kind="solid")),
     ("panel1", "3_ground", dict(kind="drop")),
     ("panel1", "4_foreground", dict(kind="solid")),
     ("panel1", "5_particles", dict(kind="light", darken=False)),
-    ("panel1", "6_vfx", dict(kind="haze", floor=0.25)),
-    ("panel1", "7_vignette", dict(kind="frame", thin=0.35)),   # usuário: moldura bem mais fina
+    ("panel1", "6_vfx", dict(kind="drop")),        # 2026-10-05: igualdade 4+4+4
+    ("panel1", "7_vignette", dict(kind="drop")),   # 2026-10-05: igualdade 4+4+4
     ("panel2_conflito", "0_sky", dict(kind="opaque")),
     ("panel2_conflito", "1_distant", dict(kind="mist")),
     ("panel2_conflito", "2_mid", dict(kind="mist")),
+    ("panel2_conflito", "4_foreground", dict(kind="gen")),     # arte 2026-10-05
     # painel 3 — a Pálida "no alto da névoa" (originais 2096×1152, 2048², 2672×1504, 2048×1152)
     ("panel3_gancho", "0_sky", dict(kind="opaque")),                       # bruma em espiral, 16:9 pelo meio
     ("panel3_gancho", "2_mid", dict(kind="glow", floor=10,                 # a Pálida: 12,5 px do original por
@@ -575,6 +584,9 @@ def main():
             continue
         game_png = os.path.join(GAME_DIR, panel, name + ".png")
         orig = os.path.join(ORIG_DIR, panel, name + ".png")
+        if cfg["kind"] == "gen":
+            print("    arte nova sem original clássico (PNG já versionado no jogo; não reprocessar)")
+            continue
         read_original(panel, name)   # garante a cópia de trabalho do original
         total_before += os.path.getsize(orig)
         print(f">> {tag} ({cfg['kind']})")

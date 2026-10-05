@@ -31,7 +31,7 @@ do canvas.
 - **Dois apps, duas versões:** `/game/` instala **“FUMIGA — Colônia Eterna (PC)”** e `/game/mobile/`
   instala **“FUMIGA — Colônia Eterna (Mobile)”**; a raiz instala só **FUMIGA** e, ao abrir, leva para
   a versão do aparelho. Os saves continuam separados (PC e mobile não se conectam).
-- **Baixar offline:** um pacote único com o jogo completo (**~24,8 MB, 235 arquivos**), com barra de
+- **Baixar offline:** um pacote único com o jogo completo (**~24,8 MB, 233 arquivos**), com barra de
   progresso e status do que já está no aparelho: os 6 biomas, a árvore, a cutscene da Noite Branca e os
   7 santuários dos frutos. O botão **LIBERAR ESPAÇO** apaga os caches.
 - **Como funciona:** `sw.js` (raiz do repositório — o GitHub Pages não permite ampliar escopo de

@@ -32,7 +32,7 @@ npm run test:quick          # ~10 s: confirma que a base está verde
 | `npm run inspect:ui` | cliques/toques reais: páginas de Memórias/Profecias, replay, ninho, pausa e invocar | ~15 s |
 | `npm run inspect:hud` | HUD orgânico nos 6 biomas, tecla H, acessibilidade | ~40 s |
 | `npm run inspect:layout` | **auditoria de layout**: todas as telas PC + mobile, com e sem FONTE GRANDE — texto fora da tela, colidindo, vazando da caixa, botões sobrepostos, toque cobrindo o canvas | ~4 min |
-| `npm run inspect:pwa` | **app instalável**: pacote único completo (235 arquivos), **reinício do worker com a rede desligada**, update que falha de propósito (a cópia anterior tem que sobreviver), timeout e boot offline em PC + mobile; passo 6: atualização real (versão velha → nova) exige **uma** recarga automática do jogo, nunca com expedição em andamento | ~25 s |
+| `npm run inspect:pwa` | **app instalável**: pacote único completo (233 arquivos), **reinício do worker com a rede desligada**, update que falha de propósito (a cópia anterior tem que sobreviver), timeout e boot offline em PC + mobile; passo 6: atualização real (versão velha → nova) exige **uma** recarga automática do jogo, nunca com expedição em andamento | ~25 s |
 | `npm run inspect:preload` | **pré-carregamento do TITLE** (Regra 14): boot leve, tudo pronto parado no TITLE, árvore → 7 santuários → replay → profecias sem tela de carregamento, clique cedo com CPU 4× mais lenta, sem rede, pixels idênticos | ~45 s |
 | `node game/test/native-packages.mjs` | Android GeckoView embutido + loopback/CSP + Electron/NSIS x64: sem rede externa no runtime e cobertura integral dos assets | ~1 s |
 | `npm run playtest` | lê os JSONs de teste de campo (pasta `playtest/` ou caminhos) e gera o relatório de balanceamento/PWA | ~1 s |
@@ -101,7 +101,7 @@ faltando e o último erro. No console: `FUMIGA.ajuda()`, `FUMIGA.go('RUN', {mapa
   `MANIFEST` de `assets.js` (o `test/assets.mjs` acusa se faltar).
 - **Arte nova, arquivo movido ou qualquer byte mudado em `game/` ou `app/`** → subir `ASSET_V`, rodar
   `node tools/make_assets_list.mjs` e sincronizar os shells nativos com `node tools/sync-native-assets.mjs`.
-  `app/assets.json` alimenta o único download offline completo (231 arquivos, ~55,8 MiB); `test/pwa.mjs`
+  `app/assets.json` alimenta o único download offline completo (233 arquivos, ~24,8 MB); `test/pwa.mjs`
   compara a lista com a árvore real. Arquivo de arte não usado vai para `art-source/` (Regra 13).
 - **Novo atalho de teclado** → trate em `game.js` **e** crie o botão/gesto em `mobile/touch.js`
   (Regra 9) + texto em `HELP_CONTROLS_TOUCH`.
@@ -158,13 +158,16 @@ faltando e o último erro. No console: `FUMIGA.ajuda()`, `FUMIGA.go('RUN', {mapa
 - `docs.mjs` exige que os 6 documentos originais estejam **byte a byte** dentro do
   `MEGA_ARQUIVO.md`: editou um deles, atualize o bloco e o hash no registro de integridade.
 - Cutscene Noite Branca: as camadas já vêm do disco em 320×180 RGBA (o tamanho desenhado,
-  ampliado 3× sem suavização; 14 camadas, ~0,7 MB no total), geradas por `tools/fix_noite_branca.py` a
+  ampliado 3× sem suavização; **12 camadas, ~0,65 MB no total**), geradas por `tools/fix_noite_branca.py` a
   partir dos originais (painéis 1–2: 1672×941, histórico do git em `645dc68`; painel 3: arte nova de
   2026-10-04 sobre preto liso, recortada pelo brilho; cópias em `art-source/` e no espelho). Os
   originais tinham um xadrez de "transparência" PINTADO no lugar do alfa — `game/test/cutscene-art.mjs`
   barra camada sem alfa, fora de 320×180 ou com xadrez. Decisão do usuário de 2026-10-02 (substitui a
   de 2026-09-23, que mantinha os PNGs grandes reduzidos no carregamento). Cada painel lista as camadas
-  que tem em `layers` (slot 3, o chão, ficou fora do painel 1; o painel 3 usa `[0, 2, 4, 5]`). Desde
+  que tem em `layers` — **igualdade 4+4+4 (decisão 2026-10-05):** painel 1 `[0, 2, 4, 5]` (perdeu
+  1_distant, 6_vfx e 7_vignette, apagadas do jogo e do Git), painel 2 `[0, 1, 2, 4]` (ganhou
+  4_foreground: arte nova da moldura de ruína com mato, aprovada entre 2 opções, receita ImageMagick
+  no cabeçalho de `fix_noite_branca.py`) e painel 3 `[0, 2, 4, 5]`. Desde
   2026-10-01 são pré-carregadas no TITLE (Blob → `createImageBitmap`, decodificação fora da thread
   principal); desde 2026-10-04 entram no pacote offline — que o PR #57 unificou num **pacote completo
   único** (a divisão ESSENCIAL/COMPLETO não existe mais) — tocam sozinhas na 1ª expedição, e a caixa de

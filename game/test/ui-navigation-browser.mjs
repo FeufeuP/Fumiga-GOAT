@@ -60,7 +60,23 @@ try {
     // ao fim o jogador continua em MEMÓRIAS (antes ia ao TITLE com a HQ invisível).
     await page.waitForFunction(() => MOD.cs.isCutsceneActive() && FUMIGA.G.screen === 'MEMORY' && !MOD.render.hasTransition(), null, { timeout: 5000 });
     assert.equal(await page.evaluate(() => FUMIGA.G.run), null, 'replay sem expedição');
-    await page.keyboard.press('Escape');
+    // Dica por plataforma (PENDENCIAS §1, decisão 2026-10-05): o PC lê as teclas
+    // reais; o toque lê TOQUE: e ganha a área PULAR desenhada — o único caminho
+    // de pular fora da expedição, onde o HUD de botões não aparece.
+    const footerText = await page.evaluate(async () => (await FUMIGA.auditarLayout()).detalhes.map(t => t.text).join(' '));
+    if (mobile) {
+      assert.ok(footerText.includes('TOQUE:'), 'dica do toque no rodapé: ' + footerText);
+      assert.ok(!footerText.includes('ENTER / ESPAÇO'), 'sem falar de teclado no toque');
+      const box = await page.waitForFunction(() => {
+        const r = MOD.cs.cutsceneSkipRect();
+        return r && r.w > 0 ? { x: r.x, y: r.y, w: r.w, h: r.h } : false;
+      }, null, { timeout: 5000 }).then(h => h.jsonValue());
+      await tap(box.x + box.w / 2, box.y + box.h / 2);
+    } else {
+      assert.ok(footerText.includes('ENTER / ESPAÇO'), 'dica do PC no rodapé: ' + footerText);
+      assert.equal(await page.evaluate(() => MOD.cs.cutsceneSkipRect()), null, 'PC não desenha área PULAR');
+      await page.keyboard.press('Escape');
+    }
     await page.waitForFunction(() => !MOD.cs.isCutsceneActive() && FUMIGA.G.screen === 'MEMORY', null, { timeout: 5000 });
     console.log((mobile ? 'mobile' : 'PC') + ': todas as páginas, fonte normal/grande, anterior/próxima e replay por toque/clique OK');
     if (mobile) {

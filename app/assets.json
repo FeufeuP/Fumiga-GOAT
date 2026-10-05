@@ -1,5 +1,5 @@
 {
-  "version": "20261005-painel3-native",
+  "version": "20261005-cutscene-4x4",
   "geradoPor": "tools/make_assets_list.mjs",
   "grupos": [
     {
@@ -73,14 +73,14 @@
         7089,
         2314,
         1379,
-        20969,
+        20967,
         11449,
         21721,
         2553,
         4559,
         8208,
         53674,
-        20873,
+        23041,
         14574,
         38797,
         3248,
@@ -117,22 +117,20 @@
         8826,
         899
       ],
-      "bytes": 1336666
+      "bytes": 1338832
     },
     {
       "id": "assets",
       "titulo": "Todos os recursos do jogo",
       "files": [
         "game/assets/cutscenes/noite_branca/panel1/0_sky.png",
-        "game/assets/cutscenes/noite_branca/panel1/1_distant.png",
         "game/assets/cutscenes/noite_branca/panel1/2_mid.png",
         "game/assets/cutscenes/noite_branca/panel1/4_foreground.png",
         "game/assets/cutscenes/noite_branca/panel1/5_particles.png",
-        "game/assets/cutscenes/noite_branca/panel1/6_vfx.png",
-        "game/assets/cutscenes/noite_branca/panel1/7_vignette.png",
         "game/assets/cutscenes/noite_branca/panel2_conflito/0_sky.png",
         "game/assets/cutscenes/noite_branca/panel2_conflito/1_distant.png",
         "game/assets/cutscenes/noite_branca/panel2_conflito/2_mid.png",
+        "game/assets/cutscenes/noite_branca/panel2_conflito/4_foreground.png",
         "game/assets/cutscenes/noite_branca/panel3_gancho/0_sky.png",
         "game/assets/cutscenes/noite_branca/panel3_gancho/2_mid.png",
         "game/assets/cutscenes/noite_branca/panel3_gancho/4_foreground.png",
@@ -307,15 +305,13 @@
       ],
       "tamanhos": [
         85396,
-        23711,
         68584,
         77310,
         29267,
-        35345,
-        45674,
         72124,
         56097,
         99059,
+        49426,
         85763,
         21156,
         24085,
@@ -488,7 +484,7 @@
         839032,
         656076
       ],
-      "bytes": 24714772
+      "bytes": 24659468
     }
   ]
 }

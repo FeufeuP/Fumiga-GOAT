@@ -6,9 +6,10 @@
 // ============================================================================
 import { VIEW_W, VIEW_H, MAPS } from "./config.js";
 import { G, persistSave } from "./state.js";
-import { drawText, wrapText } from "./font.js";
+import { drawText, wrapText, textWidth } from "./font.js";
 import { SFX } from "./audio.js";
 import { assetUrl, loadImage } from "./assets.js";
+import { isTouchUI, pointInRect } from "./ui.js";
 
 const CUTSCENE_DEFS = {
   noite_branca: {
@@ -18,13 +19,18 @@ const CUTSCENE_DEFS = {
     biome: "planicie",
     panels: [
       {
-        // camadas com arte (o índice é o slot do parallax; 3 = chão ficou fora)
-        id: "panel1_intro", assetPanel: "panel1", layers: [0, 1, 2, 4, 5, 6, 7],
+        // Camadas com arte (o índice é o slot do parallax). Igualdade 2026-10-05
+        // (decisão do usuário): os três painéis têm EXATAS 4 camadas — as que
+        // saíram (1_distant, 6_vfx, 7_vignette) foram apagadas do jogo e do Git.
+        id: "panel1_intro", assetPanel: "panel1", layers: [0, 2, 4, 5],
         lore: "Era uma vez uma colônia que vivia sob a lua laranja. A Rainha Silenciosa cantava com feromônio.",
         tip: "DICA: Segure H para ver o mundo como as formigas veem — com cheiro.",
       },
       {
-        id: "panel2_conflito", layers: [0, 1, 2],
+        // 4_foreground (2026-10-05): moldura de ruína tomada por mato, vista da
+        // "câmera na relva" — arte nova aprovada pelo usuário (2 opções, Regra 6),
+        // recortada para alfa por ImageMagick (receita em fix_noite_branca.py).
+        id: "panel2_conflito", layers: [0, 1, 2, 4],
         lore: "Na Noite Branca, a névoa subiu do vale sem vento. Ela não queimava. Ela lembrava.",
         tip: "DICA: Cristais roxos guardam memória. Colete essência para a Árvore.",
       },
@@ -134,6 +140,11 @@ const LAYER_FADE = 0.35;
 // faltar para sempre (uma camada leva ~2 s até em 3G lento).
 const LAYER_TIMEOUT_MS = 20000;
 const LAYER_READY = new Map();    // url -> ImageBitmap (ou <img>) 320×180
+// Área "PULAR" desenhada no rodapé quando a UI é de toque (coords 960×540).
+// Publicada por drawCutscene a cada quadro; handleCutsceneInput a testa antes
+// do avanço, senão o toque no botão também pularia de painel. null no PC.
+let lastSkipRect = null;
+export function cutsceneSkipRect() { return lastSkipRect; }
 const LAYER_LOADING = new Map();  // url -> Promise
 const layerAt = new Float64Array(8).fill(-Infinity); // quando cada camada surgiu (fade)
 
@@ -392,10 +403,33 @@ export function drawCutscene(ctx, time) {
   }
   const isLast = active.panelIdx === def.panels.length - 1;
   const action = active.textShown < fullText.length ? "MOSTRAR TEXTO" : isLast ? (active.fromLibrary ? "VOLTAR ÀS MEMÓRIAS" : "JOGAR") : "PRÓXIMO PAINEL";
+  // Dica por plataforma (PENDENCIAS §1, decisão do usuário 2026-10-05): no
+  // toque o jogador não tem ENTER/ESPAÇO/ESC — a dica mostra só o gesto real
+  // e o rodapé desenha a área PULAR (no replay das MEMÓRIAS o HUD de botões
+  // do mobile nem aparece, então antes não havia caminho para pular).
+  const touchHint = !active.isLoading && isTouchUI();
+  let hintCX = VIEW_W / 2, hintMax = Infinity;
+  if (touchHint) {
+    const sw = textWidth("PULAR ▶", { scale: 0.8 }) + 24;
+    const sx = margin + innerW - sw - 8, sy = VIEW_H - 62, sh = 40;
+    lastSkipRect = { x: sx, y: sy, w: sw, h: sh };
+    ctx.fillStyle = "rgba(10,8,16,0.92)";
+    ctx.fillRect(sx, sy, sw, sh);
+    ctx.strokeStyle = "#ffd479";
+    ctx.lineWidth = 1;
+    ctx.strokeRect(sx, sy, sw, sh);
+    drawText(ctx, "PULAR ▶", sx + sw / 2, sy + sh / 2 - 6, { color: "#ffd479", align: "center", scale: 0.8 });
+    hintCX = (margin + sx - 10) / 2;
+    hintMax = sx - 10 - margin;
+  } else {
+    lastSkipRect = null;
+  }
   const hint = active.isLoading
     ? "CARREGANDO... " + Math.ceil(active.autoCloseT) + "s"
-    : "ENTER / ESPAÇO / CLIQUE: " + action + " • ESC: PULAR";
-  drawText(ctx, hint, VIEW_W / 2, VIEW_H - 40, { color: "#efe9ff", align: "center", scale: 0.8 });
+    : touchHint
+      ? "TOQUE: " + action
+      : "ENTER / ESPAÇO / CLIQUE: " + action + " • ESC: PULAR";
+  drawText(ctx, hint, hintCX, VIEW_H - 40, { color: "#efe9ff", align: "center", scale: 0.8, maxWidth: hintMax });
   ctx.restore();
   return true;
 }
@@ -403,13 +437,19 @@ export function drawCutscene(ctx, time) {
 export function handleCutsceneInput(pressed, mouse) {
   if (!active) return false;
   if (active.isLoading) return true; // bloqueia input durante loading
-  if (pressed.Escape) {
+  const close = () => {
     const { id, onEnd } = active;
     active = null;
     if (onEnd) onEnd();
     return "closed:" + id;
-  }
+  };
+  if (pressed.Escape) return close();
   if (pressed.Enter || pressed.Space || (mouse && mouse.justDown)) {
+    // Toque na área PULAR: fecha sem avançar; toque em outro ponto avança.
+    if (mouse && mouse.justDown && lastSkipRect &&
+        pointInRect(mouse.x, mouse.y, lastSkipRect.x, lastSkipRect.y, lastSkipRect.w, lastSkipRect.h)) {
+      return close();
+    }
     const panel = active.def.panels[active.panelIdx];
     const full = panel.lore + "  " + panel.tip;
     if (active.textShown < full.length) {
