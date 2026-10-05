@@ -12,6 +12,7 @@
 //
 // Os testes que precisam de navegador (inspect.mjs, lorehud-browser.mjs) ficam
 // de fora: rodam com `npm run inspect` depois de tools/setup-dev.sh.
+import fs from "node:fs";
 import { spawn } from "node:child_process";
 import { cpus, tmpdir } from "node:os";
 import { fileURLToPath } from "node:url";
@@ -19,6 +20,13 @@ import path from "node:path";
 
 const HERE = path.dirname(fileURLToPath(import.meta.url));
 const GAME = path.resolve(HERE, "..");
+const RAIZ = path.resolve(HERE, "..", "..");
+// Testes que abrem um Chromium de verdade só rodam com o Playwright instalado
+// (`bash tools/setup-dev.sh`). Sem ele, são PULADOS com aviso — o job headless
+// do CI não instala navegador, e o job de navegador roda as inspeções.
+const temPlaywright = (() => {
+  try { return fs.existsSync(path.join(RAIZ, "node_modules", "playwright", "package.json")); } catch (e) { return false; }
+})();
 
 // slow = fica fora do --quick. Ordem: os mais lentos primeiro (menor tempo total).
 const TESTS = [
@@ -47,9 +55,14 @@ const TESTS = [
   { name: "nestmap", file: "nestmap.mjs", env: { NESTMAP_OUT: path.join(tmpdir(), "formigueiro-layout.png") } },
   { name: "attack", file: "attack.mjs" },
   { name: "prophecy", file: "prophecy.mjs" },
+  { name: "regressions", file: "regressions.mjs" },
   { name: "docs", file: "docs.mjs" },
   { name: "pwa", file: "pwa.mjs" },
   { name: "browser-waits", file: "browser-waits.mjs" },
+  { name: "native-packages", file: "native-packages.mjs" },
+  { name: "playtest", file: "playtest.mjs" },
+  { name: "pwa-worker", file: "pwa-worker.mjs" },
+  { name: "regressions-browser", file: "regressions-browser.mjs", slow: true, browser: true },
 ];
 
 const args = process.argv.slice(2);
@@ -63,6 +76,14 @@ const jobs = jIdx < 0 ? Math.max(4, cpus().length * 2)
 const TIMEOUT_MS = Number(process.env.TEST_TIMEOUT_MS) || 300000;
 
 let list = TESTS.filter((t) => !(quick && t.slow));
+const pulados = [];
+if (!temPlaywright && !only) {
+  list = list.filter((t) => {
+    if (!t.browser) return true;
+    pulados.push(t.name);
+    return false;
+  });
+}
 if (only) {
   const unknown = only.filter((n) => !TESTS.some((t) => t.name === n));
   if (unknown.length) {
@@ -99,7 +120,9 @@ function runOne(t) {
   });
 }
 
-console.log("FUMIGA — " + list.length + " testes" + (quick ? " (rápidos)" : "") + ", " + Math.min(jobs, list.length) + " em paralelo\n");
+console.log("FUMIGA — " + list.length + " testes" + (quick ? " (rápidos)" : "")
+  + (pulados.length ? " — PULADOS sem Playwright: " + pulados.join(", ") : "")
+  + ", " + Math.min(jobs, list.length) + " em paralelo\n");
 const queue = [...list];
 await Promise.all(Array.from({ length: Math.min(jobs, queue.length) }, async () => {
   while (queue.length) await runOne(queue.shift());
@@ -120,7 +143,8 @@ for (const f of failed) {
 const total = Date.now() - t0;
 const serial = results.reduce((a, r) => a + r.ms, 0);
 console.log("\n" + (failed.length ? "✗ " + failed.length + " FALHARAM: " + failed.map((f) => f.name).join(", ")
-  : "✓ TODOS OS " + results.length + " TESTES PASSARAM") +
+  : "✓ TODOS OS " + results.length + " TESTES PASSARAM"
+    + (pulados.length ? " (" + pulados.length + " pulado(s) sem Playwright: " + pulados.join(", ") + ")" : "")) +
   "  —  " + (total / 1000).toFixed(1) + "s (em série seriam " + (serial / 1000).toFixed(1) + "s)");
 if (process.env.GITHUB_ACTIONS && failed.length) {
   console.log("::warning title=bateria::" + failed.length + " teste(s) falharam: " + failed.map((f) => f.name).join(", "));

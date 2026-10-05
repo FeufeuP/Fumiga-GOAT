@@ -6,7 +6,7 @@
 //      Lista de download desatualizada = pacote com arquivo faltando lá na frente.
 //   2. COBERTURA — todo arquivo servido ao navegador (código, sprites, UI,
 //      cutscenes) está em exatamente um grupo: nada de asset órfão fora do
-//      download, nada de caminho fantasma que não existe no repositório.
+//      pacote completo, nada de caminho fantasma que não existe no repositório.
 //   3. MANIFESTS — JSON válido, o que o navegador EXIGE para instalar (name,
 //      short_name, start_url, scope, display, ícones 192/512 + maskable), com
 //      os ícones existindo de verdade e no tamanho declarado (lê o IHDR do PNG).
@@ -15,8 +15,8 @@
 //      ASSET_V do jogo (é o ASSET_V que decide quando descartar o cache velho).
 //   5. PÁGINAS — todo href/src local dos quatro HTMLs e todo `from "./x.js"`
 //      dos módulos inline existem (pega 404 de CSS, ícone, manifest e módulo).
-//   6. TAMANHOS — os pacotes são cumulativos (shell ⊂ essencial ⊂ completo) e
-//      os megabytes batem com a soma dos arquivos em disco.
+//   6. PACOTE ÚNICO — não existe opção parcial; tamanho e conteúdo somam todos
+//      os arquivos distribuídos pelo jogo.
 import assert from "node:assert/strict";
 import fs from "node:fs";
 import path from "node:path";
@@ -41,7 +41,7 @@ assert.equal(atual, serializar(lista), "app/assets.json está EM DIA (rode: node
 console.log("ok    assets.json em dia — " + lista.version);
 
 const grupos = Object.fromEntries(lista.grupos.map((g) => [g.id, g]));
-assert.deepEqual(Object.keys(grupos).sort(), ["completo", "essencial", "shell"], "três grupos (shell, essencial, completo)");
+assert.deepEqual(Object.keys(grupos).sort(), ["assets", "shell"], "grupos internos do pacote completo (shell + assets)");
 
 const vistos = new Set();
 for (const g of lista.grupos) {
@@ -70,21 +70,21 @@ for (const dir of ["game/js", "game/assets", "app"]) {
 const fora = deveEstar.filter((f) => !vistos.has(f) && f !== "app/sw.js" && f !== "app/assets.json");
 assert.deepEqual(fora, [], "nenhum arquivo servido ficou fora da lista de download");
 
-// pacotes cumulativos: shell ⊂ essencial ⊂ completo (o pacote grande soma,
-// não substitui). Os GRUPOS são disjuntos — cada arquivo é gravado uma vez só.
-const pacote = (alvo) => new Set(lista.grupos
-  .filter((g) => alvo === "completo" || g.id !== "completo")
-  .flatMap((g) => g.files));
-const pacEss = pacote("essencial"), pacCmp = pacote("completo");
-assert.ok(pacCmp.size > pacEss.size, "o pacote completo tem mais arquivos que o essencial");
-for (const g of ["shell", "essencial"]) {
-  for (const f of grupos[g].files) {
-    assert.ok(pacEss.has(f) && pacCmp.has(f), "grupo " + g + " entra nos dois pacotes: " + f);
-  }
+// Pacote único: shell + todos os assets, sem recorte ESSENCIAL.
+const pacoteCompleto = new Set(lista.grupos.flatMap((g) => g.files));
+assert.equal(pacoteCompleto.size, vistos.size, "o pacote completo contém todo arquivo coberto");
+assert.ok(pacoteCompleto.has("game/assets/cutscenes/noite_branca.png") || [...pacoteCompleto].some((f) => f.startsWith("game/assets/cutscenes/")), "inclui as cutscenes");
+assert.ok([...pacoteCompleto].some((f) => /santuario_.*\.png$/.test(f)), "inclui os santuários");
+for (const rel of ["index.html", "app/online.html"]) {
+  const html = fs.readFileSync(abs(rel), "utf8");
+  assert.ok(html.includes("btnCompleto"), rel + " oferece o pacote completo");
+  assert.ok(!/btnEssencial|ESSENCIAL/.test(html), rel + " não oferece um pacote parcial");
 }
-for (const f of grupos.completo.files) {
-  assert.ok(pacCmp.has(f) && !pacEss.has(f), "grupo completo é o que distingue o pacote grande: " + f);
-}
+const home = fs.readFileSync(abs("index.html"), "utf8");
+assert.match(home, /APK ANDROID — EM PREPARAÇÃO/, "não anuncia APK como download antes da Release");
+assert.ok(home.includes("INSTALADOR WINDOWS 64-BIT (.EXE) — EM PREPARAÇÃO"), "não anuncia EXE como download antes da Release");
+assert.match(home, /<button[^>]+disabled/, "instaladores ainda não publicados não são clicáveis");
+assert.doesNotMatch(home, /releases\/latest\/download\/FUMIGA-/, "não deixa links quebrados para artefatos que ainda não foram publicados");
 console.log("ok    cobertura — " + lista.grupos.reduce((s, g) => s + g.files.length, 0) + " arquivos em um grupo só, sem órfãos");
 
 // --------------------------------------------------------------------- 3 ----
@@ -184,10 +184,10 @@ for (const rel of PAGINAS) {
 }
 
 // --------------------------------------------------------------------- 6 ----
-const p = (alvo) => lista.grupos.filter((g) => alvo === "completo" || g.id !== "completo")
-  .reduce((s, g) => s + g.bytes, 0);
-assert.ok(p("essencial") < p("completo"), "o pacote completo é maior que o essencial");
-assert.ok(p("essencial") > 5 * 1024 * 1024 && p("completo") < 200 * 1024 * 1024, "tamanhos plausíveis para download");
-console.log("ok    pacotes — essencial " + mb(p("essencial")) + " · completo " + mb(p("completo")));
+const totalBytes = lista.grupos.reduce((sum, g) => sum + g.bytes, 0);
+assert.ok(totalBytes > 5 * 1024 * 1024 && totalBytes < 200 * 1024 * 1024, "tamanho plausível para o jogo completo");
+// Sobe quando entra asset novo (o painel 3 da Noite Branca trouxe 4 em 2026-10-04).
+assert.equal(pacoteCompleto.size, 235, "conjunto completo esperado de 235 arquivos");
+console.log("ok    pacote único — " + mb(totalBytes) + " · " + pacoteCompleto.size + " arquivos (sem versão parcial)");
 
-console.log("PWA OK — instalável nos dois shells, download em dois pacotes, cache versionado e nenhum link quebrado");
+console.log("PWA OK — shell completo, sem pacote parcial, cache versionado e nenhum link quebrado");

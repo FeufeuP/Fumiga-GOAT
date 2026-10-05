@@ -31,7 +31,7 @@ jobs:
       # treemap/nestmap desenham com ImageMagick + DejaVu (costumam vir na imagem)
       - name: ImageMagick e DejaVu
         run: command -v convert >/dev/null && [ -f /usr/share/fonts/truetype/dejavu/DejaVuSansMono-Bold.ttf ] || (sudo apt-get update -qq && sudo apt-get install -y -qq imagemagick fonts-dejavu-core)
-      - name: npm test (19 testes em paralelo)
+      - name: npm test — bateria headless em paralelo (pula os testes de navegador se o Playwright não estiver instalado)
         run: node game/test/run-all.mjs
 
   navegador:
@@ -54,6 +54,10 @@ jobs:
         run: node game/test/lorehud-browser.mjs
         env:
           HUD_SHOTS: ${{ runner.temp }}/fumiga-inspect/hud
+      - name: regressões no navegador (diário/playtest, janela estreita, erro/retry, save)
+        run: node game/test/regressions-browser.mjs
+        env:
+          REGRESSION_SHOTS: ${{ runner.temp }}/fumiga-inspect/regressions
       - name: capturas de tela para revisão
         if: always()
         uses: actions/upload-artifact@v4

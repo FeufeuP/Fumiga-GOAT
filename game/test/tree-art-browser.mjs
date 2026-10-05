@@ -214,6 +214,9 @@ try {
     const rebirth = await page.evaluate(async () => {
       const { G } = await M("state.js"); G.save.nodes = { r_ren: 1 }; G.save.accessibility.invincible = false;
       FUMIGA.go("RUN", { mapa: 0, seed: 41 });
+      // Sem comida: o único efeito sobre a vida aqui é o Renascimento (o
+      // desfecho agora é verificado no início do quadro e a rainha ainda come).
+      G.run.food = 0;
       const q = (await M("units.js")).allies.queen;
       q.hp = -100000;
       return new Promise(resolve => requestAnimationFrame(() => resolve({ used: G.run.rebirthUsed, hp: q.hp, max: q.maxHp })));

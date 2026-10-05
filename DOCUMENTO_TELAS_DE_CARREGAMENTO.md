@@ -68,6 +68,14 @@ Inspirado nas transições de bioma de **Dead Cells** e **Hollow Knight**, cada 
 
 ## 3. Detalhamento das Telas Restantes
 
+> **Atualização 2026-10-01 (falha de carga):** a tarefa pesada é tratada como essencial. Se ela
+> lançar erro (ou o `onFinish` falhar), a tela entra em estado de **erro**, com os botões
+> **TENTAR NOVAMENTE** e **VOLTAR AO MENU** — nada de 100% ou de continuar num mundo pela metade.
+> A arte panorâmica continua opcional: sem arquivo próprio, o bioma usa a base existente e o
+> fallback procedural. Regressões em `game/test/regressions.mjs` e `regressions-browser.mjs`.
+
+### 3. Detalhamento das Telas Restantes
+
 ### 3.1. Degrau 3 — Pântano Pútrido
 * **Local de Exibição**: Avanço de mapa entre o Mundo 2 e o Mundo 3 (`advanceMap`), e reinício/carregamento no Pântano.
 * **Silhueta do Chefão ao Fundo**: **A Sombra Alada** (*Grouse* / grande ave proto-pálida pantanosa com asas envoltas em névoa espectral e olhar predatório).

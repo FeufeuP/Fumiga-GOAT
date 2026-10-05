@@ -74,7 +74,7 @@ cutscene?”* — com as decisões: manter a formiga como está, recarregar sozi
   artes novas podem se perder entre sessões aqui e um recorte novo da Pálida a partir deles já não é
   possível (o jogo não depende disso — as 14 camadas aprovadas estão no repositório).
 
-### Defeito achado de passagem (EM ABERTO, sem correção)
+### Defeito achado de passagem (RESOLVIDO na integração com o PR #57 — logo abaixo)
 
 - **Offline depois de FECHAR o navegador:** com o app instalado e o pacote essencial baixado (227
   arquivos, cache `fumiga-20261004-painel3`), fechar o navegador e reabrir **sem rede** devolve 504 —
@@ -87,7 +87,8 @@ cutscene?”* — com as decisões: manter a formiga como está, recarregar sozi
   variables are lost”). Proposta: ao subir, adotar um cache `fumiga-<versão>` já existente antes de
   responder, mais um teste novo (baixa → FECHA → reabre offline). **Decisão do usuário (2026-10-05,
   nesta rodada): registrar** em vez de corrigir agora — o defeito, a reprodução medida, a causa e o
-  esboço da correção ficam consolidados em `PENDENCIAS.md` (raiz do repositório).
+  esboço da correção ficam consolidados em `PENDENCIAS.md` (raiz do repositório). O defeito não chegou a ser corrigido nesta branch: o PR #57,
+  integrado na mesma rodada, trouxe a correção (seção seguinte).
 
 ### Pendências consolidadas em `PENDENCIAS.md` (novo documento, raiz)
 
@@ -100,12 +101,43 @@ saíram do histórico e viraram um documento de handoff, com reprodução, causa
 3. **Trabalho sem decisão:** as **5 camadas extras do painel 2** do plano antigo da Fase 5 (o painel 3
    foi resolvido com 4 camadas enxutas em 2026-10-04; sobre o painel 2 não há decisão nova).
 
+### Integração com o PR #57 (pacote único, versão persistida, recarga reaproveitada)
+
+A `main` avançou enquanto esta branch trabalhava (PRs #56 e #57, da sessão `arena/01a0fc42`); o merge
+exigiu resolver 11 arquivos em conflito. O que muda de decisão, explicitamente:
+
+- **Pacotes offline:** o PR #57 unificou o download num **pacote completo único** (235 arquivos,
+  ~24,8 MB) e removeu os botões parciais. Isso **substitui a decisão de 2026-10-04** de pôr a Noite
+  Branca no pacote ESSENCIAL: ESSENCIAL/COMPLETO não existem mais — a cutscene (e todo o resto) vai no
+  pacote único. `ASSET_V = "20261005-painel3-native"` (as duas branches tinham subido versões
+  diferentes; a integrada cobre as duas).
+- **Defeito offline:** o `sw.js` novo persiste a versão ativa e a de cada cliente no Cache Storage e as
+  recupera ao reiniciar, **resolvendo o defeito registrado acima**. Verificado de duas formas:
+  `inspect:pwa` (“worker reiniciado offline: versão preservada”) e o cenário real — baixar o pacote,
+  **fechar o navegador**, reabrir o mesmo perfil sem rede: `/game/mobile/` responde 200 e o jogo chega
+  ao PRETITLE.
+- **Recarga automática:** reaplicada sobre a arquitetura nova (o jogo pergunta `versao-atual`; o worker
+  avisa `versao-nova` ao promover). O passo 6 do `inspect:pwa`, escrito nesta branch, prova os três
+  casos: **uma** recarga quando a 1ª abertura roda o snapshot velho, nenhuma recarga quando o código já
+  é o novo, e nenhuma com expedição em andamento (recarrega ao voltar ao título) — sem laço.
+- **Esperas de teste:** os 12 `waitForFunction(async …)` dos testes do PR #57 foram convertidos para o
+  padrão síncrono (`importGameModules` + `MOD`); sem isso a guarda `browser-waits.mjs` reprovaria e as
+  esperas seriam vazias (voltavam sem checar nada). `regressions-browser.mjs` passou a esperar de
+  verdade — PC + mobile verdes.
+- **Documentos reconciliados com o pacote único:** `AGENTS.md`, `game/README.md`, `index.html` e
+  `PENDENCIAS.md` (nada de “essencial”); `test/pwa.mjs` passou a esperar 235 arquivos.
+
 ### Verificação desta rodada
 
-- `npm test`: 28/28. `npm run inspect`: PC e celular, sem erro de JS, 404 ou glifo faltando, 60 fps em
-  RUN-MAPA1–6. `npm run inspect:pwa`: as 5 seções antigas + o passo 6 novo, tudo verde.
-- `node tools/make_assets_list.mjs` regerado (mudou o tamanho de `sw.js` e de `game/js/main.js`; a
-  versão continua `20261004-painel3`, porque nenhum PNG mudou — o `test/pwa.mjs` protege a sincronia).
+- **Antes do merge (branch):** `npm test`: 28/28; `npm run inspect` OK; `npm run inspect:pwa` verde
+  (5 seções + o passo 6 novo).
+- **Depois da integração com o PR #57:** `npm test`: **33/33** (50,3 s); `npm run inspect` OK (PC +
+  celular, sem erro de JS, 404 ou glifo faltando; 60 fps em RUN-MAPA1–6); `npm run inspect:pwa` verde
+  (pacote único de 235 arquivos, reinício offline com versão preservada, update que falha de propósito,
+  timeout e o passo 6); `regressions-browser.mjs` verde com as esperas reais; `lorehud-browser.mjs` e
+  `inspect:preload` verdes; fechar e reabrir o navegador offline boota o jogo (PRETITLE).
+- `node tools/make_assets_list.mjs` regerado na integração: **235 arquivos, 24,8 MB**,
+  `ASSET_V = "20261005-painel3-native"` (o `test/pwa.mjs` protege a sincronia).
 
 ## Registro — Esperas reais nos testes de navegador, arte do painel 3, caixa de texto 0,7 e Noite Branca no pacote essencial (2026-10-04, branch arena/01a0f71c)
 
@@ -3972,6 +4004,292 @@ Decisões confirmadas com o usuário (`ask_user`):
   - `game/mobile/touch.js`: ocultação automática de `#touch-hud` enquanto `isLoadingActive()` estiver ativa.
   - `game/test/endless.mjs` e `game/test/lorehud-browser.mjs`: testes automatizados do botão `PULAR ONDA` e da confirmação manual da tela de carregamento.
 
+## Registro — Estabilidade: offline durável, fim de partida no ninho, níveis de poder e falhas de carga (2026-10-01, branch arena/01a0f6cf-fumiga-goat)
 
+**Status: implementado e verificado.** Pedido do usuário: *“Corrija tudo dito no tópico 1”* — os nove
+achados reproduzidos na auditoria do mesmo dia (relatório fora do Git, em `~/analise-fumiga/`).
 
+### Pesquisa de inspiração (Regra 2)
 
+- **Persistência e ciclo de vida de Service Worker** — [web.dev, Service Workers](https://web.dev/learn/pwa/service-workers)
+  e [MDN, ServiceWorkerGlobalScope](https://developer.mozilla.org/en-US/docs/Web/API/ServiceWorkerGlobalScope):
+  o estado global do worker **não** sobrevive a terminar/reiniciar, então versão e cache ativos passam a
+  viver no Cache Storage. `web.dev` também documenta que a janela de atualização é opcional para o
+  usuário — daí a atualização só promover depois de verificada.
+- **Bônus explícitos por nível (Hades)** — [prima games, Mirror of Night](https://primagames.com/gaming/hades-guide-mirror-of-night-upgrades-fated-list-of-prophecies)
+  e [Gamepur](https://www.gamepur.com/guides/all-of-the-mirror-of-night-abilities-in-hades): cada rank
+  descreve numericamente o que ganha; a adaptação foi dar aos 20 poderes globais valores-base por rank
+  com descrição própria, sem inflar gatilhos, alvos ou ressurreições.
+- **Correções de acessibilidade/ressurreição e migração de saves (Dead Cells — “Breaking Barriers”)** —
+  [patch notes 29](https://dead-cells.com/patchnotes/29): “Fixed a bug where Assist Mode's Continue would
+  not work if the player died by a curse” e “Fixed multiple issues when going back to an older version…
+  will create a clean version of the Options, while keeping what you changed”. Inspirou o cuidado com
+  estados de morte + assistência e a validação de saves antigos sem descartar o que é válido.
+
+### Escolha do usuário (Regra 1, `ask_user`)
+
+**Progressão conservadora** para os níveis 2 e 3: o **bônus** cresce **+25% / +50%** sobre o nível 1
+(não o multiplicador inteiro), contagens arredondadas e limites de usos/ressurreições iguais.
+
+### Correções implementadas
+
+1. **Offline após reiniciar o worker (crítico)** — `sw.js` reescrito: versão ativa, versão anterior e
+   a versão de cada cliente ficam persistidas no Cache Storage (`fumiga-controle`); ao acordar, o worker
+   recupera a versão do cache (inclusive dos caches da implementação anterior) antes de responder ao
+   fetch. Atualização é preparada num snapshot e **promovida só depois de verificada**; a cópia anterior
+   e os snapshots de abas abertas sobrevivem a falha de rede, interrupção e quota. O `app/offline.js`
+   correlaciona respostas por `requestId`, rejeita timeout com mensagem clara e confirma o pacote pelo
+   **cache real** (nunca pelo anúncio do worker).
+2. **Morte da Rainha dentro do ninho (crítico)** — as regras de fim viraram `checkRunOutcome()` em
+   `game/js/game.js`, chamada antes de curas e depois de **cada** `worldTick`, no interior e na
+   superfície. `endRun()` fecha o ninho. Renascimento, modo acessível, chefe final e `bossRush`
+   continuam valendo; ataque ocorrido durante o tick também encerra no mesmo quadro.
+3. **Níveis 2 e 3 dos poderes globais** — `game/js/fruit_skills.js` ganhou `POWER_BASE`/`fruitPowerValues`
+   e descrições por nível; `game/js/fruit_effects.js` passou a ler o rank (alcance 45/56/68, cura da
+   gota 8/10/12, etc.) e `game/js/meta.js` mostra “PRÓXIMO NÍVEL n”. **Nível 1, preços, IDs e saves
+   anteriores não mudaram.**
+4. **SANGUE FRIO** — o vale de vida da Rainha é registrado no caminho real de dano
+   (`spawnQueen.takeDamage` e no pulso de `updateAllies`), **antes** de cura/resgate.
+5. **Saves robustos** — `game/js/state.js` valida schema, tipos, chaves perigosas e limites por nó;
+   `metaCanBuy` recusa preço/nível não finito; `persistSave` recusa saldo inválido. IDs, preços e saves
+   v1 de PC/mobile/debug continuam os mesmos.
+6. **Timeout do download** — `mensagemSW` rejeita (15 min) com “tente novamente para retomar”; o retorno
+   do pacote é conferido e reconfirmado no Cache Storage.
+7. **Atualização malsucedida** — coberta pelo item 1 (staging + rollback + retomada).
+8. **Falha de tarefa essencial no carregamento** — `game/js/loading_screen.js` ganhou o estado `error`
+   com **TENTAR NOVAMENTE** (`retryLoadingScreen`) e **VOLTAR AO MENU** (`cancelLoadingScreen`, sem
+   retomar mundo pela metade); `onFinish` com erro também vira estado de erro e callbacks antigos não
+   escrevem na tentativa nova. A arte panorâmica continua opcional (fallback).
+9. **Janela estreita no PC** — `game/css/style.css` não força mais `100vw×100vh` em `<=900px`: o
+   `fit()` de `main.js` mantém 16:9 (800×450 em 800×1000) e as scanlines acompanham o canvas.
+
+### Testes e resultados (2026-10-01)
+
+| Verificação | Resultado |
+|---|---|
+| `npm run test:quick` | **25/25** (novos: `regressions`, `pwa-worker`) |
+| `npm test` | **29/29** (novos: `regressions`, `pwa-worker`, `regressions-browser`) |
+| `npm run inspect` | PC/mobile, todas as telas e 6 mapas, sem erro/404/glifo; 60 FPS |
+| `npm run inspect:pwa` | worker **reiniciado offline** mantém `20261001-estabilidade`; update com 208 falhas preserva a cópia anterior; timeout rejeita; boot offline PC + mobile |
+| `npm run inspect:ui` / `inspect:hud` / `inspect:layout` | OK (layout: 112 estados) |
+| `npm run inspect:tree` | OK (arte, gates, 127 posições, Renascimento) |
+| `node tools/make_assets_list.mjs --check` | em dia — **`ASSET_V` subiu para `20261001-estabilidade`** |
+
+Limitações: sem aparelho físico (Android/iOS), sem teste de quota/eviction real de dias, e o cenário
+“atualização com duas abas executando” é validado por snapshots por cliente, não por sessão longa.
+
+### Próximos passos (backlog da auditoria)
+
+A3 (balanceamento fino de builds), artes próprias de carregamento, Eras transformando o mundo, flores
+dos quatro biomas restantes, Pálida e idiomas — todos dependem do fluxo de pesquisa → perguntas →
+implementação. O CI está ativo, mas o `main` não tem proteção de branch/ruleset (exigir os checks no
+merge segue manual).
+
+## Registro — Playtest de campo: diário local, aba TESTE e relatório (2026-10-01, branch arena/01a0f6cf-fumiga-goat)
+
+**Status: implementado e verificado.** Pedido do usuário: *“Preparar playtest e após salvar no
+GitHub”*. Escolhas da Regra 1 (`ask_user`): exportar/apagar numa **aba TESTE das OPÇÕES** (PC e
+mobile juntos), **gravar por padrão** com botão APAGAR, e roteiro cobrindo **PWA em aparelho real
++ balanceamento**. Nada é enviado a servidor: os dados só saem do aparelho quando o tester exporta.
+
+### Pesquisa de inspiração (Regra 2)
+
+- **“The First 10 Telemetry Events Every Indie Game Should Ship”** ([gamineai](https://gamineai.com/blog/the-first-10-telemetry-events-every-indie-game-should-ship-and-why)):
+  sessão, funil de fase e economia (ganho/gasto) como base; foi o desenho dos eventos `sessao`,
+  `expedicao_inicio/fim`, `mapa_limpo`, `poder_comprado` e `recompensa`.
+- **“What a few days of playtest telemetry found…”** ([DEV](https://dev.to/chris_longden/what-a-few-days-of-playtest-telemetry-found-that-my-own-testing-never-did-20b)):
+  flag de teste, log pequeno em `localStorage`, **nada de upload automático** e um script que
+  transforma o log em lista de problemas (a seção ALERTAS do relatório). Daqui veio também a
+  ideia de carimbar o contexto do aparelho uma vez por sessão.
+- **PRs open-source de telemetria local** ([bio_siege #25](https://github.com/briercliffe/bio_siege/issues/25),
+  [Idle-game #13](https://github.com/Kayza1708/Idle-game-/pull/13)): JSONL/JSON versionado com
+  “exportar relatório” + script de análise offline; serviu de referência para o formato do arquivo
+  e para o `tools/playtest.mjs`.
+- Já em uso desde a auditoria: **Slay the Spire — Metrics Driven Design (GDC 2019)**, para as
+  métricas de balanceamento (taxa de vitória, onde a expedição termina, tempo e economia).
+
+### Decisões
+
+1. **Local-first e sem PII**: sem nome/e-mail/IP/localização/UA crua; o `pt-xxxxxxxx` é um id
+   aleatório do aparelho, criado localmente. Chave própria `localStorage["fumiga_playtest_v1"]`,
+   separada dos saves (não interfere em PC/mobile/debug).
+2. **Grava por padrão** (para não perder o teste de quem esquecer de ligar), com **DIÁRIO DE TESTE
+   LIGADO/DESLIGADO** e **APAGAR DADOS** (confirmação em dois toques) na aba TESTE.
+3. **Teto de 4.000 eventos** (~400 KB) com poda dos mais antigos e corte de emergência em quota:
+   o diário nunca derruba nem trava o jogo (`try/catch` em tudo, escrita só em evento discreto —
+   nada por frame).
+4. **Entrega do arquivo** na melhor via do aparelho: folha de compartilhamento (Android/iOS) →
+   download → copiar para a área de transferência. O `ptEntregar()` é síncrono até a chamada do
+   share, para preservar o gesto do toque que o iOS/Android exigem.
+5. **Sexta aba `TESTE`** nas OPÇÕES, com o rótulo da aba 4 encurtado para `ACESSO` (o nome antigo
+   não caberia com 6 abas). As ações (EXPORTAR/APAGAR) ficam **acima** das notas, para continuarem
+   à mão com rolagem/FONTE GRANDE; a mensagem de status substitui a linha do ID e não muda a altura.
+6. **Eventos**: `sessao`, `pwa_offline` (a evidência do A1), `expedicao_inicio`, `mapa_limpo`,
+   `draft`, `poder_comprado`, `expedicao_fim`, `recompensa`, `pwa_pacote`, `erro`, `loader_erro`.
+
+### Implementação
+
+| Onde | O que mudou |
+|---|---|
+| `game/js/playtest.js` (novo) | diário local: eventos, contadores, ambiente derivado, teto/quota, redes de erro, exportação (share → download → clipboard) |
+| `game/js/game.js` | ganchos em `newRun`/`advanceMap`/`pickDraft`/`endRun`/`settleRun`; aba TESTE (resumo, EXPORTAR, APAGAR, ligar/desligar; `__ptArmed()` como gancho de teste) |
+| `game/js/state.js` | `metaBuy` registra `poder_comprado` (id, nível 1/2/3, preço, saldo) |
+| `game/js/main.js` | sessão do jogo no boot (antes das cargas) e instalação das redes de erro |
+| `game/js/loading_screen.js` | `loadingFailed` registra `loader_erro` (mensagem + tentativa + bioma) |
+| `app/offline.js` | sessão nas páginas do app; `baixarPacote` registra `pwa_pacote` (ok/falha, ms, arquivos) |
+| `tools/playtest.mjs` (novo) | relatório: funil por modo/mapa, poderes (comprado/presente × vitória), economia, PWA, erros e **alertas**; CLI `npm run playtest -- arquivos|pasta [--json=…]` |
+| `PLAYTEST.md` (novo) + `playtest/LEIA-ME.md` | roteiro de campo: A1–A7 no Android, i1–i5 no iPhone, roteiro de balanceamento, perguntas de feedback, envio dos dados e check-in |
+| `.gitignore` | `playtest/*.json` fora do Git (dados dos testers) |
+
+### Testes e resultados (2026-10-01)
+
+| Verificação | Resultado |
+|---|---|
+| `npm run test:quick` | **26/26** (novo: `playtest`) |
+| `npm test` | **30/30 (52,0 s)** — novo `game/test/playtest.mjs`: gravação, teto, ligar/apagar, sessão offline, erros e o relatório/CLI |
+| `regressions-browser` | PC + mobile: EXPORTAR gera **download real** e o JSON tem sessão/eventos; APAGAR em dois toques limpa; aba TESTE sem problemas de layout |
+| `npm run inspect` | todas as telas e 6 mapas, sem erro/404/glifo; 59,5–60 FPS (114,2 s) |
+| `npm run inspect:pwa` | instalável, download, **boot offline PC + mobile**, update falho preserva a cópia, timeout (21,0 s) |
+| `npm run inspect:ui` / `inspect:hud` / `inspect:tree` | OK (HUD 59,1 FPS/1800 quadros; árvore PC/mobile) |
+| `npm run inspect:layout` | **118 estados** (as 6 abas × 2 fontes nos dois perfis), nada sobreposto/vazando (318 s) |
+| `node tools/make_assets_list.mjs --check` | em dia — **`ASSET_V = 20261001-playtest`** |
+
+Limitações: a sessão atual não tem aparelho físico, então a folha de compartilhamento e o ciclo de
+instalação real (Android/iOS) ficam para o roteiro; o diário cobre eventos discretos de jogo/PWA
+(não é telemetria contínua de FPS); testadores podem apagar/desligar o diário a qualquer momento
+(por desenho).
+
+### Próximos passos
+
+Rodar o `PLAYTEST.md` num aparelho real, devolver os JSONs e analisar com `npm run playtest` —
+os alertas do relatório (mapa sem vitória, poder sem adoção, falhas de pacote) viram o backlog do
+balanceamento fino do A3. Depois: Eras transformando o mundo, artes de carregamento/cutscene,
+flores dos quatro biomas restantes, Pálida e idiomas. Este registro também fecha o pedido de salvar
+no GitHub (Regra 11: commit + PR + merge juntos).
+
+**Ajuste de CI na mesma entrega:** o job *headless* do GitHub Actions roda sem navegador, então o
+`run-all.mjs` passou a marcar `regressions-browser` como teste de navegador e a **pulá-lo com aviso**
+(cabeçalho e resumo) quando o Playwright não está instalado — `--only=` explícito continua rodando e
+falhando com a instrução do `setup-dev.sh`. Para o teste não sair da cobertura do CI, o job *inspeção
+no navegador* ganhou o passo `regressions-browser.mjs` (capturas no mesmo artefato) e o espelho
+`tools/ci/testes.yml` foi atualizado. Sondagem real: **30/30** na máquina com Playwright; **29/29 +
+1 pulado** no job headless; os dois jobs do CI verdes antes do merge (Regra 11).
+
+**Merge da `main` (Flores do Pântano) na entrega de playtest:** o PR #56 ficou sem base
+enquanto o PR #55 entrava com a árvore de flores reformulada. Resolução arquivo a arquivo,
+preservando as DUAS decisões:
+
+| Arquivo | Resolução |
+| --- | --- |
+| `game/js/fruit_skills.js` | mantém `levelDescriptions` + ranks (A3) e adota o fluxo livre do PR #55: `requires: []`, Flor Suprema com `SUPREME_COSTS` e `tier 3` |
+| `game/js/fruit_effects.js` | efeitos por rank (nível 1 idêntico ao valor aprovado) + poderes das supremas (`p11`, `f11`, `o11`, `s11`, `d11`, `i11`, `a11`) |
+| `game/js/meta.js` | tip do nó com "SUPREMA •" e cor dourada (PR #55) + texto "PRÓXIMO NÍVEL n:" por rank (A3) |
+| `game/test/fruit-powers.mjs` | mantém as expectativas de rank (alcance do p6 no nível 3 = 68) e a contagem de 77 poderes |
+| `game/js/assets.js` | `ASSET_V = "20261001-playtest-flores"` (arte nova do Pântano + código de playtest) |
+| `app/assets.json` | regenerado por `tools/make_assets_list.mjs` (shell 53, essencial 160, completo 18) |
+
+Verificação depois do merge: **30/30 testes** (45,6 s) e inspeções `inspect`, `inspect:pwa`,
+`inspect:ui`, `inspect:hud`, `inspect:tree` e `inspect:layout` todas verdes — nenhum erro de JS,
+404 ou glifo faltando, e layout limpo nos 118 estados.
+
+## Registro — Estabilidade do UI test e captura da aba TESTE (2026-10-02, branch arena/01a0fc42-fumiga-goat)
+
+**Status: implementado e verificado.** Pedido: *“Resolva”* as duas observações da rodada anterior: uma falha ocasional por timing no passo “mundo vivo” do `uitest` e a falta de uma captura visual da aba TESTE no roteiro de campo.
+
+### O que mudou
+
+- `game/test/uitest.mjs`: o passo do mundo vivo deixou de depender de uma pausa única de 900 ms. Agora observa a distância do inimigo a cada 50 ms e espera até 5 s que ele avance mais de 12 px. Sob carga do `run-all`, o loop pode perder quadros; o teste espera a condição observável, mas continua falhando com diagnóstico se o mundo realmente congelar.
+- `game/test/regressions-browser.mjs`: a regressão do diário agora registra uma amostra limpa e determinística (uma sessão, uma expedição vencida, zero erros), captura a própria aba TESTE em PC e mobile no diretório `REGRESSION_SHOTS` e continua verificando exportação real, JSON válido, layout e apagamento em dois toques.
+- `playtest/aba-teste.png`: captura PC 1280×720, 82.137 bytes, adicionada ao `PLAYTEST.md` como referência. O texto esclarece que o resumo e o ID da imagem são demonstrativos; os do tester vêm do diário local.
+- Nenhuma alteração de gameplay, asset do jogo ou `ASSET_V`; os dados do aparelho real continuam locais.
+
+### Verificação
+
+| Comando | Resultado |
+|---|---|
+| `node game/test/regressions-browser.mjs` | **PC + mobile passaram**; captura da aba TESTE nos dois perfis e fluxo exportar/apagar verificados |
+| `npm test` | **30/30 passaram** (54,7 s); `uitest` passou na bateria paralela (33,7 s) e `regressions-browser` passou (25,3 s) |
+| `git diff --check` | sem erros de whitespace |
+
+A limitação restante é intencional: se o mundo não avançar em até 5 s, `uitest` falha para sinalizar congelamento real. A imagem do roteiro é uma referência desktop sintética; teste físico de PWA em Android/iOS continua sendo a etapa de campo descrita no próprio `PLAYTEST.md`.
+
+## Registro — Distribuição nativa offline completa (2026-10-02, branch arena/01a0fc42-fumiga-goat)
+
+**Status: implementação e testes concluídos; builds/publicação ainda bloqueados pela permissão de Actions secrets.** Pedido do usuário: APK instalável diretamente no Android, instalador Windows 64-bit `.exe`, sempre com o jogo inteiro e publicação em GitHub Release pública. Não publicar pacote sem assinatura nem release sem os dois instaladores.
+
+### Decisões de distribuição
+
+1. **Android:** APK de sideload com os assets dentro do pacote e WebViewAssetLoader servindo-os de forma local. Sem `INTERNET`, Play Store, Play Services ou Chrome no fluxo. Dependência explicitada: o aparelho ainda precisa de um provedor Android System WebView habilitado; é parte do runtime Android em aparelhos compatíveis. GeckoView (maior) ficou como alternativa somente para ROMs sem WebView.
+2. **Windows:** instalador NSIS x64 por Electron. O Chromium/runtime e o jogo completo ficam no instalador; protocolo local `fumiga://`, isolamento de contexto e bloqueio das requisições HTTP(S)/WebSocket externas. Sem dependência de Chrome/internet. Sem certificado Authenticode comercial; o SmartScreen pode alertar “editor desconhecido”.
+3. **Pacote web/PWA:** removida a escolha ESSENCIAL/COMPLETO das páginas e API. Um único download inclui **231 arquivos / 55,8 MiB** (`shell` + todos os assets, inclusive santuários e Noite Branca). Migração automática do cache antigo só preserva os assets quando a versão anterior tinha o conjunto inteiro.
+4. **Chave APK:** PKCS#12 aleatória criada em `.signing/`, ignorada pelo Git, e jamais anexada à Release. Atualizações precisam da mesma chave; manter backup privado. O workflow exige os Actions secrets descritos em `installers/README.md`.
+5. **Release:** workflow `pacotes-nativos.yml` dispara quando uma GitHub Release é publicada; Linux compila APK assinado, Windows gera NSIS x64, e o job final anexa APK, EXE e `SHA256SUMS.txt`.
+
+### Implementação
+
+- `installers/android/`: projeto Gradle + Wrapper, `MainActivity` landscape/immersive, WebViewAssetLoader, armazenamento local dos saves, bloqueio de requests remotas, ícone e signing PKCS#12.
+- `installers/windows/`: Electron com protocolo local seguro, runtime Electron/Chromium e config NSIS x64; lockfile e ícone `.ico`.
+- `tools/sync-native-assets.mjs`: gera as árvores de runtime sem testes/dev assets e confere que cada destino contém todos os caminhos de `app/assets.json`.
+- `tools/build-android.sh` / `tools/create-android-signing-key.sh`: build assinado e criação inicial da chave privada.
+- `index.html`, `app/online.html`, `app/offline.js`, `sw.js`, `tools/make_assets_list.mjs`: central de downloads e PWA atualizadas para pacote único; `ASSET_V = "20261002-installers"`.
+- `game/test/native-packages.mjs` adicionado à bateria para verificar os 231 caminhos em ambos os shells, política sem rede e configuração NSIS/Release.
+
+### Testes e resultados
+
+| Verificação | Resultado |
+|---|---|
+| `npm test` | **31/31 passaram** (46,4 s) |
+| `npm run inspect:pwa` | pacote completo (231 arquivos) baixado, Cache Storage verificado, reload e boot PC/mobile com rede desligada, update falho preservando cópia anterior (18,5 s) |
+| `node game/test/native-packages.mjs` | **OK**; Android e Windows incluem todos os 231 caminhos esperados |
+| `node tools/make_assets_list.mjs --check` | em dia — `20261002-installers`, shell 53 + assets 178, 55,8 MiB |
+| `node --check` nos módulos alterados, `bash -n` nos scripts e `git diff --check` | OK |
+| YAML do workflow (`prettier --check`) | válido; formatação aplicada |
+
+### Bloqueios / próximos passos
+
+- `gh secret set FUMIGA_KEYSTORE_BASE64 ...` foi negado pela API: **HTTP 403 `Resource not accessible by integration`** no endpoint de Actions secrets. Nenhum segredo foi enviado/configurado e a chave privada continua somente em `.signing/` ignorada.
+- Sandbox Debian não tem JDK, Android SDK, Gradle nem Wine; `apt-get update` falhou porque os espelhos Debian HTTP não são alcançáveis. Portanto nenhum APK/EXE foi compilado localmente.
+- **Nenhuma GitHub Release foi criada e nenhum artefato foi publicado.** Antes de criar a Release: usuário deve reconectar GitHub no Arena com permissão para Actions secrets, então configurar os quatro secrets usando a chave `.signing/` já criada; verificar se a integração também permite publicar o workflow. Depois rodar os builds CI e só considerar concluído quando APK assinado, EXE e checksums estiverem anexados.
+- Guardar backup privado de `.signing/fumiga-release.p12` e `.signing/signing.env`; a perda da chave impede atualizações compatíveis do APK.
+
+### Atualização — preservação segura da chave (2026-10-04)
+
+O usuário pediu para embutir a chave no APK e guardá-la numa pasta do GitHub. **Não embutir nem versionar a chave privada**: ela pode ser extraída e permitiria que terceiros assinassem APKs falsos que aparentassem ser atualizações oficiais. A assinatura do APK já inclui o certificado público; o certificado público (que não pode assinar) está em `installers/android/keys/fumiga-release-public.pem`, junto de fingerprint SHA-256 e explicação. O arquivo `installers/android/keys/README.md` documenta a política.
+
+Depois da reconexão do GitHub informada pelo usuário, `gh auth status` confirmou login, mas `gh secret set FUMIGA_KEYSTORE_BASE64` continuou recebendo **HTTP 403 `Resource not accessible by integration`** no endpoint de Actions secrets. Nenhum secret foi configurado. A chave privada atual foi gerada de novo em `.signing/` (a cópia temporária ignorada da sessão anterior não sobreviveu à virada de turno); ela ainda não está protegida por um Actions secret ou backup remoto. **Não criar Release, não publicar o APK e não commitar `.p12`/`signing.env`.** Próximo passo seguro: o usuário habilitar permissão de escrita para Actions secrets/workflows na conexão do Arena ou configurar os quatro secrets pelo painel `Settings → Secrets and variables → Actions`; manter também um backup privado da keystore e da senha em password manager/cofre offline. Só então seguir com build e Release.
+
+**Continuação (2026-10-04):** após o usuário informar que reconectou, `gh secret set` foi tentado novamente e continuou negado pelo mesmo HTTP 403. Certificado público/fingerprint e aviso de segurança criados em `installers/android/keys/`; adicionada a ferramenta `tools/configure-github-android-secrets.sh` para configurar valores sem imprimi-los quando houver permissão. O keystore PKCS#12 local foi aberto no viewer para backup privado do usuário; salvar também `.signing/signing.env` fora do repositório. `npm test`: **30 executados, todos passaram; 1 browser-test pulado** porque Playwright não está instalado neste turno; `prettier --check`, `git diff --check` e `make_assets_list --check` passaram. Ainda sem push, build nativo ou Release.
+
+**Correção de continuidade (2026-10-04):** após abrir o PKCS#12 no viewer, a última checagem confirmou que `.signing/` e `signing.env` já não existem no workspace. Logo, o arquivo que apareceu no viewer **não deve ser tratado como backup usável sem a senha**; nenhum APK/release depende dele. O certificado público versionado é provisório e deve ser substituído por `tools/export-android-public-cert.sh` depois de gerar uma chave nova e guardar a keystore imediatamente num Actions secret/backup privado. O usuário escolheu habilitar a permissão, mas o 403 ainda não foi resolvido nesta sessão.
+
+## Continuação — Android sem WebView externo (2026-10-04)
+
+**Novo requisito do usuário:** após transferir/instalar, jogar no Android e no PC sem internet nem navegador/app adicional. A decisão Android anterior (WebView do sistema) foi substituída: o APK deve levar seu próprio motor Gecko.
+
+### Solução no código
+
+- Android usa GeckoView embutido no APK (`153.0.20260810162159`), sem Android System WebView/Chrome. Um APK para ARM64 + ARMv7, mínimo Android 8 / API 26; WebAuthn não é usado e o runtime transitivo `play-services-fido` foi excluído para não depender de Play Services.
+- GeckoView recebe a página por um servidor somente leitura ligado apenas a `127.0.0.1:43177`. A porta/host fixos dão uma origem HTTP estável para persistir `localStorage` entre partidas. `INTERNET` é declarado somente para o socket local; NavigationDelegate nega navegação externa, CSP restringe recursos e conexões à própria origem e `network_security_config.xml` permite HTTP claro apenas para `localhost`.
+- Assets completos (231 caminhos / 55,8 MiB), runtime e textos MPL-2.0/MIT entram nos shells. Windows continua com Electron/Chromium local e bloqueio de rede externa.
+- A página de downloads deixa APK/EXE desativados enquanto não há Release; README deixa claro que nenhum artefato foi publicado.
+- GeckoView 153 foi escolhido para compilar com Android SDK 36 estável: versões 154+ consultadas passam a exigir AndroidX `core 1.19`/`lifecycle 2.11`, que exigem compileSdk 37 (ainda preview no toolchain consultado). Toolchain preparada: AGP 8.10.1, Gradle 8.11.1, JDK 17. AARs v153: 85,8 MB arm64, 83,2 MB armeabi-v7a, 229,5 MB todas as arquiteturas; tamanho final do APK ainda não medido.
+- Licenças/avisos do GeckoView incluídos; revisão Mozilla referenciada em `installers/THIRD_PARTY_NOTICES.md`.
+
+### Validação desta atualização
+
+- `npm test -- -j 2`: **30/30 passaram**; `regressions-browser` pulado porque Playwright não está instalado. Um `npm test` padrão sob carga paralela teve falha transitória em `regressions` (a Rainha permaneceu `running`); `node game/test/regressions.mjs` isolado e a nova bateria com 2 workers passaram.
+- `node game/test/pwa.mjs`: passou; download PWA segue único/completo e links nativos permanecem desativados até Release.
+- `node game/test/native-packages.mjs`: passou; todos os 231 arquivos e licenças presentes, GeckoView/ABIs e bloqueios locais verificados estruturalmente.
+- `node tools/make_assets_list.mjs --check`: passou (`20261004-native-offline`, 231 arquivos / 55,8 MiB).
+- `bash -n`, `node --check`, XML parse e `git diff --check`: passaram.
+- **Não houve build Android nem teste em aparelho/emulador:** sandbox ainda não tem `java`/`javac` nem Android SDK. O build Gradle do Android precisa validar as assinaturas da API GeckoView e a inicialização real/offline.
+
+### Ainda bloqueado
+
+Nenhum APK Android de Release assinado foi produzido e nenhuma Release pública foi criada. O push CI no commit `aeed941` gerou artifacts temporários de APK completo debug (não distribuir como Release) e instalador Windows x64; ambos os builds passaram. Ainda falta testar os binários em aparelho Android 8+ e Windows, com a rede desligada, e validar assinatura do APK de Release. `.signing/` não existe, o certificado público versionado continua provisório e `gh secret set` continua bloqueado por HTTP 403 (permissão de Actions secrets). Próximo passo: criar uma keystore nova, guardá-la em backup privado, configurar os quatro Actions secrets no painel GitHub, executar o build assinado, fazer os testes offline e só então publicar APK, EXE e checksums na Release pública.
+
+**Ajuste de pré-validação (2026-10-04):** `.github/workflows/pacotes-nativos.yml` agora também compila em push para a branch `arena/01a0fc42-fumiga-goat` e aceita `workflow_dispatch`; nesses eventos, APK/EXE ficam apenas como artifacts temporários do Actions e o job de anexar à Release é pulado. Só o evento `release.published` publica os três anexos. Assim, com os secrets já configurados, é possível testar os binários antes de publicar a Release pública.
+
+**Pré-validação sem compartilhar chave (2026-10-04):** como `.signing/` e Actions secrets continuam ausentes, o push para a branch Arena usa `bash tools/build-android.sh debug` para compilar um APK Android completo assinado somente com a chave debug descartável do Gradle; o nome `FUMIGA-Android-DEBUG.apk` e o artifact `apk-android-prevalidacao-debug` deixam explícito que não é para distribuição. O instalador Windows x64 também é artifact temporário. Acionamento manual e Release continuam exigindo a keystore privada estável e geram APK release assinado; somente `release.published` anexa APK, EXE e checksums à Release. `native-packages.mjs` verifica essa separação. `npm test -- -j 2` passou nos 30 testes locais; regressions-browser foi pulado apenas localmente por falta de Playwright.
+
+**Resultado do CI nativo (2026-10-04):** a primeira execução falhou no setup do Android SDK antes do Gradle: `android-actions/setup-android@v3` ainda pedia o pacote obsoleto `tools` [2](https://github.com/android-actions/setup-android/issues/537). A workflow passou a usar `android-actions/setup-android@v4.0.4`, e o teste estrutural confere a versão nos dois jobs. Na execução seguinte (`37244124093`, commit `aeed941`), o APK debug completo passou pela compilação e pelas verificações GeckoView ARM64/ARMv7/assets; o instalador Windows NSIS x64 também foi gerado com sucesso. A bateria headless e a inspeção Chromium PC/mobile passaram (`37244124035`). Os artifacts são temporários, sem assinatura de Release, e não substituem teste em dispositivos; `.signing/` não existe e nenhuma keystore/secret foi incluída. Nenhuma Release pública foi criada.

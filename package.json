@@ -1,7 +1,7 @@
 {
   "name": "fumiga-goat",
   "private": true,
-  "description": "FUMIGA — Colônia Eterna. O jogo é JavaScript puro sem build; este arquivo só guarda os atalhos de teste e a ferramenta de navegador (dev).",
+  "description": "FUMIGA — Colônia Eterna. Jogo em JavaScript puro com testes, versão web e instaladores nativos offline completos.",
   "license": "MIT",
   "type": "module",
   "engines": {
@@ -17,8 +17,12 @@
     "inspect:layout": "node game/test/layout-browser.mjs",
     "inspect:pwa": "node game/test/pwa-browser.mjs",
     "inspect:preload": "node game/test/preload-browser.mjs",
+    "playtest": "node tools/playtest.mjs",
     "serve": "node game/test/lib/server.mjs 8000",
-    "setup": "bash tools/setup-dev.sh"
+    "setup": "bash tools/setup-dev.sh",
+    "prepare:native": "node tools/sync-native-assets.mjs",
+    "package:android": "bash tools/build-android.sh",
+    "package:windows": "npm --prefix installers/windows run dist:win"
   },
   "devDependencies": {
     "playwright": "1.63.0"

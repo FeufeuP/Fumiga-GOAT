@@ -5,13 +5,18 @@
 // (index.html) e pela página do app instalado (app/online.html). Ele resolve
 // três coisas, nos dois ambientes (GitHub Pages e servidor local):
 //
-//   • detectar o ambiente (instalado? iOS? suporta Service Worker?);
+//   • detectar o ambiente e o suporte a Service Worker;
 //   • registrar o Service Worker da raiz do repositório;
-//   • baixar um pacote de assets para o Cache Storage com progresso, e dizer
-//     o que já está baixado.
+//   • baixar o pacote COMPLETO de assets para o Cache Storage com progresso,
+//     e dizer o que já está baixado.
 //
 // A verdade sobre o que baixar é `app/assets.json` (gerada + testada).
+//
+// PLAYTEST: as páginas do app também alimentam o diário local (ver
+// game/js/playtest.js): sessão (instalado? offline?), resultado do download do
+// pacote e — o mais importante do A1 — o boot com a rede desligada.
 // ============================================================================
+import { ptInstalar, ptSessao, ptEvento } from "../game/js/playtest.js";
 
 /** Caminho da lista, a partir da página: "app/assets.json" (raiz) ou "../app/assets.json". */
 export const listaUrl = (base) => base + "app/assets.json";
@@ -34,13 +39,15 @@ export async function carregarLista(base = "") {
 }
 
 /**
- * Expande um alvo ("essencial" | "completo" | ["shell", ...]) na lista de
- * arquivos, cada um com caminho relativo à raiz e tamanho.
+ * Expande o pacote completo (ou apenas o shell para a atualização inicial) na
+ * lista de arquivos, cada um com caminho relativo à raiz e tamanho.
  */
-export function arquivosDoPacote(lista, alvo = "essencial") {
-  const alvos = alvo === "completo" ? ["shell", "essencial", "completo"]
-    : alvo === "essencial" ? ["shell", "essencial"]
-      : Array.isArray(alvo) ? alvo : ["shell"];
+export function arquivosDoPacote(lista, alvo = "completo") {
+  // "completo" é o único pacote público. "essencial" continua sendo tratado
+  // como completo para que clientes/marcadores antigos nunca baixem um recorte.
+  const alvos = Array.isArray(alvo) ? alvo
+    : alvo === "shell" ? ["shell"]
+      : lista.grupos.map((g) => g.id);
   const out = [];
   for (const g of lista.grupos || []) {
     if (!alvos.includes(g.id)) continue;
@@ -64,8 +71,8 @@ function bytesDe(lista, rel) {
 }
 
 /** Tamanho do pacote sem baixar nada: { arquivos, bytes }. */
-export function tamanhoDoPacote(lista, alvo) {
-  const gs = (lista.grupos || []).filter((g) => alvo === "completo" ? true : g.id !== "completo");
+export function tamanhoDoPacote(lista, alvo = "completo") {
+  const gs = alvo === "shell" ? (lista.grupos || []).filter((g) => g.id === "shell") : (lista.grupos || []);
   return {
     arquivos: gs.reduce((s, g) => s + g.files.length, 0),
     bytes: gs.reduce((s, g) => s + g.bytes, 0),
@@ -131,11 +138,14 @@ export function aguardarControlador(ms = 8000) {
   });
 }
 
-/** Manda uma mensagem e espera a resposta final, repassando o progresso. */
+/** Cada operação tem ID e tipo final próprios; outras abas/respostas não a concluem. */
+let operacaoSW = 0;
 export function mensagemSW(msg, { aoProgresso, timeout = 15 * 60 * 1000 } = {}) {
   return new Promise((resolve, reject) => {
     if (!suportaSW()) { reject(new Error("sem Service Worker")); return; }
-    let terminado = false;
+    const requestId = Date.now() + "-" + (++operacaoSW) + "-" + Math.random().toString(36).slice(2);
+    const esperado = msg.type === "baixar" ? "fim" : msg.type === "limpar" ? "limpo" : "versao";
+    let terminado = false, alvo = null;
     const fim = (m, erro) => {
       if (terminado) return;
       terminado = true;
@@ -143,20 +153,29 @@ export function mensagemSW(msg, { aoProgresso, timeout = 15 * 60 * 1000 } = {}) 
       navigator.serviceWorker.removeEventListener("message", ouve);
       erro ? reject(erro) : resolve(m);
     };
-    const ouve = (e) => {
+    const ouve = e => {
       const m = e.data || {};
-      if (m.type === "progresso") { if (aoProgresso) aoProgresso(m); return; }
-      if (m.type === "fim" || m.type === "limpo" || m.type === "versao") fim(m);
+      if (alvo && e.source && e.source !== alvo) return;
+      if (m.requestId !== undefined ? m.requestId !== requestId : m.protocol === 2) return;
+      // Sem ID só para compatibilidade com o worker anterior; ainda exige o
+      // tipo final esperado, portanto uma consulta de versão não acaba o download.
+      if (m.type === "erro") { fim(null, new Error(m.message || "Falha na operação offline")); return; }
+      if (m.type === "progresso" && msg.type === "baixar") {
+        try { aoProgresso?.(m); } catch (err) { fim(null, err); }
+        return;
+      }
+      if (m.type === esperado) fim(m);
     };
-    const relogio = setTimeout(() => fim(null), timeout);
+    const relogio = setTimeout(() => fim(null, new Error("A operação offline não respondeu a tempo. Tente novamente para retomar os arquivos já guardados.")), timeout);
     navigator.serviceWorker.addEventListener("message", ouve);
     navigator.serviceWorker.ready
-      .then((reg) => {
-        const alvo = reg.active || navigator.serviceWorker.controller;
+      .then(reg => {
+        if (terminado) return;
+        alvo = reg.active || navigator.serviceWorker.controller;
         if (!alvo) throw new Error("Service Worker inativo");
-        alvo.postMessage(msg);
+        alvo.postMessage({ ...msg, requestId });
       })
-      .catch((e) => fim(null, e));
+      .catch(e => fim(null, e));
   });
 }
 
@@ -166,7 +185,24 @@ export function mensagemSW(msg, { aoProgresso, timeout = 15 * 60 * 1000 } = {}) 
  * Usa o Service Worker (continua mesmo se a aba sair da frente); sem ele,
  * baixa na própria página. `aoProgresso({feitos, total, falhas})` anima a barra.
  */
-export async function baixarPacote({ base = "", lista, alvo = "essencial", aoProgresso } = {}) {
+/**
+ * Baixa o pacote e registra o resultado no diário de playtest (evidência do
+ * A6/A7 no aparelho real): duração, arquivos confirmados e motivo da falha.
+ */
+export async function baixarPacote(opts = {}) {
+  const t0 = Date.now();
+  const alvo = opts.alvo || "completo";
+  try {
+    const r = await baixarPacoteInterno(opts);
+    ptEvento("pwa_pacote", { ok: r.falhas === 0, ms: Date.now() - t0, arquivos: r.feitos, total: r.total, alvo });
+    return r;
+  } catch (e) {
+    ptEvento("pwa_pacote", { ok: false, ms: Date.now() - t0, erro: String((e && e.message) || e).slice(0, 140), alvo });
+    throw e;
+  }
+}
+
+async function baixarPacoteInterno({ base = "", lista, alvo = "completo", aoProgresso, timeout } = {}) {
   const arquivos = arquivosDoPacote(lista, alvo);
   const urls = arquivos.map((a) => urlDoArquivo(base, a.rel, lista.version));
   const total = urls.length;
@@ -177,26 +213,34 @@ export async function baixarPacote({ base = "", lista, alvo = "essencial", aoPro
     if (!suportaCache()) throw new Error("Este navegador não guarda arquivos para jogar offline.");
     let feitos = 0, falhas = 0;
     const cache = await caches.open(nomeCache(lista));
+    await cache.put(new URL(listaUrl(base), document.baseURI).href, new Response(JSON.stringify(lista), { headers: { "Content-Type": "application/json" } }));
     await comFila(urls, 6, async (url) => {
-      let ok = !!(await cache.match(url, { ignoreSearch: true }));
+      let ok = (await cache.match(url, { ignoreSearch: true }))?.ok === true;
       for (let t = 0; !ok && t < 2; t++) {
         try { const r = await fetch(url); if (r.ok) { await cache.put(url, r); ok = true; } } catch (e) { /* tenta de novo */ }
       }
       ok ? feitos++ : falhas++;
       if (aoProgresso) aoProgresso({ feitos, falhas, total });
     });
-    return { feitos, falhas, total };
+    const real = await progressoPacote({ base, lista, alvo });
+    return { feitos: real.feitos, falhas: total - real.feitos, total };
   }
 
   const res = await mensagemSW(
-    { type: "baixar", urls, alvos: alvo, versao: lista.version },
-    { aoProgresso: (m) => aoProgresso && aoProgresso({ feitos: m.feitos, falhas: m.falhas, total: m.total || total, segundos: m.segundos }) },
+    { type: "baixar", urls, alvos: alvo, versao: lista.version, lista },
+    { timeout, aoProgresso: m => aoProgresso?.({ feitos: m.feitos, falhas: m.falhas, total: m.total ?? total, segundos: m.segundos }) },
   );
-  return res || { feitos: total, falhas: 0, total };
+  if (!res || res.total !== total || !Number.isSafeInteger(res.feitos) || !Number.isSafeInteger(res.falhas)
+      || res.feitos < 0 || res.falhas < 0 || res.feitos + res.falhas !== total) {
+    throw new Error("Resposta de download inválida. Verifique o pacote e tente novamente.");
+  }
+  // Não confiar no anúncio do worker: só o cache real pode confirmar o pacote.
+  const real = await progressoPacote({ base, lista, alvo });
+  return { ...res, feitos: real.feitos, falhas: total - real.feitos, total };
 }
 
 /** O que já está guardado neste pacote: {feitos, total, bytes, bytesTotal, completo}. */
-export async function progressoPacote({ base = "", lista, alvo = "essencial" } = {}) {
+export async function progressoPacote({ base = "", lista, alvo = "completo" } = {}) {
   const arquivos = arquivosDoPacote(lista, alvo);
   const total = arquivos.length;
   const bytesTotal = arquivos.reduce((s, a) => s + a.bytes, 0);
@@ -216,7 +260,7 @@ export async function progressoPacote({ base = "", lista, alvo = "essencial" } =
       const achados = await Promise.all(lote.map((_, k) =>
         cache.match(urls[i + k], { ignoreSearch: true })));
       for (const [k, achado] of achados.entries()) {
-        if (achado) { feitos++; bytes += lote[k].bytes; }
+        if (achado?.ok) { feitos++; bytes += lote[k].bytes; }
       }
     }
     return { feitos, total, bytes, bytesTotal, completo: feitos >= total && total > 0 };
@@ -271,4 +315,16 @@ async function comFila(itens, conexoes, tarefa) {
       try { await tarefa(item); } catch (e) { /* a tarefa trata o erro */ }
     }
   }));
+}
+
+// ------------------------------------------------------------------ playtest --
+// Sessão do diário nas páginas do app (index.html e app/online.html). Serve
+// para registrar boot com a rede desligada ANTES mesmo de o jogo abrir — é a
+// evidência de campo do A1. `ehToque()` é declaração de função (içada), então
+// pode ser chamada aqui embaixo sem ordem especial.
+if (typeof window !== "undefined" && typeof document !== "undefined" && typeof navigator !== "undefined") {
+  try {
+    ptInstalar();
+    ptSessao({ fonte: "app", plataforma: ehToque() ? "mobile" : "pc" });
+  } catch (e) { /* ambiente sem navegador completo (testes do worker) */ }
 }

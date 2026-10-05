@@ -5,6 +5,8 @@
 import { VIEW_W, VIEW_H, PAL, GIANT_SCALE, ANT_SIZES, GATHERER_SIZE } from "./config.js";
 import { G, loadSave } from "./state.js";
 import { loadAll, bakeRot, dupSprite, setRotDrawScale, LOAD, ASSET_V } from "./assets.js";
+// PLAYTEST: diário local de campo (sessão, expedições, erros). Nunca envia nada.
+import { ptInstalar, ptSessao } from "./playtest.js";
 import { loadFonts, drawText } from "./font.js";
 import { initAudio } from "./audio.js";
 import { endTick } from "./input.js";
@@ -222,6 +224,10 @@ function reloadForNewVersion() {
 async function bootAll() {
   watchNewVersion();
   loadSave();
+  // Sessão do playtest ANTES das cargas: se algo falhar no boot, o diário já
+  // registrou o aparelho e a rede de erros captura o motivo (ver playtest.js).
+  ptInstalar();
+  ptSessao({ fonte: "jogo", v: ASSET_V, mobile: !!document.getElementById("touch-hud") });
   await loadFonts();
   await loadAll((p) => { progress = p * 0.9; lastProgressAt = performance.now(); });
   await loadLoreHUD();

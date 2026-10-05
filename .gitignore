@@ -31,6 +31,9 @@ __pycache__/
 formigueiro-layout.png
 arvore-layout.png
 
+# dados de playtest (arquivos exportados pelos testers): o relatório lê, o Git ignora
+playtest/*.json
+
 # segredos e logs
 .env
 .env.*
@@ -47,3 +50,17 @@ game/assets/parallax/menu/_orig/
 # (loading/, parallax/) e o ícone do app instalável (pwa/), aprovado e
 # reproduzível por tools/make_pwa_icons.sh.
 art-source/
+
+# builds nativos (pacotes completos gerados fora do Git)
+.signing/
+installers/android/.gradle/
+installers/android/local.properties
+installers/android/build/
+installers/android/app/build/
+installers/android/app/src/main/assets/www/
+installers/android/dist/
+installers/windows/node_modules/
+installers/windows/web/
+installers/windows/dist/
+installers/windows/win-unpacked/
+installers/windows/linux-unpacked/

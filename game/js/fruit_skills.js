@@ -98,12 +98,68 @@ export const FRUIT_SKILLS = {
     ['a11','Semente do Formigueiro Eterno','FLOR SUPREMA — Dobra o ganho de essência e XP, +35% dano e vida global e +15 vida/s na rainha.','crown'],
   ],
 };
+// Progressão conservadora aprovada em 2026-10-01: aumenta o BÔNUS,
+// não o multiplicador inteiro. Gatilhos, intervalos, alvos e usos não mudam.
+const RANK_FACTORS = [1, 1.25, 1.5];
+const POWER_BASE = {
+  p1: { speed: .35 }, p2: { heal: 8 }, p3: { damage: .8 },
+  p4: { reduction: 12 }, p5: { foodBonus: 1 },
+  p6: { projectileSpeed: .5, range: 45 }, p7: { speed: .6 },
+  p8: { splash: .15 }, p9: { workers: 3, food: 60 }, p10: { healing: .08 },
+  f1: { slow: 2 }, f2: { damage: .6 }, f3: { healRange: .7 },
+  f4: { revive: .25 }, f5: { stun: .4 }, f6: { healing: .5 },
+  f7: { food: 6 }, f8: { speed: .8, carry: 2 }, f9: { damage: .25 },
+  f10: { healing: .08 },
+};
+const INTEGER_BONUSES = new Set(["range", "workers", "food", "carry"]);
+const POWER_RANKS = Object.fromEntries(Object.entries(POWER_BASE).map(([key, base]) =>
+  [key, RANK_FACTORS.map(factor => Object.fromEntries(Object.entries(base).map(([field, value]) =>
+    [field, INTEGER_BONUSES.has(field) ? Math.round(value * factor) : value * factor])))]));
+
+// Prefixo é constante: a UI mede o texto com os MESMOS valores que o motor usa.
+export const FRUIT_POWER_PREFIX = "GLOBAL: ";
+
+// Tabelas assadas uma vez: os hooks não alocam valores por unidade/frame.
+export function fruitPowerValues(key, level = 1) {
+  const ranks = POWER_RANKS[key];
+  return ranks ? ranks[Math.max(0, Math.min(ranks.length - 1, Math.floor(level || 1) - 1))] : null;
+}
+const number = value => String(Number(value.toFixed(2))).replace(".", ",");
+const pct = value => number(value * 100) + "%";
+function rankedDescription(key, v) {
+  switch (key) {
+    case "p1": return `Nos primeiros 20s da expedição, irmãs se movem ${pct(v.speed)} mais rápido.`;
+    case "p2": return `Entregar comida cura ${number(v.heal)} de vida da rainha. Intervalo de 1s entre curas.`;
+    case "p3": return `Cada quarto golpe direto da colônia causa ${pct(v.damage)} de dano extra.`;
+    case "p4": return `Cada irmã reduz um golpe em ${number(v.reduction)} de dano. Recarrega após 8s; mínimo 1 de dano.`;
+    case "p5": return `As três primeiras entregas de cada irmã rendem ${number(1 + v.foodBonus)} vezes a comida.`;
+    case "p6": return `Projéteis aliados viajam ${pct(v.projectileSpeed)} mais rápido; alcance de ataque aumenta em ${v.range}.`;
+    case "p7": return `Irmãs abaixo de 35% de vida ganham ${pct(v.speed)} de velocidade para escapar.`;
+    case "p8": return `Golpear um alvo lento espalha ${pct(v.splash)} do dano a até três vizinhos em 130. Máximo uma vez a cada 0,4s.`;
+    case "p9": return `Cada expedição começa com ${v.workers} operárias e ${v.food} de comida extras.`;
+    case "p10": return `A cada 20 derrotas inimigas, toda a colônia recupera ${pct(v.healing)} da vida máxima.`;
+    case "f1": return `Cada terceiro golpe direto deixa inimigos comuns lentos por ${number(v.slow)}s.`;
+    case "f2": return `O primeiro golpe contra um alvo com vida cheia causa ${pct(v.damage)} de dano extra.`;
+    case "f3": return `Matabeles alcançam ${pct(v.healRange)} mais longe ao curar.`;
+    case "f4": return `Cada irmã, exceto a rainha, resiste uma vez a um golpe fatal com ${pct(v.revive)} da vida máxima.`;
+    case "f5": return `Receber golpe corpo a corpo atordoa o agressor comum por ${number(v.stun)}s. Intervalo de 6s por irmã.`;
+    case "f6": return `Curas em irmãs abaixo de 35% de vida restauram ${pct(v.healing)} mais vida.`;
+    case "f7": return `Cada entrega de comida recebe ${v.food} folhas extras.`;
+    case "f8": return `Tecelãs se movem ${pct(v.speed)} mais rápido e carregam ${v.carry} recursos extras.`;
+    case "f9": return `Inimigos revelados recebem ${pct(v.damage)} mais dano direto.`;
+    case "f10": return `A cada 12s, irmãs a até 300 da rainha recuperam ${pct(v.healing)} da vida máxima.`;
+    default: return "";
+  }
+}
+
 export const NEW_FRUIT_NODES = Object.entries(FRUIT_SKILLS).flatMap(([map, rows], mi) => rows.map(([key,name,desc,icon], i) => {
   const isSupreme = i === 10;
   const c0 = 60 + mi*15 + Math.floor(i/3)*45 + (i===9?120:0);
   const steps = FLOWER_STEPS[map];
+  const levelDescriptions = POWER_RANKS[key]?.map(v => FRUIT_POWER_PREFIX + rankedDescription(key, v));
   return {
-    id:'v_'+key, key, name:name.toUpperCase(), desc:'GLOBAL: '+desc, map, fruit:'fruit_'+map,
+    id:'v_'+key, key, name:name.toUpperCase(), desc:levelDescriptions?.[0] || 'GLOBAL: '+desc,
+    levelDescriptions, map, fruit:'fruit_'+map,
     cost: isSupreme ? [SUPREME_COSTS[mi]] : (steps ? steps.map(s => c0 + s) : [c0]),
     requires: [],
     tier: isSupreme ? 3 : (i===9?2:i>=3?1:0), br:['G','C','H'][i%3], icon, global:true, supreme: isSupreme,

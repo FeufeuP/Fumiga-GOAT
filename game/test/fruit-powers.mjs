@@ -8,8 +8,8 @@ const near=(a,b)=>assert.ok(Math.abs(a-b)<1e-7,`${a} != ${b}`);
 const unit=(props={})=>({x:0,y:0,hp:50,maxHp:100,type:'soldier',faction:'ally',...props});
 const foe=(props={})=>({x:0,y:0,hp:100,maxHp:100,burnT:0,slowT:0,stunT:0,revealT:0,takeDamage(d){this.hp-=d;},...props});
 let a,q,e,covered=new Set();
-function test(key,fn) {
-  G.run={mapIdx:0,elapsed:0,food:0,essencePool:0};G.time=10;G.save.nodes={['v_'+key]:1};
+function test(key,fn,level=1) {
+  G.run={mapIdx:0,elapsed:0,food:0,essencePool:0};G.time=10;G.save.nodes={['v_'+key]:level};
   a=unit();q=unit({type:'queen'});e=foe();
   P.fruitWorld.allies=[a];P.fruitWorld.allies.queen=q;P.fruitWorld.foes=[e];P.fruitWorld.home=()=>({x:0,y:0});P.fruitWorld.freeWorker=()=>true;
   fn();covered.add(key);console.log('ok '+key);
@@ -94,6 +94,44 @@ test('a11',()=>{near(metaBonus().essMult,2);near(metaBonus().xpGain,2);near(meta
 assert.equal(NEW_FRUIT_NODES.length,77);assert.equal(covered.size,77);
 assert.deepEqual(new Set(NEW_FRUIT_NODES.map(n=>n.key)),covered,'cada habilidade tem teste de comportamento');
 assert.equal(FRUIT_TREES.length,7);
+// Cada um dos 20 poderes com flores: comportamento real em 0/1/2/3,
+// não só autorização/preço de compra. Conservador +25%/+50% sobre o bônus.
+const rankCases = {
+  p1: [()=>P.fruitSpeed(a)-1,[0,.35,.4375,.525]],
+  p2: [()=>{P.fruitDeposit(a,10);return q.hp-50;},[0,8,10,12]],
+  p3: [()=>{let n;for(let i=0;i<4;i++)n=P.fruitEnemyDamage(e,10,'ally',a);return n-10;},[0,8,10,12]],
+  p4: [()=>40-P.fruitAllyDamage(a,40,e),[0,12,15,18]],
+  p5: [()=>P.fruitDeposit(a,10)-10,[0,10,12.5,15]],
+  p6: [()=>metaBonus().rangeBonus,[0,45,56,68]],
+  p7: [()=>{a.hp=20;return P.fruitSpeed(a)-1;},[0,.6,.75,.9]],
+  p8: [()=>{e.slowT=1;const n=foe({x:10});P.fruitWorld.foes.push(n);P.fruitEnemyDamage(e,100,'ally',a);return 100-n.hp;},[0,15,18.75,22.5]],
+  p9: [()=>metaBonus().startFood,[0,60,75,90]],
+  p10: [()=>{for(let i=0;i<20;i++)P.fruitKill(e);return a.hp-50;},[0,8,10,12]],
+  f1: [()=>{for(let i=0;i<3;i++)P.fruitEnemyDamage(e,1,'ally',a);return e.slowT;},[0,2,2.5,3]],
+  f2: [()=>P.fruitEnemyDamage(e,10,'ally',a)-10,[0,6,7.5,9]],
+  f3: [()=>P.fruitUnitStats('healer',{healRange:100}).healRange-100,[0,70,87.5,105]],
+  f4: [()=>{a.hp=0;P.fruitSurvive(a);const n=a.hp;a.hp=0;assert.equal(P.fruitSurvive(a),false,'um resgate por irmã');return n;},[0,25,31.25,37.5]],
+  f5: [()=>{P.fruitAllyDamage(a,10,e);return e.stunT;},[0,.4,.5,.6]],
+  f6: [()=>{a.hp=20;return P.fruitHealingMultiplier(a)-1;},[0,.5,.625,.75]],
+  f7: [()=>P.fruitDeposit(a,10)-10,[0,6,8,9]],
+  f8: [()=>P.fruitUnitStats('weaver',{speed:100,carry:1}).speed-100,[0,80,100,120]],
+  f9: [()=>{e.revealT=1;return P.fruitEnemyDamage(e,10,'ally',a)-10;},[0,2.5,3.125,3.75]],
+  f10: [()=>{P.fruitTick(12);return a.hp-50;},[0,8,10,12]],
+};
+for(const [key,[evaluate,expected]] of Object.entries(rankCases)) {
+  for(let level=0;level<=3;level++)test(key,()=>near(evaluate(),expected[level]),level);
+  const n=NEW_FRUIT_NODES.find(n=>n.key===key);
+  assert.equal(n.levelDescriptions.length,3);
+  assert.equal(new Set(n.levelDescriptions).size,3,'a UI descreve três benefícios distintos');
+}
+for(const [level,expected] of [[1,1.5],[2,1.625],[3,1.75]])test('p6',()=>near(P.fruitProjectile({faction:'ally',vx:1,vy:0}).vx,expected),level);
+for(const [level,expected] of [[1,3],[2,4],[3,5]])test('p9',()=>near(metaBonus().startWorkers,expected),level);
+for(const [level,expected] of [[1,3],[2,4],[3,4]])test('f8',()=>near(P.fruitUnitStats('weaver',{speed:100,carry:1}).carry,expected),level);
+// Compras existentes de outras árvores continuam nível único; inválidos não
+// dão potência extra e gatilhos/limites não crescem com o nível.
+test('p5',()=>{for(let i=0;i<3;i++)P.fruitDeposit(a,10);near(P.fruitDeposit(a,10),10);},3);
+test('p4',()=>{near(P.fruitAllyDamage(a,40,e),22);near(P.fruitAllyDamage(a,40,e),40);},3);
+test('f5',()=>{P.fruitAllyDamage(a,10,e);e.stunT=0;P.fruitAllyDamage(a,10,e);near(e.stunT,0);},3);
 // Persistência e autoridade do chefe: visitante, chefe errado e modo errado não liberam.
 G.save.nodes={};G.save.clearedMaps={};G.save.essence=500000;G.save.era=0;
 for(const f of FRUIT_TREES) {
@@ -134,5 +172,5 @@ for(const f of FRUIT_TREES) {
 }
 G.save.nodes={};loadSave();assert.equal(Object.keys(G.save.nodes).length,84,'84 compras de frutos (66 novas + 18 legadas) persistem');
 // Novos poderes ativos independentemente do mapa; não dependem de estar no bioma natal.
-for(let i=0;i<6;i++){G.run.mapIdx=i;assert.equal(P.hasFruitPower('p1'),true);assert.equal(P.hasFruitPower('i9'),true);near(metaBonus().rangeBonus,45);}
-console.log('77 PODERES OK — 70 regulares livres + 7 Flores Supremas, limites, sinergias e Pálida bloqueada');
+for(let i=0;i<6;i++){G.run.mapIdx=i;assert.equal(P.hasFruitPower('p1'),true);assert.equal(P.hasFruitPower('i9'),true);near(metaBonus().rangeBonus,68);}
+console.log('77 PODERES OK — 70 regulares (níveis 1–3) + 7 Flores Supremas, efeitos por rank, limites, sinergias e Pálida bloqueada');

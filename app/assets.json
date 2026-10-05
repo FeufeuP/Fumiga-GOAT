@@ -1,10 +1,10 @@
 {
-  "version": "20261004-painel3",
+  "version": "20261005-painel3-native",
   "geradoPor": "tools/make_assets_list.mjs",
   "grupos": [
     {
       "id": "shell",
-      "titulo": "Código do jogo",
+      "titulo": "Código e páginas do jogo",
       "files": [
         "app/app.css",
         "app/icons/apple-touch-icon-180.png",
@@ -41,6 +41,7 @@
         "game/js/mutations.js",
         "game/js/nest.js",
         "game/js/particles.js",
+        "game/js/playtest.js",
         "game/js/preload.js",
         "game/js/render.js",
         "game/js/state.js",
@@ -68,11 +69,11 @@
         46151,
         129561,
         228010,
-        11605,
-        8453,
-        2261,
+        14916,
+        7089,
+        2314,
         1379,
-        20962,
+        20969,
         11449,
         21721,
         2553,
@@ -84,26 +85,27 @@
         38797,
         3248,
         9813,
-        9695,
-        10842,
-        130055,
+        10280,
+        14824,
+        136916,
         4785,
-        24156,
+        27441,
         23168,
         13052,
-        11226,
-        46411,
+        11634,
+        46646,
         1342,
         43782,
         15085,
+        14081,
         4494,
         81713,
-        16565,
+        18916,
         6938,
         7119,
         8157,
         20158,
-        56778,
+        56951,
         4378,
         11211,
         23627,
@@ -112,14 +114,14 @@
         945,
         7490,
         19399,
-        13328,
+        8826,
         899
       ],
-      "bytes": 1307200
+      "bytes": 1336666
     },
     {
-      "id": "essencial",
-      "titulo": "Sprites, telas, títulos e Noite Branca",
+      "id": "assets",
+      "titulo": "Todos os recursos do jogo",
       "files": [
         "game/assets/cutscenes/noite_branca/panel1/0_sky.png",
         "game/assets/cutscenes/noite_branca/panel1/1_distant.png",
@@ -294,6 +296,13 @@
         "game/assets/ui/maca_pantano.png",
         "game/assets/ui/maca_planicie.png",
         "game/assets/ui/README.md",
+        "game/assets/ui/santuario_deserto.png",
+        "game/assets/ui/santuario_floresta.png",
+        "game/assets/ui/santuario_gelo.png",
+        "game/assets/ui/santuario_outono.png",
+        "game/assets/ui/santuario_palida.png",
+        "game/assets/ui/santuario_pantano.png",
+        "game/assets/ui/santuario_planicie.png",
         "game/assets/ui/tree_ancestral.png"
       ],
       "tamanhos": [
@@ -470,32 +479,16 @@
         580045,
         628252,
         9857,
-        656076
-      ],
-      "bytes": 19614482
-    },
-    {
-      "id": "completo",
-      "titulo": "Santuários dos frutos",
-      "files": [
-        "game/assets/ui/santuario_deserto.png",
-        "game/assets/ui/santuario_floresta.png",
-        "game/assets/ui/santuario_gelo.png",
-        "game/assets/ui/santuario_outono.png",
-        "game/assets/ui/santuario_palida.png",
-        "game/assets/ui/santuario_pantano.png",
-        "game/assets/ui/santuario_planicie.png"
-      ],
-      "tamanhos": [
         615281,
         615627,
         598319,
         620959,
         896781,
         914291,
-        839032
+        839032,
+        656076
       ],
-      "bytes": 5100290
+      "bytes": 24714772
     }
   ]
 }
