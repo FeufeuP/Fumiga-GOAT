@@ -15,7 +15,7 @@ import {
   G, mods, metaBonus, mutBonus, toggleMute, persistSave, loadSave, checkProphecies,
 } from "./state.js";
 import { IMG, rotFrame } from "./assets.js";
-import { drawText, textWidth, wrapText, fitTextBlock, FONT, layoutRec, fontScale } from "./font.js";
+import { drawText, textWidth, textHeight, wrapText, fitTextBlock, layoutRec, fontScale, setOptionsFontAccent } from "./font.js";
 import { keys, pressed, mouse, initInput, touchMode } from "./input.js";
 import { cam, camReset, updateCam, panCam, zoomCam, shake, screenToWorld, worldToScreen, visibleWorldRect } from "./camera.js";
 import {
@@ -1226,7 +1226,7 @@ function renderTitle() {
 
   const mobile = isMobileLayout();
   const tY = 54 + Math.sin(G.time * 0.7) * 2.5;
-  drawTitleLogo(ctx, G.time, 56, tY, 5.0);
+  drawTitleLogo(ctx, G.time, 56, tY, 4.1);
 
   ctx.fillStyle = "rgba(8,6,14,0.58)";
   // A faixa acompanha a altura REAL da tinta: com FONTE GRANDE o "COLÔNIA
@@ -1257,7 +1257,7 @@ function renderTitle() {
   // FONTE GRANDE no PC: 6px a mais de respiro entre o subtítulo e o 1º botão
   let by = mobile ? 252 : (tFS > 1 ? 258 : 252);
   for (const b of btns) {
-    if (button(ctx, { x: bx, y: by, w: bw, h: b.h, label: b.label, font: b.font || "small", scale: 1, id: b.id, accent: b.accent })) {
+    if (button(ctx, { x: bx, y: by, w: bw, h: b.h, label: b.label, font: b.font || "small", scale: b.id === "options" ? 0.9 : 1, id: b.id, accent: b.accent })) {
       if (b.id === "start") {
         notePointer(mouse.x, mouse.y);
         initAudio();
@@ -1284,7 +1284,7 @@ function renderTitle() {
   }
 
   // FASE 6 FINAL: área toque maior rodapé 28px -> 44px + touch feedback vibrate + 104px
-  const footerH = mobile ? 44 : 28;
+  const footerH = mobile ? 44 : 32;
   const footerY = VIEW_H - footerH - 10;
   panel(ctx, 12, footerY, VIEW_W - 24, footerH, { fill: "rgba(10,8,16,0.75)", border: "rgba(74,58,110,0.45)", r: 4 });
   drawText(ctx, "v2.4 • PLANÍCIE VIVA • CICLO DIA/NOITE • PARALLAX • 5X ESCALA • SNOW", 20, footerY + (mobile ? 14 : 8),
@@ -1324,7 +1324,7 @@ function renderModeScreen() {
   } else {
     // quebra em linhas em vez de esticar 736px dentro de uma barra de 560
     const lockLines = wrapText("VENÇA A CAMPANHA PARA DESPERTAR A ASCENSÃO DA NÉVOA", ascW - 40, { scale: 0.85 });
-    const lh = 15;
+    const lh = Math.ceil(18 * 0.85 * fontScale());
     const ly0 = ascY + (ascH - lockLines.length * lh) / 2 + 2;
     lockLines.forEach((L, i) => drawText(ctx, L, VIEW_W / 2, ly0 + i * lh, { color: "#5a4f78", align: "center", scale: 0.85, maxWidth: ascW - 40 }));
   }
@@ -1349,6 +1349,7 @@ function renderModeScreen() {
 // todo texto tem maxWidth: nada vaza, nada sobrepõe. O conteúdo vive numa
 // viewport com recorte + rolagem; a troca de aba zera a rolagem.
 function renderOptions() {
+  setOptionsFontAccent(OPTIONS_TABS[optionsTab]?.color || "#37e6c8");
   drawSolidMenuBg(ctx, "#0e0c1e");
   drawTitleMotes(ctx, G.time);
   ctx.fillStyle = "rgba(10,8,18,0.78)";
@@ -1375,7 +1376,7 @@ function renderOptions() {
     "MENUS E TUTORIAIS",
     "DIÁRIO DE PLAYTEST — NADA SAI DESTE APARELHO",
   ];
-  drawText(ctx, SUBS[optionsTab], VIEW_W / 2, PY + 64, { color: "#9a8fc0", align: "center", scale: 0.85 * chrome, maxWidth: PW - 60 });
+  drawText(ctx, SUBS[optionsTab], VIEW_W / 2, PY + 74, { color: "#9a8fc0", align: "center", scale: 0.85 * chrome, maxWidth: PW - 60 });
 
   // abas: 5 botões de largura igual preenchendo o diálogo
   const NT = OPTIONS_TABS.length, tabGap = 10, tabW = Math.floor((PW - 16 - tabGap * (NT - 1)) / NT), tabH = 34, tabY = PY + 92;
@@ -1743,7 +1744,9 @@ function renderHelp() {
   const PX = 32, PY = 20, PW = VIEW_W - 64, PH = VIEW_H - 56;
   dialogBox(ctx, PX, PY, PW, PH, { border: "#8f6fd6", accent: "#ffd479" });
   const helpFS = fontScale();
-  drawText(ctx, "COMO JOGAR", VIEW_W / 2, PY + 16, { font: "big", scale: 2, color: "#ffd479", align: "center", maxWidth: PW - 40 });
+  const helpTitleY = PY + 16;
+  const helpTitleH = textHeight("COMO JOGAR", { font: "big", scale: 2 });
+  drawText(ctx, "COMO JOGAR", VIEW_W / 2, helpTitleY, { font: "big", scale: 2, color: "#ffd479", align: "center", maxWidth: PW - 40 });
 
   const colW = (PW - 80) / 2;
   const colX = [PX + 24, PX + 40 + colW];
@@ -1751,7 +1754,6 @@ function renderHelp() {
   // 14px ficava mais alta que o próprio passo e as linhas se atravessavam)
   const bigStep = Math.ceil(26 * helpFS);
   const lineGoal = Math.ceil(20 * 0.9 * helpFS);
-  const lineTips = Math.ceil(16 * 0.9 * helpFS);
   const controlsTable = touchMode.on ? HELP_CONTROLS_TOUCH : HELP_CONTROLS;
   const goalLines = HELP_GOAL.flatMap((t) => wrapText(t, colW, { scale: 0.9 }));
 
@@ -1763,7 +1765,7 @@ function renderHelp() {
   };
   const drawTips = (x, y, scale) => {
     drawText(ctx, "DICAS", x, y, { font: "big", color: "#c77dff", maxWidth: colW });
-    const step = Math.ceil(16 * scale * helpFS);
+    const step = Math.ceil(20 * scale * helpFS);
     let yy = y + bigStep;
     for (const t of HELP_TIPS) {
       for (const L of wrapText(t, colW, { scale })) { drawText(ctx, L, x, yy, { color: PAL.text, scale, maxWidth: colW }); yy += step; }
@@ -1775,8 +1777,8 @@ function renderHelp() {
     let descX = 120;
     for (const [k] of controlsTable) descX = Math.max(descX, textWidth(k, { scale: labScale }) + 12);
     drawText(ctx, touchMode.on ? "CONTROLES (TOQUE)" : "CONTROLES", x, y, { font: "big", color: "#c77dff", maxWidth: colW });
-    const dStep = Math.ceil(15 * descScale * helpFS);
-    let yy = y + bigStep;
+    const dStep = Math.ceil(18 * descScale * helpFS);
+    let yy = y + bigStep + 2;
     for (const [k, d] of controlsTable) {
       drawText(ctx, k, x, yy, { color: "#37e6c8", scale: labScale, maxWidth: descX - 6 });
       const lines = wrapText(d, colW - descX, { scale: descScale });
@@ -1786,21 +1788,20 @@ function renderHelp() {
     return yy;
   };
 
+  const contentY = helpTitleY + helpTitleH + 12;
   if (helpFS > 1) {
     // FONTE GRANDE: a tabela de controles (12 linhas, quase todas com descrição
     // de 2 linhas) não cabe embaixo do OBJETIVO — ela passa a ocupar a coluna
     // da direita sozinha, e OBJETIVO + DICAS ficam na esquerda. Tudo cabe
     // dentro da caixa, sem rolagem.
-    const y0 = PY + 16 + 20 * 2 * helpFS + 10;
-    let yl = drawGoal(colX[0], y0);
-    drawTips(colX[0], yl + 14, 0.8);
-    drawControls(colX[1], y0, 0.7, 0.7);
+    let yl = drawGoal(colX[0], contentY);
+    drawTips(colX[0], yl + 18, 0.8);
+    drawControls(colX[1], contentY, 0.7, 0.7);
   } else {
-    let y = PY + 68;
+    let y = contentY;
     y = drawGoal(colX[0], y);
-    drawControls(colX[0], y + 14, 0.85, 0.85);
-    let yr = PY + 68;
-    drawTips(colX[1], yr, 0.9);
+    drawControls(colX[0], y + 18, 0.85, 0.85);
+    drawTips(colX[1], contentY, 0.9);
   }
 
   const helpMobile = isMobileLayout();
@@ -1901,7 +1902,7 @@ function drawHUD() {
 
   // --------------------------------------- painel orgânico da colônia (quitina/cera por bioma) ----
   const pw = 320;
-  const ph = run.modeDef ? 118 : 100;
+  const ph = run.modeDef ? 118 + (fontScale() > 1 ? 14 : 0) : 100;
   // fundo com textura biome
   drawBiomeTexture(ctx, 10, 8, pw, ph, biomeId, G.time);
   panel(ctx, 10, 8, pw, ph, { border: bh.border, accentLine: bh.accent, fill: "rgba(0,0,0,0)" });
@@ -1941,7 +1942,7 @@ function drawHUD() {
     yy += rowH;
     // bioma à esquerda, irmãs à direita: cada um com a sua largura reservada
     drawText(ctx, bh.loreName, 20, yy, { color: bh.border, scale: 1, maxWidth: biomeW });
-    yy += 22;
+    yy += 22 * hudFS;
   } else {
     drawText(ctx, bh.loreName, 20, yy, { color: bh.border, scale: 1, maxWidth: biomeW });
     yy += rowH;
@@ -2006,7 +2007,7 @@ function drawHUD() {
     // Com FONTE GRANDE cada linha de texto cresce 30%: o painel também cresce
     // e o passo entre as linhas sai da tinta real (antes as duas primeiras
     // linhas encostavam nas barras de necessidade).
-    const eph = 104 + (eFS > 1 ? 20 : 0);
+    const eph = 104 + (eFS > 1 ? 20 : (isTouchUI() ? 10 : 0));
     const ey = mutY + (mutLog.length > 0 ? 26 : 6);
     drawBiomeTexture(ctx, 10, ey, pw, eph, biomeId, G.time*0.3);
     panel(ctx, 10, ey, pw, eph, { border: bh.border, fill: "rgba(0,0,0,0)" });
@@ -2032,7 +2033,7 @@ function drawHUD() {
     needBar("CURA", n.medical, "#7fd6a0");
     drawText(ctx, "COLETA " + hc.gather + " • EXPLORAÇÃO " + hc.explore, 20, cy + 28, { color: bh.border, scale: 0.8, maxWidth: 300 });
     if (isTouchUI()) {
-      if (button(ctx, { x:20, y:cy+46, w:280, h:22, compact:true, label:keys.KeyH ? "OLFATO: LIGADO" : "OLFATO: DESLIGADO", id:"touchScent", scale:0.7, accent:bh.accent })) keys.KeyH = !keys.KeyH;
+      if (button(ctx, { x:20, y:cy+(eFS > 1 ? 52 : 46), w:280, h:22, compact:true, label:keys.KeyH ? "OLFATO: LIGADO" : "OLFATO: DESLIGADO", id:"touchScent", scale:0.7, accent:bh.accent })) keys.KeyH = !keys.KeyH;
     } else {
       drawText(ctx, "[H] SEGURE PARA VER FEROMÔNIOS", 20, cy + 28 + Math.ceil(18 * 0.8 * fontScale()), { color: PAL.textDim, scale: 0.75, maxWidth: 300 });
     }
@@ -2074,10 +2075,14 @@ function drawHUD() {
       drawText(ctx, "MAPA LIMPO! " + bh.loreName, VIEW_W / 2, 18, { font: "small", color: bh.accent, align: "center" });
       drawText(ctx, m.name, VIEW_W / 2, 40, { color: PAL.textDim, align: "center" });
     } else {
-      drawText(ctx, "INVASÃO " + director.waveInMap + "/" + m.waves.length + (run.endless ? (director.cycle ? " • CICLO " + (director.cycle + 1) : " • INF") : ""), cx0 + 16, 12, { font: "big", color: "#ff4d5a", scale: 0.9 });
+      const invasionLabel = "INVASÃO " + director.waveInMap + "/" + m.waves.length + (run.endless ? (director.cycle ? " • CICLO " + (director.cycle + 1) : " • INF") : "");
       let aliveF = 0;
       for (const f of foes) if (!f.dead) aliveF++;
-      drawText(ctx, "RESTAM " + aliveF + (director.budget > 0 ? "+" : ""), cx0 + cw - 16, 22, { color: "#ff8a94", align: "right", scale: 0.85 });
+      const remainingLabel = "RESTAM " + aliveF + (director.budget > 0 ? "+" : "");
+      const remainingWidth = textWidth(remainingLabel, { scale: 0.85 });
+      const invasionMaxWidth = Math.max(100, cw - 32 - remainingWidth - 16);
+      drawText(ctx, invasionLabel, cx0 + 16, 12, { font: "big", color: "#ff4d5a", scale: 0.9, maxWidth: invasionMaxWidth });
+      drawText(ctx, remainingLabel, cx0 + cw - 16, 22, { color: "#ff8a94", align: "right", scale: 0.85 });
       // barra como trilha feromônio perigosa
       ctx.fillStyle = "rgba(20,10,16,0.9)";
       ctx.fillRect(cx0+16, 38, cw-32, 10);
@@ -2099,7 +2104,7 @@ function drawHUD() {
     const by = hudTopSlot() + (bossUp ? 48 : 0);
     // No toque não existe tecla G: o rótulo não promete um atalho que não há
     // (o próprio botão continua clicável/toque, como antes).
-    if (button(ctx, { x: cx0, y: by, w: cw, h: 26, label: isTouchUI() ? "▶ INVOCAR +ESSÊNCIA" : "▶ INVOCAR (G) +ESSÊNCIA", id: "skip", compact: true, accent: bh.essenceColor })) {
+    if (button(ctx, { x: cx0, y: by, w: cw, h: 30, label: isTouchUI() ? "▶ INVOCAR +ESSÊNCIA" : "▶ INVOCAR (G) +ESSÊNCIA", id: "skip", compact: true, accent: bh.essenceColor })) {
       skipPeace();
     }
   }
@@ -2507,11 +2512,11 @@ function drawDraft(draft) {
     const descY = y + 166 + (fontScale() > 1 ? 5 : 0) - lift;
     lines.slice(0, 4).forEach((L, li) => drawText(ctx, L, x + cw / 2, descY + li * 19 * fontScale(), { color: PAL.text, align: "center", maxWidth: cw - 18 }));
     ctx.fillStyle = hot ? rare.color : "#2a2340";
-    ctx.fillRect(x + cw/2 - 18, y + ch - 36 - lift, 36, 20);
+    ctx.fillRect(x + cw/2 - 18, y + ch - 28 - lift, 36, 20);
     ctx.strokeStyle = rare.color; ctx.lineWidth = 1; ctx.globalAlpha = 0.6;
-    ctx.strokeRect(x + cw/2 - 18 + 0.5, y + ch - 36 - lift + 0.5, 35, 19);
+    ctx.strokeRect(x + cw/2 - 18 + 0.5, y + ch - 28 - lift + 0.5, 35, 19);
     ctx.globalAlpha = 1;
-    drawText(ctx, String(i + 1), x + cw / 2, y + ch - 34 - lift, { color: hot ? "#000" : "#efe9ff", align: "center" });
+    drawText(ctx, String(i + 1), x + cw / 2, y + ch - 26 - lift, { color: hot ? "#000" : "#efe9ff", align: "center" });
 
     if (hot && mouse.justDown && !paused) { pickDraft(i); return; }
   }
@@ -2534,11 +2539,13 @@ function drawMapTransition(run) {
   dialogBox(ctx, VIEW_W/2 - 280, 84, 560, 386, { border: "#ffd479", accent: "#37e6c8" });
   const boxW = 520, innerW = boxW - 40;
   const FS = fontScale();
-  drawText(ctx, "MAPA LIMPO!", VIEW_W / 2, 104, { font: "big", scale: 2.2, color: "#ffd479", align: "center", maxWidth: boxW });
-  let ty = 104 + 56 * FS;
+  const transitionTitle = "MAPA LIMPO!";
+  const transitionTitleH = textHeight(transitionTitle, { font: "big", scale: 2.2 });
+  drawText(ctx, transitionTitle, VIEW_W / 2, 104, { font: "big", scale: 2.2, color: "#ffd479", align: "center", maxWidth: boxW });
+  let ty = 104 + transitionTitleH + 10;
   for (const L of wrapText("O chefão caiu. A colônia respira — e a Rainha se recupera.", innerW, {})) {
     drawText(ctx, L, VIEW_W / 2, ty, { color: PAL.text, align: "center", maxWidth: innerW });
-    ty += 18 * FS;
+    ty += 20 * FS;
   }
   ty += 22;
   if (next) {
@@ -2707,7 +2714,7 @@ function drawPause() {
     lines.push(["MAPA: " + (run.mapIdx + 1) + "/" + MAPS.length + " - " + MAPS[run.mapIdx].name, PAL.text, 1]);
     lines.push(["ONDA: " + run.wave + " • ABATES: " + run.kills, PAL.textDim, 1]);
     lines.push(["NÍVEL: " + run.level + " • COMIDA: " + fmt(run.food), PAL.textDim, 1]);
-    lines.push(["ESSÊNCIA: " + fmt(run.essencePool) + " • MUTAÇÕES: " + run.mutationLog.length, "#c77dff", 1]);
+    lines.push(["ESSÊNCIA: " + fmt(run.essencePool) + " • MUTAÇÕES: " + run.mutationLog.length, "#c77dff", 0.85]);
     lines.push(["POP: " + popUsed() + "/" + popCapTotal() + " • TEMPO: " + Math.floor(run.elapsed) + "s", PAL.textDim, 0.85]);
     const n = colony.needs, hc = colony.headcount;
     lines.push(["COLÔNIA: FOME " + Math.round(n.food*100) + "% • GUERRA " + Math.round(n.defense*100) + "% • CURA " + Math.round(n.medical*100) + "%", "#8f7bb5", 0.75]);
@@ -2788,7 +2795,7 @@ function renderProphecyScreen() {
   panel(ctx, 12, 10, 426, 88, { border: "#6ee7ff", accentLine: "#6ee7ff" });
   drawText(ctx, "PROFECIAS DA COLÔNIA", 28, 18, { font: "big", scale: 1, color: "#6ee7ff", maxWidth: 398 });
   const subLines = wrapText("Vaticínios da Matriarca — cumpra-os pela essência", 398, { scale: 0.8 });
-  subLines.forEach((L, li) => drawText(ctx, L, 28, 50 + li * Math.ceil(15 * 0.8 * FS),
+  subLines.forEach((L, li) => drawText(ctx, L, 28, 56 + li * Math.ceil(18 * 0.8 * FS),
     { color: PAL.textDim, scale: 0.8, maxWidth: 398 }));
   const done = Object.keys(G.save.prophecies || {}).length;
 
@@ -2994,7 +3001,8 @@ function renderMemoryScreen() {
   const FS = fontScale();
   const PX=24, PY=16, PW=VIEW_W-48, PH=VIEW_H-32;
   dialogBox(ctx, PX, PY, PW, PH, { border: "#ffd479", accent: "#7fd6a0" });
-  drawText(ctx, "MEMÓRIAS DA COLÔNIA", VIEW_W/2, PY+16, { font:"big", scale:2, color:"#ffd479", align:"center", maxWidth: PW-40 });
+  const memoryTitleScale = FS > 1 ? 1.6 : 2;
+  drawText(ctx, "MEMÓRIAS DA COLÔNIA", VIEW_W/2, PY+16, { font:"big", scale:memoryTitleScale, color:"#ffd479", align:"center", maxWidth: PW-40 });
   drawText(ctx, "REVEJA AS MEMÓRIAS DESCOBERTAS PELA COLÔNIA", VIEW_W/2, 96,
     { color: PAL.textDim, align: "center", scale: 0.85 });
   const defs = getCutsceneDefs();

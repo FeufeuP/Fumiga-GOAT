@@ -10,7 +10,7 @@ import { allies, eggs, insideCount } from "./units.js";
 import { foes, boss } from "./enemies.js";
 import { orbs, projectiles, drawProjectiles, drawOrbs } from "./combat.js";
 import { drawDecals, drawTrails, drawParts, drawGlows, drawRings, drawFloats } from "./particles.js";
-import { drawText, textWidth, lineWidth, FONT, fontScale } from "./font.js";
+import { drawText, textWidth, lineWidth, textHeight, fontScale } from "./font.js";
 import { clamp, TAU, lerp } from "./utils.js";
 import { fogDraw, fogVisible } from "./fog.js";
 import { SFX } from "./audio.js";
@@ -1208,8 +1208,8 @@ export function drawTitleLogo(ctx, time, x = 56, y = 54, scale = 5.0) {
   // projeto — o fator de acessibilidade é desfeito no próprio drawText.
   scale = (scale + breathing + secondary) / fontScale();
   const str = "FUMIGA";
-  const h = FONT.big.ch * scale;
-  const w = lineWidth(str.length, { font: "big", scale });
+  const h = textHeight(str, { font: "big", scale });
+  const w = lineWidth(str, { font: "big", scale });
   const base = { font: "big", scale, align: "left", shadow: false };
 
   // glow externo pulsante atrás do logo (respira junto)
@@ -1551,7 +1551,7 @@ export function drawPreTitle(ctx, time) {
   drawText(ctx, txt, cx, baseY + 180, { font: "big", scale: 1, color: "#ffd479", align: "center" });
 
   // seta animada
-  // (desenhada em blocos: "▼" não existe no atlas da fonte e virava "?")
+  // (desenhada em blocos de pixel, sem depender de um glifo de fonte)
   const arrowY = Math.round(baseY + 212 + Math.sin(time * 3) * 4);
   ctx.globalAlpha = clickAlpha;
   for (let r = 0; r < 4; r++) {
@@ -1628,7 +1628,7 @@ export function drawModeSelect(ctx, time) {
   // título da tela — o subtítulo desce conforme a altura REAL da tinta do
   // título (com FONTE GRANDE ele passava por cima das letras)
   const modeFS = fontScale();
-  const titleInk = 20 * 2 * modeFS;
+  const titleInk = textHeight("SELECIONE O MODO", { font: "big", scale: 2 });
   drawText(ctx, "SELECIONE O MODO", VIEW_W/2, 24, { font: "big", scale: 2, color: "#ffd479", align: "center", maxWidth: VIEW_W - 40 });
   drawText(ctx, "Cada modo é uma colônia diferente para comandar", VIEW_W/2, 24 + titleInk + 13,
     { color: "#9a8fc0", align: "center", maxWidth: VIEW_W - 40 });
@@ -1707,7 +1707,7 @@ export function drawModeCards(ctx, modes, hoverIdx, time, scrollOffset = 0) {
     let dy = iconY + 76 + nameAdv + diffAdv;
     for (const line of descLines) {
       drawText(ctx, line, x + cardW/2, dy, { color: "#9a8fc0", align: "center", scale: 0.85, maxWidth: cardW - 20 });
-      dy += 14 * FS;
+      dy += 17 * FS;
     }
 
     // stats
@@ -1716,8 +1716,8 @@ export function drawModeCards(ctx, modes, hoverIdx, time, scrollOffset = 0) {
     ctx.fillRect(x + 10, dy, cardW - 20, 1);
     dy += 8;
     for (const s of m.stats) {
-      drawText(ctx, s, x + 12, dy, { color: "#6b5a8a", scale: 0.8, maxWidth: cardW - 20 });
-      dy += 12 * FS;
+      drawText(ctx, s, x + 12, dy, { color: "#6b5a8a", scale: 0.7, maxWidth: cardW - 20 });
+      dy += 13 * FS;
     }
 
     // botão jogar - sempre abaixo dos stats com margem

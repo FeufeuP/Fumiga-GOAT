@@ -82,9 +82,9 @@ passam a ter exatamente 4 camadas.**
   ImageMagick (fuzz 12% → branco vira transparente, `-scale 320x180!`, PNG32), receita registrada no
   cabeçalho de `tools/fix_noite_branca.py` (kind `gen`) — **49 KB** no jogo.
 - **Painel 3:** `[0, 2, 4, 5]` — inalterado.
-- **Estado:** 12 camadas, **~0,65 MB** (eram 14, ~0,7 MB); pacote offline **233 arquivos, ~24,8 MB**
-  (−3 camadas do painel 1, +1 do painel 2); `ASSET_V = 20261005-cutscene-4x4` com
-  `app/assets.json` regerado e shells nativos sincronizados.
+- **Estado:** 12 camadas, **~0,65 MB** (eram 14, ~0,7 MB); pacote offline **232 arquivos, ~24,8 MB**
+  (−3 camadas do painel 1, +1 do painel 2; depois as duas atlas bitmap foram substituídas pela Kiwi Soda TTF).
+  `ASSET_V = 20261005-kiwisoda-font-theme`; `app/assets.json` regerado e shells nativos sincronizados.
 
 **Prova:** `game/test/cutscene-art.mjs` (12 camadas 320×180, alfa real, sem xadrez),
 `game/test/preload-browser.mjs` (12 decodificadas, 12 requisições únicas), `game/test/pwa.mjs` (233

@@ -1,7 +1,7 @@
 // Teste do PÓS-FINAL: ASCENSÃO DA NÉVOA + PROFECIAS + ERAS.
 // Garante que o fator replay é de verdade:
 //   1. ascMods() — modificadores lineares + marcos de rampa nos níveis certos;
-//   2. PROPHECIES/ERA_LINES — ids únicos, recompensas e glifos que a fonte tem;
+//   2. PROPHECIES/ERA_LINES — ids únicos, recompensas e caracteres que a Kiwi Soda ou fallback suportam;
 //   3. a horda e os chefes escalam com a ASCENSÃO (spawnEnemy/spawnBoss);
 //   4. checkProphecies() concede uma única vez, com trade correto;
 //   5. settleRun() — essência extra, destravamento de nível, ERA e prophecias.
@@ -81,7 +81,7 @@ const ids = new Set(PROPHECIES.map((p) => p.id));
 if (ids.size !== PROPHECIES.length) bad("ids de profecias repetidos");
 for (const p of PROPHECIES) {
   if (!(p.reward > 0)) bad(p.id + ": recompensa inválida");
-  if (!glyphOk(p.name) || !glyphOk(p.desc)) bad(p.id + ": glifo fora do atlas em \"" + p.name + "\" / \"" + p.desc + "\"");
+  if (!glyphOk(p.name) || !glyphOk(p.desc)) bad(p.id + ": caractere fora da lista da fonte/fallback em \"" + p.name + "\" / \"" + p.desc + "\"");
 }
 if (ERA_LINES.length !== 10 || ERA_LINES.some((l) => !glyphOk(l))) bad("ERA_LINES com problema (10 linhas, glifos)");
 ok(PROPHECIES.length + " profecias + " + ERA_LINES.length + " eras — ids únicos, recompensas e glifos OK");

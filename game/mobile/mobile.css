@@ -14,7 +14,7 @@ html, body {
   background: #05040a;
   overflow: hidden;
   overscroll-behavior: none;          /* sem pull-to-refresh / elástico */
-  font-family: "Courier New", monospace;
+  font-family: "Kiwi Soda", sans-serif;
   -webkit-user-select: none; user-select: none;
   -webkit-touch-callout: none;        /* iOS: sem balão de seleção ao segurar */
 }
@@ -117,7 +117,7 @@ body {
   border-radius: 8px;
   background: rgba(29, 23, 48, 0.82);
   color: #efe9ff;
-  font-family: "Courier New", monospace;
+  font-family: "Kiwi Soda", sans-serif;
   font-weight: bold; font-size: 13px; letter-spacing: .04em;
   display: flex; align-items: center; justify-content: center; gap: 6px;
   touch-action: manipulation;         /* sem double-tap-zoom do navegador */
@@ -147,7 +147,7 @@ body {
   border-radius: 10px;
   background: rgba(48, 36, 20, 0.88);
   color: #ffd479;
-  font-family: "Courier New", monospace;
+  font-family: "Kiwi Soda", sans-serif;
   font-weight: bold; font-size: 12px; letter-spacing: .05em;
   display: flex; align-items: center; justify-content: center; gap: 6px;
   touch-action: manipulation;
@@ -178,7 +178,7 @@ body {
   border-radius: 8px;
   background: rgba(26, 20, 48, 0.92);
   color: #efe9ff;
-  font-family: "Courier New", monospace;
+  font-family: "Kiwi Soda", sans-serif;
   font-size: 12px; letter-spacing: .06em;
   white-space: nowrap;
   animation: rotatePulse 2.2s ease-in-out infinite;

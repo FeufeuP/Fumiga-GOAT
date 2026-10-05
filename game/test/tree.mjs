@@ -6,6 +6,7 @@
 //   4. dá para comprar nó por nó (custo, pré-requisito, nível máximo).
 // Uso: node test/tree.mjs
 import { fileURLToPath } from "node:url";
+import { installFontFaceMock } from "./lib/font-mock.mjs";
 
 const grad = { addColorStop() {} };
 function makeCtx() {
@@ -28,6 +29,7 @@ globalThis.document = {
   getElementById() { return null; },
   addEventListener() {}, createElementNS() { return { getContext: makeCtx }; },
 };
+installFontFaceMock();
 globalThis.localStorage = { getItem: () => null, setItem() {}, removeItem() {} };
 globalThis.Image = class {
   constructor() { this.width = 264; this.height = 180; this._src = ""; }
@@ -38,7 +40,7 @@ globalThis.requestAnimationFrame = (cb) => setTimeout(() => cb(performance.now()
 
 const BASE = new URL("../js/", import.meta.url).pathname;
 await import(BASE + "assets.js");
-await (await import(BASE + "font.js")).loadFonts();   // atlas da fonte p/ desenhar texto
+await (await import(BASE + "font.js")).loadFonts();   // Kiwi Soda TTF para desenhar texto
 const { META_NODES, META_BRANCHES, MAPS } = await import(BASE + "config.js");
 const { genWorld, world } = await import(BASE + "world.js");
 const { G, loadSave, metaBonus, mods, metaLevel, metaCanBuy, metaBuy } = await import(BASE + "state.js");

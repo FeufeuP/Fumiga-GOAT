@@ -1,5 +1,5 @@
 // Regressão de inicialização, sem dependências: sintaxe ESM real, boot normal,
-// save inválido, falhas de fonte/sprite/atlas e REQUISIÇÃO PENDURADA (o caso do
+// save inválido, falhas de fonte/sprite e REQUISIÇÃO PENDURADA (o caso do
 // celular: o pedido nunca responde). Uso: node game/test/boot.mjs
 import assert from "node:assert/strict";
 import { readFileSync, readdirSync } from "node:fs";
@@ -52,9 +52,18 @@ if (!scenario) {
   globalThis.window = globalThis;
   globalThis.innerWidth = 1280;
   globalThis.innerHeight = 720;
+  const requested = [];
   globalThis.document = {
     getElementById: () => canvas,
     createElement: () => ({ width: 0, height: 0, style: {}, getContext: makeCtx }),
+    fonts: { add() {}, delete() {} },
+  };
+  globalThis.FontFace = class {
+    constructor(family, source) { this.family = family; this.source = source; this.status = "unloaded"; requested.push(source); }
+    load() {
+      if (scenario === "falha-fonte" && this.source.includes("KiwiSoda.ttf")) { this.status = "error"; return Promise.reject(new Error("fonte indisponível")); }
+      this.status = "loaded"; return Promise.resolve(this);
+    }
   };
   globalThis.addEventListener = () => {};
   globalThis.requestAnimationFrame = (cb) => { frames.push(cb); return frames.length; };
@@ -63,15 +72,13 @@ if (!scenario) {
     getItem: () => scenario === "save-invalido" ? "{incompleto" : saved,
     setItem() { assert.fail("boot não deve sobrescrever o save"); },
   };
-  const requested = [];
   globalThis.Image = class {
     constructor() { this.width = this.height = 64; }
     set src(value) {
       this._src = value;
       requested.push(value);
       queueMicrotask(() => {
-        const fail = scenario === "falha-fonte" && value.includes("font_big.png")
-          || scenario === "falha-sprite" && value.includes("ants/worker.png")
+        const fail = scenario === "falha-sprite" && value.includes("ants/worker.png")
           || scenario === "falha-hud" && value.includes("ui/lore_icons.png");
         if (scenario === "pendurado" && value.includes("ants/worker.png")) return; // engasgado
         if (fail) this.onerror?.(new Error("imagem indisponível"));
@@ -107,10 +114,10 @@ if (!scenario) {
     assert.equal(G.screen, "BOOT", "não entrar no jogo sem os recursos obrigatórios");
     assert.equal(listeners.length, 0, "controles não devem iniciar após falha");
     assert.equal(errors.length, 1, "falha registrada uma única vez");
-    assert(nativeTexts.some((text) => text.startsWith("ERRO:")), "erro visível sem fonte bitmap");
+    assert(nativeTexts.some((text) => text.startsWith("ERRO:")), "erro visível sem a Kiwi Soda");
     assert(nativeTexts.some((text) => text.includes("recarregue")), "instrução de recuperação visível");
     if (scenario === "falha-fonte") {
-      assert(requested.every((src) => src.includes("/font/")), "parar antes de carregar sprites se a fonte falhar");
+      assert(requested.every((src) => src.includes("/font/")), "parar antes de carregar sprites se a Kiwi Soda falhar");
     }
     if (scenario === "pendurado") {
       // O BUG DO CELULAR: sem prazo, uma imagem que não responde deixava a barra

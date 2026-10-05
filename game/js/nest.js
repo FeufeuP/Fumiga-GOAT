@@ -692,7 +692,7 @@ export function nestDraw(ctx) {
     const cx = r.x + r.w / 2;
     if (r.id === "entrance") {
       drawText(ctx, "ENTRADA", cx, r.y + 6, { color: "#ffd479", align: "center", maxWidth: r.w - 12 });
-      const ent = fitTextBlock("Comida vindo de fora", r.w - 14, 34, { scale: 0.8, minScale: 0.7, lineStep: 15 });
+      const ent = fitTextBlock("Comida vindo de fora", r.w - 14, 38, { scale: 0.8, minScale: 0.7, lineStep: 18 });
       ent.lines.forEach((L, i) => drawText(ctx, L, cx, r.y + r.h - 22 - (ent.lines.length - 1 - i) * ent.step,
         { color: PAL.textDim, align: "center", scale: ent.scale, maxWidth: r.w - 14 }));
       continue;
@@ -754,7 +754,7 @@ export function nestDraw(ctx) {
   // Com FONTE GRANDE a barra do topo cresce: a janela desce e encurta para não
   // ficar embaixo dela nem encostar na despensa (y=232).
   const eyeFS = fontScale();
-  const eyeY = eyeFS > 1 ? 68 : 46;
+  const eyeY = eyeFS > 1 ? 68 : 52;
   const eyeH = eyeFS > 1 ? PIP.h - 24 : PIP.h;
   drawOutsideEye(ctx, VIEW_W - PIP.w - 22, eyeY, PIP.w, eyeH);
 
@@ -1019,7 +1019,7 @@ function drawNestHud(ctx) {
     drawText(ctx, "ENTREGUE POR ELAS: +" + nest.deliveries, VIEW_W - 16, 14,
       { color: "#7fd6a0", align: "right", maxWidth: 330 });
     drawText(ctx, nest.ants.length + " TRABALHANDO AQUI DENTRO (DE " + insideCount() + " NO NINHO)",
-      VIEW_W - 16, 30, { color: PAL.textDim, align: "right", maxWidth: 330 });
+      VIEW_W - 16, 34, { color: PAL.textDim, align: "right", maxWidth: 330 });
   }
 
   // rodapé: sair + dica

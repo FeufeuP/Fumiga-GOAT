@@ -38,7 +38,7 @@ const { MAPS, UNITS, ENEMIES, MUTATIONS, META_NODES, CHAMBERS, GIANT_SCALE, FRUI
 const { fruitAssetName } = await import("../js/tree_layout.js");
 const { genWorld, world } = await import("../js/world.js");
 const { bossAnimSheets } = await import("../js/render.js");
-const { FONT_CHARS, FONT } = await import("../js/font.js");
+const { FONT_CHARS, FONT, FONT_ASSET, FONT_FALLBACK_CHARS } = await import("../js/font.js");
 const fs = await import("node:fs");
 const path = await import("node:path");
 const { fileURLToPath } = await import("node:url");
@@ -110,8 +110,8 @@ const unused = [...cited].filter((k) => !perBiome.some((s) => s.has(k)));
 if (unused.length) console.log("aviso  props citados no config e não sorteados nos seeds testados: " + unused.join(", "));
 
 // ------------------------------------------------ glifos x textos do jogo ----
-// Todo caractere usado nos textos precisa existir no atlas, senão drawText
-// desenha "?" no lugar (foi o caso de "—", "•", "▶", "[", "]" e "✓").
+// Todo caractere textual precisa existir na Kiwi Soda ou no conjunto explícito
+// de símbolos fallback; drawText registra qualquer caractere fora dessa lista.
 //
 // O scanner antigo exigia >=3 letras E um espaço na string, então nunca via
 // rótulos curtos nem símbolos soltos — foi assim que "[ ", " ]" (atalhos do
@@ -132,8 +132,7 @@ for (const file of fs.readdirSync(jsDir).filter((f) => f.endsWith(".js"))) {
     }
   }
   // Segunda passada, sem filtro de "parece texto": QUALQUER literal entregue
-  // direto à fonte bitmap. Foi assim que o "▼" solto da tela inicial (símbolo
-  // sozinho, sem letra) virou "?" sem o teste acusar.
+  // diretamente ao renderizador. Símbolos não previstos também são detectados.
   const direct = /\b(?:drawText\(\s*\w+\s*,|textWidth\(|wrapText\()\s*(["'])((?:(?!\1)[^\\\n]|\\.)*)\1/g;
   for (const m of src.matchAll(direct)) {
     for (const ch of m[2].toUpperCase()) {
@@ -143,29 +142,81 @@ for (const file of fs.readdirSync(jsDir).filter((f) => f.endsWith(".js"))) {
   }
 }
 const bad = [...missing.entries()];
-console.log((bad.length ? "ERRO " : "ok   ") + "glifos x textos (" + FONT_CHARS.length + " glifos no atlas)");
+console.log((bad.length ? "ERRO " : "ok   ") + "glifos x textos (" + FONT_CHARS.length + " caracteres reconhecidos)");
 if (bad.length) problems.push("caracteres sem glifo: " + bad.map(([c, s]) => `${c} em "${s}"`).join(" | "));
 
-// A ordem/lista de glifos da fonte e a do pipeline precisam ser idênticas: se
-// divergirem, o índice da célula aponta para o glifo errado (texto trocado).
-const pipeline = fs.readFileSync(path.join(ROOT, "..", "tools", "prepare_assets.sh"), "utf8");
-const chsBlock = pipeline.match(/^CHS=\(([\s\S]*?)\)\s*$/m);
-if (chsBlock) {
-  // tokens: ou 'x' entre aspas simples, ou uma sequência sem espaços
-  const tokens = chsBlock[1].replace(/\\\n/g, " ").match(/'[^']*'|[^\s\\]+/g) || [];
-  const chs = tokens.map((t) => (t.startsWith("'") && t.endsWith("'") ? t.slice(1, -1) : t)).join("");
-  const same = chs === FONT_CHARS;
-  console.log((same ? "ok   " : "ERRO ") + "CHS do pipeline x FONT_CHARS (" + chs.length + " glifos)");
-  if (!same) {
-    const diff = [];
-    for (let i = 0; i < Math.max(chs.length, FONT_CHARS.length); i++) {
-      if (chs[i] !== FONT_CHARS[i]) diff.push(i + ": " + JSON.stringify(chs[i]) + " x " + JSON.stringify(FONT_CHARS[i]));
-    }
-    problems.push("ordem dos glifos divergente: " + diff.slice(0, 6).join(", "));
+// O runtime e a pasta fonte/kiwisoda devem carregar os mesmos bytes da TTF.
+const fontRuntime = path.join(ROOT, FONT_ASSET);
+const fontSource = path.resolve(ROOT, "..", "fonte/kiwisoda/KiwiSoda.ttf");
+assert(fs.existsSync(fontRuntime), "asset Kiwi Soda no jogo: " + FONT_ASSET);
+assert(fs.existsSync(fontSource), "fonte original preservada em fonte/kiwisoda");
+assert(fs.readFileSync(fontRuntime).equals(fs.readFileSync(fontSource)), "cópia runtime idêntica à fonte original");
+assert.match(fs.readFileSync(path.join(ROOT, "..", "tools/prepare_assets.sh"), "utf8"),
+  /fonte\/kiwisoda\/KiwiSoda\.ttf/, "pipeline repõe a Kiwi Soda a partir da fonte original");
+assert.equal(FONT.small.size, 18, "tamanho base pequeno adaptado à Kiwi Soda");
+assert.equal(FONT.big.size, 30, "tamanho base grande adaptado à Kiwi Soda");
+
+// Lê os subformatos Unicode comuns do cmap TTF para que textos em português
+// não dependam de glifos vazios nem de um fallback silencioso.
+function ttfCodepoints(buffer) {
+  const tables = new Map();
+  const tableCount = buffer.readUInt16BE(4);
+  for (let i = 0; i < tableCount; i++) {
+    const at = 12 + i * 16;
+    const tag = buffer.toString("ascii", at, at + 4);
+    tables.set(tag, { offset: buffer.readUInt32BE(at + 8), length: buffer.readUInt32BE(at + 12) });
   }
-} else {
-  console.log("aviso  não achei o array CHS em tools/prepare_assets.sh");
+  const cmap = tables.get("cmap");
+  assert(cmap, "Kiwi Soda tem tabela cmap");
+  const covered = new Set();
+  const recordCount = buffer.readUInt16BE(cmap.offset + 2);
+  for (let i = 0; i < recordCount; i++) {
+    const rec = cmap.offset + 4 + i * 8;
+    const sub = cmap.offset + buffer.readUInt32BE(rec + 4);
+    const format = buffer.readUInt16BE(sub);
+    if (format === 4) {
+      const length = buffer.readUInt16BE(sub + 2);
+      const segCount = buffer.readUInt16BE(sub + 6) / 2;
+      const endAt = sub + 14;
+      const startAt = endAt + segCount * 2 + 2;
+      const deltaAt = startAt + segCount * 2;
+      const rangeAt = deltaAt + segCount * 2;
+      for (let seg = 0; seg < segCount; seg++) {
+        const end = buffer.readUInt16BE(endAt + seg * 2);
+        const start = buffer.readUInt16BE(startAt + seg * 2);
+        const delta = buffer.readInt16BE(deltaAt + seg * 2);
+        const range = buffer.readUInt16BE(rangeAt + seg * 2);
+        if (start === 0xffff) continue;
+        for (let cp = start; cp <= end; cp++) {
+          let glyph;
+          if (!range) glyph = (cp + delta) & 0xffff;
+          else {
+            const glyphAt = rangeAt + seg * 2 + range + (cp - start) * 2;
+            if (glyphAt + 2 > sub + length) continue;
+            glyph = buffer.readUInt16BE(glyphAt);
+            if (glyph) glyph = (glyph + delta) & 0xffff;
+          }
+          if (glyph) covered.add(cp);
+        }
+      }
+    } else if (format === 12) {
+      const groups = buffer.readUInt32BE(sub + 12);
+      for (let i = 0; i < groups; i++) {
+        const at = sub + 16 + i * 12;
+        const start = buffer.readUInt32BE(at), end = buffer.readUInt32BE(at + 4);
+        const firstGlyph = buffer.readUInt32BE(at + 8);
+        if (firstGlyph) for (let cp = start; cp <= end; cp++) covered.add(cp);
+      }
+    }
+  }
+  return covered;
 }
+const cmap = ttfCodepoints(fs.readFileSync(fontRuntime));
+const unsupported = [...FONT_CHARS].filter(ch => !cmap.has(ch.codePointAt(0)) && !FONT_FALLBACK_CHARS.includes(ch));
+console.log((unsupported.length ? "ERRO " : "ok   ") + "Kiwi Soda cobre acentos, letras, números e pontuação essenciais");
+if (unsupported.length) problems.push("glifos sem cobertura TTF: " + unsupported.map(ch => JSON.stringify(ch)).join(", "));
+const fallbackAbsent = [...FONT_FALLBACK_CHARS].filter(ch => !FONT_CHARS.includes(ch));
+if (fallbackAbsent.length) problems.push("fallbacks de símbolo fora da lista de texto: " + fallbackAbsent.join(" "));
 
 // ------------------------------------------- escala da FORMIGA GIGANTE --------
 // A gigante é assada em 247 (pad = 5x o da soldado, escolhido na ARTE real) e
@@ -188,19 +239,6 @@ const scaleOk = pGiant === 5 * pSold && Number.isInteger(factor);
 console.log((scaleOk ? "ok   " : "ERRO ") +
   `escala da GIGANTE (${GIANT_SCALE}x a soldado: assado ${pGiant} = 5x${pSold}, fator de desenho ${factor})`);
 if (!scaleOk) problems.push(`assado da gigante desalinhado: pad ${pGiant} x soldado ${pSold} — ajuste ANT_SIZES.giant em main.js`);
-
-// o atlas precisa ter células suficientes para todos os glifos
-const rowsNeeded = Math.ceil(FONT_CHARS.length / 12);
-const atlasBad = [];
-for (const [k, f] of Object.entries(FONT)) {
-  const buf = fs.readFileSync(path.join(ROOT, f.src));
-  const w = buf.readUInt32BE(16), h = buf.readUInt32BE(20);
-  const okAtlas = w === 12 * f.cw && h >= rowsNeeded * f.ch;
-  console.log(`     atlas ${k}: ${w}x${h}px — 12 colunas de ${f.cw}px, ${rowsNeeded} linhas de ${f.ch}px`);
-  if (!okAtlas) atlasBad.push(`${k} (${w}x${h})`);
-}
-console.log((atlasBad.length ? "ERRO " : "ok   ") + "atlas com células para todos os glifos");
-if (atlasBad.length) problems.push("atlas pequeno/envelhecido: " + atlasBad.join(", ") + " — rode tools/prepare_assets.sh");
 
 // Os sete fundos existem em 960×540, mas nenhum entra no boot: carregamento
 // por fruto, promessa compartilhada/cache por bioma e retry com a versão do asset.

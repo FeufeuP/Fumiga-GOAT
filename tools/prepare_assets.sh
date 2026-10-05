@@ -234,94 +234,10 @@ icn "$I3/Skill_icon15.png" sk_heart.png
 icn "$I3/Skill_icon7.png"  sk_bomb.png
 
 # ----------------------------------------------------------------- Fonte ------
-# O atlas só é regenerado se a DejaVu Sans Mono Bold estiver disponível;
-# caso contrário preserva os arquivos já existentes em game/assets/font.
-if convert -list font 2>/dev/null | grep -qi "DejaVu-Sans-Mono-Bold"; then
-# Atlas bitmap gerado com DejaVu Sans Mono Bold SEM antialiasing (estilo pixel).
-# Célula fixa 22x30, grade 12 colunas. A ordem é a mesma de FONT.CHARS em font.js.
-# Os últimos glifos são usados nos textos do jogo (— travessão, • marcador,
-# ▶ seta do botão de invocar onda, [ ] atalhos do draft, ✓ nível comprado na
-# árvore). Ficam no FIM para não deslocar nenhum índice.
-CHS=(A B C D E F G H I J K L M N O P Q R S T U V W X Y Z \
-     Á À Â Ã É Ê Í Ó Ô Õ Ú Ç \
-     0 1 2 3 4 5 6 7 8 9 \
-     '?' '!' '.' ',' ':' ';' '+' '-' '*' '/' '%' '(' ')' '<' '>' '=' '#' '_' ' ' \
-     '—' '•' '▶' '[' ']' '✓' '∞' 'Ñ')
-FDIR=$(mktemp -d)
-convert -size 22x30 xc:none "$FDIR/blank.png"
-i=0
-while [ $i -lt ${#CHS[@]} ]; do
-  ch="${CHS[$i]}"
-  f="$FDIR/$(printf '%03d' $i).png"
-  if [ "$ch" = " " ]; then
-    cp "$FDIR/blank.png" "$f"
-  else
-    convert -background none -fill white -font DejaVu-Sans-Mono-Bold \
-      -pointsize 21 +antialias "label:$ch" -gravity north -extent 22x30 "$f"
-  fi
-  i=$((i+1))
-done
-# monta linhas de 12 e depois empilha
-rows=$(( (${#CHS[@]} + 11) / 12 ))
-r=0
-while [ $r -lt $rows ]; do
-  files=""
-  c=0
-  while [ $c -lt 12 ]; do
-    idx=$(( r*12 + c ))
-    if [ $idx -lt ${#CHS[@]} ]; then
-      files="$files $FDIR/$(printf '%03d' $idx).png"
-    else
-      files="$files $FDIR/blank.png"
-    fi
-    c=$((c+1))
-  done
-  convert $files +append "$FDIR/row$r.png"
-  r=$((r+1))
-done
-convert $(for r in $(seq 0 $((rows-1))); do echo "$FDIR/row$r.png"; done) -append "$OUT/font/font_big.png"
-echo "  font font_big.png ($(identify -format '%wx%h' "$OUT/font/font_big.png"))"
-rm -rf "$FDIR"
-
-# Versão pequena (HUD / corpo de texto): pointsize 18, célula 20x18 —
-# glifos bem maiores que a antiga 13x16 (legibilidade).
-FDIR=$(mktemp -d)
-convert -size 20x18 xc:none "$FDIR/blank.png"
-i=0
-while [ $i -lt ${#CHS[@]} ]; do
-  ch="${CHS[$i]}"
-  f="$FDIR/$(printf '%03d' $i).png"
-  if [ "$ch" = " " ]; then
-    cp "$FDIR/blank.png" "$f"
-  else
-    convert -background none -fill white -font DejaVu-Sans-Mono-Bold \
-      -pointsize 18 +antialias "label:$ch" -gravity north -extent 20x18 "$f"
-  fi
-  i=$((i+1))
-done
-r=0
-while [ $r -lt $rows ]; do
-  files=""
-  c=0
-  while [ $c -lt 12 ]; do
-    idx=$(( r*12 + c ))
-    if [ $idx -lt ${#CHS[@]} ]; then
-      files="$files $FDIR/$(printf '%03d' $idx).png"
-    else
-      files="$files $FDIR/blank.png"
-    fi
-    c=$((c+1))
-  done
-  convert $files +append "$FDIR/row$r.png"
-  r=$((r+1))
-done
-convert $(for r in $(seq 0 $((rows-1))); do echo "$FDIR/row$r.png"; done) -append "$OUT/font/font_small.png"
-echo "  font font_small.png ($(identify -format '%wx%h' "$OUT/font/font_small.png"))"
-rm -rf "$FDIR"
-
-else
-  echo "  font DejaVu indisponível — mantendo atlas existente"
-fi
+# A fonte original fica em fonte/kiwisoda; o runtime recebe uma cópia local
+# para Canvas, mobile, PWA e instaladores offline.
+cp "$ROOT/fonte/kiwisoda/KiwiSoda.ttf" "$OUT/font/KiwiSoda.ttf"
+echo "  font KiwiSoda.ttf ($(wc -c < "$OUT/font/KiwiSoda.ttf") bytes)"
 
 echo "Concluído -> $OUT"
-echo "LEMBRETE: se algum PNG mudou, dê bump em ASSET_V (game/js/assets.js) — senão o cache do jogador esconde a arte nova."
+echo "LEMBRETE: se algum arquivo em game/ mudou, dê bump em ASSET_V (game/js/assets.js) — senão o cache do jogador pode servir o recurso antigo."

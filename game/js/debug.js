@@ -24,7 +24,7 @@
 // ============================================================================
 import { G, persistSave } from "./state.js";
 import { MAPS } from "./config.js";
-import { missingGlyphs, layoutRec } from "./font.js";
+import { missingGlyphs, layoutRec, fontCSS } from "./font.js";
 import { __debug } from "./game.js";
 import { getCutsceneDefs } from "./cutscenes.js";
 import { allies } from "./units.js";
@@ -286,9 +286,9 @@ export function debugFrame(ctx, dt, workMs) {
   if (missingGlyphs.size) lines.push("GLIFO FALTANDO: " + [...missingGlyphs.keys()].join(" "));
   if (errors.length) lines.push("ERRO: " + errors[errors.length - 1].slice(0, 60));
 
-  // fonte nativa: o overlay funciona mesmo se o atlas da fonte falhar
+  // Kiwi Soda: overlay do modo debug acompanha a tipografia do jogo
   ctx.save();
-  ctx.font = "11px 'Courier New', monospace";
+  ctx.font = fontCSS(11);
   ctx.textAlign = "left"; ctx.textBaseline = "top";
   const w = 8 + Math.max(...lines.map((l) => ctx.measureText(l).width || l.length * 7));
   const x = ctx.canvas.width - w - 6, y = 6;

@@ -7,7 +7,7 @@ import { G, loadSave } from "./state.js";
 import { loadAll, bakeRot, dupSprite, setRotDrawScale, LOAD, ASSET_V } from "./assets.js";
 // PLAYTEST: diário local de campo (sessão, expedições, erros). Nunca envia nada.
 import { ptInstalar, ptSessao } from "./playtest.js";
-import { loadFonts, drawText } from "./font.js";
+import { loadFonts, fontCSS } from "./font.js";
 import { initAudio } from "./audio.js";
 import { endTick } from "./input.js";
 import { boot, update, render, setLastDt } from "./game.js";
@@ -81,7 +81,7 @@ function drawLoading() {
 
   // logo pequeno
   ctx.fillStyle = "#efe9ff";
-  ctx.font = "bold 32px 'Courier New', monospace";
+  ctx.font = fontCSS(32, "bold");
   ctx.textAlign = "center";
   ctx.fillText("FUMIGA", VIEW_W/2, VIEW_H/2 - 90);
 
@@ -122,8 +122,9 @@ function drawLoading() {
   ctx.fillStyle = "rgba(255,255,255,0.3)";
   ctx.fillRect(bx + 2, by + 2, fillW, 2);
 
-  ctx.fillStyle = loadError || stalled() ? "#ff4d5a" : "#9a8fc0";
-  ctx.font = "11px 'Courier New', monospace";
+  const loadAccent = loadError || stalled() ? "#ff4d5a" : "#37e6c8";
+  ctx.fillStyle = loadAccent;
+  ctx.font = fontCSS(11);
   ctx.textAlign = "center";
   ctx.fillText(loadError ? ("ERRO: " + loadError.message) : (phase + "... " + Math.floor(progress * 100) + "%"), cx, by + bh + 22);
 
@@ -132,15 +133,15 @@ function drawLoading() {
   if (!ready && LOAD.total) {
     const pend = Math.max(0, LOAD.total - LOAD.done);
     const extra = LOAD.retries ? "  (" + LOAD.retries + " repetidas)" : "";
-    ctx.fillStyle = "rgba(154,143,192,0.75)";
-    ctx.font = "10px 'Courier New', monospace";
+    ctx.fillStyle = "rgba(55,230,200,0.78)";
+    ctx.font = fontCSS(10);
     ctx.fillText("IMAGENS " + LOAD.done + "/" + LOAD.total +
       (pend ? "  •  " + pend + " na fila" + extra : ""), cx, by + bh + 40);
   }
 
-  // A tela de erro usa fonte nativa: funciona mesmo se o atlas não carregar.
-  ctx.fillStyle = loadError || stalled() ? "#efe9ff" : "rgba(154,143,192,0.5)";
-  ctx.font = "10px 'Courier New', monospace";
+  // A tela de erro mantém fallback do sistema caso a Kiwi Soda não carregue.
+  ctx.fillStyle = loadError || stalled() ? "#efe9ff" : "rgba(55,230,200,0.58)";
+  ctx.font = fontCSS(10);
   ctx.fillText(loadError
     ? "Verifique a conexão e recarregue a página para tentar novamente."
     : (stalled()
@@ -155,7 +156,7 @@ function drawLoading() {
     ctx.strokeStyle = "#ff4d5a"; ctx.lineWidth = 2;
     ctx.strokeRect(bx2 + 0.5, by2 + 0.5, bw2 - 1, bh2 - 1);
     ctx.fillStyle = "#ffd7db";
-    ctx.font = "bold 13px 'Courier New', monospace";
+    ctx.font = fontCSS(13, "bold");
     ctx.fillText("▶ TENTAR DE NOVO", cx, by2 + 25);
   }
 }

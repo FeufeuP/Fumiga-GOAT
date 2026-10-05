@@ -6,6 +6,7 @@
 // loop, run.transition sempre true (controles bloqueados) e sem diálogo de
 // avanço (o guard do render excluía endless). O jogo travava de verdade.
 // Este teste atravessa dois ciclos completos pelo fluxo real do game.js.
+import { installFontFaceMock } from "./lib/font-mock.mjs";
 
 const gradProxy = { addColorStop() {} };
 function makeCtx() {
@@ -31,6 +32,7 @@ globalThis.document = {
   addEventListener() {}, fonts: { load: () => Promise.resolve() },
   createElementNS() { return { getContext: makeCtx }; },
 };
+installFontFaceMock();
 globalThis.localStorage = { getItem: () => null, setItem() {}, removeItem() {} };
 globalThis.Image = class {
   constructor() { this.width = 64; this.height = 64; }

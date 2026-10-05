@@ -1,6 +1,5 @@
 // Teste de LAYOUT headless: roda o jogo com um canvas de mentira que grava
-// todas as operações de desenho e reconstrói o texto desenhado pela fonte
-// bitmap (a partir das células do atlas). Depois acusa:
+// as linhas renderizadas pela Kiwi Soda e as demais operações. Depois acusa:
 //   1. texto desenhado fora do canvas 960x540;
 //   2. texto encoberto por um retângulo opaco pintado depois (o clássico
 //      "painel por cima do título");
@@ -8,15 +7,6 @@
 //   4. botões clicáveis sobrepostos (clique ambíguo).
 // Uso: node test/layout.mjs
 const gradProxy = { addColorStop() {} };
-const FONT_META = {
-  // cw/ch = célula do atlas; ink = altura real da tinta e o recuo do topo
-  // (medidos no atlas: a célula tem folga, o texto não encosta no rodapé)
-  "assets/font/font_big.png": { cw: 22, ch: 30, ink: 20, inkY: 5 },
-  "assets/font/font_small.png": { cw: 20, ch: 18, ink: 14, inkY: 4 },
-};
-// As URLs reais levam base do shell (PC ou ../ no mobile) + ?v= anti-cache
-// (assetUrl em js/assets.js): normaliza antes de procurar no FONT_META.
-const fontKey = (u) => String(u || "").replace(/^(\.\.\/)+/, "").split("?")[0];
 
 // ------------------------------------------------------------------ canvas --
 let REC = null;            // coletor de operações do canvas principal
@@ -33,7 +23,7 @@ function apply(m, x, y) { return [m.a * x + m.c * y + m.e, m.b * x + m.d * y + m
 class MockCanvas {
   constructor() {
     this.width = 0; this.height = 0; this.style = {};
-    this._text = null; this._tint = null; this._fontName = null;
+    this._text = null; this._tint = null; this._ink = null;
     this._draws = [];
   }
   getContext() { return new MockCtx(this); }
@@ -69,7 +59,25 @@ class MockCtx {
   rotate(a) { this.m = mul(this.m, { a: Math.cos(a), b: Math.sin(a), c: -Math.sin(a), d: Math.cos(a), e: 0, f: 0 }); }
   createLinearGradient() { return gradProxy; }
   createRadialGradient() { return gradProxy; }
-  measureText() { return { width: 8 }; }
+  measureText(text = "") {
+    const size = Number((String(this.font).match(/([\d.]+)px/) || [])[1]) || 16;
+    let width = 0;
+    for (const ch of String(text)) {
+      if (ch === " ") width += size * 0.36;
+      else if (/[I1!|.,:;]/.test(ch)) width += size * 0.36;
+      else if (/[MW@#%]/.test(ch)) width += size * 0.82;
+      else width += size * 0.62;
+    }
+    return { width, actualBoundingBoxAscent: size * 0.7, actualBoundingBoxDescent: size * 0.1,
+      actualBoundingBoxLeft: 0, actualBoundingBoxRight: width };
+  }
+  fillText(text, x, y) {
+    const metrics = this.measureText(text);
+    this.cv._text = String(text);
+    this.cv._tint = this.fillStyle;
+    this.cv._ink = { x, y: y - metrics.actualBoundingBoxAscent, w: metrics.width,
+      h: metrics.actualBoundingBoxAscent + metrics.actualBoundingBoxDescent };
+  }
   getImageData(x, y, w, h) { return { width: w, height: h, data: new Uint8ClampedArray(w * h * 4) }; }
   putImageData() {}
   setTransform() {}
@@ -114,25 +122,18 @@ class MockCtx {
   clearRect() {}
 
   drawImage(img, ...a) {
-    // 0) atlas da fonte tingido num canvas auxiliar: marca de qual fonte é,
-    //    para depois reconstruir o texto glifo a glifo
-    if (img && img._src && FONT_META[fontKey(img._src)]) this.cv._fontName = fontKey(img._src);
-    // 1) desenho de glifo numa linha (canvas de fonte tingida -> texto)
-    if (img && img._fontName && a.length >= 8) {
-      const meta = FONT_META[img._fontName];
-      const idx = Math.round(a[0] / meta.cw) + Math.round(a[1] / meta.ch) * 12;
-      this.cv._fontName = img._fontName;
-      this.cv._text = (this.cv._text || "") + (CHARS[idx] !== undefined ? CHARS[idx] : "?");
-      return;
-    }
-    // 2) uma linha de texto pronta sendo desenhada no destino
-    if (img && img._text) {
+    // uma linha de texto cacheada pela fonte sai do canvas auxiliar e entra no
+    // principal já colorida; registra a tinta (não as dimensões da textura).
+    if (img && typeof img._text === "string") {
       const dx = a[0], dy = a[1];
-      const meta = FONT_META[img._fontName] || { ch: img.height, ink: img.height, inkY: 0 };
-      const scale = Math.max(1, Math.round(img.height / meta.ch));
+      const dw = a.length >= 4 ? a[2] : img.width, dh = a.length >= 4 ? a[3] : img.height;
+      const sx = img.width ? dw / img.width : 1, sy = img.height ? dh / img.height : 1;
+      const ink = img._ink || { x: 0, y: 0, w: img.width, h: img.height };
+      const [ax, ay] = apply(this.m, dx + ink.x * sx, dy + ink.y * sy);
+      const [bx, by] = apply(this.m, dx + (ink.x + ink.w) * sx, dy + (ink.y + ink.h) * sy);
       this.op("text", {
-        x: dx, y: dy + meta.inkY * scale, w: img.width, h: meta.ink * scale,
-        cellY: dy, cellH: img.height,
+        x: Math.min(ax, bx), y: Math.min(ay, by), w: Math.abs(bx - ax), h: Math.abs(by - ay),
+        cellY: dy, cellH: dh,
       }, img._tint || "#fff", img._text);
       return;
     }
@@ -175,15 +176,17 @@ globalThis.document = {
   },
   createElementNS() { const cv = new MockCanvas(); cv._draws = []; return cv; },
   getElementById() { return mainCanvas; },
-  addEventListener() {}, fonts: { load: () => Promise.resolve() },
+  addEventListener() {}, fonts: { add() {}, delete() {}, load: () => Promise.resolve([]) },
+};
+globalThis.FontFace = class {
+  constructor(family, source) { this.family = family; this.source = source; this.status = "unloaded"; }
+  load() { this.status = "loaded"; return Promise.resolve(this); }
 };
 globalThis.localStorage = { getItem: () => null, setItem() {}, removeItem() {} };
 globalThis.Image = class {
   constructor() { this.width = 64; this.height = 64; this._src = ""; }
   set src(v) {
     this._src = v;
-    const meta = FONT_META[fontKey(v)];
-    if (meta) { this.width = 264; this.height = 180; }
     if (this.onload) setTimeout(() => this.onload(), 0);
   }
   get src() { return this._src; }

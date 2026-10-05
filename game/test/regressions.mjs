@@ -1,6 +1,7 @@
 // Regressões da auditoria 2026-10-01: regras reais do jogo, saves e loader.
 // Não reimplementa o fim da partida: chama update()/settleRun()/takeDamage().
 import assert from 'node:assert/strict';
+import { installFontFaceMock } from './lib/font-mock.mjs';
 const gradient = { addColorStop() {} };
 function context() {
   return new Proxy({ canvas: { width: 960, height: 540 } }, {
@@ -23,6 +24,7 @@ globalThis.document = {
   createElement: () => ({ width: 0, height: 0, style: {}, getContext: context }),
   addEventListener() {}, fonts: { load: () => Promise.resolve() },
 };
+installFontFaceMock();
 const store = new Map();
 globalThis.localStorage = { getItem: k => store.get(k) || null, setItem: (k, v) => store.set(k, v), removeItem: k => store.delete(k) };
 let failImage = false;
