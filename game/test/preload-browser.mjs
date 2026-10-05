@@ -127,8 +127,8 @@ try {
     assert.equal(st.fruits.grayApples, 6, "maçãs cinza dos 6 frutos bloqueados (save novo)");
     assert.equal(st.fruits.sanctuaryApples, 7, "maçã do santuário de cada fruto");
     assert.equal(st.fruits.flowerSheets, 6, "folhas de flores e Flores Supremas com arte");
-    assert.equal(st.layers, 14, "14 camadas da Noite Branca decodificadas (7 do painel 1 + 3 do 2 + 4 do 3)");
-    assert.deepEqual([s.net.santuario, s.net.noite], [7, 14], "cada arquivo pedido uma única vez");
+    assert.equal(st.layers, 12, "12 camadas da Noite Branca decodificadas (4 + 4 + 4 por painel, decisão 2026-10-05)");
+    assert.deepEqual([s.net.santuario, s.net.noite], [7, 12], "cada arquivo pedido uma única vez");
     // Fidelidade: bitmap decodificado fora da thread = mesmos pixels do <img>; e a
     // maçã do santuário reduzida a 232 px ANTES de colorir = a de 960 px reduzida no desenho.
     const fidelity = await s.page.evaluate(async () => {

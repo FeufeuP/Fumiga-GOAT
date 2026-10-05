@@ -98,6 +98,6 @@ for (const def of Object.values(getCutsceneDefs())) {
     }
   }
 }
-assert.ok(checked >= 14, "camadas da Noite Branca verificadas (7 + 3 + 4): " + checked);
+assert.ok(checked >= 12, "camadas da Noite Branca verificadas (4 + 4 + 4 — igualdade, decisão 2026-10-05): " + checked);
 assert.ok(totalBytes < MAX_BYTES, `peso total das camadas < 1 MB (${(totalBytes / 1024).toFixed(0)} KB)`);
 console.log(`cutscene-art OK — ${checked} camadas 320×180, ${(totalBytes / 1024).toFixed(0)} KB`);

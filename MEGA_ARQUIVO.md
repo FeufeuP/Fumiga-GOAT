@@ -29,6 +29,88 @@ repetições, datas, branches, checklists e notas históricas foram preservados.
 > Divergências permanecem visíveis, sem apagar conteúdo. O que efetivamente
 > funciona deve ser confirmado por testes e inspeção no preview.
 
+## Registro — Dica da cutscene por plataforma + área PULAR no toque e Noite Branca em 4+4+4 (2026-10-05, branch arena/01a10bcf)
+
+**Status: implementado e verificado (PC e mobile). Encerra os DOIS trabalhos sem decisão abertos em
+`PENDENCIAS.md`** (documento criado na branch arena/01a0f71c), faltando só o “salvar no GitHub”:
+sem isso, o documento passa a dizer “nenhum trabalho em aberto”.
+
+Pedido do usuário: *“Análise a fundo todo o repo. Leia o documento PENDENCIAS.md”* — e, diante das
+pendências encontradas, a escolha *“Resolver as duas nesta ordem (1 depois 2)”*.
+
+### Regra 2 (inspirações, pesquisa antes de perguntar)
+
+- **Pendência 1:** port de *Dead Cells* para mobile (Playdigious/GameDeveloper) — a regra “nunca
+  presuma o dispositivo do jogador”: ações que só existiam no teclado ganharam **botão visível**;
+  e o padrão de **prompt-swap por dispositivo** (Steam Input/Prey 2017, InputGlyphs): o runtime trocar
+  o texto/glyph do prompt pelo que o aparelho realmente tem.
+- **Pendência 2:** *Hollow Knight* (PC Gamer / análise da City of Tears) — profundidade = silhueta de
+  primeiro plano nítida e escura + fundo dessaturado/neblina + partículas + vinheta — e o guia de
+  parallax de Sandro Maglione (“adereços de primeiro plano acima da camada principal”).
+
+### Regra 1 (perguntas com opções e impacto — decisões)
+
+1. **Dica da cutscene:** escolhida a **opção B** — texto por plataforma (`isTouchUI()`) **+ área
+   PULAR desenhada no rodapé da cutscene** (liga ao mesmo caminho do ESC). Motivo que decidiu: no
+   replay das MEMÓRIAS o mobile não tinha nenhum caminho para pular (o HUD de botões só existe na
+   expedição).
+2. **Camadas do painel 2:** escolhida a linha “A + todos os painéis devem ter 4 camadas, igual ao
+   painel 3” e, na confirmação de colisão (o A tinha +3 camadas), **“igualdade estrita: todos com
+   exatas 4”** — mesmo com o aviso explícito de que o painel 1 perderia 3 camadas aprovadas.
+
+### 1. Dica por plataforma (PENDENCIAS §1 — RESOLVIDO)
+
+- `game/js/cutscenes.js`: rodapé lê `isTouchUI()` (`game/js/ui.js`). PC inalterado
+  (`ENTER / ESPAÇO / CLIQUE … • ESC: PULAR`); toque mostra `TOQUE: <ação>` e desenha a área
+  `PULAR ▶` no canto direito do rodapé (largura por `textWidth`, `maxWidth` na dica — não vaza sob
+  FONTE GRANDE; glifos dentro de `FONT_CHARS`). A área é publicada por `cutsceneSkipRect()` e o
+  handler a testa **antes** do avanço — tocar nela fecha, tocar em outro ponto avança. Carregamento
+  (`CARREGANDO... ns`) segue bloqueando input.
+- Cobertura: `game/test/ui-navigation-browser.mjs` — no replay das MEMÓRIAS, PC lê “ENTER / ESPAÇO”
+  (sem área) e fecha com ESC; mobile lê “TOQUE:” (sem teclas), vê a área e fecha **por toque no
+  botão**, voltando às MEMÓRIAS nos dois perfis.
+
+### 2. Noite Branca com exatas 4 camadas por painel (PENDENCIAS §2 — RESOLVIDO)
+
+- **Painel 1: 7 → 4** (`[0, 2, 4, 5]`). `1_distant.png`, `6_vfx.png` e `7_vignette.png` **apagados**
+  do jogo e do Git (receitas viraram `drop` em `tools/fix_noite_branca.py`).
+- **Painel 2: 3 → 4** (`[0, 1, 2, 4]`). `4_foreground.png` **novo**: moldura de ruína tomada por
+  mato (silhueta frontal; o “olho” que o painel do conflito não tinha — a colônia em ruínas passa a
+  ser vista de dentro da vegetação). Arte **gerada e aprovada pelo usuário entre 2 opções (Regra
+  6/R10)**, original 2848×1600 em `art-source/cutscenes/noite_branca/panel2_conflito/` + espelho
+  `~/art-source-backup/` (Regra 13) **na mesma sessão**. Recorte numérico e reproduzível:
+  ImageMagick `-fuzz 12% -transparent "#ffffff" -scale 320x180! PNG32:` — receita no cabeçalho de
+  `tools/fix_noite_branca.py` (kind `gen`, não derivável dos originais). No jogo: **~48 KB**.
+- **Painel 3:** inalterado (`[0, 2, 4, 5]` — modelo da igualdade).
+- **Placar:** 14 → **12 camadas**, ~0,7 MB → **~0,65 MB**; pacote offline 235 → **233 arquivos**
+  (~24,8 MB); `ASSET_V` → `20261005-cutscene-4x4`; `app/assets.json` regerado
+  (`make_assets_list.mjs`) e shells nativos sincronizados (`sync-native-assets.mjs`).
+- **Testes atualizados:** `cutscene-art.mjs` (12 camadas), `preload-browser.mjs` (12 decodificadas +
+  12 fetches únicos), `pwa.mjs` (233). **Docs vivos:** `AGENTS.md` (armadilha da cutscene + contagens
+  do pacote), `README.md` e `game/README.md` (233 arquivos / ~24,8 MB),
+  `REGRAS_DE_TRABALHO.md` (Regra 14: “12 PNGs … 4 por painel desde 2026-10-05”) — com **bloco e
+  SHA-256 sincronizados neste MEGA** (`docs.mjs` verde, 113.359 bytes íntegros).
+
+### Verificação
+
+- `npm test`: **33/33** (~57 s) — inclui `cutscene-art`, `preload-browser`, `pwa`, `uitest`,
+  `endless` e `regressions-browser` (PC + mobile).
+- `npm run inspect`: PC + mobile, todas as telas e os 6 mapas — sem erros de JS, 404 ou glifos
+  que viraram “?”; **60 fps** nos 6 mapas.
+- `npm run inspect:ui`: verde nos dois perfis (replays MEMÓRIAS: ESC no PC, toque na área PULAR no
+  celular).
+- Quadros reais de `drawCutscene` **antes × depois** (capturas fora do Git, `/tmp/caps/`): painel 1
+  muda de 7 para 4 camadas sem quebrar a cena; painel 2 ganha a moldura de mato; painel 3 inalterado;
+  rodapé do mobile lê *TOQUE: MOSTRAR TEXTO* com a caixa **PULAR ▶**.
+
+### Observações que ficam desta sessão
+
+- O clone do sandbox veio **raso** (1 commit): o “original” `8d88f08` citado na pendência 2 só foi
+  conferido depois de `git fetch --depth 50 origin main`. Recorte novo do painel 3 continua
+  impossível (limitação aceita §4.1 do `PENDENCIAS.md`): os originais da Pálida se perderam.
+- As 2 limitações aceitas de `PENDENCIAS.md` §4 (arte fora do Git; recarga automática) **não** são
+  tarefas e seguem como estão.
+
 ## Registro — Versão nova recarrega sozinha, formiga do painel 3 conferida e originais de arte fora do Git (2026-10-05, branch arena/01a0f71c)
 
 **Status: implementado e verificado (PC e mobile); um defeito antigo segue EM ABERTO (última seção).**
@@ -2179,7 +2261,7 @@ Ao final de cada tarefa, apresentar um **checklist de conferência** com este fo
 > **A tela de carregamento aparece somente na troca de mundo. Tudo o que os botões da tela TITLE abrem é pré-carregado enquanto o jogador está no TITLE, para que nenhum deles precise de tela de carregamento — nem na ida, nem na volta.** (decisão do usuário, 2026-10-01)
 
 - **Com tela de carregamento — troca de mundo (`mundos`):** início/reinício de expedição (`newRun`, por JOGAR → CAMPANHA/MODO TESTE), avanço entre mapas (`advanceMap` / transição de fim de mapa) e trocas de mapa no Modo Teste (`PRÓXIMO MAPA`, `M1..M6` e tecla `N`), sempre com a lore do bioma.
-- **Sem tela de carregamento — pré-carregado no TITLE (`preload.js`):** ÁRVORE DA EVOLUÇÃO (arte e maçãs), os 7 Santuários dos Frutos (download de ~5,7 MB + cor restaurada), PROFECIAS, MEMÓRIAS e os replays das memórias (camadas da Noite Branca, 14 PNGs 320×180, ~0,7 MB), OPÇÕES, COMO JOGAR e o menu de modos. Entrar e voltar é transição rápida; o replay toca dentro de MEMÓRIAS e volta para ela.
+- **Sem tela de carregamento — pré-carregado no TITLE (`preload.js`):** ÁRVORE DA EVOLUÇÃO (arte e maçãs), os 7 Santuários dos Frutos (download de ~5,7 MB + cor restaurada), PROFECIAS, MEMÓRIAS e os replays das memórias (camadas da Noite Branca, 12 PNGs 320×180, ~0,65 MB — 4 por painel desde 2026-10-05), OPÇÕES, COMO JOGAR e o menu de modos. Entrar e voltar é transição rápida; o replay toca dentro de MEMÓRIAS e volta para ela.
 - **Instantâneos em jogo:** entrar e sair do Formigueiro (`B` / botão `FORMIGUEIRO`) e a chegada do Chefão (anunciado pelo banner `CHEFÃO DE MAPA`), sem tela de carregamento no meio do combate.
 - **Como pré-carregar:** começa ao chegar no TITLE; downloads em paralelo e trabalho de CPU em fatias de poucos ms por quadro (geradores), para o TITLE seguir a 60 FPS; PNGs decodificados fora da thread principal. Ordem: árvore → maçãs → flores → santuários → Noite Branca. Sem rede, prepara só o que já está na memória.
 - **Clique antes do fim (`abre_na_hora`):** a tela abre na hora, sem tela de carregamento; o trabalho de CPU que faltar termina ali mesmo (engasgo curto, no clique) e imagens ainda a caminho entram com fade quando chegam.
@@ -3850,7 +3932,7 @@ parte dos blocos originais.
 
 | Arquivo original | Bytes preservados | SHA-256 |
 |---|---:|---|
-| `REGRAS_DE_TRABALHO.md` | 17361 | `a5c02af789dedba56ba7c9d0dc016d51bc6aea4a3c8039a58d6b0542a6a0e6ba` |
+| `REGRAS_DE_TRABALHO.md` | 17396 | `f99ded1544cebf080e111e0c69041b32be074f2e2614631063b776ba0725dc66` |
 | `LORE.md` | 15056 | `42075fe4334601f1a74834388c0155342b2a8a6c21e51afa6020e34a5260f493` |
 | `DOCUMENTO_MEGA_ATUALIZACAO_LORE_TOTAL.md` | 30473 | `c642dd06d14e527bba6566458afa5293f697b0a3b981ef6301f6fafdfb9e856e` |
 | `DOCUMENTO_DECISOES_MEGA_ATUALIZACAO.md` | 8179 | `2b05240cd9fef9fb33d8a08768164f60202437c886c1c5b83f250ee9cbb58637` |
