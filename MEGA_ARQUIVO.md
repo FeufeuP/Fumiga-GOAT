@@ -29,6 +29,377 @@ repetições, datas, branches, checklists e notas históricas foram preservados.
 > Divergências permanecem visíveis, sem apagar conteúdo. O que efetivamente
 > funciona deve ser confirmado por testes e inspeção no preview.
 
+## Registro — Versão nova recarrega sozinha, formiga do painel 3 conferida e originais de arte fora do Git (2026-10-05, branch arena/01a0f71c)
+
+**Status: implementado e verificado (PC e mobile); um defeito antigo segue EM ABERTO (última seção).**
+Perguntas do usuário: *“Tudo foi implementado com sucesso?”* e *“Vê a imagem da formiga usada na
+cutscene?”* — com as decisões: manter a formiga como está, recarregar sozinho quando sair versão nova
+(opção B) e manter os originais de arte fora do Git (opção A).
+
+### A formiga do painel 3 (a Pálida)
+
+- Está em `game/assets/cutscenes/noite_branca/panel3_gancho/2_mid.png` (21 KB, 320×180 RGBA, 89,6% do
+  quadro transparente; o jogo amplia 3×): rainha-formiga de névoa lilás, coroa de pontas (fungo e
+  seda), antenas curvas, olhos redondos que brilham e pingam, quatro asas, abdômen de rainha e pernas
+  que viram fios de bruma — sem traço humano (Regra 8). Folha de revisão (uso 1×, ampliação 4× e no
+  jogo): `art-source/cutscenes/noite_branca/revisao/formiga_painel3.png`.
+- **Jogador novo, sem modo debug:** PRETITLE → TITLE → CAMPANHA → tela de carregamento (confirmação dos
+  100%) → a Noite Branca toca sozinha na 1ª expedição. As 4 camadas do painel 3 responderam HTTP 200 em
+  PC e celular, sem erro de JS.
+
+### O bug que a pergunta “viu a formiga?” revelou: a 1ª abertura depois de uma atualização
+
+- **Diagnóstico:** o `sw.js` entrega o código guardado na hora e revalida atrás (stale-while-revalidate,
+  decisão de 2026-10-01, que continua valendo). A consequência só aparecia em teste de duas aberturas:
+  quem já tinha aberto a página inicial (o Service Worker fica instalado) e voltava depois de uma
+  atualização rodava a versão ANTERIOR na 1ª abertura — painel 3 sem a formiga — e via a arte só na 2ª.
+- **Correção (opção B do usuário; complementa a decisão de 2026-10-01, não a substitui):** o jogo
+  pergunta a versão ao Service Worker (`versao-atual`; o worker sincroniza a lista de `app/assets.json`
+  antes de responder) e o `sw.js` avisa `versao-nova` quando o cache troca (depois de gravar o shell
+  novo, nunca antes). Se a versão respondida for diferente do `ASSET_V` do código que está rodando, o
+  `game/js/main.js` recarrega **uma vez** — durante o carregamento, no PRETITLE ou no TÍTULO; **nunca**
+  no meio de uma expedição (fica pendente até o jogador voltar ao título) e nunca em laço
+  (`sessionStorage` guarda a última versão recarregada; `dev` é ignorado).
+- **Teste (passo 6 do `npm run inspect:pwa`):** uma “rede” com atraso serve uma versão falsa, deixa o
+  navegador guardá-la e depois publica a atual; o teste exige **1 recarga automática**, terminando na
+  versão nova e sem laço. Em seguida, com uma expedição DE VERDADE aberta (`?debug&tela=RUN`), publica
+  outra versão e exige que NÃO recarregue — e que recarregue ao voltar ao título. Contraprova:
+  desligando o `watchNewVersion()`, o teste falha exatamente nas duas condições (“ficou na versão
+  teste-velha”).
+
+### Originais de arte: decisão do usuário (opção A)
+
+- O `art-source/` e o espelho `~/art-source-backup/` (Regra 13) são ignorados pelo Git e sumiram de novo
+  quando o sandbox reiniciou. Com a escolha de manter a regra, fica registrado: os originais em alta das
+  artes novas podem se perder entre sessões aqui e um recorte novo da Pálida a partir deles já não é
+  possível (o jogo não depende disso — as 14 camadas aprovadas estão no repositório).
+
+### Defeito achado de passagem (RESOLVIDO na integração com o PR #57 — logo abaixo)
+
+- **Offline depois de FECHAR o navegador:** com o app instalado e o pacote essencial baixado (227
+  arquivos, cache `fumiga-20261004-painel3`), fechar o navegador e reabrir **sem rede** devolve 504 —
+  “SEM CONEXÃO E SEM CÓPIA LOCAL” — e o jogo não abre; com internet, abre normal. Causa: o `sw.js` guarda
+  `VERSAO`/`CACHE` em memória e, quando o navegador o desliga (acontece sempre), as variáveis voltam ao
+  padrão `fumiga-dev`; até a lista de `app/assets.json` chegar, ele responde com o cache errado. O
+  `inspect:pwa` não pega porque baixa e navega offline **sem** reiniciar o navegador. Referências do
+  comportamento: https://web.dev/articles/service-worker-mindset e
+  https://developer.chrome.com/docs/extensions/develop/concepts/service-workers/lifecycle (“global
+  variables are lost”). Proposta: ao subir, adotar um cache `fumiga-<versão>` já existente antes de
+  responder, mais um teste novo (baixa → FECHA → reabre offline). **Decisão do usuário (2026-10-05,
+  nesta rodada): registrar** em vez de corrigir agora — o defeito, a reprodução medida, a causa e o
+  esboço da correção ficam consolidados em `PENDENCIAS.md` (raiz do repositório). O defeito não chegou a ser corrigido nesta branch: o PR #57,
+  integrado na mesma rodada, trouxe a correção (seção seguinte).
+
+### Pendências consolidadas em `PENDENCIAS.md` (novo documento, raiz)
+
+A pedido do usuário (*“salve o que ainda não foi concluído em um documento”*), as pendências abertas
+saíram do histórico e viraram um documento de handoff, com reprodução, causa, proposta e onde mexer:
+
+1. **Defeito:** o jogo offline não abre depois de FECHAR o navegador (seção acima) — decisão: registrar.
+2. **Trabalho sem decisão:** a dica da cutscene no celular fala de teclado (“ENTER / ESPAÇO … ESC:
+   PULAR”; `game/js/cutscenes.js`) — é pré-existente e exige Regra 2 + Regra 1 antes de codar.
+3. **Trabalho sem decisão:** as **5 camadas extras do painel 2** do plano antigo da Fase 5 (o painel 3
+   foi resolvido com 4 camadas enxutas em 2026-10-04; sobre o painel 2 não há decisão nova).
+
+### Integração com o PR #57 (pacote único, versão persistida, recarga reaproveitada)
+
+A `main` avançou enquanto esta branch trabalhava (PRs #56 e #57, da sessão `arena/01a0fc42`); o merge
+exigiu resolver 11 arquivos em conflito. O que muda de decisão, explicitamente:
+
+- **Pacotes offline:** o PR #57 unificou o download num **pacote completo único** (235 arquivos,
+  ~24,8 MB) e removeu os botões parciais. Isso **substitui a decisão de 2026-10-04** de pôr a Noite
+  Branca no pacote ESSENCIAL: ESSENCIAL/COMPLETO não existem mais — a cutscene (e todo o resto) vai no
+  pacote único. `ASSET_V = "20261005-painel3-native"` (as duas branches tinham subido versões
+  diferentes; a integrada cobre as duas).
+- **Defeito offline:** o `sw.js` novo persiste a versão ativa e a de cada cliente no Cache Storage e as
+  recupera ao reiniciar, **resolvendo o defeito registrado acima**. Verificado de duas formas:
+  `inspect:pwa` (“worker reiniciado offline: versão preservada”) e o cenário real — baixar o pacote,
+  **fechar o navegador**, reabrir o mesmo perfil sem rede: `/game/mobile/` responde 200 e o jogo chega
+  ao PRETITLE.
+- **Recarga automática:** reaplicada sobre a arquitetura nova (o jogo pergunta `versao-atual`; o worker
+  avisa `versao-nova` ao promover). O passo 6 do `inspect:pwa`, escrito nesta branch, prova os três
+  casos: **uma** recarga quando a 1ª abertura roda o snapshot velho, nenhuma recarga quando o código já
+  é o novo, e nenhuma com expedição em andamento (recarrega ao voltar ao título) — sem laço.
+- **Esperas de teste:** os 12 `waitForFunction(async …)` dos testes do PR #57 foram convertidos para o
+  padrão síncrono (`importGameModules` + `MOD`); sem isso a guarda `browser-waits.mjs` reprovaria e as
+  esperas seriam vazias (voltavam sem checar nada). `regressions-browser.mjs` passou a esperar de
+  verdade — PC + mobile verdes.
+- **Documentos reconciliados com o pacote único:** `AGENTS.md`, `game/README.md`, `index.html` e
+  `PENDENCIAS.md` (nada de “essencial”); `test/pwa.mjs` passou a esperar 235 arquivos.
+
+### Verificação desta rodada
+
+- **Antes do merge (branch):** `npm test`: 28/28; `npm run inspect` OK; `npm run inspect:pwa` verde
+  (5 seções + o passo 6 novo).
+- **Depois da integração com o PR #57:** `npm test`: **33/33** (50,3 s); `npm run inspect` OK (PC +
+  celular, sem erro de JS, 404 ou glifo faltando; 60 fps em RUN-MAPA1–6); `npm run inspect:pwa` verde
+  (pacote único de 235 arquivos, reinício offline com versão preservada, update que falha de propósito,
+  timeout e o passo 6); `regressions-browser.mjs` verde com as esperas reais; `lorehud-browser.mjs` e
+  `inspect:preload` verdes; fechar e reabrir o navegador offline boota o jogo (PRETITLE).
+- `node tools/make_assets_list.mjs` regerado na integração: **235 arquivos, 24,8 MB**,
+  `ASSET_V = "20261005-painel3-native"` (o `test/pwa.mjs` protege a sincronia).
+
+## Registro — Esperas reais nos testes de navegador, arte do painel 3, caixa de texto 0,7 e Noite Branca no pacote essencial (2026-10-04, branch arena/01a0f71c)
+
+**Status: implementado e verificado (PC e mobile).** Pedido do usuário: *“Perfeito, comece o problema 2 e
+adicione o que falta.”* — aprovou o problema 1 (registro de 2026-10-02, logo abaixo) e pediu o problema 2
+mais os três pontos que aquele registro deixou em aberto: painel 3 sem arte, caixa de texto cobrindo as
+patas da fila de formigas no painel 2 e a Noite Branca fora do pacote offline básico.
+
+> **Substitui decisões anteriores:**
+> - **Pacotes offline:** o registro “Jogo instalável e baixável” (2026-10-01) pôs a Noite Branca no pacote
+>   **COMPLETO** (eram 11 camadas, 32,6 MB) e o de 2026-10-02 a manteve lá. Agora ela vai no **ESSENCIAL**:
+>   toca sozinha no início da 1ª expedição, e quem baixava só o essencial jogava offline sem a abertura.
+>   O COMPLETO fica com os 7 santuários (e com cutscenes futuras, até decisão em contrário).
+> - **Painel 3:** o retrato de progresso da Fase 5 registrava 13 camadas pendentes (5 do painel 2 e 8 do
+>   painel 3), e a decisão de 2026-09-23 era não mexer nas cutscenes. O painel 3 deixa de ser pendência com
+>   **4 camadas enxutas** (escolha do usuário); sobre as 5 do painel 2 não há decisão nova.
+> - **Caixa de texto:** o limite conhecido de 2026-10-02 (“no painel 2 a caixa de texto cobre as patas”)
+>   foi resolvido com opacidade **0,92 → 0,7** (opção C; legibilidade um pouco menor, aceita pelo usuário).
+
+### Problema 2 — `page.waitForFunction` com predicado `async`
+
+- **Diagnóstico:** um predicado `async` devolve uma Promise — objeto sempre “verdadeiro” — e o Playwright
+  1.63 não espera por ela: a espera acaba na 1ª checagem. Medido no Chromium do sandbox:
+  `waitForFunction(async () => false)` voltou em **436 ms** (deveria esperar o prazo de 5 000 ms), e o
+  predicado antigo do `inspect.mjs` voltou com a condição **falsa** (`pronto: false`). Eram três esperas
+  falsas: `inspect.mjs` (`waitReady`), `lorehud-browser.mjs` (PRETITLE) e `pwa-browser.mjs` (o jogo
+  bootando offline).
+- **Pesquisa (Regra 2):** o mesmo bug, com a mesma saída, em outros projetos —
+  https://github.com/stabrea/Branch-Agent/pull/763 (espera de 19 ms; guarda que barra o padrão),
+  https://github.com/CosmicGrub/The-Guidon/pull/224 (Playwright 1.63; `page.evaluate`, ao contrário,
+  espera a Promise) e https://github.com/OurHike/OurHike/issues/1725.
+- **Decisão do usuário (A):** helper compartilhado, predicados síncronos e guarda na bateria.
+- **O que mudou:** `game/test/lib/browser.mjs` ganhou `importGameModules(page, arquivos)` — importa os
+  módulos do jogo com `page.evaluate` (que espera) e os guarda em `window.MOD`; os predicados viraram
+  síncronos (`() => MOD.state.G.screen …`). `preload-browser.mjs` e `ui-navigation-browser.mjs`, que já
+  importavam à mão, passaram a usar o helper. Guarda nova **`game/test/browser-waits.mjs`** (no `npm test`,
+  portanto no CI): varre `game/test/`, `game/test/lib/` e `tools/` e falha com arquivo:linha se
+  `waitForFunction(async …` voltar — provado com uma cópia temporária do teste antigo (falhou como devia)
+  e com um autoteste do detector.
+
+### Painel 3 (“gancho”) — arte nova
+
+- **Pesquisa (Regra 2):** Kuro, de Ori and the Blind Forest — silhueta gigante contra a lua
+  (https://www.orithegame.com/last-week-ori-blind-forest-11/); o Pale King, de Hollow Knight — realeza de
+  inseto pálida e radiante, que “dói de olhar” (https://villains.fandom.com/wiki/Pale_King).
+- **Decisões do usuário (A + Regra 6):** 4 camadas enxutas, 2 opções por imagem — céu de névoa (opção 2),
+  a Pálida no alto (opção 2), névoa da frente (opção 2) e partículas pálidas (opção 1). A Pálida segue a
+  ficha do `LORE.md` e a Regra 8: marionete de névoa em forma de rainha-formiga ancestral, fios de bruma
+  nos membros, olhos que pingam memória, coroa de fungo/seda, nada humanoide.
+- **Recorte:** geradas sobre preto liso (sem xadrez). `tools/fix_noite_branca.py` ganhou o tipo *brilho*
+  (alfa = brilho acima do piso de preto, cor despremultiplicada — a mesma ideia de recuperar alfa por fundo
+  conhecido do registro de 2026-10-02), recorte 16:9 também para fontes mais largas, enquadramento da
+  Pálida (12,5 px da fonte por px; corpo centrado em x=160, antenas em y=30), névoa a 90% e partículas com
+  alfa pelo máximo da célula (cisco de 1 px não some). Se o `art-source/` faltar, o script lê os originais
+  do espelho `~/art-source-backup/` e, por fim, do git.
+- **Assets:** `0_sky` 84 KB (opaco), `2_mid` 21 KB (89,6% vazado), `4_foreground` 24 KB (72,6%),
+  `5_particles` 4 KB (98,9%) — **131 KB** (meta era ~0,25 MB). A Noite Branca inteira: **14 camadas,
+  710 KB**. `cutscenes.js`: painel 3 com `layers: [0, 2, 4, 5]`. Originais em
+  `art-source/cutscenes/noite_branca/_orig/panel3_gancho/`.
+- **`cutscene-art.mjs`:** a regra do xadrez passou a contar cinza-claro opaco **em bloco** (pixel com 3+
+  vizinhos iguais), até 0,5% da camada. As camadas de brilho têm poucos pixels opacos (olhos, ciscos), e a
+  regra antiga (≤1% dos opacos) reprovava a Pálida por 8 px. Calibração: máximo de 19 px nas camadas boas;
+  24 a 44 mil nas antigas com xadrez, que continuam reprovadas (conferido).
+
+### Caixa de texto da cutscene
+
+- **Pesquisa (Regra 2):** em visual novels, jogadores reclamam quando a caixa esconde a arte e pedem
+  opacidade ajustável
+  (https://www.reddit.com/r/visualnovels/comments/vko6n9/is_there_a_way_to_change_this_text_window_opacity/,
+  https://www.reddit.com/r/visualnovels/comments/30jyu1/do_you_prefer_nvl_or_adv_style_for_reading_text/).
+- **Decisão do usuário (C):** só a caixa de texto muda: `rgba(10,8,16,0.92)` → `0.7`; cabeçalho e barra de
+  dicas seguem em 0,92. No painel 2, as patas da fila de formigas aparecem através da caixa e o texto
+  continua legível (PC e mobile).
+
+### Noite Branca no pacote ESSENCIAL
+
+- **Pesquisa (Regra 2):** pré-cachear só o essencial da primeira experiência e o resto quando precisar
+  (https://www.reddit.com/r/PWA/comments/p62lm0/total_precache_size_acceptable/,
+  https://www.digitalapplied.com/blog/progressive-web-apps-2026-pwa-performance-guide) — a abertura faz
+  parte dela.
+- **O que mudou:** `tools/make_assets_list.mjs` (o COMPLETO não leva mais `game/assets/cutscenes/noite_branca/`;
+  títulos “Sprites, telas, títulos e Noite Branca” e “Santuários dos frutos”), texto da página oficial
+  (`index.html`) e `ASSET_V = "20261004-painel3"` — o cache do `sw.js` é nomeado pela versão do
+  `app/assets.json`, e só a versão nova faz o app já instalado montar um cache novo com a lista nova.
+  `app/assets.json`: shell 53 / 1,2 MB · essencial 174 / 18,7 MB · completo 7 / 4,9 MB. Pacotes:
+  **ESSENCIAL 20,0 MB (227 arquivos)** (antes 19,3 MB) e **COMPLETO 24,8 MB** (antes 24,7 MB).
+  `pwa-browser.mjs` agora confere que, baixando só o essencial, as 14 camadas estão no cache.
+
+### Verificação
+
+- `npm test` **28/28** (com `browser-waits` e `cutscene-art`); `npm run inspect` PC e mobile sem erro de JS,
+  404 ou glifo, 60 fps nos 6 mapas; `inspect:pwa` (14 de 14 camadas no cache só com o essencial; com a rede
+  desligada o jogo chega ao PRETITLE); `inspect:hud`; `inspect:ui`; `inspect:preload` com 14 camadas: o
+  TITLE prepara tudo em 808–867 ms no PC e 705–803 ms no mobile, a ~61–62 fps, com a maior fatia de
+  trabalho em 9–13 ms (em 2 de 3 rodadas no PC houve um quadro isolado de 33 ms, fora das fatias).
+- Quadros reais do `drawCutscene` antes × depois (painel 3 e caixa do painel 2), camadas soltas em 2× sobre
+  xadrez e captura mobile: `art-source/cutscenes/noite_branca/revisao/` (espelho em `~/art-source-backup/`).
+  As camadas aprovadas dos três painéis estão em `art-source/cutscenes/noite_branca/aprovado_A_nitida/`.
+- Limite conhecido (anterior a esta entrega): no celular, a barra de dicas da cutscene ainda mostra teclas
+  (ENTER / ESPAÇO / ESC).
+
+## Registro — Noite Branca: camadas com transparência real, moldura fina e 320×180 (2026-10-02, branch arena/01a0f71c)
+
+**Status: implementado e verificado (PC e mobile).** Pedido do usuário: *“Arrume os dois problemas antigos
+citados, comece pelo 1 e avance para o 2 após minha aprovação.”* Problema 1 = arte da cutscene Noite Branca;
+o problema 2 (predicados `async` em `page.waitForFunction` de três testes de navegador) espera a aprovação.
+
+> **Substitui decisão anterior:** a de 2026-09-23 (*manter as camadas como PNGs grandes, reduzidas a
+> 320×180 no carregamento*, registrada no `AGENTS.md`) deixa de valer. Por escolha do usuário em
+> 2026-10-02, as camadas vão para o jogo já em 320×180 RGBA — o que o pipeline original (P2/P15) previa.
+
+### Diagnóstico
+
+- 8 das 11 camadas eram RGB **sem alfa**, com um xadrez de “transparência” **pintado** pelo gerador
+  (claro 254/223–244 em `1_distant`, `2_mid`, `4_foreground` e nas duas do painel 2; escuro em
+  `5_particles`, `6_vfx` e `7_vignette`). No jogo, a moldura cobria o painel 1 com xadrez cinza (nada
+  da cena aparecia) e o xadrez branco escondia o céu e a lua do painel 2.
+- `panel1/3_ground` era uma textura opaca de chão vista de cima; `panel1/0_sky` era quadrado (2048²),
+  achatado em 16:9; `panel1/1_distant` tinha duas faixas iguais de montanhas.
+- 1672×941 cada (32,6 MB), reduzidos no carregamento; tamanho do pixel da arte variando de ~3 a ~10 px.
+
+### Pesquisa (Regra 2)
+
+- **Ori and the Blind Forest** — peças que “se misturam à transparência onde devem fazer a transição”;
+  névoa com transparência em profundidade (https://polycount.com/discussion/150335/ori-and-the-blind-forest-artdump/p2).
+- **Hollow Knight** — camadas de frente/meio/fundo, névoa entre o fundo e as silhuetas da frente
+  (https://medium.com/3d-environmental-art/the-art-of-hollow-knight-f4c05dda3882).
+- **Dead Cells** — parallax, partículas e nuvens à frente para profundidade; opacidade das camadas
+  ajustada para a leitura da cena (https://www.gamedeveloper.com/production/art-design-deep-dive-giving-back-colors-to-cryptic-worlds-in-i-dead-cells-i-).
+- **Darkest Dungeon** — abertura quase parada, só os efeitos animados
+  (https://www.reddit.com/r/darkestdungeon/comments/fl7cww/questions_about_dds_animation_style/); motion
+  comics usam recortes como “cartas” (https://www.reddit.com/r/animation/comments/76cqx9/what_is_the_name_of_this_kind_of_animation_and/).
+- **Recuperar alfa** comparando a mesma imagem sobre branco e sobre preto (https://transparify.app/) — aqui os
+  dois tons do xadrez fazem esse papel, o que recupera até a névoa translúcida; xadrez pintado não é alfa
+  (https://ofox.ai/blog/gpt-image-2-5-transparent-background/).
+
+### Decisões do usuário (Regra 1 e Regra 6)
+
+1. **Abordagem A:** conserto numérico da arte existente com script reexecutável (sem arte nova).
+2. **Chão A:** `panel1/3_ground` sai da pilha (painel 1 com 7 camadas).
+3. **Entrega A:** camadas já em 320×180 RGBA; originais em alta no `art-source/` (fora do Git).
+4. **Moldura:** mantida, mais fina — primeiro 50%, depois **35%** da espessura nas laterais
+   (de ~17,8% para ~6,2% da largura de cada lado).
+5. **Variante A — nítida** (pixel do centro de cada célula, alfa binário nos sólidos), escolhida entre
+   A nítida × B suave (média da área), com antes/depois dentro do jogo.
+
+### O que mudou
+
+- **`tools/fix_noite_branca.py` (novo, reexecutável):** lê os originais (histórico do git em `645dc68`,
+  cópia em `art-source/cutscenes/noite_branca/_orig/`) e grava as 10 camadas do jogo. Ajusta período e
+  fase do xadrez (mediana dos intervalos + DFT fina) e a **deriva local da grade** (fase das componentes
+  do xadrez); recortes por tipo: *sólido* (fundo = manchas grandes com cor de xadrez, sem depender da
+  paridade, + anel de 2 px sem halo), *névoa* (alfa pelo contraste entre casas claras e escuras vizinhas),
+  *luz* (cor → alfa contra o tom da casa) e *névoa/raios do vfx* (média de um período inteiro apaga o
+  xadrez; o véu escuro uniforme sai); moldura afinada por deformação suave (cantos intactos); céu
+  recortado em 16:9 sem achatar (lua preservada); só a 1ª faixa de montanhas; redução exata por área.
+- **`game/js/cutscenes.js`:** cada painel lista suas camadas em `layers` (`[0,1,2,4,5,6,7]` e `[0,1,2]`);
+  a camada decodificada (ImageBitmap) é desenhada direto, sem canvas de redução; slot que o painel não
+  usa não ganha névoa procedural por cima da arte; prazo por camada 45 s → 20 s.
+- **Assets:** 10 PNGs, **579 KB** (antes 11 PNGs, 32,6 MB); `panel1/3_ground.png` removido.
+  `ASSET_V = "20261002-noite-branca"`; `app/assets.json` regenerado (pacote completo 38,3 → 5,4 MB).
+- **Testes:** `game/test/cutscene-art.mjs` (novo, na bateria): arquivos = `layers`, 320×180, RGBA com
+  ≥30% vazado e sem xadrez cinza-claro opaco, total < 1 MB. `preload-browser.mjs`: 11 → 10 camadas.
+- **Docs:** Regra 14 (tamanho da Noite Branca; bloco sincronizado + SHA-256), `AGENTS.md`, comentários de
+  `preload.js` e `tools/make_assets_list.mjs`.
+
+### Verificação
+
+- Quadros reais do `drawCutscene` (mesmo instante do parallax) antes × A × B e camadas soltas sobre
+  xadrez neutro: folhas em `art-source/cutscenes/noite_branca/revisao/` (espelho em `~/art-source-backup/`).
+- Rede local do teste: 10 camadas prontas em ~30–60 ms (antes ~450 ms para 32,6 MB).
+- Limites conhecidos: o painel 3 continua sem arte (fallback procedural); a névoa/raios do painel 1 ficam
+  macios de propósito (média de um período do xadrez); no painel 2 a caixa de texto cobre as patas da
+  fila de formigas (layout anterior, fora deste pedido).
+
+## Registro — Pré-carregamento no TITLE e tela de carregamento só na troca de mundo (2026-10-01, branch arena/01a0f71c)
+
+**Status: implementado e verificado (PC e mobile).** Pedido do usuário: *“Arrume quando as telas de
+carregamento devem aparecer. Ao entrar no jogo, a árvore de habilidades e todas as outras funções nos
+botões da tela TITLE devem ser carregadas, para que não precise de uma tela de carregamento ao entrar em
+qualquer um dos botões. Realize o pré-carregamento de tudo na Tela TITLE.”*
+
+### Pesquisa (Regra 2)
+
+- **GDevelop** — baixa em segundo plano os recursos das próximas cenas enquanto o jogador interage com
+  o menu; só mostra carregamento de novo se a cena ainda não estiver pronta
+  (https://wiki.gdevelop.io/gdevelop5/all-features/resources-loading/).
+- **Banished (Shining Rock Software)** — o menu carrega o mínimo e o resto vem por trás, mantendo a
+  interação rápida (https://shiningrocksoftware.com/2013-08-05-the-menu/).
+- **Terraria / tModLoader** — carregamento assíncrono de texturas: pedir na hora “pode derrubar 2 ou 3
+  frames” (https://github.com/tModLoader/tModLoader/wiki/Assets/1f2e47126fdd2c7d5b6b77ab460e2b1a3eeed888).
+- **Celeste** — a tela depois do boot não é carregamento: tudo já terminou e o jogo só espera o jogador
+  (https://www.reddit.com/r/celestegame/comments/zsio9j/any_idea_how_to_fix_it_doesnt_get_past_the/).
+- **GameDev.SE** — no menu principal, já pré-carregar o que vem depois de “Novo Jogo”
+  (https://gamedev.stackexchange.com/questions/21869/what-is-the-logic-behind-the-loading-scenes-in-games).
+
+### Decisões do usuário (Regra 1)
+
+1. **Início da expedição:** mantém a tela de lore do bioma (é troca de mundo — gera mapa, túneis e névoa).
+2. **“Tudo” inclui a Noite Branca:** árvore + maçãs + 7 santuários (5,7 MB) + camadas da Noite Branca
+   (32,6 MB, por último na fila).
+3. **Clique antes do fim:** abre na hora; o trabalho de CPU termina ali (engasgo curto) e imagens ainda
+   a caminho entram com fade.
+4. **Fora do TITLE:** Formigueiro e Chefão instantâneos; só troca de mundo tem tela de carregamento.
+
+### O que mudou
+
+- **`game/js/preload.js` (novo):** fila cooperativa de geradores — `yield` = uma fatia; `yield promessa`
+  = espera rede/decodificação sem ocupar quadro. Começa ao chegar no TITLE, 5 ms por quadro (10 ms com a
+  árvore aberta antes do fim; parado durante a expedição, volta na pausa). Ordem: arte da árvore → maçãs
+  → flores → santuários → Noite Branca. Sem rede, só o que já está na memória.
+- **`tree_art.js`:** preparação (pesos por pixel + 1º assado) em fatias (`treeArtSteps`); quem desenhar
+  antes do fim continua o MESMO trabalho (`treeArtCanvas`). `enterTree` termina o que faltar no clique,
+  nunca no meio do zoom.
+- **`color_restore.js`:** restauração em fatias (`restore.steps`), modo enxuto (`lean`, só o canvas fica)
+  e fonte de desenho separada da chave (bitmap decodificado fora da thread).
+- **`meta.js`:** um restaurador enxuto por santuário (trocar de fruto não reprocessa pixels; só o
+  santuário aberto guarda os buffers, para compras seguidas recolorirem sem engasgo); maçã do
+  santuário reduzida a 232 px antes de colorir (mesmos pixels, 1/17 do trabalho e da memória); maçãs
+  cinza fatiadas, com fade se a árvore abrir antes; maçãs conquistadas desenhadas do bitmap
+  pré-decodificado; `openFruit` abre na hora (arte que chegar depois entra com fade); `ensureSantuario`
+  devolve a mesma promessa a quem chega durante o download (antes devolvia `null`).
+- **`cutscenes.js`:** camadas baixadas como Blob e decodificadas fora da thread (`createImageBitmap`),
+  reduzidas a 320×180 num cache (prazo de 45 s por camada: conexão travada vira o fallback desenhado e
+  libera nova tentativa); camada atrasada entra com fade; no replay o último painel diz
+  `VOLTAR ÀS MEMÓRIAS`.
+- **`game.js`:** ÁRVORE, PROFECIAS, MEMÓRIAS e os retornos viraram transições rápidas; **o replay de
+  memória toca dentro de MEMÓRIAS** — corrige o bug em que, sem expedição ativa, o jogo ia para o TITLE
+  com a cutscene invisível; `openNest`/`closeNest` instantâneos. **`waves.js`:** Chefão entra na hora
+  com o banner `CHEFÃO DE MAPA` (os sheets já são assados no boot).
+- **`utils.js`:** `drainSteps` (termina um gerador na hora), `offThreadDecode`/`releaseDecoded`.
+- **Docs:** Regra 14 reescrita (este bloco sincronizado byte a byte + SHA-256), `AGENTS.md`,
+  `DOCUMENTO_TELAS_DE_CARREGAMENTO.md`.
+
+### Medições (Chromium headless do sandbox, 2 vCPUs)
+
+- Parado no TITLE, tudo pronto em ~1,1–1,4 s; CPU total ~330–400 ms em fatias (maior fatia 10–20 ms;
+  antes, só a árvore custava ~82 ms de uma vez).
+- `img.decode()` não ajuda o canvas de leitura (16 ms no 1º desenho+leitura); `createImageBitmap(<img>)`
+  bloqueia ~10 ms; a partir de Blob, 0,7 ms — por isso o Blob.
+- Clique cedo com CPU 4× mais lenta: engasgo de ~1 s caiu para ~180–270 ms (só a arte da árvore, no
+  clique; as maçãs entram com fade).
+- Santuário pré-carregado: abrir = 0 quadro perdido; 1ª compra 1 quadro (33 ms), seguintes 0.
+- Fidelidade: bitmap × `<img>` e maçã 232 px × 960 px reduzida — diferença máxima 0 (testado).
+
+### Testes
+
+- **Novo `game/test/preload-browser.mjs`** (`npm run inspect:preload`): boot leve (nada antes do TITLE),
+  tudo pronto parado no TITLE, árvore → 7 santuários → replay → profecias → TITLE sem tela de
+  carregamento nem reassados, clique cedo com CPU 4× mais lenta, sem rede e pixels idênticos.
+- **`ui-navigation-browser.mjs`:** o replay agora é verificado de verdade (fica em MEMÓRIAS e volta
+  para a lista). Achado: `page.waitForFunction` com predicado `async` não espera nada no Playwright
+  1.63 (a Promise é “verdadeira”) — os predicados passaram a ser síncronos.
+- `npm test` (26/26), `npm run inspect`, `inspect:tree`, `inspect:ui` e `inspect:hud` verdes.
+
+### Achado pendente (arte, fora do escopo)
+
+As 11 camadas da Noite Branca são PNGs **100% opacos**; `panel1/1_distant`, `2_mid`, `4_foreground` e
+`panel2_conflito/1_distant`, `2_mid` têm o xadrez de “transparência falsa” desenhado na própria arte
+(47–86% dos pixels), cobrindo o céu no replay e na intro. Corrigir exige refazer o recorte das camadas
+(Regras 6, 10 e 13) — aguarda decisão do usuário.
+
 ## Atualização — Clareira Orgânica por Bioma, 13 Flores Livres e 14ª Flor Suprema (2026-10-01)
 
 **Status: código, clareira, maçã reajustada e 7 poderes supremos implementados e verificados (PC e mobile).**
@@ -1803,17 +2174,17 @@ Ao final de cada tarefa, apresentar um **checklist de conferência** com este fo
   original, qualquer ajuste posterior exigiria refazer a arte do zero (como ocorreu com os
   originais do Santuário da Planície).
 
-## Regra 14 — Tela de Carregamento em mudanças de telas, mundos e cargas pesadas ⏳
+## Regra 14 — Tela de Carregamento só na troca de mundo; o que sai do TITLE é pré-carregado ⏳
 
-> **Sempre que houver mudança de telas, mundos ou quando qualquer coisa pesada/demorada para carregar na hora aparecer no jogo, a tela de carregamento deve acontecer para que o jogo carregue tudo sem que o jogador veja.**
+> **A tela de carregamento aparece somente na troca de mundo. Tudo o que os botões da tela TITLE abrem é pré-carregado enquanto o jogador está no TITLE, para que nenhum deles precise de tela de carregamento — nem na ida, nem na volta.** (decisão do usuário, 2026-10-01)
 
-- **Escopo obrigatório (`mundos_telas_pesadas`):**
-  1. **Mudança de mundos e biomas**: início/reinício de expedição (`newRun`), avanço entre mapas (`advanceMap` / transição de fim de mapa) e trocas de mapa no Modo Teste (`PRÓXIMO MAPA`, `M1..M6` e tecla `N`).
-  2. **Interior e superfície da colônia**: entrar (`openNest`) e sair (`closeNest`) do Formigueiro (`B` / botão `FORMIGUEIRO`).
-  3. **Telas pesadas e santuários**: entrada e saída da Árvore da Evolução (`TREE`, pré-assando `treeArtCanvas`), abertura dos Santuários dos Frutos (`openFruit`, baixando `loadSantuario` de ~5,1 MB e pré-assando a restauração de cor), Profecias (`PROPHECY`), Memórias (`MEMORY`) e replays de cutscenes em camadas.
-  4. **Aparições pesadas em jogo**: chegada da Onda do Chefão (pré-carregando e compondo o boss fora de vista antes do combate).
-- **Submenus leves** (`OPTIONS` e `HELP`) permanecem com transição rápida para não interromper ajustes simples de volume/acessibilidade.
-- **Execução invisível ao jogador**: a tela de carregamento (`loading_screen.js` / `runWithLoadingScreen`) cobre 100% do canvas (`alpha = 1`) **antes** de executar a tarefa pesada (no frame seguinte ao da cortina fechar), impedindo qualquer engasgo visual, pop-in de sprite ou tela incompleta.
+- **Com tela de carregamento — troca de mundo (`mundos`):** início/reinício de expedição (`newRun`, por JOGAR → CAMPANHA/MODO TESTE), avanço entre mapas (`advanceMap` / transição de fim de mapa) e trocas de mapa no Modo Teste (`PRÓXIMO MAPA`, `M1..M6` e tecla `N`), sempre com a lore do bioma.
+- **Sem tela de carregamento — pré-carregado no TITLE (`preload.js`):** ÁRVORE DA EVOLUÇÃO (arte e maçãs), os 7 Santuários dos Frutos (download de ~5,7 MB + cor restaurada), PROFECIAS, MEMÓRIAS e os replays das memórias (camadas da Noite Branca, 14 PNGs 320×180, ~0,7 MB), OPÇÕES, COMO JOGAR e o menu de modos. Entrar e voltar é transição rápida; o replay toca dentro de MEMÓRIAS e volta para ela.
+- **Instantâneos em jogo:** entrar e sair do Formigueiro (`B` / botão `FORMIGUEIRO`) e a chegada do Chefão (anunciado pelo banner `CHEFÃO DE MAPA`), sem tela de carregamento no meio do combate.
+- **Como pré-carregar:** começa ao chegar no TITLE; downloads em paralelo e trabalho de CPU em fatias de poucos ms por quadro (geradores), para o TITLE seguir a 60 FPS; PNGs decodificados fora da thread principal. Ordem: árvore → maçãs → flores → santuários → Noite Branca. Sem rede, prepara só o que já está na memória.
+- **Clique antes do fim (`abre_na_hora`):** a tela abre na hora, sem tela de carregamento; o trabalho de CPU que faltar termina ali mesmo (engasgo curto, no clique) e imagens ainda a caminho entram com fade quando chegam.
+- **Conteúdo pesado novo** acessível pelo TITLE entra na fila do `preload.js` — não ganha tela de carregamento.
+- **Execução invisível ao jogador (troca de mundo)**: a tela de carregamento (`loading_screen.js` / `runWithLoadingScreen`) cobre 100% do canvas (`alpha = 1`) **antes** de executar a tarefa pesada (no frame seguinte ao da cortina fechar), impedindo qualquer engasgo visual, pop-in de sprite ou tela incompleta.
 - **Confirmação manual ao concluir (`sempre_confirmar`)**: ao atingir 100% (`ready`), a tela de carregamento aguarda o clique/toque ou `ESPAÇO`/`ENTER` do jogador com aviso piscante (`CLIQUE, TOQUE OU PRESSIONE ESPAÇO PARA CONTINUAR`), permitindo ler a dica/lore do bioma sem pressa.
 
 ---
@@ -1823,7 +2194,7 @@ Ao final de cada tarefa, apresentar um **checklist de conferência** com este fo
 ```text
 1. PESQUISAR  → inspirações em jogos indies na Web (Regra 2)
 2. PERGUNTAR  → opções de implementação (Regra 1)
-3. IMPLEMENTAR → seguindo as escolhas do usuário, otimização (Regra 5) e tela de carregamento em cargas pesadas (Regra 14)
+3. IMPLEMENTAR → seguindo as escolhas do usuário, otimização (Regra 5) e Regra 14 (tela de carregamento só na troca de mundo; o que sai do TITLE é pré-carregado)
 4. ARTE       → imagens em alta resolução, pixel art harmônico (Regra 6) + Regra 8 não-humanóide
 5. MOSTRAR    → exibir toda arte gerada para aprovação visual (Regra 10)
 6. ADAPTAR    → mobile: todo input novo vira gesto/botão de toque (Regra 9)
@@ -3479,7 +3850,7 @@ parte dos blocos originais.
 
 | Arquivo original | Bytes preservados | SHA-256 |
 |---|---:|---|
-| `REGRAS_DE_TRABALHO.md` | 16637 | `d6da0d428d9c73e359fc7c461f846ac4ca36daaa52a09872cc8ce18fe2eaeb91` |
+| `REGRAS_DE_TRABALHO.md` | 17361 | `a5c02af789dedba56ba7c9d0dc016d51bc6aea4a3c8039a58d6b0542a6a0e6ba` |
 | `LORE.md` | 15056 | `42075fe4334601f1a74834388c0155342b2a8a6c21e51afa6020e34a5260f493` |
 | `DOCUMENTO_MEGA_ATUALIZACAO_LORE_TOTAL.md` | 30473 | `c642dd06d14e527bba6566458afa5293f697b0a3b981ef6301f6fafdfb9e856e` |
 | `DOCUMENTO_DECISOES_MEGA_ATUALIZACAO.md` | 8179 | `2b05240cd9fef9fb33d8a08768164f60202437c886c1c5b83f250ee9cbb58637` |

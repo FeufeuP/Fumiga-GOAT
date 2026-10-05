@@ -1,5 +1,6 @@
 // Abre um Chromium headless para os testes de navegador (inspect.mjs,
-// lorehud-browser.mjs). Ferramenta de desenvolvimento: nada disso vai para o jogo.
+// lorehud-browser.mjs, pwa-browser.mjs...) e dá acesso aos módulos do jogo
+// (importGameModules). Ferramenta de desenvolvimento: nada disso vai para o jogo.
 //
 // Onde procura o navegador, nesta ordem:
 //   1. CHROMIUM_PATH (+ CHROMIUM_LIBS opcional, pasta de .so extras)
@@ -39,6 +40,27 @@ export async function launchBrowser() {
       "Rode  bash tools/setup-dev.sh  e tente de novo.\n\n" + e.message.split("\n").slice(0, 6).join("\n"));
     process.exit(3);
   }
+}
+
+/**
+ * Importa módulos do jogo para `window.MOD` — as MESMAS instâncias que o jogo
+ * usa (resolve pelo <script> do main.js: vale para /game/ e /game/mobile/) — e
+ * deixa `window.M(arquivo)` para imports avulsos. Chame de novo após navegar.
+ *
+ * Existe para os predicados do page.waitForFunction serem SÍNCRONOS: o
+ * Playwright não espera a Promise de um predicado async (a Promise já conta
+ * como "verdadeira"), então a espera acabava na 1ª checagem sem esperar nada.
+ * game/test/browser-waits.mjs barra a volta desse padrão.
+ *   await importGameModules(page, { state: "state.js" });
+ *   await page.waitForFunction(() => MOD.state.G.screen === "PRETITLE");
+ */
+export async function importGameModules(page, files) {
+  await page.evaluate(async (files) => {
+    const root = document.querySelector('script[src*="main.js"]').src.replace(/main\.js.*$/, "");
+    window.M = (f) => import(root + f);
+    window.MOD = window.MOD || {};
+    for (const [k, f] of Object.entries(files)) window.MOD[k] = await import(root + f);
+  }, files);
 }
 
 /** Registra erros de JS, console.error, HTTP >= 400 e falhas de rede da página. */

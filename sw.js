@@ -1,6 +1,9 @@
 // FUMIGA — Service Worker compartilhado por PC/mobile, raiz local e GitHub Pages.
 // Código/assets são snapshots imutáveis por ASSET_V. A versão ativa e a versão
 // de cada cliente são persistidas: terminar o worker não perde o pacote offline.
+// O jogo pergunta a versão ativa (`versao-atual`) e recebe `versao-nova` quando
+// o snapshot ativo troca: se o motor que está rodando é de outra versão, ele
+// recarrega UMA vez no PRETITLE/TÍTULO (game/js/main.js) — nunca em expedição.
 // Atualizações são preparadas/verificadas antes de promover; a última cópia boa
 // e os snapshots de abas ainda abertas não são apagados por um download falho.
 const LISTA = "app/assets.json";
@@ -121,8 +124,20 @@ async function promover(lista, cache) {
   const controle = await caches.open(CONTROLE);
   // Commit persistente primeiro. Erro/quota não altera a versão ativa em memória.
   await controle.put(ATIVA_URL, jsonResponse({ versao: lista.version, anterior: previa }));
+  const mudou = VERSAO !== lista.version;
   anterior = previa; VERSAO = lista.version; CACHE = nomeCache(VERSAO);
   await limparAntigas();
+  // Depois de persistir e limpar: as páginas abertas podem decidir recarregar.
+  if (mudou) await avisarVersaoNova();
+}
+
+/** Conta às páginas abertas qual snapshot passou a valer (reload único no jogo). */
+async function avisarVersaoNova() {
+  try {
+    for (const c of await self.clients.matchAll({ type: "window", includeUncontrolled: true })) {
+      c.postMessage({ type: "versao-nova", versao: VERSAO, protocol: 2 });
+    }
+  } catch { /* sem páginas abertas: nada a avisar */ }
 }
 
 /** Prepara um snapshot sem tocar na versão ativa. Retoma arquivos já guardados. */
@@ -261,11 +276,12 @@ self.addEventListener("message", event => {
   const task = async () => {
     await inicializar();
     if (msg.type === "versao") { responder({ type: "versao", versao: VERSAO, cache: CACHE }); return; }
+    if (msg.type === "versao-atual") { responder({ type: "versao-atual", versao: VERSAO }); return; }
     if (msg.type === "baixar") await baixar(msg, responder);
     if (msg.type === "limpar") await limpar(responder);
   };
   // Leituras não esperam um download longo; mutações são serializadas.
-  event.waitUntil((msg.type === "versao" ? task() : emFila(task))
+  event.waitUntil(((msg.type === "versao" || msg.type === "versao-atual") ? task() : emFila(task))
     .catch(err => responder({ type: "erro", message: err.message || "Falha no armazenamento offline" })));
 });
 async function baixar(msg, responder) {

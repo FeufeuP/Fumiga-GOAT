@@ -3,7 +3,7 @@
 // Sobe o próprio servidor (ou use BASE_URL); CHROMIUM_PATH pode apontar a um browser.
 // Saídas fora do Git: HUD_SHOTS=/home/user/fumiga-hud-shots (padrão /tmp).
 import { startServer } from './lib/server.mjs';
-import { launchBrowser } from './lib/browser.mjs';
+import { launchBrowser, importGameModules } from './lib/browser.mjs';
 import fs from 'node:fs';
 import assert from 'node:assert/strict';
 const shots = process.env.HUD_SHOTS || '/tmp/fumiga-hud-shots';
@@ -15,7 +15,9 @@ try {
 const page=await browser.newPage({viewport:{width:1280,height:720}});
 const errors=[];page.on('pageerror',e=>errors.push(String(e)));page.on('response',r=>{if(r.status()>=400) errors.push(r.status()+' '+r.url())});
 await page.goto((process.env.BASE_URL || server.url) + '/game/');
-await page.waitForFunction(async()=> (await import('./js/state.js')).G.screen==='PRETITLE');
+// predicado SÍNCRONO lendo MOD: um async voltava na hora, antes do PRETITLE
+await importGameModules(page,{state:'state.js'});
+await page.waitForFunction(()=>MOD.state.G.screen==='PRETITLE',null,{timeout:30000});
 async function click(x,y){const box=await page.locator('canvas#game').boundingBox();await page.mouse.click(box.x+x*box.width/960,box.y+y*box.height/540);await page.waitForTimeout(900);}
 await click(480,270);await click(200,275);await click(114,282);
 // A abertura real do Mundo 1 é uma sequência: tela de carregamento (estilo

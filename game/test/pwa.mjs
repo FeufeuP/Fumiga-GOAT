@@ -186,7 +186,8 @@ for (const rel of PAGINAS) {
 // --------------------------------------------------------------------- 6 ----
 const totalBytes = lista.grupos.reduce((sum, g) => sum + g.bytes, 0);
 assert.ok(totalBytes > 5 * 1024 * 1024 && totalBytes < 200 * 1024 * 1024, "tamanho plausível para o jogo completo");
-assert.equal(pacoteCompleto.size, 231, "conjunto completo esperado de 231 arquivos");
+// Sobe quando entra asset novo (o painel 3 da Noite Branca trouxe 4 em 2026-10-04).
+assert.equal(pacoteCompleto.size, 235, "conjunto completo esperado de 235 arquivos");
 console.log("ok    pacote único — " + mb(totalBytes) + " · " + pacoteCompleto.size + " arquivos (sem versão parcial)");
 
 console.log("PWA OK — shell completo, sem pacote parcial, cache versionado e nenhum link quebrado");

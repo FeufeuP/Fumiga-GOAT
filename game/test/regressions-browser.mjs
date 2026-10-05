@@ -3,7 +3,7 @@
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import { startServer } from './lib/server.mjs';
-import { launchBrowser, watchPage } from './lib/browser.mjs';
+import { launchBrowser, watchPage, importGameModules } from './lib/browser.mjs';
 const OUT = process.env.REGRESSION_SHOTS || '/tmp/fumiga-regressions';
 fs.mkdirSync(OUT, { recursive: true });
 const server = process.env.BASE_URL ? null : await startServer();
@@ -19,10 +19,11 @@ try {
     await page.goto(base + path + '?debug&limpo&tela=TITLE&hud=0');
     await page.waitForFunction(() => window.FUMIGA?.pronto && FUMIGA.G.screen === 'TITLE');
     async function modules() {
-      await page.evaluate(() => {
-        const root = document.querySelector('script[src*="main.js"]').src.replace(/main\.js.*$/, '');
-        window.M = name => import(root + name); window.FUMIGA_DUMP_TEXTS = true;
-      });
+      // window.M (imports avulsos) + window.MOD (predicados SÍNCRONOS): um
+      // predicado async devolve uma Promise, que o Playwright NÃO espera —
+      // a espera voltaria na hora, sem ter checado nada (browser-waits.mjs).
+      await importGameModules(page, { render: 'render.js', loading: 'loading_screen.js', ui: 'ui.js', game: 'game.js' });
+      await page.evaluate(() => { window.FUMIGA_DUMP_TEXTS = true; });
     }
     await modules();
     // A tela só está estável quando a transição terminou: esperar por G.screen
@@ -113,7 +114,7 @@ try {
       FUMIGA.G.save.nodes = {}; FUMIGA.G.save.accessibility.invincible = false;
       FUMIGA.go('RUN', { mapa: 0, seed: 42 });
     });
-    await page.waitForFunction(async () => FUMIGA.G.screen === 'RUN' && !(await M('render.js')).hasTransition());
+    await page.waitForFunction(() => FUMIGA.G.screen === 'RUN' && !MOD.render.hasTransition());
     await click('nestBtn'); await page.waitForFunction(() => FUMIGA.G.run.baseOpen);
     await page.evaluate(async () => { FUMIGA.G.run.food = 0; (await M('units.js')).allies.queen.takeDamage(100000, 'foe'); });
     await page.waitForFunction(() => ['lost', 'ended'].includes(FUMIGA.G.run.status));
@@ -144,13 +145,13 @@ try {
           onFinish: () => loadingCounts.finish++,
         });
       }, big);
-      await page.waitForFunction(async () => !!(await M('loading_screen.js')).getLoadingError());
+      await page.waitForFunction(() => !!MOD.loading.getLoadingError());
       const failed = await page.evaluate(async () => {
         const L = await M('loading_screen.js');
         return { ready: L.isLoadingReady(), progress: L.getLoadingProgress(), dismiss: L.dismissLoadingScreen(), finish: loadingCounts.finish };
       });
       assert.equal(failed.ready, false); assert.ok(failed.progress < 1); assert.equal(failed.dismiss, false); assert.equal(failed.finish, 0);
-      await page.waitForFunction(async () => (await M('ui.js')).uiButtons().some(b => b.id === 'loadingRetry'));
+      await page.waitForFunction(() => MOD.ui.uiButtons().some(b => b.id === 'loadingRetry'));
       assert.deepEqual((await page.evaluate(() => FUMIGA.auditarLayout())).issues, [], 'erro de loading legível normal/grande');
       await page.screenshot({ path: OUT + '/' + name + '-loading-erro' + (big ? '-fonte-grande' : '') + '.png' });
       await click('loadingRetry');
@@ -170,12 +171,12 @@ try {
       assert.equal(afterRetry.counts.finish, 0);
       assert.ok(afterRetry.progress >= .98, 'retry chega a 100%: ' + JSON.stringify(afterRetry));
       await page.keyboard.press('Space');
-      await page.waitForFunction(async () => !(await M('loading_screen.js')).isLoadingActive());
+      await page.waitForFunction(() => !MOD.loading.isLoadingActive());
       assert.equal(await page.evaluate(() => loadingCounts.finish), 1);
       await page.evaluate(async () => (await M('loading_screen.js')).startLoadingScreen({ task: () => { throw new Error('falha ao preparar'); } }));
-      await page.waitForFunction(async () => !!(await M('loading_screen.js')).getLoadingError());
+      await page.waitForFunction(() => !!MOD.loading.getLoadingError());
       await click('loadingCancel');
-      await page.waitForFunction(async () => !(await M('loading_screen.js')).isLoadingActive());
+      await page.waitForFunction(() => !MOD.loading.isLoadingActive());
       assert.equal(await page.evaluate(() => FUMIGA.G.screen), 'TITLE');
       assert.equal(await page.evaluate(() => FUMIGA.G.run), null);
       results.loader.push({ bigFont: big, retry: true, cancel: true });
@@ -197,7 +198,7 @@ try {
     // APAGAR (em dois toques) precisa limpar de verdade.
     await go('OPTIONS');
     await click('tab5');
-    await page.waitForFunction(async () => (await M('ui.js')).uiButtons().some(b => b.id === 'ptExport'));
+    await page.waitForFunction(() => MOD.ui.uiButtons().some(b => b.id === 'ptExport'));
     // Deixa a captura estável e útil como exemplo, sem os erros que este teste
     // provoca intencionalmente nas regressões anteriores.
     await page.evaluate(async () => {
@@ -221,9 +222,9 @@ try {
     // segundo confirma. O gancho __ptArmed() diz que o jogo processou o 1º
     // antes de mandar o 2º (dois toques num quadro só viram um clique).
     await click('ptClear');
-    await page.waitForFunction(async () => (await M('game.js')).__ptArmed() === true);
+    await page.waitForFunction(() => MOD.game.__ptArmed() === true);
     await click('ptClear');
-    await page.waitForFunction(async () => (await M('game.js')).__ptArmed() === false);
+    await page.waitForFunction(() => MOD.game.__ptArmed() === false);
     results.playtest = {
       baixou: !!download,
       nome: download ? download.suggestedFilename() : '',

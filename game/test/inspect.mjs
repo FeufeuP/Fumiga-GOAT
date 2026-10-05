@@ -14,7 +14,7 @@
 import fs from "node:fs";
 import path from "node:path";
 import { startServer } from "./lib/server.mjs";
-import { launchBrowser, watchPage } from "./lib/browser.mjs";
+import { launchBrowser, watchPage, importGameModules } from "./lib/browser.mjs";
 
 const args = process.argv.slice(2);
 const OUT = process.env.INSPECT_OUT || "/tmp/fumiga-inspect";
@@ -42,12 +42,10 @@ const problems = [];
 const t0 = Date.now();
 
 async function waitReady(page, debug) {
-  await page.waitForFunction(async (dbg) => {
-    // resolve pelo <script> do main.js: vale para /game/ e /game/mobile/
-    const js = document.querySelector('script[src*="main.js"]').src.replace(/main\.js.*$/, "");
-    const { G } = await import(js + "state.js");
-    return G.screen !== "BOOT" && (!dbg || (window.FUMIGA && window.FUMIGA.pronto));
-  }, debug, { timeout: 30000, polling: 100 });
+  // predicado SÍNCRONO lendo MOD (um async voltava na hora, sem esperar o boot)
+  await importGameModules(page, { state: "state.js" });
+  await page.waitForFunction((dbg) => MOD.state.G.screen !== "BOOT" && (!dbg || (window.FUMIGA && window.FUMIGA.pronto)),
+    debug, { timeout: 30000, polling: 100 });
 }
 
 /** Mede frames reais por 2 s: fps médio e pior intervalo (ms). */

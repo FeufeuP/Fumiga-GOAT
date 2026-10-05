@@ -16,6 +16,7 @@
     "inspect:hud": "node game/test/lorehud-browser.mjs",
     "inspect:layout": "node game/test/layout-browser.mjs",
     "inspect:pwa": "node game/test/pwa-browser.mjs",
+    "inspect:preload": "node game/test/preload-browser.mjs",
     "playtest": "node tools/playtest.mjs",
     "serve": "node game/test/lib/server.mjs 8000",
     "setup": "bash tools/setup-dev.sh",

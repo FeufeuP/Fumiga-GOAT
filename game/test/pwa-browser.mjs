@@ -11,9 +11,10 @@
 //      "baixado" é "jogável sem internet", não só "arquivos no cache";
 //   5. abre a página do app (?v=mobile) offline e confere o botão JOGAR.
 import fs from "node:fs";
+import http from "node:http";
 import assert from "node:assert/strict";
 import { startServer } from "./lib/server.mjs";
-import { launchBrowser, watchPage } from "./lib/browser.mjs";
+import { launchBrowser, watchPage, importGameModules } from "./lib/browser.mjs";
 
 const OUT = process.env.PWA_SHOTS || "/tmp/fumiga-pwa";
 fs.mkdirSync(OUT, { recursive: true });
@@ -151,15 +152,11 @@ const gp = await ctx.newPage();
 watchPage(gp, problemas);
 await gp.goto(BASE + "/game/mobile/", { waitUntil: "load" });
 try {
-  await gp.waitForFunction(async () => {
-    const js = document.querySelector('script[src*="main.js"]').src.replace(/main\.js.*$/, "");
-    const { G } = await import(js + "state.js");
-    return G.screen !== "BOOT";
-  }, null, { timeout: 60000, polling: 120 });
-  dizer("offline: o jogo BOOTOU na versão mobile (tela " + await gp.evaluate(async () => {
-    const js = document.querySelector('script[src*="main.js"]').src.replace(/main\.js.*$/, "");
-    return (await import(js + "state.js")).G.screen;
-  }) + ")");
+  // predicado SÍNCRONO lendo MOD: um async devolveria uma Promise e a espera
+  // terminaria na 1ª checagem, sem provar boot nenhum (browser-waits.mjs).
+  await importGameModules(gp, { state: "state.js" });
+  await gp.waitForFunction(() => MOD.state.G.screen !== "BOOT", null, { timeout: 60000, polling: 120 });
+  dizer("offline: o jogo BOOTOU na versão mobile (tela " + await gp.evaluate(() => MOD.state.G.screen) + ")");
 } catch (e) {
   problemas.push("o jogo NÃO bootou com a rede desligada: " + (e.message || e).split("\n")[0]);
 }
@@ -188,7 +185,8 @@ const pc = await ctx.newPage();
 await pc.setViewportSize({ width: 1280, height: 720 });
 watchPage(pc, problemas);
 await pc.goto(BASE + "/game/", { waitUntil: "load" });
-await pc.waitForFunction(async () => (await import("./js/state.js")).G.screen !== "BOOT", null, { timeout: 60000 });
+await importGameModules(pc, { state: "state.js" });
+await pc.waitForFunction(() => MOD.state.G.screen !== "BOOT", null, { timeout: 60000 });
 await pc.screenshot({ path: OUT + "/4-pc-offline.png" });
 dizer("offline: boot do shell PC também OK");
 
@@ -242,10 +240,113 @@ const rollbackVersion = await fp.evaluate(async () => (await import("./app/offli
 assert.equal(rollbackVersion.versao, before.lista.version);
 const recovered = await faultCtx.newPage();
 await recovered.goto(BASE + "/game/mobile/", { waitUntil: "load" });
-await recovered.waitForFunction(async () => (await import("../js/state.js")).G.screen !== "BOOT", null, { timeout: 60000 });
+await importGameModules(recovered, { state: "state.js" });
+await recovered.waitForFunction(() => MOD.state.G.screen !== "BOOT", null, { timeout: 60000 });
 await recovered.screenshot({ path: OUT + "/5-update-falho-offline.png" });
 dizer("depois do update falho + restart: boot offline continua OK");
 await faultCtx.close();
+
+// ------------------- 6) atualização: a 1ª abertura depois da versão nova --
+// O worker serve o snapshot do cliente: a 1ª abertura depois de uma atualização
+// ainda roda o motor anterior. Aqui uma "rede" com atraso (como a internet)
+// publica uma versão falsa, deixa o navegador guardá-la e depois publica a
+// verdadeira: o jogo tem que se corrigir sozinho com UMA recarga — e nunca com
+// uma expedição em andamento (decisão do usuário, 2026-10-05, opção B).
+if (!process.env.BASE_URL) {
+  let falsa = null;
+  const reescreve = {
+    "/game/js/assets.js": [/ASSET_V = "[^"]*"/, (v) => 'ASSET_V = "' + v + '"'],
+    "/app/assets.json": [/"version": "[^"]*"/, (v) => '"version": "' + v + '"'],
+  };
+  const fake = http.createServer((req, res) => setTimeout(() => {
+    const regra = falsa && reescreve[req.url.split("?")[0]];
+    const up = http.request({ host: "127.0.0.1", port: server.port, path: req.url, method: req.method, headers: req.headers }, (r) => {
+      if (!regra) { res.writeHead(r.statusCode, r.headers); r.pipe(res); return; }
+      const partes = [];
+      r.on("data", (c) => partes.push(c));
+      r.on("end", () => {
+        const corpo = Buffer.from(Buffer.concat(partes).toString("utf8").replace(regra[0], regra[1](falsa)));
+        res.writeHead(r.statusCode, { ...r.headers, "content-length": corpo.length });
+        res.end(corpo);
+      });
+    });
+    up.on("error", () => res.writeHead(502).end());
+    req.pipe(up);
+  }, 200));
+  await new Promise((ok) => fake.listen(0, "127.0.0.1", ok));
+  const REDE = "http://127.0.0.1:" + fake.address().port;
+
+  const upCtx = await browser.newContext({ viewport: { width: 960, height: 540 } });
+  const up = await upCtx.newPage();
+  watchPage(up, problemas);
+  let navegacoes = 0;
+  up.on("framenavigated", (f) => { if (f === up.mainFrame()) navegacoes++; });
+  // qual versão o 1º documento recebeu: se o snapshot velho tocava, a recarga
+  // automática é obrigatória; se já veio a nova, o certo é NÃO recarregar
+  let primeiraVersao = "?";
+  up.on("response", async (r) => {
+    if (primeiraVersao !== "?" || !/\/game\/js\/assets\.js(\?|$)/.test(r.url())) return;
+    try { primeiraVersao = ((await r.text()).match(/ASSET_V = "([^"]*)"/) || [])[1] || "?"; } catch { /* corpo indisponível */ }
+  });
+  const versaoRodando = async () => {
+    await importGameModules(up, { assets: "assets.js", state: "state.js" });
+    await up.waitForFunction(() => MOD.state.G.screen === "PRETITLE", null, { timeout: 90000 });
+    return up.evaluate(() => MOD.assets.ASSET_V);
+  };
+  try {
+    // a) forma o snapshot velho: a página oficial registra o worker; o jogo o guarda
+    falsa = "teste-velha";
+    await up.goto(REDE + "/", { waitUntil: "load" });
+    await up.evaluate(async () => { await navigator.serviceWorker.ready; });
+    await up.reload({ waitUntil: "load" });
+    await up.goto(REDE + "/game/", { waitUntil: "load" });
+    assert.equal(await versaoRodando(), "teste-velha", "snapshot velho montado para o teste");
+
+    // b) publica a versão nova: o jogo se corrige sozinho, sem laço
+    falsa = null;
+    navegacoes = 0;
+    primeiraVersao = "?";
+    await up.goto(REDE + "/game/", { waitUntil: "commit" });
+    const fim = Date.now() + 20000;
+    while (primeiraVersao === "?" && Date.now() < fim) await up.waitForTimeout(150);
+    const rodouVelho = primeiraVersao === "teste-velha";
+    if (rodouVelho) {
+      const prazo = Date.now() + 30000;
+      while (navegacoes < 2 && Date.now() < prazo) await up.waitForTimeout(200);
+    }
+    await up.waitForLoadState("load").catch(() => {});
+    const depois = await versaoRodando();
+    await up.waitForTimeout(3000);                       // não pode virar laço
+    dizer("atualização: 1ª abertura " + (rodouVelho ? "rodou o snapshot velho" : "já veio da versão nova") +
+      " → " + (navegacoes - 1) + " recarga automática, terminou rodando " + depois);
+    assert.equal(depois, versao, "a 1ª abertura depois da atualização termina na versão nova");
+    if (rodouVelho) assert.equal(navegacoes, 2, "exatamente 1 recarga automática (sem laço)");
+    else assert.equal(navegacoes, 1, "não recarrega quando o código já é o novo");
+
+    // c) versão nova com expedição DE VERDADE em andamento: só recarrega no título
+    await up.goto(REDE + "/game/?debug&tela=RUN&mapa=1&seed=7&hud=0", { waitUntil: "load" });
+    await importGameModules(up, { state: "state.js" });
+    await up.waitForFunction(() => MOD.state.G.screen === "RUN" && !!MOD.state.G.run, null, { timeout: 90000 });
+    falsa = "teste-outra";
+    navegacoes = 0;
+    const outra = await upCtx.newPage();                 // outra aba navega: o worker promove a versão
+    await outra.goto(REDE + "/", { waitUntil: "load" });
+    await up.waitForTimeout(6000);
+    const durante = navegacoes;
+    await up.evaluate(() => FUMIGA.go("TITLE"));
+    const prazoC = Date.now() + 20000;
+    while (navegacoes < 1 && Date.now() < prazoC) await up.waitForTimeout(200);
+    dizer("atualização: com expedição em andamento " + (durante ? "RECARREGOU (errado)" : "não recarregou") +
+      "; ao voltar ao título " + (navegacoes ? "recarregou" : "NÃO recarregou"));
+    assert.equal(durante, 0, "nunca recarrega no meio de uma expedição");
+    assert.ok(navegacoes >= 1, "recarrega quando o jogador volta ao título com versão nova pendente");
+    await outra.close();
+  } catch (err) {
+    problemas.push("atualização: " + (err.message || err).split("\n")[0]);
+  }
+  await upCtx.close();
+  fake.close();
+}
 
 } catch (err) {
   problemas.push(err.stack || String(err));

@@ -18,17 +18,19 @@ const CUTSCENE_DEFS = {
     biome: "planicie",
     panels: [
       {
-        id: "panel1_intro", assetPanel: "panel1", layerCount: 8,
+        // camadas com arte (o índice é o slot do parallax; 3 = chão ficou fora)
+        id: "panel1_intro", assetPanel: "panel1", layers: [0, 1, 2, 4, 5, 6, 7],
         lore: "Era uma vez uma colônia que vivia sob a lua laranja. A Rainha Silenciosa cantava com feromônio.",
         tip: "DICA: Segure H para ver o mundo como as formigas veem — com cheiro.",
       },
       {
-        id: "panel2_conflito", layerCount: 3,
+        id: "panel2_conflito", layers: [0, 1, 2],
         lore: "Na Noite Branca, a névoa subiu do vale sem vento. Ela não queimava. Ela lembrava.",
         tip: "DICA: Cristais roxos guardam memória. Colete essência para a Árvore.",
       },
       {
-        id: "panel3_gancho",
+        // arte de 2026-10-04: céu de bruma, a Pálida, névoa da frente, cisco de memória
+        id: "panel3_gancho", layers: [0, 2, 4, 5],
         lore: "No alto da névoa, algo pálido observava. Forma de rainha, fios de bruma. A Pálida.",
         tip: "DICA: A Pálida não é inimiga. É a memória que a colônia esqueceu.",
       },
@@ -120,7 +122,20 @@ const CUTSCENE_DEFS = {
 };
 
 let active = null;
-let layerImgs = []; // 8 layers; painéis ainda sem arte usam o fallback procedural
+let layerImgs = []; // 8 slots; painéis (ou slots) sem arte usam o fallback procedural
+// As camadas já vêm do disco no tamanho desenhado: 320×180 RGBA, ampliadas 3×
+// sem suavização (tools/fix_noite_branca.py; ~60 KB cada). Regra 14: o TITLE
+// pré-carrega a Noite Branca (preload.js), então replay e 1ª expedição abrem
+// completos; camada que ainda estiver a caminho entra com fade. Falha libera
+// nova tentativa depois.
+const LAYER_NAMES = ["sky", "distant", "mid", "ground", "foreground", "particles", "vfx", "vignette"];
+const LAYER_FADE = 0.35;
+// Conexão travada vira o fallback desenhado e libera nova tentativa, em vez de
+// faltar para sempre (uma camada leva ~2 s até em 3G lento).
+const LAYER_TIMEOUT_MS = 20000;
+const LAYER_READY = new Map();    // url -> ImageBitmap (ou <img>) 320×180
+const LAYER_LOADING = new Map();  // url -> Promise
+const layerAt = new Float64Array(8).fill(-Infinity); // quando cada camada surgiu (fade)
 
 export function getCutsceneDefs() { return CUTSCENE_DEFS; }
 
@@ -151,6 +166,36 @@ export function startCutscene(id, opts = {}) {
   return true;
 }
 
+function layerUrl(def, panel, i) {
+  return assetUrl(`assets/cutscenes/${def.id}/${panel.assetPanel || panel.id}/${i}_${LAYER_NAMES[i]}.png`);
+}
+
+// PNG da camada baixado como Blob e decodificado numa thread de fundo
+// (ImageBitmap): nada de decodificação na thread principal durante o TITLE.
+function decodeLayer(url) {
+  if (typeof fetch !== "function" || typeof createImageBitmap !== "function") return loadImage(url);
+  const ctrl = typeof AbortController === "function" ? new AbortController() : null;
+  const timer = ctrl ? setTimeout(() => ctrl.abort(), LAYER_TIMEOUT_MS) : 0;
+  return fetch(url, ctrl ? { signal: ctrl.signal } : undefined)
+    .then((r) => (r.ok ? r.blob() : Promise.reject(new Error("HTTP " + r.status))))
+    .then((blob) => createImageBitmap(blob).catch(() => loadImage(url)))
+    .finally(() => clearTimeout(timer));
+}
+
+function loadLayer(url) {
+  const ready = LAYER_READY.get(url);
+  if (ready) return Promise.resolve(ready);
+  let loading = LAYER_LOADING.get(url);
+  if (!loading) {
+    loading = decodeLayer(url).then((layer) => {
+      LAYER_READY.set(url, layer);
+      return layer;
+    }).finally(() => LAYER_LOADING.delete(url));
+    LAYER_LOADING.set(url, loading);
+  }
+  return loading;
+}
+
 function loadPanelLayers(def, pIdx) {
   const panel = def.panels[pIdx];
   if (!panel) return;
@@ -158,24 +203,31 @@ function loadPanelLayers(def, pIdx) {
   // Cada carga escreve no próprio array: uma imagem lenta do painel anterior
   // nunca pode substituir uma camada do painel que o jogador acabou de abrir.
   const images = layerImgs = Array(8).fill(null);
-  const names = ["sky", "distant", "mid", "ground", "foreground", "particles", "vfx", "vignette"];
-  for (let i = 0; i < (panel.layerCount || 0); i++) {
-    // prazo + retry (loadImage): em 4G, uma camada de corte que não responde
-    // deixaria o painel faltando PARA SEMPRE; agora ela vira o fallback desenhado
-    loadImage(assetUrl(`assets/cutscenes/${def.id}/${panel.assetPanel || panel.id}/${i}_${names[i]}.png`))
-      .then((img) => {
-        // Adequar a arte-fonte uma única vez à resolução do parallax, não
-        // redimensionar oito PNGs de alta resolução em todo frame da introdução.
-        const layer = document.createElement("canvas");
-        layer.width = 320; layer.height = 180;
-        const c = layer.getContext("2d");
-        c.imageSmoothingEnabled = false;
-        c.drawImage(img, 0, 0, layer.width, layer.height);
-        images[i] = layer;
-      })
-      .catch(() => { images[i] = null; });
+  layerAt.fill(-Infinity);
+  for (const i of panel.layers || []) {
+    const url = layerUrl(def, panel, i), ready = LAYER_READY.get(url);
+    if (ready) { images[i] = ready; continue; }   // pré-carregada: aparece inteira
+    loadLayer(url).then((layer) => {
+      if (layerImgs === images) layerAt[i] = G.time;
+      images[i] = layer;
+    }, () => { images[i] = null; });
   }
 }
+
+/** Regra 14 — pré-carregamento do TITLE: baixa e decodifica as camadas de
+ *  uma cutscene, um painel por vez (o 1º painel chega antes). */
+export function* cutsceneLayerSteps(id) {
+  const def = CUTSCENE_DEFS[id];
+  if (!def) return;
+  for (const panel of def.panels) {
+    const loads = [];
+    for (const i of panel.layers || []) loads.push(loadLayer(layerUrl(def, panel, i)).catch(() => null));
+    if (loads.length) yield Promise.all(loads);
+  }
+}
+
+/** Diagnóstico (testes): quantas camadas decodificadas já estão na memória. */
+export function cutsceneLayersReady() { return LAYER_READY.size; }
 
 export function updateCutscene(dt) {
   if (!active) return null;
@@ -224,6 +276,10 @@ export function drawCutscene(ctx, time) {
   const oy = (VIEW_H - drawH) / 2;
 
   ctx.imageSmoothingEnabled = false;
+  const baseAlpha = ctx.globalAlpha;
+  // Painel com arte: slot que ele não usa fica vazio (sem névoa procedural por
+  // cima da névoa pintada); painel sem arte desenha tudo no fallback.
+  const art = panel.layers;
   for (let i = 0; i < 8; i++) {
     const img = layerImgs[i];
     const speed = speeds[i];
@@ -232,12 +288,9 @@ export function drawCutscene(ctx, time) {
     if (i === 5) { // particles sway
       // partículas flutuam
     }
-    if (img) {
-      ctx.globalAlpha = i === 6 ? 0.85 : i === 7 ? 0.9 : 1;
-      ctx.drawImage(img, ox + offX, oy + offY, drawW, drawH);
-      ctx.globalAlpha = 1;
-    } else {
-      // fallback: cor por layer
+    const fade = img ? Math.min(1, (time - layerAt[i]) / LAYER_FADE) : 0;
+    if (fade < 1 && (!art || art.includes(i))) {
+      // fallback: cor por layer (também por baixo da camada que está chegando)
       if (i === 0) {
         const grad = ctx.createLinearGradient(0, oy, 0, oy+drawH);
         grad.addColorStop(0, "#1a1430");
@@ -276,6 +329,11 @@ export function drawCutscene(ctx, time) {
         ctx.fill();
       }
     }
+    if (img) {
+      ctx.globalAlpha = baseAlpha * (i === 6 ? 0.85 : i === 7 ? 0.9 : 1) * fade;
+      ctx.drawImage(img, ox + offX, oy + offY, drawW, drawH);
+      ctx.globalAlpha = baseAlpha;
+    }
   }
 
   // vinheta gótica por cima se não tem layer 7
@@ -311,7 +369,10 @@ export function drawCutscene(ctx, time) {
   const lines = wrapText(fullText.slice(0, active.textShown), innerW - 24, { scale: textScale * fontMult });
   const boxH = 20 + fullLines.length * lineH;
   const boxY = VIEW_H - 72 - boxH;
-  ctx.fillStyle = "rgba(10,8,16,0.92)";
+  // Caixa da narração translúcida (decisão 2026-10-04): a cena aparece por trás
+  // (as patas da fila do painel 2 ficavam escondidas); a sombra do drawText
+  // segura a leitura.
+  ctx.fillStyle = "rgba(10,8,16,0.7)";
   ctx.fillRect(margin, boxY, innerW, boxH);
   ctx.strokeStyle = "#4a3a6e";
   ctx.lineWidth = 1;
@@ -330,7 +391,7 @@ export function drawCutscene(ctx, time) {
     ctx.fill();
   }
   const isLast = active.panelIdx === def.panels.length - 1;
-  const action = active.textShown < fullText.length ? "MOSTRAR TEXTO" : isLast ? "JOGAR" : "PRÓXIMO PAINEL";
+  const action = active.textShown < fullText.length ? "MOSTRAR TEXTO" : isLast ? (active.fromLibrary ? "VOLTAR ÀS MEMÓRIAS" : "JOGAR") : "PRÓXIMO PAINEL";
   const hint = active.isLoading
     ? "CARREGANDO... " + Math.ceil(active.autoCloseT) + "s"
     : "ENTER / ESPAÇO / CLIQUE: " + action + " • ESC: PULAR";
