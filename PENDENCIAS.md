@@ -19,9 +19,10 @@ branch arena/01a0fc42)”** (perto do fim, seção da distribuição). **Não le
 
 ## 0. Como usar (vale para qualquer item daqui — e para pendências futuras)
 
-1. Siga o fluxo obrigatório das regras: **pesquisar inspirações na web (Regra 2) → perguntar com
-   opções A/B/C + impacto (Regra 1) → implementar → adaptar o mobile (Regra 9) → check-in (Regra 3) →
-   jogar/inspecionar (Regra 4) → preview no fim (Regra 7) → documentar (Regra 12)**.
+1. Siga o fluxo obrigatório das regras: **ler o MEGA_ARQUIVO (Regra 15) → pesquisar inspirações
+   na web (Regra 2) → perguntar com opções A/B/C + impacto (Regra 1) → implementar → adaptar o mobile
+   (Regra 9) → check-in (Regra 3) → jogar/inspecionar (Regra 4) → preview no fim (Regra 7) →
+   documentar (Regra 12)**.
 2. Ambiente no começo da sessão (~20 s): `bash tools/setup-dev.sh`; depois `npm test` e
    `npm run inspect` (PC + mobile) precisam estar verdes **antes** de qualquer “salvar no GitHub”.
 3. Teste de navegador usa predicado **síncrono** lendo `MOD` (`importGameModules`, `game/test/lib/browser.mjs`);

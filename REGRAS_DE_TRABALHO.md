@@ -124,15 +124,17 @@ Ao final de cada tarefa, apresentar um **checklist de conferência** com este fo
 
 ---
 
-## Regra 8 — Design não-humanóide obrigatório 🐜
+## Regra 8 — Humanização moderada: acessórios e ofícios sim, corpo humano não 🐜
 
-> **Nada no design dos personagens do jogo deve remeter a humanos, ou humanóides. A única exceção será quando o usuário pedir explicitamente.**
+> **Pode existir humanização, porém não exagerada: formigas e demais seres podem utilizar ferramentas, acessórios, skins e itens, mas nunca ter a aparência humanizada — como se tornar bípedes.** (decisão do usuário, 2026-10-06 — substitui a redação anterior, que proibia qualquer traço humanóide)
 
-- Todos os personagens jogáveis (formigas), inimigos, bosses e NPCs visuais devem ser **estritamente baseados em fauna real, insetos, aracnídeos, ou criaturas míticas não-humanóides** — nunca silhueta humana, rosto humano, mãos, roupas humanóides.
-- Exceções apenas com pedido explícito do usuário (ex.: “crie um NPC humanoide para a cutscene X”).
-- Mesmo quando a lore fala de “rainha” ou “matriarca”, a representação deve ser **formiga-rainha gigante**, não mulher-inseto. A PÁLIDA é uma marionete de névoa em forma de rainha-formiga, não humanoide.
-- Validação: antes de gerar qualquer asset de personagem, checar se há traços humanóides (olhos frontais humanos, boca humana, postura bípede humana). Se houver, refazer.
-- Inspirações válidas: *Hollow Knight*, *Rain World* [2](https://www.reddit.com/r/gamingsuggestions/comments/1ivfjbo/games_where_you_play_a_nonhumanoid_like_stray_or/), *Webbed* (aranha), *Shelter* (texugo), *Stray* mas com insetos — todos com protagonismo não-humano sem humanização.
+- **Permitido:** ferramentas (lanças, pás, martelos, arcos), acessórios (mochilas, cintos, amuletos, elmos), skins e itens equipáveis — sempre dimensionados ao corpo do animal, sem alterar sua anatomia.
+- **Permitido:** ofícios e trabalhos de inspiração humana — ferraria, artesanato, alquimia, magia etc. — desde que **sem fugir do estilo natural do animal em questão**: uma formiga ferreira continua sendo uma formiga (seis patas, exoesqueleto, antenas, silhueta de inseto).
+- **Proibido:** aparência humanizada — postura bípede humana, rosto humano, mãos humanas, roupas humanóides. A silhueta continua sendo a do animal real (ou criatura mítica não-humanóide) de origem.
+- Exceções além disso só com pedido explícito do usuário (ex.: “crie um NPC humanoide para a cutscene X”).
+- Mesmo com acessórios e ofícios, a lore continua valendo: a “rainha” é uma **formiga-rainha gigante**, não mulher-inseto; a PÁLIDA é uma marionete de névoa em forma de rainha-formiga, não humanoide.
+- Validação: antes de gerar qualquer asset de personagem, checar se há traços de aparência humana (olhos frontais humanos, boca humana, bipedia). Se houver, refazer.
+- Inspirações válidas: *Hollow Knight*, *Rain World* [2](https://www.reddit.com/r/gamingsuggestions/comments/1ivfjbo/games_where_you_play_a_nonhumanoid_like_stray_or/), *Webbed* (aranha), *Shelter* (texugo) — protagonismo não-humano com ferramentas e ofícios, sem humanizar o corpo.
 
 ## Regra 9 — Adaptar toda mudança para a versão mobile 📱
 
@@ -210,15 +212,77 @@ Ao final de cada tarefa, apresentar um **checklist de conferência** com este fo
 - **Execução invisível ao jogador (troca de mundo)**: a tela de carregamento (`loading_screen.js` / `runWithLoadingScreen`) cobre 100% do canvas (`alpha = 1`) **antes** de executar a tarefa pesada (no frame seguinte ao da cortina fechar), impedindo qualquer engasgo visual, pop-in de sprite ou tela incompleta.
 - **Confirmação manual ao concluir (`sempre_confirmar`)**: ao atingir 100% (`ready`), a tela de carregamento aguarda o clique/toque ou `ESPAÇO`/`ENTER` do jogador com aviso piscante (`CLIQUE, TOQUE OU PRESSIONE ESPAÇO PARA CONTINUAR`), permitindo ler a dica/lore do bioma sem pressa.
 
+## Regra 15 — Sempre ler o MEGA ARQUIVO 📚
+
+> **Sempre ler o `MEGA_ARQUIVO.md` em qualquer coisa que o usuário pedir.** (decisão do usuário, 2026-10-06)
+
+- No início de **toda** tarefa, abrir o `MEGA_ARQUIVO.md` pelo índice (“Como consultar”) e ler os
+  **registros mais recentes** + as **seções pertinentes ao pedido** (decisões, entregas e pendências
+  da área afetada) — nunca trabalhar sem esse contexto.
+- O MEGA é a memória do projeto: antes de propor, perguntar ou implementar, conferir o que já foi
+  decidido, aprovado, rejeitado ou deixado pendente sobre o assunto.
+- Se o pedido tocar um tema sem registro, isso também se anota: a ausência de histórico vira
+  observação no check-in/documentação da entrega (Regra 12).
+
+## Regra 16 — Imagens em grupos de no máximo 10 🖼️
+
+> **Sempre gerar imagens em grupos de no máximo 10 por rodada — nunca mais que isso.** (decisão do usuário, 2026-10-06)
+
+- Cada rodada de geração tem teto de **10 imagens** (incluindo as opções apresentadas lado a lado
+  pela Regra 6).
+- Demandas maiores são **fatiadas em rodadas de até 10**, com apresentação/confirmação entre elas —
+  nunca uma avalanche de uma vez.
+- A cadência das flores (9 + 9) já cabe nesse teto; qualquer pipeline futuro de arte deve ser
+  desenhado respeitando-o.
+
+## Regra 17 — Estilo top-down para o mundo do jogo 🗺️
+
+> **Mapas, personagens, itens, elementos dos mapas, ferramentas etc. são sempre gerados em estilo top-down. A única exceção são ilustrações: telas de carregamento, telas de menus, árvore de habilidades e maçãs. Santuários e flores também são top-down.** (decisão do usuário, 2026-10-06)
+
+- **Top-down (vista de cima)** vale para tudo que existe *dentro* do mundo jogável: terreno dos
+  biomas, personagens, inimigos, chefes, itens, ferramentas, construções, santuários e flores.
+- **Ilustrações** (fora do mundo jogável) são a exceção: telas de carregamento, telas de menus/TITLE,
+  árvore de habilidades e maçãs seguem livres no enquadramento que servir melhor à peça.
+- Toda arte top-down nova mantém **o mesmo ângulo de câmera, escala relativa e direção de sombra/luz**
+  da arte top-down já aprovada, além da harmonia de paleta da Regra 6.
+- Na dúvida sobre a categoria de uma peça (“é mundo ou ilustração?”), perguntar ao usuário
+  (Regra 1) antes de gerar.
+
+## Regra 18 — Prompt-mestre do estilo artístico 🎨
+
+> **Assim que um estilo artístico for escolhido permanentemente, salvá-lo e criar um prompt padrão, usado em toda nova imagem, para que o estilo seja sempre mantido em todo o jogo.** (decisão do usuário, 2026-10-06)
+
+- Quando o usuário aprovar um estilo como definitivo, registrar imediatamente o **prompt-mestre**:
+  descrição canônica do estilo (técnica, paleta, contorno, sombreamento, enquadramento, fundo,
+  o que evitar) — ele passa a abrir **toda** geração/edição de imagem, somando-se apenas os
+  detalhes específicos do assunto da peça.
+- O prompt-mestre fica salvo em registro próprio no `MEGA_ARQUIVO.md` (Regra 12) e referenciado a
+  cada entrega de arte, para auditoria (“esta imagem usou o prompt-mestre + <detalhes>”).
+- O prompt-mestre só muda com aprovação explícita do usuário, em rodada de opções (Regra 6);
+  a mudança é registrada com data, motivo e o texto anterior preservado no histórico.
+
+## Regra 19 — Mapas gerados limpos, sem decorativos 🏗️
+
+> **Ao gerar mapas para os mundos, criar o mapa inteiro, porém sem elementos decorativos — como flores, árvores, pedras, buracos, rachaduras, arbustos etc. Vale também para vilas e cidades quanto às construções.** (decisão do usuário, 2026-10-06)
+
+- A primeira passada do mapa entrega o **terreno/layout completo e limpo** (forma, relevo, caminhos,
+  zonas) — legível para o gameplay antes de qualquer enfeite.
+- Decorativos (vegetação, pedras, rachaduras, props) e construções (vilas, cidades, edifícios)
+  entram em **passadas separadas**, cada uma aprovada à parte — nunca embutidos no mapa-base
+  sem confirmação.
+- Isso mantém as camadas combináveis (base × decoração × construções) e evita refazer o mapa
+  inteiro quando só o decorativo muda.
+
 ---
 
 ## 🔄 Resumo do fluxo obrigatório a cada pedido
 
 ```text
+0. LER MEGA    → abrir o MEGA_ARQUIVO (índice + registros recentes + seções do tema) em todo pedido (Regra 15)
 1. PESQUISAR  → inspirações em jogos indies na Web (Regra 2)
 2. PERGUNTAR  → opções de implementação (Regra 1)
 3. IMPLEMENTAR → seguindo as escolhas do usuário, otimização (Regra 5) e Regra 14 (tela de carregamento só na troca de mundo; o que sai do TITLE é pré-carregado)
-4. ARTE       → imagens em alta resolução, pixel art harmônico (Regra 6) + Regra 8 não-humanóide
+4. ARTE       → imagens em alta resolução, pixel art harmônico (Regra 6) + humanização moderada (Regra 8) + top-down no mundo do jogo (Regra 17) + mapas-base limpos (Regra 19), em rodadas de no máx. 10 imagens (Regra 16), sempre partindo do prompt-mestre de estilo (Regra 18)
 5. MOSTRAR    → exibir toda arte gerada para aprovação visual (Regra 10)
 6. ADAPTAR    → mobile: todo input novo vira gesto/botão de toque (Regra 9)
 7. VERIFICAR  → check-in com checklist do que foi pedido (Regra 3)
