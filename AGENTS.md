@@ -102,7 +102,9 @@ faltando e o último erro. No console: `FUMIGA.ajuda()`, `FUMIGA.go('RUN', {mapa
 - **Arte nova, arquivo movido ou qualquer byte mudado em `game/` ou `app/`** → subir `ASSET_V`, rodar
   `node tools/make_assets_list.mjs` e sincronizar os shells nativos com `node tools/sync-native-assets.mjs`.
   `app/assets.json` alimenta o único download offline completo (232 arquivos, ~24,8 MB); `test/pwa.mjs`
-  compara a lista com a árvore real. Arquivo de arte não usado vai para `art-source/` (Regra 13).
+  compara a lista com a árvore real. Arquivo de arte não usado vai para `art-source/` e deve ter
+  cópia na pasta dedicada do projeto no Google Drive (Regra 13); se o Drive não estiver disponível,
+  preservá-lo em outro local persistente.
 - **Novo atalho de teclado** → trate em `game.js` **e** crie o botão/gesto em `mobile/touch.js`
   (Regra 9) + texto em `HELP_CONTROLS_TOUCH`.
 - **Tela nova** → `update*`/`render*` em `game.js` (switch de `G.screen`), entrada por

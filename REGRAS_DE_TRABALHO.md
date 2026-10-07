@@ -185,19 +185,28 @@ Ao final de cada tarefa, apresentar um **checklist de conferência** com este fo
   tamanho/SHA-256 no MEGA ARQUIVO; validar com `node game/test/docs.mjs`.
 - A atualização documental faz parte da entrega, não fica para uma sessão futura.
 
-## Regra 13 — Salvar as imagens selecionadas no Arena 💾
+## Regra 13 — Preservar imagens do jogo e imagens geradas no Google Drive 💾
 
-> **Toda imagem selecionada/aprovada pelo usuário deve permanecer salva no workspace do Arena, para nunca ser perdida.**
+> **Sempre salvar todas as imagens do jogo e todas as imagens geradas pelo assistente em uma pasta dedicada do Google Drive, para que nenhuma imagem se perca entre mensagens ou sessões.**
 
-- Os originais de alta resolução (ex.: `art-source/flores/`) continuam **fora do Git** por decisão do
-  projeto (`.gitignore`), mas devem **sempre** existir no workspace persistente do Arena.
-- Além da pasta de trabalho, manter um **espelho de segurança** em `~/art-source-backup/`
-  (fora do repositório, dentro do workspace do Arena), sincronizado a cada nova arte aprovada.
-- Vale para todo asset gerado: sprites, prévias e mockups — incluindo as versões que o usuário
-  escolheu entre as opções (Regra 6) e as artes refeitas depois de ajustes.
-- Motivo: o ambiente onde a arte é gerada pode não ser o mesmo de uma sessão futura; sem o arquivo
-  original, qualquer ajuste posterior exigiria refazer a arte do zero (como ocorreu com os
-  originais do Santuário da Planície).
+- Manter no Drive uma cópia de segurança de todas as imagens pertencentes ao jogo, inclusive as já
+  existentes, e atualizá-la quando imagens forem criadas ou alteradas. Isso abrange sprites, ícones,
+  cenários, UI e demais assets, além de toda imagem gerada, editada ou derivada pelo assistente:
+  originais em alta resolução, versões finais/otimizadas, prévias, mockups e opções/variantes geradas.
+- Usar sempre a mesma pasta dedicada do projeto no Google Drive, acessando-a pela integração do
+  Drive quando disponível; se ela ainda não existir, criar uma pasta de imagens do FUMIGA e
+  reutilizá-la, mantendo nomes e subpastas que permitam localizar cada arquivo. Confirmar que o
+  upload terminou e que o arquivo está acessível; não substituir o original ao salvar uma versão
+  editada.
+- Quando uma imagem também for usada pelo jogo, manter a cópia operacional no caminho correto do
+  repositório (por exemplo, `game/assets/`) e salvar uma cópia de segurança no Drive. Originais que
+  ficam fora do Git (por exemplo, `art-source/`) também devem ter cópia no Drive.
+- Se não for possível salvar no Drive, salvar imediatamente onde for possível em um local persistente
+  disponível (por exemplo, no workspace do Arena, em `art-source/` ou no repositório, conforme o
+  tipo de arquivo). Não deixar a única cópia em preview, arquivo temporário ou armazenamento que
+  desapareça entre mensagens; não apagar cópias locais antes de confirmar uma cópia de segurança.
+- Ao concluir, informar o caminho da pasta/arquivo no Drive ou, se foi necessário usar a alternativa,
+  o caminho persistente onde a imagem ficou salva.
 
 ## Regra 14 — Tela de Carregamento só na troca de mundo; o que sai do TITLE é pré-carregado ⏳
 
@@ -290,7 +299,7 @@ Ao final de cada tarefa, apresentar um **checklist de conferência** com este fo
 9. PREVIEW    → abrir o jogo no preview ao vivo (Regra 7)
 10. DOCUMENTAR → atualizar MEGA_ARQUIVO com mudanças, verificações e pendências (Regra 12)
 11. SALVAR    → “salvar no GitHub” = CREATE PR + MERGE PR juntos (Regra 11)
-12. PRESERVAR → imagens selecionadas sempre salvas no workspace do Arena + espelho de segurança (Regra 13)
+12. PRESERVAR → imagens do jogo e geradas salvas no Drive; se não for possível, em local persistente disponível (Regra 13)
 ```
 
 > Estas regras valem para **qualquer** alteração: features, correções, balanceamento,
