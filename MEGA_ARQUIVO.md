@@ -29,6 +29,42 @@ repetições, datas, branches, checklists e notas históricas foram preservados.
 > Divergências permanecem visíveis, sem apagar conteúdo. O que efetivamente
 > funciona deve ser confirmado por testes e inspeção no preview.
 
+## Registro — Migração do acervo de imagens para Google Drive (2026-10-07)
+
+**Status: migrado e verificado.** Pedido do usuário: *“Migre as imagens para o Drive e quando tudo estiver concluído, Salve no Github”.*
+
+- **Destino:** pasta `Fumiga Arquives/Fumiga-GOAT - Imagens do jogo` no Google Drive.
+- **Escopo:** todas as imagens presentes no snapshot do repositório na branch desta sessão: **1.228 arquivos** (1.223 PNG, 4 JPEG e 1 ICO), total original de **54.701.900 bytes**. Todos os caminhos relativos foram preservados; nenhum original foi removido ou alterado no repositório.
+- **Pacote:** `Fumiga-GOAT-imagens-2026-10-07.zip` (54.203.121 bytes), com inventário `MANIFEST.csv` e `README.txt`; também foi enviado `manifest-imagens-2026-10-07.csv` para consulta direta na pasta do Drive.
+- **Integridade:** SHA-256 do ZIP `a32502e5ccca66f98ed9eea78ed5a3556da66b32adcc5c7361713d909c143aaf`. O ZIP foi validado localmente e os SHA-256 dos 1.228 arquivos foram conferidos contra o manifesto. Tamanho e MD5 dos dois arquivos no Drive conferem com os originais locais.
+- O arquivo compactado mantém a árvore de pastas; o manifesto inclui caminho, tamanho, extensão e SHA-256 por imagem. A staging temporária em `art-source/drive-migration/` foi removida após confirmar os hashes no Drive; nenhum dos arquivos originais do repositório foi alterado.
+
+### Verificação
+
+- ZIP abre sem corrupção; os **1.228** itens esperados e seus hashes individuais conferem.
+- O Drive lista os dois arquivos na pasta de destino; tamanho e MD5 conferem byte a byte com a cópia local.
+- `node game/test/docs.mjs` e `git diff --check`: passaram.
+- O `npm test` padrão teve uma falha transitória em `regressions` sob alta paralelização; o teste passou isolado. Após preparar Chromium, `npm test -- -j 2` passou **33/33**, incluindo `regressions-browser` (sem testes pulados).
+
+## Registro — Regra 13 atualizada: preservar imagens no Google Drive (2026-10-07)
+
+**Status: regra normativa atualizada e verificada (documentação; sem mudança no código ou nos assets do jogo).**
+
+Pedido do usuário: *“Sempre salve imagens do jogo e imagens geradas por você em uma pasta no Drive, e caso não consiga salve onde conseguir, para que nenhuma imagem seja perdida entre uma mensagem e outra.”*
+
+- **Regra 13 reescrita:** manter no Google Drive uma cópia de segurança de todas as imagens do jogo, inclusive as já existentes, e de todas as imagens geradas/editadas pelo assistente (originais, versões finais, prévias e variantes), numa pasta dedicada reutilizada entre mensagens. Confirmar o upload e não sobrescrever originais.
+- **Fallback:** se o Drive não puder ser usado, salvar imediatamente em um local persistente disponível (workspace, `art-source/` ou repositório, conforme o arquivo), sem deixar a única cópia em preview/temporário; informar o caminho salvo.
+- A nova regra substitui a orientação anterior de manter imagens selecionadas apenas no workspace do Arena e no espelho local `~/art-source-backup/`. Os registros antigos que descrevem essa prática continuam como histórico, não como regra vigente.
+- `AGENTS.md` também foi alinhado para orientar o armazenamento dos arquivos de arte não usados no Drive (com fallback persistente).
+- Este pedido atualiza a regra; não foi solicitada migração em massa das imagens históricas para o Drive nesta alteração.
+
+### Verificação
+
+- `node game/test/docs.mjs`: bloco integral de `REGRAS_DE_TRABALHO.md`, tamanho e SHA-256 sincronizados.
+- `git diff --check`: sem erros de whitespace.
+- Sem alteração de runtime; nenhum teste de jogo ou inspeção visual é necessário nesta tarefa documental.
+
+
 ## Registro — Regras 15–19 criadas e Regra 8 revista para humanização moderada (2026-10-06, branch arena/189e20fc-fumiga-goat)
 
 **Status: implementado e verificado (documentação; sem mudança de código ou arte).** Pedido literal do
@@ -2292,19 +2328,28 @@ Ao final de cada tarefa, apresentar um **checklist de conferência** com este fo
   tamanho/SHA-256 no MEGA ARQUIVO; validar com `node game/test/docs.mjs`.
 - A atualização documental faz parte da entrega, não fica para uma sessão futura.
 
-## Regra 13 — Salvar as imagens selecionadas no Arena 💾
+## Regra 13 — Preservar imagens do jogo e imagens geradas no Google Drive 💾
 
-> **Toda imagem selecionada/aprovada pelo usuário deve permanecer salva no workspace do Arena, para nunca ser perdida.**
+> **Sempre salvar todas as imagens do jogo e todas as imagens geradas pelo assistente em uma pasta dedicada do Google Drive, para que nenhuma imagem se perca entre mensagens ou sessões.**
 
-- Os originais de alta resolução (ex.: `art-source/flores/`) continuam **fora do Git** por decisão do
-  projeto (`.gitignore`), mas devem **sempre** existir no workspace persistente do Arena.
-- Além da pasta de trabalho, manter um **espelho de segurança** em `~/art-source-backup/`
-  (fora do repositório, dentro do workspace do Arena), sincronizado a cada nova arte aprovada.
-- Vale para todo asset gerado: sprites, prévias e mockups — incluindo as versões que o usuário
-  escolheu entre as opções (Regra 6) e as artes refeitas depois de ajustes.
-- Motivo: o ambiente onde a arte é gerada pode não ser o mesmo de uma sessão futura; sem o arquivo
-  original, qualquer ajuste posterior exigiria refazer a arte do zero (como ocorreu com os
-  originais do Santuário da Planície).
+- Manter no Drive uma cópia de segurança de todas as imagens pertencentes ao jogo, inclusive as já
+  existentes, e atualizá-la quando imagens forem criadas ou alteradas. Isso abrange sprites, ícones,
+  cenários, UI e demais assets, além de toda imagem gerada, editada ou derivada pelo assistente:
+  originais em alta resolução, versões finais/otimizadas, prévias, mockups e opções/variantes geradas.
+- Usar sempre a mesma pasta dedicada do projeto no Google Drive, acessando-a pela integração do
+  Drive quando disponível; se ela ainda não existir, criar uma pasta de imagens do FUMIGA e
+  reutilizá-la, mantendo nomes e subpastas que permitam localizar cada arquivo. Confirmar que o
+  upload terminou e que o arquivo está acessível; não substituir o original ao salvar uma versão
+  editada.
+- Quando uma imagem também for usada pelo jogo, manter a cópia operacional no caminho correto do
+  repositório (por exemplo, `game/assets/`) e salvar uma cópia de segurança no Drive. Originais que
+  ficam fora do Git (por exemplo, `art-source/`) também devem ter cópia no Drive.
+- Se não for possível salvar no Drive, salvar imediatamente onde for possível em um local persistente
+  disponível (por exemplo, no workspace do Arena, em `art-source/` ou no repositório, conforme o
+  tipo de arquivo). Não deixar a única cópia em preview, arquivo temporário ou armazenamento que
+  desapareça entre mensagens; não apagar cópias locais antes de confirmar uma cópia de segurança.
+- Ao concluir, informar o caminho da pasta/arquivo no Drive ou, se foi necessário usar a alternativa,
+  o caminho persistente onde a imagem ficou salva.
 
 ## Regra 14 — Tela de Carregamento só na troca de mundo; o que sai do TITLE é pré-carregado ⏳
 
@@ -2397,7 +2442,7 @@ Ao final de cada tarefa, apresentar um **checklist de conferência** com este fo
 9. PREVIEW    → abrir o jogo no preview ao vivo (Regra 7)
 10. DOCUMENTAR → atualizar MEGA_ARQUIVO com mudanças, verificações e pendências (Regra 12)
 11. SALVAR    → “salvar no GitHub” = CREATE PR + MERGE PR juntos (Regra 11)
-12. PRESERVAR → imagens selecionadas sempre salvas no workspace do Arena + espelho de segurança (Regra 13)
+12. PRESERVAR → imagens do jogo e geradas salvas no Drive; se não for possível, em local persistente disponível (Regra 13)
 ```
 
 > Estas regras valem para **qualquer** alteração: features, correções, balanceamento,
@@ -4044,7 +4089,7 @@ parte dos blocos originais.
 
 | Arquivo original | Bytes preservados | SHA-256 |
 |---|---:|---|
-| `REGRAS_DE_TRABALHO.md` | 22579 | `e3453566b0b9070e05c0665650349be9a61ad6541df4d7ef95ac257615b18f9f` |
+| `REGRAS_DE_TRABALHO.md` | 23551 | `e90d81676d9d4a8392154b5841849f4920d08b52c36e24fb062a3ea5673fda2f` |
 | `LORE.md` | 15056 | `42075fe4334601f1a74834388c0155342b2a8a6c21e51afa6020e34a5260f493` |
 | `DOCUMENTO_MEGA_ATUALIZACAO_LORE_TOTAL.md` | 30473 | `c642dd06d14e527bba6566458afa5293f697b0a3b981ef6301f6fafdfb9e856e` |
 | `DOCUMENTO_DECISOES_MEGA_ATUALIZACAO.md` | 8179 | `2b05240cd9fef9fb33d8a08768164f60202437c886c1c5b83f250ee9cbb58637` |
