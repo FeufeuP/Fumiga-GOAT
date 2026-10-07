@@ -1,7 +1,7 @@
 # AGENTS.md — mapa rápido para quem desenvolve o FUMIGA
 
 Leia isto **antes** de mexer no código. É o resumo operacional; as regras obrigatórias
-continuam em [`REGRAS_DE_TRABALHO.md`](REGRAS_DE_TRABALHO.md) (fluxo: pesquisar →
+continuam em [`REGRAS_DE_TRABALHO.md`](REGRAS_DE_TRABALHO.md) (fluxo: ler o MEGA → pesquisar →
 perguntar → implementar → mostrar arte → mobile → check-in → jogar → preview → salvar).
 Lore e planejamento: [`LORE.md`](LORE.md) e [`MEGA_ARQUIVO.md`](MEGA_ARQUIVO.md). **Não leia
 o MEGA_ARQUIVO inteiro** (120 KB); abra só a seção que interessa.

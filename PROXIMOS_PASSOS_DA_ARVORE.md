@@ -18,9 +18,9 @@ integração.
 
 1. [`AGENTS.md`](AGENTS.md) — mapa do código, comandos, armadilhas. **Não leia o `MEGA_ARQUIVO.md`
    inteiro**; abra só as seções citadas aqui.
-2. [`REGRAS_DE_TRABALHO.md`](REGRAS_DE_TRABALHO.md) — as 12 regras. O fluxo obrigatório:
-   pesquisar → perguntar → implementar → arte → mostrar → mobile → check-in → jogar → preview →
-   documentar → salvar.
+2. [`REGRAS_DE_TRABALHO.md`](REGRAS_DE_TRABALHO.md) — as 19 regras. O fluxo obrigatório:
+   ler o MEGA → pesquisar → perguntar → implementar → arte → mostrar → mobile → check-in → jogar →
+   preview → documentar → salvar.
 3. **Este arquivo** — o que já existe, o que falta, onde mexer, como provar que funcionou.
 4. [`MEGA_ARQUIVO.md`](MEGA_ARQUIVO.md) — seção **“Entrega — Sete maçãs douradas e sete santuários
    de bioma (2026-09-25)”** (topo do arquivo) + a seção *“Árvore Ancestral ao Crepúsculo”* logo
