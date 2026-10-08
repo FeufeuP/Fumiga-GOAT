@@ -4,6 +4,12 @@
 **Escopo confirmado:** quatro documentos de atualização + lore + regras de trabalho.  
 **Preservação:** os seis arquivos originais permanecem intactos no repositório.
 
+> **Todo pedido, independentemente do assunto:** ler [`REGRAS_DE_TRABALHO.md`](REGRAS_DE_TRABALHO.md) **por inteiro**.
+> Usar [`GUIA.md`](GUIA.md) como roteiro de perguntas para localizar arquivos/seções; ele não substitui as regras nem a leitura do MEGA.
+> **Novo chat / criação de imagens:** começar pelo [guia de continuidade artística](#continuidade-artistica).
+> Direção vigente: **06 — papel recortado detalhado**, prompt **`FUMIGA-PAPEL-v2-DETALHADO`**.
+> As bases limpas anteriores não representam a densidade do cenário final; o rework ainda não foi integrado.
+
 ## Como consultar este arquivo
 
 Este documento reúne **o conteúdo integral dos seis arquivos**, não um resumo.
@@ -28,6 +34,576 @@ repetições, datas, branches, checklists e notas históricas foram preservados.
 > comprovação do estado atual do código nem em limites da sessão atual.
 > Divergências permanecem visíveis, sem apagar conteúdo. O que efetivamente
 > funciona deve ser confirmado por testes e inspeção no preview.
+
+## Validação para salvar no GitHub — documentação da sessão (2026-10-08)
+
+**Pedido explícito:** “Salve no GitHub”. Autorizado o fluxo da Regra 11: commit e push da branch `arena/088109c0-fumiga-goat`, criação de PR para `main` e merge após checks verdes, sem trocar ou apagar a branch da sessão.
+
+**Escopo consolidado:** GUIA com 28 perguntas; leitura integral obrigatória das regras; atualização dos pontos de entrada e do MEGA; direção oficial 06 — papel recortado detalhado, prompt canônico e histórico; plano de reestilização, inventários e manifestos das referências; ferramentas locais de inventário e auditoria da continuidade artística. Inclui os trabalhos acumulados da sessão, não somente o último arquivo. Nenhuma mudança no runtime, gameplay, assets de produção ou `ASSET_V`; nenhum binário de imagem ou captura de teste acrescentado ao Git.
+
+**Verificação pré-publicação:**
+- `npm test -- -j 1`: **33/33 testes passaram**, incluindo mobile e regressões PC/mobile no navegador (126,5 s).
+- `BASE_URL=http://127.0.0.1:8000 npm run inspect`: **30/30 verificações passaram**, cobrindo novo jogador, telas e seis mapas nos dois perfis (102 s); sem erros JS, 404 ou glifos faltando. Expedições a 60 FPS, pior frame 16,8 ms no ambiente headless. Capturas de RUN-MAPA1 PC/mobile abertas para inspeção; preview do jogo mantido em :8000.
+- `node game/test/docs.mjs`: seis originais íntegros, **121.462 bytes**; `node tools/check_art_handoff.mjs`: prompt vigente/histórico e **15 registros** coerentes; `node tools/make_assets_list.mjs --check`: pacote inalterado com **232 arquivos / 24,8 MB**.
+
+**Revisão do conjunto completo:** os 21 arquivos foram conferidos, incluindo os novos; JSONs e sintaxe Python/Node válidos, 128 links do GUIA com destinos existentes e nenhum padrão de credencial identificado na varredura básica. O primeiro `git diff --cached --check` apontou apenas formatação nos arquivos novos: quebras Markdown foram preservadas com barra invertida e CSVs normalizados para LF, sem alterar nenhuma célula ou linha do inventário histórico; o gerador CSV passou a explicitar LF. Auditorias documentais repetidas e diff do índice novamente conferido antes do commit.
+
+**Estado deste registro:** validações locais concluídas, antes do commit/push/PR. O resultado remoto deve ser confirmado pelos checks e pelo estado `MERGED` do PR no GitHub, não presumido a partir deste registro. A entrega informa o link do PR e o commit de merge após confirmação. O piloto composto F0b e a migração F1–F9 continuam pendentes de aprovação; salvar documentação não os implementa.
+
+---
+
+<a id="guia-de-encaminhamento"></a>
+## GUIA — perguntas de encaminhamento e leitura integral das regras (2026-10-08)
+
+**Pedido explícito:** “Agora crie um arquivo guia, seu nome será GUIA, ele será uma lista de perguntas que o chat deve responder de acordo com o que eu pedi, tudo isto servirá para guiar o chat até o arquivo/sessão correta que ele deverá ler para conseguir efetuar o que pedi, com destaque que, independente do pedido as regras sempre deveram ser lidas por inteiro.”
+
+**Entregue:** [`GUIA.md`](GUIA.md), na raiz, com **28 perguntas** que o próprio chat responde a partir do pedido e das fontes. As respostas devem ser objetivas (resposta → arquivo/seção consultados → ação/pendência), não um questionário inteiro repassado ao usuário. Perguntas ao usuário ficam restritas às decisões realmente abertas, sem repetir escolhas vigentes e respeitando a pesquisa/confirmação das regras.
+
+**Exigência universal registrada:** ler `REGRAS_DE_TRABALHO.md` **por inteiro, do começo ao fim, em todo pedido e independentemente do assunto**. Inclui perguntas simples, arte, planejamento, documentação, correções, testes, backup e publicação. Ler títulos, trechos, resumo, GUIA ou lembrar o conteúdo de outro chat não basta. Continuar em blocos se a saída for truncada; não declarar leitura concluída sem fazê-la. O encaminhamento temático não dispensa essa leitura nem a leitura integral do MEGA já solicitada nesta continuidade.
+
+**Estrutura do GUIA:**
+- 01–06: regras completas, pedido/resultado, memória, precedência, lacunas e seleção de todas as rotas pertinentes.
+- 07–22: arte, cenários/camadas, seres/anatomia, flores, árvore/progressão, lore/cutscenes, UI/mobile, loading/pré-carga, gameplay/mundo/ninho, áudio, bugs/desempenho/playtest, offline/instaladores, Drive, GitHub, documentação e temas ainda não mapeados. Cada rota aponta arquivos existentes e seções/símbolos a consultar, além da resposta que precisa ser obtida.
+- 23–28: suficiência da leitura/autorização, menor lote, critérios/testes, estado real do resultado, atualização/preservação e entrega/checklist.
+- Modelo de respostas e exemplos de roteamento para pedidos comuns. Mais de uma rota pode ser aplicável; nenhuma resposta “não se aplica” libera a leitura integral das regras.
+
+**Pontos de entrada sincronizados:** AGENTS, README, PENDENCIAS e o topo do MEGA apontam para GUIA e reforçam a leitura universal. A abertura de REGRAS e o resumo do fluxo foram ampliados com a decisão explícita; seu bloco integral e linha de tamanho/SHA no MEGA foram sincronizados. As outras cinco fontes incorporadas não mudaram. O prompt artístico e o estado do rework permanecem inalterados; o GUIA é geral, não apenas para imagens.
+
+**Limite de escopo:** documentação/orientação, sem gerar arte, editar lógica/ASSET_V ou publicar no GitHub. Sem alteração das decisões de estilo, lore, cadência das flores ou conteúdo futuro.
+
+**Verificação desta entrega:** 28 perguntas numeradas em sequência; 128 links conferidos, 67 destinos locais distintos existentes e 15 links com âncora válida. AGENTS, README, PENDENCIAS, REGRAS e MEGA remetem ao GUIA. `node game/test/docs.mjs`: seis fontes íntegras, 121.462 bytes; `node tools/check_art_handoff.mjs`: prompt e 15 registros de arquivos coerentes; `node tools/make_assets_list.mjs --check`: lista vigente de 232 arquivos / 24,8 MB; `git diff --check` sem erros. `npm run inspect -- --telas=TITLE,RUN-MAPA1`: 4/4 cenas PC/mobile, sem JS/404/glifos ausentes, RUN a 60 FPS headless; capturas de RUN dos dois perfis abertas para inspeção. Preview do jogo mantido em :8000 e GUIA servido com HTTP 200. Não repetida a suíte completa; nenhum comportamento ou asset de produção alterado.
+
+---
+
+<!-- INICIO CONTINUIDADE ARTISTICA -->
+<a id="continuidade-artistica"></a>
+## LEIA PRIMEIRO — continuidade artística para um novo chat (2026-10-08)
+
+**Finalidade:** permitir retomar a criação de imagens sem depender da memória desta conversa, sem rediscutir decisões já tomadas e sem confundir arquivos históricos com entregas atuais. Este guia reúne o estado vigente; os registros abaixo permanecem como histórico. Foi acrescentado a pedido do usuário: “Certifique-se de que tudo está bem descrito dentro do MEGA ARQUIVO, para que um novo chat consiga entender e criar estas imagens com excelência.”
+
+**Navegação neste próprio MEGA:** [decisão e estado](#arte-estado-vigente) · [aparência e detalhe](#arte-acabamento) · [camadas e contratos](#arte-camadas) · [prompt completo vigente](#prompt-mestre-vigente) · [ficha e exemplos](#arte-fichas-exemplos) · [referências e recuperação](#arte-acervo-drive) · [execução e aprovação](#arte-producao) · [checklist](#arte-aceite) · [próxima etapa](#arte-proximo-passo) · [histórico dos dez estilos v2](#acervo-estilos-v2) · [manual de flores v3](#flores-v3) · [integridade dos seis documentos](#registro-de-integridade).
+
+### Como começar sem depender do chat anterior
+
+**Em qualquer assunto, antes da execução:** ler `REGRAS_DE_TRABALHO.md` integralmente e responder [`GUIA.md`](GUIA.md). O roteiro só direciona leituras adicionais.
+
+1. Ler este guia, o prompt completo indicado acima e os registros pertinentes. **O usuário solicitou a leitura integral do MEGA nesta continuidade**; o guia serve de entrada, não dispensa essa leitura. Não parar no registro de integridade: há conteúdo histórico depois dele. Quando a ferramenta truncar a saída, continuar em trechos menores; não declarar leitura integral se ela não foi feita.
+2. Conferir `REGRAS_DE_TRABALHO.md`, `LORE.md`, `docs/arte/ESTILO_OFICIAL.md` e `docs/arte/direcao-vigente.json`. Os dois últimos espelham a direção que está descrita aqui. O plano/inventário detalham o trabalho, mas não substituem este acordo visual.
+3. Conferir o pedido novo e o estado real do checkout. **Decisões explícitas mais recentes do usuário têm precedência** sobre planos antigos. Branches, contagens de testes, previews, caminhos locais e declarações “concluído” do histórico não garantem o estado de uma sessão nova. Trabalhar na branch fornecida para a sessão atual, não copiar o nome de uma branch histórica.
+4. Recuperar e abrir as referências corretas do Drive antes de editar/derivar a arte. Há um procedimento e IDs abaixo. Caminho local ausente não significa imagem apagada do chat ou do Drive.
+5. Usar o prompt-mestre vigente **integral + ficha específica + referências realmente disponíveis**. Não gerar imagens neste pedido de documentação; a próxima criação deve ter seu lote/assunto definidos e seguir o aceite abaixo.
+
+<a id="arte-estado-vigente"></a>
+### 1. Decisão vigente e fronteira entre aprovado e pendente
+
+> **Decisão explícita do usuário:** “Certo, decidi que o estilo oficial será o 6 papel recortado, porem quero que seja tudo bem detalhado para não passar um ar de vazio.”
+
+| Item | Estado que o próximo chat deve respeitar |
+|---|---|
+| Técnica oficial | **06 — papel recortado artesanal, detalhado e harmonioso.** Não minimalista, não pixel art, não low-poly. Não pedir novamente qual dos dez estilos deve ser oficial. |
+| Prompt ativo | **`FUMIGA-PAPEL-v2-DETALHADO`**, integral neste MEGA no [bloco canônico](#prompt-mestre-vigente). Não reescrever silenciosamente; mudança de direção exige aprovação explícita e versão anterior preservada. |
+| Escopo visual | Todo o conjunto: terrenos, personagens, fauna, vegetação, flores, recursos, construções, árvore/maçãs/santuários, UI/ícones, menus, carregamentos e cutscenes. O tipo de detalhe se adapta à função e ao tamanho. |
+| Acabamento | Riqueza orgânica, material tátil e recortes trabalhados, sem grandes áreas com aparência de rascunho vazio; a ação continua legível. |
+| Rodada original de dez imagens (v1) | PNGs não recuperados; metadados e hashes históricos preservados. Não usar outra imagem sob esses hashes nem dizer que foram restaurados. |
+| Nova rodada de dez imagens (v2) | Dez PNGs + PDF + ZIP + manifesto salvos e conferidos no Drive na entrega respectiva. A cena 06 v2 é referência de técnica/paleta, **não demonstra por si só todo o acabamento detalhado exigido depois**. |
+| Comparação de cenários 06/08 | Duas bases limpas da Planície com o mesmo desenho geral, salvas no Drive. O 08 é estudo histórico. O 06 é estudo de terreno, **não o cenário final nem seu nível final de preenchimento**. |
+| Versões que não se confundem | “Rodada v2” é o segundo conjunto de imagens. A cena 06 e a base 06 usaram `FUMIGA-PAPEL-v1`; os demais estilos e a base 08 usaram instruções específicas de comparação, não o prompt de papel. “Prompt v2-DETALHADO” é o refinamento posterior. Não atribuir o novo prompt retroativamente aos PNGs antigos. |
+| Aprovação visual | A técnica e a exigência de detalhe estão aprovadas. Isso não aprova automaticamente cada anatomia, ornamento, atlas ou implementação. A composição detalhada e as peças finais ainda precisam de revisão/aceite. |
+| Jogo e migração | **Nenhuma arte de produção foi substituída nesta sequência de estudos.** O jogo continua com os assets antigos. Piloto F0b e integração F1–F9 pendentes; não anunciar o rework como concluído. |
+
+### Precedência: não repetir decisões superadas
+
+- Exigências antigas de pixel art/Dead Cells são histórico para as artes instaladas. Para as próximas peças vale papel recortado detalhado.
+- `FUMIGA-PAPEL-v1` permanece para auditar gerações passadas, não para abrir novas gerações.
+- “Base limpa” significa ausência de decoração embutida, **não** autorização para entregar um mundo final vazio.
+- Pedidos anteriores de reanexar os PNGs v1 não bloqueiam a retomada: a nova rodada foi autorizada e as referências v2 foram salvas/recuperadas do Drive.
+- Backup principal é Drive verificado. Menções antigas a um espelho local obrigatório não provam disponibilidade remota ou sobrevivência do workspace.
+- Flores: prevalece a cadência v3 **9 vivos → pausa → 9 restantes → pausa**; antigos parágrafos “uma variação por vez” não a substituem. O limite real continua sendo dez imagens geradas por rodada, incluindo alternativas.
+- Preferência mais recente nesta continuidade: **sem opções extras não solicitadas**. Não transformar automaticamente um pedido de N peças em 2N candidatos. Se o usuário revisar essa preferência, contar todas as imagens no teto.
+- “Nenhum trabalho em aberto” no handoff de 2026-10-05 descreve aquela integração antiga, não a migração artística atual.
+
+<a id="arte-acabamento"></a>
+### 2. Tradução prática de “bem detalhado, sem vazio”
+
+**Material:** papel colorido fosco, camadas rasas, bordas de tesoura ligeiramente irregulares, fibras finas, variações sutis de pigmento/espessura e sombras curtas de contato. O volume deve parecer construído com papel, não argila, plástico, metal realista, pintura lisa ou malha low-poly. Manter bordas nítidas em escala real; não usar contorno preto grosso de cartoon como substituto dos recortes.
+
+**Três níveis que precisam coexistir:**
+
+1. **Grandes formas:** silhueta da peça, caminhos, clareiras, massas de terreno e zonas de interesse. Elas organizam a imagem e permitem reconhecer função e ameaça rapidamente.
+2. **Recortes médios:** placas e segmentos do inseto, conjuntos de pétalas, folhas/nervuras, pregas e molduras, camadas do relevo e transições orgânicas. Aqui está a maior parte da riqueza percebida durante o jogo.
+3. **Acabamento fino:** fibras, veios, filamentos, pequenos cortes e diferenças de espessura. Devem enriquecer o material sem virar pontilhado/confete uniforme ou desaparecer em ruído na redução.
+
+**Densidade com intenção:** combinar agrupamentos irregulares, escalas e orientações plausíveis. Concentrar mais detalhe nas bordas, áreas não transitáveis e pontos de interesse. Áreas de combate/caminhos continuam trabalhadas em material de baixo contraste, com espaço visual para unidades, recursos e telegráficos. Não preencher todas as áreas com o mesmo padrão, nem confundir quantidade de objetos com qualidade de acabamento.
+
+**Paleta sem inventar valores aprovados:** violeta-escuro para identidade/sombra, âmbar-dourado para memória/essência, oliva/musgo/verde-azulado no ambiente da Planície, branco-osso com sombras lilases na Névoa. Outros biomas adaptam as cores de acordo com a lore sem mudar de técnica. Não há uma tabela nova de hexadecimais aprovada; extrair propostas das referências e validar antes de torná-las contrato.
+
+**Luz:** alta à esquerda, suave; contato entre papéis curto/coerente. Para peças que giram, separar a sombra no chão quando necessário para não girar o sol junto do sprite. Não embutir sombras de árvores/personagens ausentes no terreno.
+
+| Família | Detalhe esperado | O que não pode ser sacrificado |
+|---|---|---|
+| Terreno limpo | fibras, recortes de relevo suave, pigmento e transições de cor | top-down, caminhos, contraste baixo; nenhuma planta/raiz/pedra/construção embutida |
+| Decoração/vegetação | formas variadas, nervuras, pétalas, fungos e filamentos em recortes | peças separadas, bioma/lore, escala e áreas de passagem |
+| Construções/props | superfícies e recortes próprios de cada objeto traduzidos para papel | âncoras, oclusão, colisões e silhueta; aprovação da passada |
+| Formigas/fauna | segmentos, placas, articulações, marcas de casta e acessórios proporcionais | anatomia animal e leitura pequena; não inventar espécie/mecânica |
+| Flores/recursos | estágios distinguíveis, veios, pétalas, filamentos e facetas de papel | identidade da espécie, estado morto/vivo, contraste de coleta |
+| UI/ícones/árvore | molduras trabalhadas e relevos/ornamentos orgânicos em áreas adequadas | centro limpo para texto editável, 9-slice, estados, acessibilidade e toque |
+| Menus/loading/cutscenes | planos ricos em motivos do bioma/lore, recortes e material | enquadramento autorizado, narrativa e contratos de camadas existentes |
+| Névoa/VFX | recortes leves e variações discretas | névoa branca, ameaças/telegráficos legíveis e efeitos reduzidos |
+
+**Exemplos de reprovação:** grandes chapas lisas vazias como acabamento final; apenas adicionar grão sobre formas sem trabalho; encher o mapa de folhas repetidas; clarear todas as superfícies até perder os personagens; desenhar UI/texto dentro de um mapa; acrescentar criaturas/props não solicitados para “ocupar espaço”.
+
+<a id="arte-camadas"></a>
+### 3. Câmera, anatomia e camadas: contratos que continuam valendo
+
+- **Mundo jogável:** vista ortográfica vertical de cima, sem horizonte/isometria. Inclui mapas, seres, itens, ferramentas, construções, santuários e flores. Exceções de ilustração já autorizadas: menus/TITLE, carregamentos, árvore de habilidades e maçãs. Não inventar exceções adicionais; esclarecer peças ambíguas antes de gerar.
+- **Anatomia:** formigas com cabeça, tórax, cintura/gaster, seis patas ligadas ao tórax e duas antenas; demais animais preservam a anatomia de sua espécie. Ofícios, ferramentas e acessórios são permitidos na escala do animal. Proibidos corpo/postura bípede humanos, mãos/rosto humanos e roupas humanoides. Rainha Silenciosa: gaster âmbar, diadema orgânico de fungo/seda, não coroa metálica de mulher-inseto.
+- **Passada A — terreno:** layout inteiro limpo, relevo, caminhos e transições materiais; não incluir árvores, flores, arbustos, raízes, pedras, buracos, rachaduras ou construções.
+- **Passada B — decoração:** objetos/vegetação em peças separadas, após definição do lote e aprovação da base. Não adicionar uma floresta inteira ao prompt de um único arbusto.
+- **Passada C — construções e objetos funcionais:** manter peças independentes, âncoras e contrato de colisão; aprovar antes de integrar.
+- **Passada D — seres, sombras e efeitos:** sprites/camadas isolados conforme ficha; névoa e HUD não são textura do mapa. Respeitar os estados/direções/quadros do consumidor.
+- **Prévia composta:** montar as peças aprovadas para avaliar a riqueza do conjunto. Uma imagem achatada de revisão é apenas uma prévia, **não substitui os arquivos separados de produção**. Não juntar tudo irreversivelmente no chão para aparentar conclusão.
+- **Alfa verdadeiro:** sprite isolado não tem chão, cenário ou xadrez pintado. Conferir canal alfa e halos em fundo claro/escuro e no bioma. Quando o gerador não entregar alfa, preservar o original e preparar o recorte sem destruir antenas/patas/filamentos.
+- **Escala/contratos:** tamanho do conceito não define resolução do jogo. Os conceitos recentes são 1376×768; não são tiles nem atlas. Canvas atual 960×540 e mundo 3200×2400; revalidar no consumidor antes de alterar. Não esticar um conceito sobre o mundo inteiro e chamá-lo de migração.
+- **Contratos já mapeados:** TITLE tem quatro camadas; Noite Branca três painéis com quatro camadas cada, atualmente 320×180. Flores regulares: folha 768×576, quatro colunas × três linhas de 192×192, desenho regular em 48 px; Suprema: 1152×192, seis células, desenho em 64 px. Revalidar recortes e estado antes da troca; dimensões novas exigem decisão própria.
+- **Não alterar por tabela:** fonte Kiwi Soda, engine Canvas 2D compartilhada PC/mobile, saves, preços, progressão, seeds ou hitboxes. Árvore sem correntes/cadeados sobre frutos. Seis mapas jogáveis; Pálida/mapa 7 é conteúdo futuro com autorização distinta. A câmera de corte transversal do interior do ninho precisa de decisão explícita antes de F7.
+
+<a id="arte-fichas-exemplos"></a>
+### 4. Como escrever os próximos prompts, sem depender de interpretação vaga
+
+**Receita única:** copiar o [prompt-mestre completo vigente](#prompt-mestre-vigente), sem abreviar → acrescentar a ficha abaixo → preencher o assunto da passada autorizada → anexar a referência correta já baixada/aberta → gerar somente as peças combinadas. Os exemplos desta seção são **complementos**, não novos prompts-mestres e não autorização automática de geração. Não usar apenas “faça igual ao estilo 6”.
+
+```text
+ID lógico / nome de arquivo e versão:
+Categoria, bioma, função e vínculo com a lore:
+Peça única ou conjunto já autorizado; limite de imagens desta rodada:
+Assunto, estado/animação, estágio e variações permitidas:
+Câmera, luz e escala relativa:
+Dimensão original, dimensão de uso/célula, direções/quadros:
+Pivot/âncora, hitbox, área de respiro e margem de recorte:
+Grandes formas / recortes médios / detalhes finos:
+Onde concentrar detalhe e onde preservar leitura:
+Camadas a produzir nesta passada; elementos deliberadamente ausentes:
+Fundo/alfa e tratamento da sombra no chão:
+Referências disponíveis: caminho real, ID do Drive, SHA-256 e função de cada uma:
+Destino e consumidor do jogo; orçamento de bytes/memória a medir:
+Critério de revisão, aprovação necessária e pasta de preservação:
+```
+
+**Campos não definidos devem ser marcados “a confirmar”, não preenchidos por suposição.** Para uma peça que entrará no jogo, ler o consumidor antes da geração; consultar o inventário e não inferir por nomes como `soldier`, `giant` ou `matron`. Guardar a ficha e o texto completo usado na geração/edição junto dos metadados.
+
+#### Complemento A — terreno da Planície, rico em material, ainda limpo
+
+```text
+Produzir apenas a base de terreno da Planície do Amanhecer, top-down vertical.
+Preservar o layout aprovado para esta peça; não assumir que o estudo de trilha em Y
+já define colisões do mapa atual. Trabalhar fibras, variações de pigmento, recortes
+orgânicos médios, espessura e relevo suave. Caminhos e zonas de combate têm material
+rico de baixo contraste; não deixar grandes superfícies de aparência provisória.
+Não acrescentar vegetação individual, raízes, pedras, buracos, rachaduras, construções,
+seres, recursos, névoa, interface ou sombras de objetos ausentes. Esta peça é somente
+a base: a densidade final será avaliada numa composição com as passadas aprovadas.
+Dimensão/escala/âncora: preencher conforme o contrato validado, não conforme o PNG de estudo.
+```
+
+#### Complemento B — uma peça botânica isolada da decoração autorizada
+
+```text
+Criar somente a espécie e o estado aprovados na ficha, em vista de cima.
+Construir a silhueta com folhas/pétalas em papel sobreposto, recortes médios e detalhes
+finos de nervuras/filamentos coerentes com a espécie. Assimetria orgânica controlada,
+sem copiar o mesmo recorte por toda a peça. Referência define paleta/luz e escala;
+a aparência detalhada não permite alterar a espécie nem colocar uma cena ao redor.
+Fundo transparente real, nenhuma base de terra, objeto extra, texto ou sombra de piso
+fundida ao corpo quando o contrato pedir sombra separada. Conferir bordas e tamanho de uso.
+```
+
+#### Complemento C — Rainha Silenciosa isolada, para o piloto
+
+```text
+Rainha-formiga vista de cima, corpo natural violeta, gaster âmbar, seis patas ligadas
+ao tórax e duas antenas. Diadema de fungo/seda orgânicos; nunca coroa metálica humana.
+Enriquecer segmentos, articulações, placas e diadema com recortes médios/finitos,
+fibras e sobreposições rasas. A silhueta precisa permanecer reconhecível no tamanho de uso.
+Sem operárias, larvas, cristais, paisagem, ninho, HUD ou chão dentro do sprite.
+Estado, direções, quadros, célula, pivot e sombra: somente os especificados na ficha.
+```
+
+#### Complemento D — moldura de UI em papel
+
+```text
+Peça isolada de UI conforme o recorte/9-slice aprovado. Bordas trabalhadas com recortes
+orgânicos e sombras de contato, mantendo cantos e áreas extensíveis estáveis.
+Centro visualmente calmo para o texto editável desenhado pelo jogo; não gerar palavras,
+números, botões falsos ou ornamentos que reduzam contraste/área de toque.
+Validar em tamanho real, estado ativo/inativo e fonte normal/grande antes da integração.
+```
+
+**Prévia final:** compor terreno + peças aprovadas + sombras/efeitos pertinentes e, quando for mock de jogo, HUD atual. Rotular “prévia composta — não integrada”. Comparar o conjunto em tamanho real PC/mobile; não usar uma base vazia como prova de que o cenário detalhado está concluído.
+
+<a id="arte-acervo-drive"></a>
+### 5. Referências visuais, arquivos e recuperação para uma nova sessão
+
+**Pasta principal:** [estilos Visuais](https://drive.google.com/drive/folders/1KCPo0hWZGmM_jeRsN0ec59lR8-IL4_sj), dentro de `Fumiga Arquives / Fumiga-GOAT - Imagens do jogo` (ID da pasta de imagens: `1IMj_-7VQf_asmRmMoMSzKxIQ37M6DXlW`).
+
+**Subpasta de bases:** [Cenários — estilos 06 e 08](https://drive.google.com/drive/folders/1GgVrL5J2M6mZVg9s1N9oXZPVXNB4MZm6).
+
+| Referência | ID real no Drive | Bytes / dimensão | Uso correto |
+|---|---|---|---|
+| `06-papel-recortado-v2.png` | `1GdC_qq28br_xO3bKlCXeLTtyJ6wQ3QR6` | 2.435.838 / 1376×768 | Material/paleta do papel; não copiar insetos/ninho/props para uma base limpa; não fixa sozinho o grau de detalhe futuro. |
+| `06-planicie-papel-recortado.png` | `1m-yVSdgpEr19Uc_00JrnfK2svgDh7pS0` | 2.030.366 / 1376×768 | Topologia de estudo e separação da base. Não usar seu vazio relativo como meta do cenário final. |
+| `08-lowpoly-ortografico-v2.png` | `1SQ54YQFLX70RT0b5Gr2V7cxZtcfeJflp` | 2.190.715 / 1376×768 | Comparação histórica; **não anexar como referência estética das novas peças oficiais**. |
+| `FUMIGA-estilos-visuais-v2.zip` | `12oX7Us_jywxSvWdlDNC89ucgeaWiok_w` | 30.196.313 | Recuperação do pacote completo de dez PNGs, PDF, galeria e manifestos. |
+| `FUMIGA-estilos-visuais-v2.pdf` | `1RpokbVYEwIe95qKsF1EXSZIwV-GUuV6p` | 6.105.651 / 10 páginas | Visualização dos dez estilos; usar os PNGs originais para edição. |
+| `FUMIGA-cenarios-06-e-08.pdf` | `19fuGZ-th4InxKewAxzdTidQHW5e8Lw_m` | 4.412.460 / 2 páginas | Visualização das duas bases; não é atlas de produção. |
+
+**SHA-256 para validar os principais downloads:**
+
+- Cena 06 v2: `1009f4dfd9ff945d5bd689dcafe40c5032d66239bbda1810341b9965d147b52e`.
+- Base limpa 06: `3a76ab51e44b1cc70943a838a4bf9cc87e919a285765f9cee53fed4c6c3665f3`.
+- Cena 08 v2: `ea142b5559af3e215fc307ba5d4083daebdd65a78f29d8796f110e2b28f68ca6`.
+- ZIP v2: `918c8c41e61e9558b7c70809f9dbfa79242cf934fb6a8657f5cce3db1b618a8c`.
+
+**Metadados de apoio:** `docs/arte/amostras-estilos.json` (v1 histórica), `amostras-estilos-v2.json` (dez novos PNGs e IDs/checksums), `pacotes-estilos-v2.json` (PDF/ZIP/manifesto), `cenarios-06-08.json` e `.md` (bases), `direcao-vigente.json` (decisão atual, não manifesto de imagens). Os dez IDs/hashes também estão no [registro v2 deste MEGA](#acervo-estilos-v2). Não sobrescrever registros de geração antiga quando o prompt mudar.
+
+#### Procedimento de recuperação e backup, sem repetir a perda de acesso
+
+1. Carregar as ferramentas do conector Google Drive. Confirmar seu estado; se estiver desconectado, pedir conexão, nunca credenciais. Consultar o esquema disponível na sessão, sem presumir limites de ferramentas antigas.
+2. Buscar a pasta `estilos Visuais`, conferir o pai/contexto do projeto e listar seus arquivos. Comparar os IDs/metadados retornados com os registros acima; não escolher apenas pelo nome. O Drive também contém conceitos de outras execuções com nomes parecidos e hashes diferentes.
+3. Baixar o PNG ou ZIP correto. Na entrega de cenários, `download_file` retornou um `file_path` local utilizável e as referências 06/08 v2 foram recuperadas com sucesso. Conferir existência, tamanho, SHA-256 e decodificação antes de usar o caminho em geração/edição. Não supor que a resposta do conector sempre terá o mesmo formato.
+4. Abrir a referência para inspeção visual. Se houver divergência de hash ou indisponibilidade, investigar/reinformar; não trocar silenciosamente pela imagem “mais parecida”, não atribuir hash antigo a uma recriação.
+5. Depois de gerar, guardar o original sem sobrescrever a referência; criar nomes/versões distinguíveis. Upload por `file_path` funcionou nesta sequência, mas verificar o esquema vigente. Preservar também candidatos, rejeitados e derivados, sem apagar a única cópia.
+6. **Confirmar o backup:** listar/obter o arquivo remoto, conferir pasta, ID, nome, tamanho e SHA-256; se SHA não estiver disponível, usar checksum confiável ou download e comparação. Salvar esses resultados no manifesto e no MEGA. Só então dizer “salvo/verificado”. Criar uma pasta ou iniciar upload não comprova salvamento das imagens.
+7. Não prometer persistência de `art-source/`, `/tmp`, caches ou caminhos fora do Git. Binários de trabalho podem deixar de estar disponíveis entre sessões; os IDs/checksums e o backup remoto são a rota de retomada. Imagem visível no chat, arquivo local e backup remoto são três coisas distintas.
+
+**Estado das verificações:** os uploads e a recuperação de referências acima foram confirmados nas entregas registradas, não reexecutados nesta revisão documental. Um novo chat deve verificar a disponibilidade na hora de retomar. A versão v1 original não foi recuperada; o pacote v2 não deve ser apresentado como recuperação dela.
+
+<a id="arte-producao"></a>
+### 6. Execução por lotes, flores e desempenho
+
+1. Ler a lore/consumidor e pesquisar inspiração indie pertinente antes das perguntas de escopo; citar fontes e explicar o princípio aproveitado, sem copiar assets nem trocar o estilo escolhido. A pesquisa antiga dos dez estilos foi exploratória; não torna pixel art a linguagem atual.
+2. Não voltar a perguntar qual é o estilo oficial. Perguntar apenas o que ainda impedir a produção: peça/bioma, espécies, quantidade, estados, dimensões novas, exceção de câmera, preços ou integração. Não inferir autorização de produção ampla a partir da escolha estética.
+3. Preencher ficha, anexar referências corretas e usar o prompt canônico integral. Gerar no máximo **10 imagens por rodada, contando cada alternativa**. Mostrar resultados e obter as aprovações previstas antes de seguir; silêncio não é aprovação.
+4. **Flores por santuário:** três espécies regulares × quatro estados = 12 sprites; uma Suprema × seis estados = 6; total 18. Leva 1: três espécies × broto/meio/flor = **9 vivos**, seguida de **PARADA 1**. Leva 2: **3 brotos mortos + 6 fases da Suprema = 9**, seguida de **PARADA 2**. Morto regular deriva do broto vivo, nunca da adulta. Se opções forem explicitamente solicitadas, fracionar em sub-rodadas para não passar de dez gerações; não contar um par como uma imagem. Um santuário por entrega; preços novos precisam de decisão própria.
+5. Preparar alfa, recortes, pivots, margens e nomes lógicos sem modificar os originais. Mostrar a peça em tamanho de uso e a composição com os outros elementos aprovados. Defeitos anatômicos ou de legibilidade não viram cânone só porque o usuário escolheu a técnica.
+6. Integrar somente após aceite e lote definido. O jogo mantém o mesmo motor Canvas 2D e runtime PC/mobile; não adicionar engine 3D ou dependência de produção por causa do papel recortado.
+7. **Detalhe estático não deve custar centenas de atualizações por frame:** pré-compor detalhes dentro da própria camada/região, cachear e fazer culling, sem destruir a separação de terreno/decoração/construções. Medir bytes, memória decodificada, pré-carga e tempo de frame. Validar suavização/rotações no piloto; não ligar smoothing global sobre UI/fontes antigas sem teste. Meta de fluidez não é garantia universal de FPS.
+8. Em alterações efetivas do pacote do jogo, revisar MANIFEST/carregadores, recortes, `ASSET_V`, lista de assets e sincronização nativa juntos. Arte acessível a partir do TITLE entra na pré-carga; tela de carregamento só na troca de mundo. Não mudar saves para resolver arte nem incluir fontes enormes no download de produção sem necessidade.
+9. Exibir artes no viewer, manter preview saudável e verificar PC/mobile. Atualizar MEGA com pedido, versão do prompt, ficha/referências, gerado/aprovado/integrado, testes e limitações, IDs/checksums do Drive. Não fazer push/PR/merge sem pedido de salvar; quando solicitado, seguir o fluxo obrigatório de GitHub com checks verdes.
+
+<a id="arte-aceite"></a>
+### 7. Checklist de excelência — portas para avançar, não promessas
+
+- [ ] Estilo reconhecível como papel recortado detalhado; sem deriva para low-poly, argila, pintura ou pixel art.
+- [ ] Grandes formas, recortes médios e acabamento fino coexistem; a riqueza não depende só de grão/ruído.
+- [ ] Fundo/material trabalhado, agrupamentos e transições variados; cenário composto não parece vazio nem artificialmente preenchido por repetição.
+- [ ] Anatomia, silhueta, câmera, escala e direção de luz coerentes; ausência de elementos humanos proibidos.
+- [ ] Personagens, recursos, caminhos, texto e telegráficos se distinguem em escala real PC/mobile.
+- [ ] Base limpa intacta, decoração/construções/sombras/efeitos separáveis; nenhum cenário embutido no sprite isolado.
+- [ ] Alfa real e contornos sem halo em fundos claros/escuros; antenas/patas/filamentos preservados; nada cortado pela célula.
+- [ ] Estados e animações mantêm espécie, pivot, escala, câmera e material; mortos/cinza e vivos/coloridos não trocam arbitrariamente a silhueta.
+- [ ] Prévia composta rotulada como estudo; peça/estado realmente aprovado antes da integração. Sem tratar escolha de técnica como aceite de todos os detalhes.
+- [ ] Quando integrado: consumidores, atlas/recortes, cache/pré-carga, offline e desempenho verificados; versões nativas/web coerentes. Não alegar teste em aparelho físico ou campanha completa sem executá-lo.
+- [ ] Originais/derivados preservados, backup remoto confirmado e manifesto/MEGA atualizados; nenhuma garantia apoiada só em caminho local.
+
+**Testes conforme escopo:** `node game/test/docs.mjs` preserva seis fontes; `node tools/check_art_handoff.mjs` valida continuidade/prompt/metadados; `node tools/make_assets_list.mjs --check` confere o pacote atual. Integrações requerem os testes pertinentes (`test:quick`, suíte completa, inspeções de UI/árvore/HUD/layout/pré-carga/PWA/nativos conforme o lote), inspeção de capturas e comparação com baseline. Um teste do jogo antigo não comprova a qualidade de uma arte ainda fora dele.
+
+<a id="arte-proximo-passo"></a>
+### 8. Próxima etapa real e mapa do trabalho restante
+
+**Próxima validação recomendada:** piloto da Planície aplicando o acabamento detalhado, com base trabalhada, passadas de decoração/elementos aprovadas separadamente e prévia composta. O objetivo é demonstrar riqueza sem vazio **e** leitura de gameplay; não gerar outra comparação com low-poly, nem repetir dez estilos já decididos. Definir o lote concreto antes de produzir.
+
+O piloto F0b também precisa de Rainha, Cortadeira, larva e cristal separados, alfa/escala e mock com HUD atual. As bases de terreno anteriores são insumos de estudo, não conclusão desse piloto. Reaproveitar o que for aprovado e registrar o que ainda não foi validado.
+
+**Ordem proposta, sujeita às portas de aprovação:** F0 estilo/prompt/piloto → F1 HUD/ícones/UI → F2 castas/Rainha/VFX/recursos → F3 árvore/maçãs/santuários/flores → F4 chefes → F5 menus/loading/cutscenes → F6 inimigos/terrenos/props → F7 formigueiro/Eras → F8 conteúdo futuro Pálida, só com autorização específica → F9 distribuição/ícones/documentação. Não prometer migração completa de uma vez.
+
+**Inventário como ponto de partida, não nova auditoria desta revisão:** 1.228 imagens registradas no inventário de base, 176 em `game/`, além de famílias procedurais. `docs/arte/inventario-imagens.csv` e `varredura-repositorio.csv` são snapshots da base auditada; não equivalem à contagem do pacote offline nem incorporam automaticamente as novas imagens do Drive. `DOCUMENTO_REESTILIZACAO_VISUAL.md` contém categorias/consumidores, ordem e riscos. Antes de mexer em cada família, revisar os consumidores atuais; ainda não houve revisão semântica manual completa de todo o código.
+
+**Ao encerrar uma próxima entrega, registrar neste MEGA:**
+
+```text
+Pedido/decisão e escopo autorizado:
+Versão do prompt + ficha exata + referências usadas (IDs/hashes):
+Arquivos gerados / aprovados / derivados / integrados (separar esses estados):
+Dimensões, alfa, recortes, âncoras e consumidor:
+Inspeção visual em tamanho de uso; defeitos e limites ainda presentes:
+Testes executados e resultados reais; o que não foi testado:
+Backup: pasta, IDs, tamanhos/checksums conferidos, originais preservados:
+Próxima ação e decisão que ainda precisa do usuário:
+```
+
+### Auditoria deste guia de continuidade
+
+Pedido exclusivamente documental: não muda o prompt canônico já aprovado, não gera novas imagens e não altera gameplay/arte de produção. Foram identificadas orientações antigas de leitura parcial, cadência de flores e “nenhum trabalho em aberto”; os pontos de entrada AGENTS/PENDENCIAS passam a remeter ao estado atual, preservando o contexto histórico. Os seis documentos originais incorporados ao MEGA permanecem intactos nesta revisão. Resultados desta revisão:
+
+- `node tools/check_art_handoff.mjs`: aprovado; prompt vigente idêntico no MEGA/guia, prompt anterior preservado, 15 registros de arquivos e navegação interna coerentes.
+- Cinco testes negativos somente em memória: o verificador rejeitou prompt divergente, bloco canônico duplicado, âncora quebrada, hash alterado e retorno da instrução antiga de não ler o MEGA inteiro. Nenhuma fixture corrompeu os arquivos do projeto.
+- `node game/test/docs.mjs`: seis fontes intactas, 120.582 bytes incorporados; nenhuma das seis foi modificada nesta revisão.
+- `node tools/make_assets_list.mjs --check`: 232 arquivos / 24,8 MB, lista vigente; `git diff --check` limpo.
+- `npm run inspect -- --telas=TITLE,RUN-MAPA1`: 4/4 cenas PC/mobile sem erros JS/404/glifos; RUN a 60 FPS no ambiente headless. É inspeção do jogo antigo, não de nova arte. Preview do jogo em :8000, MEGA servido com HTTP 200; não repetida a suíte completa.
+- Sem nova geração, upload/download do Drive ou integração nesta revisão; os links/checksums remotos são os comprovados nas entregas anteriores. Não houve push/PR/merge.
+
+A auditoria protege a consistência da memória; não garante automaticamente a qualidade estética de futuras gerações. Cada nova peça ainda precisa de inspeção e aceite visual.
+
+---
+
+<!-- FIM CONTINUIDADE ARTISTICA -->
+
+## Confirmação definitiva: 06 — papel recortado detalhado, sem vazio (2026-10-08)
+
+**Pedido explícito:** “Certo, decidi que o estilo oficial será o 6 papel recortado, porem quero que seja tudo bem detalhado para não passar um ar de vazio.”
+
+**Decisão:** manter 06 como técnica oficial, agora exigindo acabamento rico e não minimalista em todas as famílias visuais. O 08 é comparação histórica, não estilo alternativo pendente de escolha. Terrenos de estudo limpos não demonstram nem definem a densidade do cenário final. Texturas e recortes de várias escalas devem enriquecer o material; decoração, vegetação, fungos, raízes e construções permanecem peças/camadas separadas aprovadas (Regra 19). Preservar áreas de passagem/combate, contraste de ameaças, texto, anatomia, câmera e desempenho. Não resolver vazio com ruído/repetição uniforme nem alterar gameplay.
+
+**Prompt-mestre atualizado com autorização expressa:** `FUMIGA-PAPEL-v2-DETALHADO`. Texto anterior `FUMIGA-PAPEL-v1` preservado nos registros anteriores e no guia integral `docs/arte/historico/ESTILO_OFICIAL-v1.md`. Guia ativo `docs/arte/ESTILO_OFICIAL.md`; decisão atual em `docs/arte/direcao-vigente.json`. Esta versão de prompt é distinta da numeração da rodada v2 de imagens, que continua historicamente associada ao prompt v1.
+
+<a id="prompt-mestre-vigente"></a>
+<!-- INICIO PROMPT FUMIGA-PAPEL-v2-DETALHADO -->
+Crie uma única peça visual original para FUMIGA — Colônia Eterna no estilo oficial 06 de papel recortado artesanal, agora com acabamento rico e altamente detalhado, conforme a decisão explícita do usuário. A direção não é minimalista nem deve transmitir vazio ou aspecto de protótipo. Construa formas com camadas rasas de papel colorido, bordas de tesoura ligeiramente irregulares, fibras sutis e superfícies predominantemente foscas. O volume vem da sobreposição e de sombras de contato curtas e suaves; não de pixels aparentes, plástico, argila, metal realista ou modelagem low-poly. Use silhuetas reconhecíveis em tamanho pequeno, com recortes internos trabalhados e detalhes próprios da peça, com separação clara de personagem, recurso, ameaça e fundo. Evite contornos pretos grossos de cartoon: a borda cortada e o contraste entre papéis definem as formas.
+
+Distribua o detalhamento em três níveis: grandes formas que organizam a leitura, recortes médios que definem o assunto e detalhes finos de material. Mostre sobreposições elaboradas, fibras, variações sutis de pigmento e espessura, bordas artesanais e pequenos relevos coerentes, sem transformar papel em pintura lisa, plástico ou fotorrealismo. Evite áreas extensas uniformes sem tratamento, mas não preencha tudo com ruído, confetes ou peças repetidas. Em peças botânicas autorizadas, trabalhar nervuras, pétalas, filamentos e recortes delicados; em insetos, segmentos, placas, articulações e acessórios compatíveis com a anatomia; em UI, molduras trabalhadas com áreas limpas para texto e ícones. Aplicar apenas os detalhes pertinentes ao assunto solicitado, sem adicionar objetos de outras categorias a um sprite isolado.
+
+Em uma composição final de cenário, buscar abundância orgânica e sensação de lugar vivo por agrupamentos variados, sobreposições e transições cuidadas entre zonas. Concentrar o detalhe mais denso nas bordas, pontos de interesse e áreas não transitáveis; manter caminhos, personagens, recursos, ameaças e telegráficos destacados. Áreas de combate podem ter material rico de baixo contraste, sem virar superfícies vazias nem competir com a ação. A riqueza deve resultar da montagem de terreno, decoração, construções e efeitos em camadas independentes aprovadas, nunca da fusão desses elementos numa base de terreno. Para bases limpas, detalhar exclusivamente o material, as transições de cor e o relevo suave, sem incluir vegetação individual, raízes, pedras ou construções. Base limpa não significa cenário final vazio. Não gerar camadas ou assuntos além dos autorizados na ficha.
+
+Mantenha a identidade biológica e mítica do FUMIGA: sombras violeta-escuras, memória em âmbar-dourado, vegetação oliva e verde-azulada; adapte os acentos ao bioma sem mudar a técnica. A Névoa é branco-osso com sombras lilases, expressa por camadas leves de papel, sem esconder ameaças. Luz suave vindo do alto à esquerda. Preserve a anatomia animal: formigas com seis patas ligadas ao tórax, duas antenas e corpo segmentado; ferramentas e acessórios são proporcionais ao inseto. A Rainha Silenciosa tem gaster âmbar e diadema orgânico de fungo e seda, nunca coroa metálica humana. Proíba bipedia humana, rosto ou mãos humanos e roupas humanoides.
+
+Para personagens, objetos, terrenos, construções, santuários e flores, use vista ortográfica estritamente de cima, sem horizonte e sem câmera isométrica. Somente ilustrações de menus, carregamento, árvore de habilidades e maçãs podem usar outro enquadramento, explicitado na ficha da peça. Mantenha escala relativa, margem segura e âncora consistentes entre estados da mesma peça.
+
+Produza arte em alta resolução, com bordas legíveis e sem texto, logotipo, marca-d'água ou interface embutida. Sprite ou camada isolada: fundo transparente real e nenhuma cena ao redor; nunca pinte xadrez para simular transparência. Mapa-base: terreno completo e limpo, sem flores, árvores, arbustos, pedras, buracos, rachaduras ou construções; esses elementos serão peças separadas. Ilustração: composição única conforme a ficha, sem grade ou colagem de alternativas. A ficha técnica define o formato, dimensões, estado e partes a entregar; não invente novos personagens, mecânicas ou mudanças de lore.
+<!-- FIM PROMPT FUMIGA-PAPEL-v2-DETALHADO -->
+
+**Aplicação e aceite:** toda peça usa três níveis de detalhe (forma geral, recortes médios, acabamento fino) conforme sua escala e função. O piloto precisa mostrar uma composição com as camadas aprovadas, não apenas a base vazia; manter terreno/decoração/construções/sombras/VFX separáveis. Critérios e ficha por peça no guia. Nada autoriza incorporar decorativos à base nem produzir todo o jogo de uma vez. A aprovação de técnica e detalhamento não equivale à aprovação de cada asset final.
+
+**Escopo realizado nesta confirmação:** guia/prompt/decisão, plano, Regra 6 e avisos operacionais (AGENTS, flores e loading). Metadados de geração anteriores, seus hashes e backups não foram reescritos. Sem imagem nova, integração, mudanças de runtime/ASSET_V/saves ou GitHub. Próxima etapa: aplicar e validar o acabamento no piloto.
+
+**Histórico da Regra 6 imediatamente anterior a este refinamento:**
+
+```markdown
+## Regra 6 — Imagens em alta resolução, papel recortado harmônico 🎨
+
+> **Sempre criar imagens de alta resolução, mantendo o estilo oficial de papel recortado de maneira harmoniosa.** (escolha explícita do usuário: “Estilo 6 papel recortado”, 2026-10-08; substitui a exigência anterior de pixel art para novas artes)
+
+- Toda imagem criada para o jogo (sprites, ícones, cenários, UI, capas) deve ser gerada em
+  **alta resolução** e depois adequada ao tamanho de uso — nunca arte borrada ou subdimensionada.
+- **Estilo obrigatório para novas artes: papel recortado**, conforme o prompt-mestre
+  `FUMIGA-PAPEL-v1` em [`docs/arte/ESTILO_OFICIAL.md`](docs/arte/ESTILO_OFICIAL.md) e no MEGA.
+  Camadas rasas de papel, fibras discretas, bordas recortadas e sombras de contato;
+  identidade violeta/âmbar e leitura clara em tamanho pequeno. Arte antiga permanece até
+  a migração aprovada por lote; escolher o estilo não aprova todos os detalhes do conceito.
+- Antes de gerar, observar a referência 06 aprovada e os contratos dos sprites/atlas
+  existentes (`game/assets/`) para **combinar paleta, escala, sombreamento e silhueta**.
+  Não impor pixels aparentes à nova arte nem alterar filtros globais sem validar o piloto.
+- **Sempre mostrar 2 ou mais opções da mesma imagem para o usuário escolher** (ex.:
+  `offer_options` do `generate_image`): nenhuma arte entra no jogo por decisão só do agente —
+  o usuário aprova comparando alternativas lado a lado. Vale para geração nova, recriação
+  ("recrie 100%") e edição de arte existente; a escolhida ainda passa pela Regra 10. Se o usuário pedir explicitamente uma rodada
+  sem opções extras, respeitar essa escolha e manter a aprovação visual antes da integração.
+- Imagens entram otimizadas (Regra 5): tamanho certo para o uso, sem peso desnecessário.
+
+```
+
+**Coerência adicional:** a menção antiga a “pixel art” na identidade visual da Regra 2 foi alinhada para “papel recortado detalhado”; o método de pesquisa não mudou.
+
+**Verificação:** prompt v2 idêntico no guia e MEGA, v1 histórico preservado, direção atual/avisos coerentes; seis fontes do MEGA e respectivos hashes conferidos; lista de assets vigente (232 arquivos, 24,8 MB), `git diff --check` sem erros. `npm run inspect -- --telas=TITLE,RUN-MAPA1`: 4/4 cenas PC/mobile sem JS/404/glifos ausentes; RUN a 60 FPS headless. Preview do jogo antigo continua em :8000. Não repetida a suíte completa. Este registro é de direção artística e documentação, não de implementação visual concluída.
+
+---
+
+## Cenários comparativos 06/08 — Planície limpa, backup verificado (2026-10-08)
+
+**Pedido:** “Perfeito, faça uma amostra dos cenários no estilo 6 e no estilo 8”. Entregues exatamente duas imagens: papel recortado e low-poly ortográfico, usando a Planície do Amanhecer como amostra. Base limpa top-down, mesma proposta de clareira/caminhos; decorativos e construções ficam separados (Regra 19). O estudo do 08 não altera a direção oficial 06 nem conclui o piloto F0b.
+
+**Referências:** cenas 06/08 v2 recuperadas do Drive pelos IDs `1GdC_qq28br_xO3bKlCXeLTtyJ6wQ3QR6` e `1SQ54YQFLX70RT0b5Gr2V7cxZtcfeJflp`, com SHA/tamanho validados contra o manifesto v2. Seus caminhos locais antigos estavam ausentes nesta continuação; o backup remoto funcionou. Downloads retornaram arquivos locais utilizáveis. A nova base 06 utiliza `FUMIGA-PAPEL-v1` integral + ficha; a base 08 utiliza a composição da nova 06 e o material da referência 08. Não pedir reanexo nem confundir estes downloads v2 com recuperação da rodada v1.
+
+**Entrega e backup:** pasta [estilos Visuais / Cenários — estilos 06 e 08](https://drive.google.com/drive/folders/1GgVrL5J2M6mZVg9s1N9oXZPVXNB4MZm6), dois PNGs 1376×768, PDF de duas páginas e manifesto. Listagem pós-upload confirmou os quatro arquivos; tamanho e SHA-256 iguais aos locais. Originais nesta entrega em `art-source/cenarios-06-08/`, sem alteração no jogo e sem prometer disponibilidade futura de caminhos locais. Índice permanente com IDs e checksums em `docs/arte/cenarios-06-08.json` e `docs/arte/cenarios-06-08.md`.
+
+- Papel: ID `1m-yVSdgpEr19Uc_00JrnfK2svgDh7pS0`, 2.030.366 bytes, SHA `3a76ab51e44b1cc70943a838a4bf9cc87e919a285765f9cee53fed4c6c3665f3`.
+- Low-poly: ID `1eiLixhuWRMFmUCACE7GQbKB03AViVOje`, 1.525.976 bytes, SHA `d9d6f3c6da3c429ca15cfd3e97f153856f4c5641db4a12a0dee1b260e149664b`.
+- PDF: ID `19fuGZ-th4InxKewAxzdTidQHW5e8Lw_m`, 4.412.460 bytes, SHA `0a64463ec9c0dd4f7306b5940f36d4f57e41eaed929046db2bf72f7cca0fd704`.
+- Manifesto: ID `18xnMtkZhQZaMYTd2q3dm3-R1U_7fitGD`, 2.513 bytes, SHA `4193561655b8496ccc2f42eac583ea9abea6998bbb1cf63e714e0bb673ad6339`.
+
+**Verificação:** imagens decodificadas e inspecionadas; PDF com duas páginas. Galeria Chromium PC 1440×950/mobile 390×844: duas imagens, sem overflow/JS/HTTP com erro; capturas inspecionadas. Galeria em :8001 e jogo antigo em :8000. `npm run inspect -- --telas=TITLE,RUN-MAPA1`: 4/4 cenas, sem JS/404/glifos ausentes e 60 FPS no RUN headless. Não é teste da arte integrada, pois não houve integração; nenhuma colisão/seed/rota de navegação alterada. Testes documentais e lista de assets conferidos na finalização. Sem suíte completa, alterações de runtime ou push/PR/merge.
+
+---
+
+<a id="acervo-estilos-v2"></a>
+## Dez NOVOS estilos v2 — geração e backup remoto confirmados (2026-10-08)
+
+**Pedido explícito:** “Não consigo baixar os 10 pngs, quero que você crie outros”, seguido dos mesmos dez estilos numerados. Autoriza uma nova rodada, não recuperação dos originais. Mantido o pedido anterior de guardar as imagens no Drive / “estilos Visuais”.
+
+**Entregue:** dez imagens inéditas, uma por estilo (exatamente dez gerações, sem pares/opções extras). Cena conceitual top-down da Planície com ninho, rainha violeta/âmbar, operárias, larva, cristal e vegetação periférica. Exceção de estudo autorizada para os nove estilos não oficiais e para a cena decorada, que não é mapa-base final. 06 usa `FUMIGA-PAPEL-v1` integral + ficha v2; sem referência binária antiga. A escolha de papel recortado permanece vigente; o novo PNG 06 ainda precisa de aprovação como substituto visual antes do piloto. Não foi alterado o prompt canônico.
+
+**Originais:** `/home/user/fumiga-preservacao/estilos-visuais-v2/`, fora do Git e sem depender do diretório ignorado `art-source/` que estava ausente. Dez PNGs de 1376×768, total **25.217.876 bytes**. Não apagados após envio. Metadados versionáveis em `docs/arte/amostras-estilos-v2.json`; hashes v1 preservados separadamente. Nova cena 06: SHA `1009f4dfd9ff945d5bd689dcafe40c5032d66239bbda1810341b9965d147b52e`, diferente do original v1; não afirmar restauração.
+
+**Backup confirmado:** [estilos Visuais](https://drive.google.com/drive/folders/1KCPo0hWZGmM_jeRsN0ec59lR8-IL4_sj), pasta já criada, reutilizada sem duplicação. Upload por `file_path` bem-sucedido. Listagem posterior confirmou dez PNGs; tamanho e SHA-256 iguais aos locais. Descrição da pasta atualizada para distinguir nova v2 da v1 não recuperada. Nenhuma permissão de compartilhamento alterada.
+
+| Nº | Estilo | ID real no Drive | SHA-256 do PNG |
+|---|---|---|---|
+| 01 | Pixel art 16-bit | `101yDD7XYLACp2SyxA4neATjerUPsw1hW` | `15dabcd0ada06158b1740210f453be1e2952e74c25b6a3b0359a1f2895399200` |
+| 02 | Pixel art pictórico | `1wGY1p8MwaTlJdMzYzYezweQP7Hw87tqQ` | `bdd9cbc4b97fb667e1e832fbd379f1678c0e778d81475fca94ba2c4085e48844` |
+| 03 | Desenho com contorno | `1m4Q8XQFUCopvMibayoGRVPqWqRvmlJRK` | `ba20f7c048eb0da87a9af69371970dec31261cebde5ef796a66d876711bb70ac` |
+| 04 | Guache botânico | `11kkCtD_hjAFqPqyUKJ4J3asNT7Fdb0b2` | `d8973e876b9e76ef4a84d8aebfb623d1f390e816ed987633f3476d10d0b6bc1f` |
+| 05 | Aquarela e tinta | `1bMtKRlhLXqR5uP4RHBaimCavamnmE40L` | `51e9638ead481465705c9febe0553718affa5cc16ae3400a7b3e4363eb3a11d7` |
+| 06 | Papel recortado | `1GdC_qq28br_xO3bKlCXeLTtyJ6wQ3QR6` | `1009f4dfd9ff945d5bd689dcafe40c5032d66239bbda1810341b9965d147b52e` |
+| 07 | Argila / stop-motion | `19bul7Gj2ubqwaROrIQ-PAywBlrF3Os0H` | `476f731745622ec63ffd7874d050162532432c3c863c4e7f57543ecdb765c22c` |
+| 08 | Low-poly ortográfico | `1SQ54YQFLX70RT0b5Gr2V7cxZtcfeJflp` | `ea142b5559af3e215fc307ba5d4083daebdd65a78f29d8796f110e2b28f68ca6` |
+| 09 | Gravura sombria | `1DNj_0Dqm7JRHrShFuEAo0JvVt0Y4ircJ` | `5ace2df328c9064ff30ee28778503a90f2426f8ecb4417259d59dc76458b1d6d` |
+| 10 | Pintura bioluminescente | `13ODl3ya0ZVRYVKwJN8zSSG4nppLuFFsc` | `f9759dacfcaf9ecee09bb63fa0e641a408120a00ad999e47eb4e918e4241f40f` |
+
+**Pacotes adicionais na mesma pasta, também com tamanho/hash conferidos:**
+- PDF, dez páginas: ID `1RpokbVYEwIe95qKsF1EXSZIwV-GUuV6p`, 6.105.651 bytes, SHA `c554a17bd8a1a8d440f5b8cd987683567f6b80a1da77e9a82e5c8d6060bd87a8`.
+- ZIP (dez PNGs originais + PDF + galeria HTML + manifestos): ID `12oX7Us_jywxSvWdlDNC89ucgeaWiok_w`, 30.196.313 bytes, SHA `918c8c41e61e9558b7c70809f9dbfa79242cf934fb6a8657f5cce3db1b618a8c`.
+- Manifesto JSON: ID `1WZb-EVFReOxMgvdaSB8ZiMzywtGbM4kR`, 9.285 bytes, SHA `d5842bea63031ae5d1d1490e1f1942f5ff37661f4575f7cf9d2e5335c23c4a46`.
+- Registro dos pacotes em `docs/arte/pacotes-estilos-v2.json`. PDF/ZIP disponíveis também em `/home/user/fumiga-preservacao/`.
+
+**Inspeção e limites:** dez imagens abertas, técnicas reconhecíveis; composição não idêntica entre gerações (05/10 têm quatro operárias, 08 duas; 04 rainha diagonal; 09 margem clara). Reavaliar anatomia, diadema e coerência de sombras no piloto; nenhuma aprovação automática de sprite final. PDF com dez páginas; ZIP testado sem erro CRC e dez hashes internos conferidos. Galeria no Chromium PC 1440×1000/mobile 390×844: dez imagens decodificadas em ambos, sem overflow horizontal/JS/HTTP com erro, link da arte 06 abre o original. Capturas inspecionadas. Galeria ativa em :8001; jogo antigo em :8000 com HTTP 200.
+
+**Escopo técnico:** nada alterado em gameplay, assets de produção, ASSET_V, fontes ou dependências de runtime. Pillow/ReportLab apenas em venv de ferramentas no cache. Não repetida a suíte completa de gameplay, pois só arte externa/documentação mudou. Sem commit/push/PR/merge. O registro anterior de pasta vazia continua abaixo como histórico, superado para a **v2** por este backup confirmado; a v1 continua não recuperada.
+
+---
+
+## Pedido de backup dos dez estilos no Drive — destino criado, envio bloqueado (2026-10-08)
+
+**Pedido:** guardar as dez imagens geradas nesta conversa em uma pasta chamada exatamente “estilos Visuais”.
+
+**Resultado parcial confirmado:** pasta criada em `Fumiga Arquives / Fumiga-GOAT - Imagens do jogo / estilos Visuais`, ID `1KCPo0hWZGmM_jeRsN0ec59lR8-IL4_sj`, link https://drive.google.com/drive/folders/1KCPo0hWZGmM_jeRsN0ec59lR8-IL4_sj . Listagem posterior confirmou **zero arquivos**. Não declarar imagens salvas: **0/10**.
+
+**Recuperação tentada:** busca local por nomes dos estilos em `/home/user` e `/tmp`, sem os originais. Inspecionados os três diretórios de conceitos de 2026-10-08 já presentes no Drive (24 entradas, incluindo uma subpasta). Busca adicional de imagens/ZIPs/PDFs não excluídos criados a partir de 2026-10-08 retornou 33 imagens com metadados/checksums e nenhuma próxima página. Nenhum SHA-256 coincide com os dez originais registrados em `docs/arte/amostras-estilos.json`; inclusive `estilo-D_papercraft.png` tem hash diferente da amostra 06. Esses arquivos não foram copiados como substitutos, movidos ou alterados.
+
+**Bloqueio:** as imagens continuam visíveis ao usuário no chat, mas seus arquivos não estão acessíveis no workspace e não há ferramenta disponível para baixar o anexo de uma mensagem antiga pelo histórico. Não foi identificada a causa da ausência local. Nenhuma imagem regenerada. Para concluir, os dez PNGs (ou o ZIP original) precisam ser anexados/disponibilizados por link de download acessível; então conferir hashes, enviar para a pasta já criada e verificar conteúdo remoto. Destino e estado parcial também registrados no JSON para evitar duplicação da pasta.
+
+**Verificação:** criação e listagem remotas bem-sucedidas; tarefa de envio não concluída. Sem alteração de gameplay, assets ou código; nenhum push/PR/merge.
+
+---
+
+## Estilo oficial 06 — papel recortado e prompt-mestre (2026-10-08)
+
+**Decisão explícita do usuário:** “Estilo 6 papel recortado”. Substitui o estado “nenhum estilo escolhido” da rodada anterior. A Regra 6 passa de pixel art obrigatório para papel recortado harmônico em novas artes. A escolha não aprova automaticamente todos os detalhes do conceito nem autoriza substituição geral dos assets.
+
+**Prompt canônico:** `FUMIGA-PAPEL-v1`. Guia de uso e ficha por peça em `docs/arte/ESTILO_OFICIAL.md`. O bloco abaixo deve abrir as próximas gerações/edições, acrescido apenas da ficha do assunto. Só muda mediante aprovação explícita, preservando a versão anterior.
+
+<!-- INICIO PROMPT FUMIGA-PAPEL-v1 -->
+Crie uma única peça visual original para FUMIGA — Colônia Eterna no estilo oficial de papel recortado artesanal da amostra 06 aprovada. Construa formas com camadas rasas de papel colorido, bordas de tesoura ligeiramente irregulares, fibras sutis e superfícies predominantemente foscas. O volume vem da sobreposição e de sombras de contato curtas e suaves; não de pixels aparentes, plástico, argila, metal realista ou modelagem low-poly. Use silhuetas simples, reconhecíveis em tamanho pequeno, com separação clara de personagem, recurso, ameaça e fundo. Evite contornos pretos grossos de cartoon: a borda cortada e o contraste entre papéis definem as formas.
+
+Mantenha a identidade biológica e mítica do FUMIGA: sombras violeta-escuras, memória em âmbar-dourado, vegetação oliva e verde-azulada; adapte os acentos ao bioma sem mudar a técnica. A Névoa é branco-osso com sombras lilases, expressa por camadas leves de papel, sem esconder ameaças. Luz suave vindo do alto à esquerda. Preserve a anatomia animal: formigas com seis patas ligadas ao tórax, duas antenas e corpo segmentado; ferramentas e acessórios são proporcionais ao inseto. A Rainha Silenciosa tem gaster âmbar e diadema orgânico de fungo e seda, nunca coroa metálica humana. Proíba bipedia humana, rosto ou mãos humanos e roupas humanoides.
+
+Para personagens, objetos, terrenos, construções, santuários e flores, use vista ortográfica estritamente de cima, sem horizonte e sem câmera isométrica. Somente ilustrações de menus, carregamento, árvore de habilidades e maçãs podem usar outro enquadramento, explicitado na ficha da peça. Mantenha escala relativa, margem segura e âncora consistentes entre estados da mesma peça.
+
+Produza arte em alta resolução, com bordas legíveis e sem texto, logotipo, marca-d'água ou interface embutida. Sprite ou camada isolada: fundo transparente real e nenhuma cena ao redor; nunca pinte xadrez para simular transparência. Mapa-base: terreno completo e limpo, sem flores, árvores, arbustos, pedras, buracos, rachaduras ou construções; esses elementos serão peças separadas. Ilustração: composição única conforme a ficha, sem grade ou colagem de alternativas. A ficha técnica define o formato, dimensões, estado e partes a entregar; não invente novos personagens, mecânicas ou mudanças de lore.
+<!-- FIM PROMPT FUMIGA-PAPEL-v1 -->
+
+**Referência:** `06-papel-recortado.png`, 1376×768, 2.626.471 bytes, SHA-256 `35437ba0d4bf51a2ff75df02269c1910621102da000b703793a1241c3f9775e9`. Camadas rasas, fibras e sombras de contato. Não foi gerada outra imagem em seu lugar.
+
+**Retificação de preservação:** o diretório `art-source/estilos-2026-10-08/` e o ZIP da entrega anterior estão ausentes nesta continuação. Logo, a declaração histórica de preservação no workspace não garante disponibilidade atual. Metadados e hashes sobrevivem; backup dos novos binários no Drive não foi confirmado. Busca por `papel`, `recortado` e `FUMIGA-estilos-2026-10-08` retornou zero arquivos, sem comprovar ausência sob outros nomes. Recuperar o original (pedir reanexo se necessário) e conferir SHA antes do piloto. O conector atual oferece upload via `file_path`; a limitação de interface descrita no registro anterior não é permanente.
+
+**Escopo realizado:** guia/prompt; status do estilo no JSON e no plano; Regra 6 e resumo do fluxo; avisos de precedência nos guias AGENTS, flores e loading. Bloco de regras e registro SHA do MEGA sincronizados. Nenhum runtime, imagem de produção, ASSET_V, mecânica ou save alterado. Nenhum push/PR/merge solicitado ou realizado.
+
+**Próximo passo:** referência disponível → piloto separado (Rainha, Cortadeira, larva, cristal, base limpa da Planície), mock com HUD atual, validação de alfa/escala/sombras/PC/mobile e aprovação antes de F1. Não alterar smoothing global às cegas. Anatomia animal, top-down, mapa-base limpo, flores em duas levas e conteúdo Pálida futuro permanecem válidos. Sem opções extras não solicitadas nesta conversa.
+
+### Histórico: redação da Regra 6 substituída por esta escolha
+
+```markdown
+## Regra 6 — Imagens em alta resolução, sempre pixel art harmônico 🎨
+
+> **Sempre criar imagens de alta resolução, mantendo o estilo pixel art, e que mantenham o mesmo estilo artístico de maneira harmoniosa.**
+
+- Toda imagem criada para o jogo (sprites, ícones, cenários, UI, capas) deve ser gerada em
+  **alta resolução** e depois adequada ao tamanho de uso — nunca arte borrada ou subdimensionada.
+- **Estilo obrigatório: pixel art**, sempre em harmonia com a identidade visual já existente do
+  FUMIGA (paleta escura violeta/âmbar, contorno limpo, leitura clara em tamanho pequeno).
+- Antes de gerar, observar os sprites/atlas existentes (`game/assets/`) para **combinar paleta,
+  escala de pixel, sombreamento e silhueta** — a arte nova não pode parecer "colada de fora".
+- **Sempre mostrar 2 ou mais opções da mesma imagem para o usuário escolher** (ex.:
+  `offer_options` do `generate_image`): nenhuma arte entra no jogo por decisão só do agente —
+  o usuário aprova comparando alternativas lado a lado. Vale para geração nova, recriação
+  ("recrie 100%") e edição de arte existente; a escolhida ainda passa pela Regra 10.
+- Imagens entram otimizadas (Regra 5): tamanho certo para o uso, sem peso desnecessário.
+
+```
+
+### Verificação desta atualização documental
+
+- `node game/test/docs.mjs`: seis fontes íntegras, 120.115 bytes; SHA da Regra 6 atualizado.
+- `node tools/make_assets_list.mjs --check`: lista atual, 232 arquivos / 24,8 MB; versão de assets inalterada.
+- Validação JSON/guia: dez amostras preservadas nos metadados, seleção 06, hash da referência consistente e prompt canônico idêntico no guia e no MEGA.
+- `git diff --check`: sem erros de whitespace.
+- Preview atual na porta 8000, PC/mobile com HTTP 200.
+- `npm run inspect -- --telas=TITLE,RUN-MAPA1`: quatro cenas PC/mobile aprovadas, sem JS/404/glifos ausentes; 60 FPS no RUN headless. Capturas de RUN de ambos os perfis abertas para inspeção. Isso testa o jogo antigo, não a direção nova ainda não integrada.
+- Preparação manual inicial do Chromium falhou por nome incorreto dos arquivos comprimidos; corrigido para `.tar.br`, inspeção repetida com sucesso. Nenhuma alteração no script de setup ou no runtime.
+- Não repetida a suíte completa nem a inspeção de 30 cenas nesta atualização exclusivamente documental; resultados anteriores permanecem no registro da rodada original.
+
+---
+
+## Registro — Dez direções artísticas, inventário visual e plano de migração (2026-10-08)
+
+**Status: conceitos e planejamento entregues; estilo definitivo e integração pendentes.**
+Pedido: ler o repo/regras/MEGA completo, gerar dez estilos para escolha e mapear todos os assets
+com categorias e ordem de implementação. Nenhum código de produção, save ou asset do jogo alterado.
+
+### Escolhas explícitas desta sessão
+
+- Exploração autorizada **também fora do pixel art**, como exceção para as amostras, não como
+  revogação permanente da Regra 6.
+- Amostra = **cena conceitual top-down** da colônia, não apenas uma rainha isolada.
+- **Uma imagem por estilo, sem opções extras**: dez PNGs, teto da Regra 16 respeitado.
+- Nenhum estilo escolhido ainda; prompt-mestre definitivo (Regra 18) só após a escolha do usuário.
+
+### Entregas
+
+- `DOCUMENTO_REESTILIZACAO_VISUAL.md`: decisões vigentes × históricas, dez técnicas, limitações,
+  inventário lógico de 26 famílias procedurais, contratos, fases F0–F9, dependências e critérios de aceite.
+- `docs/arte/inventario-imagens.csv`: **1.228 imagens** do snapshot inicial, 54.701.900 bytes,
+  dimensões, modo/alfa, SHA-256, categoria, fase, carregador, fonte/derivado e ação por arquivo.
+  São 176 imagens em `game/assets/`, 1.039 fontes/bancos, 6 ícones PWA, 2 nativos, 4 referências e
+  1 captura. Não confundir arquivo, célula de sheet e asset efetivamente desenhado.
+- `docs/arte/varredura-repositorio.csv`: leitura automatizada dos **1.382 arquivos versionados**
+  da base `53c9f572`, com hashes; 151 textos UTF-8 / 46.360 linhas. Este registro é do snapshot
+  anterior à própria atualização documental desta entrega.
+- `tools/inventory_visual_assets.py`: auditoria reproduzível, sem sobrescrever assets;
+  **128 vínculos fonte → derivado** do pipeline; Pillow só na ferramenta de arte, não no jogo.
+- `docs/arte/amostras-estilos.json`: IDs, brief, técnica, riscos e hashes das dez imagens.
+- `art-source/estilos-2026-10-08/`: dez PNGs, `manifest.json`, galeria `index.html`,
+  `FUMIGA-10-estilos.pdf` (11 páginas) e receita `montar_galeria.py`; fora do Git.
+  Pacote portátil: `art-source/FUMIGA-estilos-2026-10-08.zip`.
+
+### Achados que o plano torna explícitos
+
+- Dinoponera é alias ampliado da Bala (`main.js`); Matriarca Rival usa a Matrona-aranha
+  (`config.js`). Artes próprias são propostas, não correções já implementadas.
+- Loadings próprios só para Planície/Floresta; outros biomas reutilizam essas imagens.
+- Noite Branca = 12 camadas / 4+4+4; outras sete definições têm 21 painéis sem PNGs dedicados.
+- Flores existentes: três mundos / 54 células. Outros quatro jardins exigem lotes e decisões próprias.
+- Interior do ninho em corte transversal exige decisão antes de novas peças top-down (Regra 17).
+- Mundo 7 continua futuro; nenhuma arte de prévia desbloqueia Pálida ou altera recompensas.
+
+### Leitura e verificação — limites declarados
+
+O **MEGA foi percorrido integralmente** e as 19 regras lidas, inclusive os registros após o
+índice de integridade. A leitura automatizada de todos os arquivos e decodificação de todas as
+imagens **não equivalem a revisão manual linha a linha de todo o código nem inspeção visual
+individual dos 1.228 originais**; essa parte do pedido permanece parcial. Não anunciar leitura
+manual integral do repo. O plano prevê revisão de consumidores por lote antes de integrar.
+
+- `test:quick`: **29/29**; `inspect`: PC/mobile, seis mapas e menus, sem JS/404/glifos ausentes,
+  ~59–60 FPS headless; capturas de RUN e Árvore inspecionadas. Não foi campanha completa nem teste físico.
+- `npm test -- -j 2`: **32/33**, falha intermitente de `regressions` em `running !== lost`,
+  também descrita no histórico. Passou isolado; repetição completa com `-j 1`: **33/33**, sem pulos.
+- Dez PNGs inspecionados e apresentados individualmente no viewer. Conceitos achatados, não sprites
+  prontos; pequenas variações de composição, anatomia/diadema a refinar no piloto (07 tem duas operárias).
+- Galeria PC/mobile: dez imagens, modal abrir/fechar, sem overflow horizontal, JS ou HTTP com erro.
+- Integridade: 1.228 hashes do inventário e 10 hashes de conceitos conferidos; todas as fontes
+  mapeadas existem. `docs.mjs` preserva os seis blocos originais; sem alteração de ASSET_V.
+- Preview do jogo atual :8000; galeria separada :8001. Nada novo no pacote offline do jogo.
+
+### Preservação e próximo passo
+
+Drive acessível: pasta `Fumiga Arquives/Fumiga-GOAT - Imagens do jogo`
+(`1IMj_-7VQf_asmRmMoMSzKxIQ37M6DXlW`). ZIP/manifesto históricos de 2026-10-07 encontrados por
+metadados, não revalidados por download. **Upload dos novos binários não confirmado**: imagens,
+PDF e ZIP preservados no workspace persistente em `art-source/`, alternativa da Regra 13;
+manifesto pequeno versionado. Não apagar os originais locais nem alegar backup remoto concluído.
+
+Próximo: usuário escolher 01–10 → fechar prompt-mestre e regra de estilo → piloto em tamanho
+real → aprovação → HUD/VFX/Árvore/Chefes/Cutscenes/Inimigos+biomas/Formigueiro/conteúdo futuro,
+com confirmações por fase. Sem commit/push/PR nesta entrega.
 
 ## Registro — Migração do acervo de imagens para Google Drive (2026-10-07)
 
@@ -734,6 +1310,7 @@ São exatamente os dois passos do job `navegador` do workflow mais o job `headle
   Planície, níveis 2–3 sem poder próprio, 4 PNGs `loading_*_raw.png` órfãos e `KeyB`/`KeyG` lidos
   depois dos `return` de draft/transição/pausa.
 
+<a id="flores-v3"></a>
 ## MANUAL — Fábrica de flores dos Santuários (método aprovado, 2026-10-01, v3)
 
 **Para chats novos: leia esta seção + [`DOCUMENTO_FLORES_DOS_SANTUARIOS.md`](DOCUMENTO_FLORES_DOS_SANTUARIOS.md)
@@ -2123,6 +2700,8 @@ HUD_MIN_FPS=55 node game/test/lorehud-browser.mjs
 
 ## Índice dos conteúdos integrais
 
+**Direção atual de arte:** [continuidade para novos chats](#continuidade-artistica) · [prompt-mestre vigente](#prompt-mestre-vigente). O histórico abaixo não revoga as decisões mais recentes.
+
 1. [Regras de trabalho](#fonte-regras-de-trabalho) — `REGRAS_DE_TRABALHO.md`
 2. [Lore canônica — A Travessia da Colônia Eterna](#fonte-lore-canonica) — `LORE.md`
 3. [Mega Atualização Lore-Total — visão, escolhas e oito fases](#fonte-mega-atualizacao-lore-total) — `DOCUMENTO_MEGA_ATUALIZACAO_LORE_TOTAL.md`
@@ -2145,6 +2724,14 @@ HUD_MIN_FPS=55 node game/test/lorehud-browser.mjs
 
 Este documento define as **regras obrigatórias** que o assistente de desenvolvimento (Arena.ai Agent Mode)
 deve seguir em **todas** as interações e alterações feitas no jogo **FUMIGA — Colônia Eterna**.
+
+> **LEITURA INTEGRAL OBRIGATÓRIA EM TODO PEDIDO — decisão do usuário, 2026-10-08:**
+> antes de executar qualquer pedido, ler este arquivo **por inteiro**, do começo ao fim,
+> independentemente do assunto (incluindo perguntas, arte, planejamento, documentação,
+> correções, testes, backup e publicação). Ler só títulos, trechos, resumos, o GUIA ou
+> lembrar a leitura de outro chat não substitui essa obrigação. Se a saída for truncada,
+> continuar em blocos até cobrir todo o conteúdo; não declarar leitura concluída sem fazê-la.
+> O [`GUIA.md`](GUIA.md) encaminha às fontes complementares, mas nunca dispensa estas regras.
 
 ---
 
@@ -2180,7 +2767,7 @@ D) Outro: (descreva)
   reconhecidos (ex.: *Dead Cells*, *Hollow Knight*, *Vampire Survivors*, *Slay the Spire*, *Stardew Valley*, etc.).
 - Registrar no retorno ao usuário **quais jogos serviram de inspiração** e **o que foi aproveitado** de cada um
   (mecânica, feel, UI, balanceamento, feedback visual).
-- A inspiração deve ser adaptada à identidade do FUMIGA: pixel art, colônia de formigas, roguelite de biomas.
+- A inspiração deve ser adaptada à identidade do FUMIGA: papel recortado detalhado, colônia de formigas, roguelite de biomas.
 - As fontes pesquisadas devem ser citadas (links) para o usuário conferir.
 
 ---
@@ -2237,20 +2824,29 @@ Ao final de cada tarefa, apresentar um **checklist de conferência** com este fo
 
 ---
 
-## Regra 6 — Imagens em alta resolução, sempre pixel art harmônico 🎨
+## Regra 6 — Imagens em alta resolução, papel recortado detalhado e harmônico 🎨
 
-> **Sempre criar imagens de alta resolução, mantendo o estilo pixel art, e que mantenham o mesmo estilo artístico de maneira harmoniosa.**
+> **Sempre criar imagens de alta resolução, mantendo o estilo oficial de papel recortado de maneira harmoniosa.** (escolha explícita do usuário: “Estilo 6 papel recortado”, 2026-10-08; substitui a exigência anterior de pixel art para novas artes)
 
 - Toda imagem criada para o jogo (sprites, ícones, cenários, UI, capas) deve ser gerada em
   **alta resolução** e depois adequada ao tamanho de uso — nunca arte borrada ou subdimensionada.
-- **Estilo obrigatório: pixel art**, sempre em harmonia com a identidade visual já existente do
-  FUMIGA (paleta escura violeta/âmbar, contorno limpo, leitura clara em tamanho pequeno).
-- Antes de gerar, observar os sprites/atlas existentes (`game/assets/`) para **combinar paleta,
-  escala de pixel, sombreamento e silhueta** — a arte nova não pode parecer "colada de fora".
+- **Estilo obrigatório para novas artes: papel recortado detalhado, não minimalista**, conforme o prompt-mestre
+  `FUMIGA-PAPEL-v2-DETALHADO` em [`docs/arte/ESTILO_OFICIAL.md`](docs/arte/ESTILO_OFICIAL.md) e no MEGA.
+  Camadas rasas trabalhadas, fibras, recortes médios e finos, variações de material e sombras de contato;
+  identidade violeta/âmbar e leitura clara em tamanho pequeno. Arte antiga permanece até
+  a migração aprovada por lote; escolher o estilo não aprova todos os detalhes do conceito.
+- **Refinamento explícito de 2026-10-08:** tudo deve ser bem detalhado, sem transmitir vazio.
+  Base limpa não é cenário final: compor riqueza com decoração/construções em camadas
+  separadas (Regra 19), mantendo caminhos, texto e ameaças legíveis. Não trocar vazio
+  por ruído visual nem sacrificar desempenho; validar o resultado composto no piloto.
+- Antes de gerar, observar a referência 06 aprovada e os contratos dos sprites/atlas
+  existentes (`game/assets/`) para **combinar paleta, escala, sombreamento e silhueta**.
+  Não impor pixels aparentes à nova arte nem alterar filtros globais sem validar o piloto.
 - **Sempre mostrar 2 ou mais opções da mesma imagem para o usuário escolher** (ex.:
   `offer_options` do `generate_image`): nenhuma arte entra no jogo por decisão só do agente —
   o usuário aprova comparando alternativas lado a lado. Vale para geração nova, recriação
-  ("recrie 100%") e edição de arte existente; a escolhida ainda passa pela Regra 10.
+  ("recrie 100%") e edição de arte existente; a escolhida ainda passa pela Regra 10. Se o usuário pedir explicitamente uma rodada
+  sem opções extras, respeitar essa escolha e manter a aprovação visual antes da integração.
 - Imagens entram otimizadas (Regra 5): tamanho certo para o uso, sem peso desnecessário.
 
 ---
@@ -2430,11 +3026,13 @@ Ao final de cada tarefa, apresentar um **checklist de conferência** com este fo
 ## 🔄 Resumo do fluxo obrigatório a cada pedido
 
 ```text
-0. LER MEGA    → abrir o MEGA_ARQUIVO (índice + registros recentes + seções do tema) em todo pedido (Regra 15)
+0a. LER REGRAS → ler REGRAS_DE_TRABALHO.md integralmente, em todo pedido e independentemente do assunto
+0b. LER MEGA    → abrir o MEGA_ARQUIVO (índice + registros recentes + seções do tema) em todo pedido (Regra 15)
+0c. GUIA       → responder GUIA.md e ler todas as fontes das rotas aplicáveis; não substituir as leituras obrigatórias
 1. PESQUISAR  → inspirações em jogos indies na Web (Regra 2)
 2. PERGUNTAR  → opções de implementação (Regra 1)
 3. IMPLEMENTAR → seguindo as escolhas do usuário, otimização (Regra 5) e Regra 14 (tela de carregamento só na troca de mundo; o que sai do TITLE é pré-carregado)
-4. ARTE       → imagens em alta resolução, pixel art harmônico (Regra 6) + humanização moderada (Regra 8) + top-down no mundo do jogo (Regra 17) + mapas-base limpos (Regra 19), em rodadas de no máx. 10 imagens (Regra 16), sempre partindo do prompt-mestre de estilo (Regra 18)
+4. ARTE       → imagens em alta resolução, papel recortado detalhado e harmônico (Regra 6) + humanização moderada (Regra 8) + top-down no mundo do jogo (Regra 17) + mapas-base limpos (Regra 19), em rodadas de no máx. 10 imagens (Regra 16), sempre partindo do prompt-mestre de estilo (Regra 18)
 5. MOSTRAR    → exibir toda arte gerada para aprovação visual (Regra 10)
 6. ADAPTAR    → mobile: todo input novo vira gesto/botão de toque (Regra 9)
 7. VERIFICAR  → check-in com checklist do que foi pedido (Regra 3)
@@ -4089,7 +4687,7 @@ parte dos blocos originais.
 
 | Arquivo original | Bytes preservados | SHA-256 |
 |---|---:|---|
-| `REGRAS_DE_TRABALHO.md` | 23551 | `e90d81676d9d4a8392154b5841849f4920d08b52c36e24fb062a3ea5673fda2f` |
+| `REGRAS_DE_TRABALHO.md` | 25499 | `ac3037df2f3ae19cc16e08c211c82811b55e281d04ae768b75fd47035232050d` |
 | `LORE.md` | 15056 | `42075fe4334601f1a74834388c0155342b2a8a6c21e51afa6020e34a5260f493` |
 | `DOCUMENTO_MEGA_ATUALIZACAO_LORE_TOTAL.md` | 30473 | `c642dd06d14e527bba6566458afa5293f697b0a3b981ef6301f6fafdfb9e856e` |
 | `DOCUMENTO_DECISOES_MEGA_ATUALIZACAO.md` | 8179 | `2b05240cd9fef9fb33d8a08768164f60202437c886c1c5b83f250ee9cbb58637` |

@@ -3,6 +3,14 @@
 Este documento define as **regras obrigatórias** que o assistente de desenvolvimento (Arena.ai Agent Mode)
 deve seguir em **todas** as interações e alterações feitas no jogo **FUMIGA — Colônia Eterna**.
 
+> **LEITURA INTEGRAL OBRIGATÓRIA EM TODO PEDIDO — decisão do usuário, 2026-10-08:**
+> antes de executar qualquer pedido, ler este arquivo **por inteiro**, do começo ao fim,
+> independentemente do assunto (incluindo perguntas, arte, planejamento, documentação,
+> correções, testes, backup e publicação). Ler só títulos, trechos, resumos, o GUIA ou
+> lembrar a leitura de outro chat não substitui essa obrigação. Se a saída for truncada,
+> continuar em blocos até cobrir todo o conteúdo; não declarar leitura concluída sem fazê-la.
+> O [`GUIA.md`](GUIA.md) encaminha às fontes complementares, mas nunca dispensa estas regras.
+
 ---
 
 ## Regra 1 — Perguntar antes de implementar 🎯
@@ -37,7 +45,7 @@ D) Outro: (descreva)
   reconhecidos (ex.: *Dead Cells*, *Hollow Knight*, *Vampire Survivors*, *Slay the Spire*, *Stardew Valley*, etc.).
 - Registrar no retorno ao usuário **quais jogos serviram de inspiração** e **o que foi aproveitado** de cada um
   (mecânica, feel, UI, balanceamento, feedback visual).
-- A inspiração deve ser adaptada à identidade do FUMIGA: pixel art, colônia de formigas, roguelite de biomas.
+- A inspiração deve ser adaptada à identidade do FUMIGA: papel recortado detalhado, colônia de formigas, roguelite de biomas.
 - As fontes pesquisadas devem ser citadas (links) para o usuário conferir.
 
 ---
@@ -94,20 +102,29 @@ Ao final de cada tarefa, apresentar um **checklist de conferência** com este fo
 
 ---
 
-## Regra 6 — Imagens em alta resolução, sempre pixel art harmônico 🎨
+## Regra 6 — Imagens em alta resolução, papel recortado detalhado e harmônico 🎨
 
-> **Sempre criar imagens de alta resolução, mantendo o estilo pixel art, e que mantenham o mesmo estilo artístico de maneira harmoniosa.**
+> **Sempre criar imagens de alta resolução, mantendo o estilo oficial de papel recortado de maneira harmoniosa.** (escolha explícita do usuário: “Estilo 6 papel recortado”, 2026-10-08; substitui a exigência anterior de pixel art para novas artes)
 
 - Toda imagem criada para o jogo (sprites, ícones, cenários, UI, capas) deve ser gerada em
   **alta resolução** e depois adequada ao tamanho de uso — nunca arte borrada ou subdimensionada.
-- **Estilo obrigatório: pixel art**, sempre em harmonia com a identidade visual já existente do
-  FUMIGA (paleta escura violeta/âmbar, contorno limpo, leitura clara em tamanho pequeno).
-- Antes de gerar, observar os sprites/atlas existentes (`game/assets/`) para **combinar paleta,
-  escala de pixel, sombreamento e silhueta** — a arte nova não pode parecer "colada de fora".
+- **Estilo obrigatório para novas artes: papel recortado detalhado, não minimalista**, conforme o prompt-mestre
+  `FUMIGA-PAPEL-v2-DETALHADO` em [`docs/arte/ESTILO_OFICIAL.md`](docs/arte/ESTILO_OFICIAL.md) e no MEGA.
+  Camadas rasas trabalhadas, fibras, recortes médios e finos, variações de material e sombras de contato;
+  identidade violeta/âmbar e leitura clara em tamanho pequeno. Arte antiga permanece até
+  a migração aprovada por lote; escolher o estilo não aprova todos os detalhes do conceito.
+- **Refinamento explícito de 2026-10-08:** tudo deve ser bem detalhado, sem transmitir vazio.
+  Base limpa não é cenário final: compor riqueza com decoração/construções em camadas
+  separadas (Regra 19), mantendo caminhos, texto e ameaças legíveis. Não trocar vazio
+  por ruído visual nem sacrificar desempenho; validar o resultado composto no piloto.
+- Antes de gerar, observar a referência 06 aprovada e os contratos dos sprites/atlas
+  existentes (`game/assets/`) para **combinar paleta, escala, sombreamento e silhueta**.
+  Não impor pixels aparentes à nova arte nem alterar filtros globais sem validar o piloto.
 - **Sempre mostrar 2 ou mais opções da mesma imagem para o usuário escolher** (ex.:
   `offer_options` do `generate_image`): nenhuma arte entra no jogo por decisão só do agente —
   o usuário aprova comparando alternativas lado a lado. Vale para geração nova, recriação
-  ("recrie 100%") e edição de arte existente; a escolhida ainda passa pela Regra 10.
+  ("recrie 100%") e edição de arte existente; a escolhida ainda passa pela Regra 10. Se o usuário pedir explicitamente uma rodada
+  sem opções extras, respeitar essa escolha e manter a aprovação visual antes da integração.
 - Imagens entram otimizadas (Regra 5): tamanho certo para o uso, sem peso desnecessário.
 
 ---
@@ -287,11 +304,13 @@ Ao final de cada tarefa, apresentar um **checklist de conferência** com este fo
 ## 🔄 Resumo do fluxo obrigatório a cada pedido
 
 ```text
-0. LER MEGA    → abrir o MEGA_ARQUIVO (índice + registros recentes + seções do tema) em todo pedido (Regra 15)
+0a. LER REGRAS → ler REGRAS_DE_TRABALHO.md integralmente, em todo pedido e independentemente do assunto
+0b. LER MEGA    → abrir o MEGA_ARQUIVO (índice + registros recentes + seções do tema) em todo pedido (Regra 15)
+0c. GUIA       → responder GUIA.md e ler todas as fontes das rotas aplicáveis; não substituir as leituras obrigatórias
 1. PESQUISAR  → inspirações em jogos indies na Web (Regra 2)
 2. PERGUNTAR  → opções de implementação (Regra 1)
 3. IMPLEMENTAR → seguindo as escolhas do usuário, otimização (Regra 5) e Regra 14 (tela de carregamento só na troca de mundo; o que sai do TITLE é pré-carregado)
-4. ARTE       → imagens em alta resolução, pixel art harmônico (Regra 6) + humanização moderada (Regra 8) + top-down no mundo do jogo (Regra 17) + mapas-base limpos (Regra 19), em rodadas de no máx. 10 imagens (Regra 16), sempre partindo do prompt-mestre de estilo (Regra 18)
+4. ARTE       → imagens em alta resolução, papel recortado detalhado e harmônico (Regra 6) + humanização moderada (Regra 8) + top-down no mundo do jogo (Regra 17) + mapas-base limpos (Regra 19), em rodadas de no máx. 10 imagens (Regra 16), sempre partindo do prompt-mestre de estilo (Regra 18)
 5. MOSTRAR    → exibir toda arte gerada para aprovação visual (Regra 10)
 6. ADAPTAR    → mobile: todo input novo vira gesto/botão de toque (Regra 9)
 7. VERIFICAR  → check-in com checklist do que foi pedido (Regra 3)

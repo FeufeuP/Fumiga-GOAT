@@ -1,0 +1,162 @@
+{
+  "data": "2026-10-08",
+  "estilo_oficial": 6,
+  "decisoes": [
+    "explorar fora do pixel art",
+    "cena conceitual top-down",
+    "10 imagens sem opções extras",
+    "Estilo 6 papel recortado"
+  ],
+  "brief_comum": "Planície com clareira/trilha, ninho superior esquerdo, rainha central violeta com gaster âmbar e diadema de fungo/seda, operárias, larva pálida à direita, cristal inferior direito, vegetação periférica. Luz superior esquerda, corpo de inseto, sem texto/UI. Não é mapa-base final.",
+  "imagens": [
+    {
+      "numero": 1,
+      "arquivo": "01-pixel-16bit.png",
+      "titulo": "Pixel art 16-bit",
+      "tratamento": "Clusters nítidos · paleta contida · silhuetas simples",
+      "beneficio": "Continuidade técnica e leitura rápida.",
+      "validar": "Simplificação pode reduzir a riqueza dos materiais.",
+      "largura": 1376,
+      "altura": 768,
+      "bytes": 1471288,
+      "sha256": "18d38ba916c53a184c4db7dd17cc87f74bff62518f8e4e5a2065ee3821e88d4b",
+      "status": "conceito não aprovado para produção"
+    },
+    {
+      "numero": 2,
+      "arquivo": "02-pixel-pictorico.png",
+      "titulo": "Pixel art pictórico",
+      "tratamento": "Textura rica · luz em degraus · contorno seletivo",
+      "beneficio": "Atmosfera detalhada mantendo uma linguagem pixelada.",
+      "validar": "Reduzir ruído do chão e validar animações.",
+      "largura": 1376,
+      "altura": 768,
+      "bytes": 2057079,
+      "sha256": "8b37933176e5a3fa0e9bbe3b24552c5f720a10aef873e5a6a3f4183385ae9e64",
+      "status": "conceito não aprovado para produção"
+    },
+    {
+      "numero": 3,
+      "arquivo": "03-desenho-cel.png",
+      "titulo": "Desenho com contorno",
+      "tratamento": "Tinta afilada · sombras em massas · formas expressivas",
+      "beneficio": "Boa separação entre personagens e cenário.",
+      "validar": "Fechar espessura do traço e suavização em escala real.",
+      "largura": 1376,
+      "altura": 768,
+      "bytes": 1933037,
+      "sha256": "f0421c93ef2031282cdb2a156d7a6df47c80e240c66026f70df4d824a6bf6d31",
+      "status": "conceito não aprovado para produção"
+    },
+    {
+      "numero": 4,
+      "arquivo": "04-guache-botanico.png",
+      "titulo": "Guache botânico",
+      "tratamento": "Pigmento opaco · pincel seco · matéria orgânica",
+      "beneficio": "Um mundo com aparência de pintura artesanal.",
+      "validar": "A pincelada não deve esconder unidades pequenas.",
+      "largura": 1376,
+      "altura": 768,
+      "bytes": 2612677,
+      "sha256": "648714eb57857b904036f029c2cc6cae737602145e367db990af4b936289ab01",
+      "status": "conceito não aprovado para produção"
+    },
+    {
+      "numero": 5,
+      "arquivo": "05-aquarela-tinta.png",
+      "titulo": "Aquarela e tinta",
+      "tratamento": "Lavagens translúcidas · papel · desenho delicado",
+      "beneficio": "Leveza e identidade de livro naturalista.",
+      "validar": "Garantir contraste da névoa branca sobre fundos claros.",
+      "largura": 1376,
+      "altura": 768,
+      "bytes": 2517761,
+      "sha256": "f2469baf1064c3114dd7617e08afaa92d6287d123a3ad1c6513b2a28a3cfaa8e",
+      "status": "conceito não aprovado para produção"
+    },
+    {
+      "numero": 6,
+      "arquivo": "06-papel-recortado.png",
+      "titulo": "Papel recortado",
+      "tratamento": "Camadas rasas · fibras · sombras de contato",
+      "beneficio": "Identidade artesanal forte e formas gráficas.",
+      "validar": "Manter sombras coerentes ao girar os sprites.",
+      "largura": 1376,
+      "altura": 768,
+      "bytes": 2626471,
+      "sha256": "35437ba0d4bf51a2ff75df02269c1910621102da000b703793a1241c3f9775e9",
+      "status": "direção artística oficial aprovada; asset de produção ainda não aprovado"
+    },
+    {
+      "numero": 7,
+      "arquivo": "07-argila-stopmotion.png",
+      "titulo": "Argila / stop-motion",
+      "tratamento": "Volume tátil · superfícies modeladas · luz suave",
+      "beneficio": "Presença física e personagens marcantes.",
+      "validar": "O conceito tem duas operárias; validar anatomia e quadros.",
+      "largura": 1376,
+      "altura": 768,
+      "bytes": 2864355,
+      "sha256": "179887c6548709e9b448dafc735bfa4580885b3468956c6e3b20f73d07665ddb",
+      "status": "conceito não aprovado para produção"
+    },
+    {
+      "numero": 8,
+      "arquivo": "08-lowpoly-ortografico.png",
+      "titulo": "Low-poly ortográfico",
+      "tratamento": "Facetas grandes · geometria limpa · volume simples",
+      "beneficio": "Boa definição de materiais e volumes.",
+      "validar": "Manter câmera de cima, nunca isométrica.",
+      "largura": 1376,
+      "altura": 768,
+      "bytes": 1947566,
+      "sha256": "e711408602869a23f7cd8b0fe286b0e847e4ba8a1e37ab1d247b25dabf5c5567",
+      "status": "conceito não aprovado para produção"
+    },
+    {
+      "numero": 9,
+      "arquivo": "09-gravura-sombria.png",
+      "titulo": "Gravura sombria",
+      "tratamento": "Massas de tinta · hachuras · cores de impressão",
+      "beneficio": "Uma leitura de mito antigo, com personalidade.",
+      "validar": "Controlar as hachuras para não poluir o combate.",
+      "largura": 1376,
+      "altura": 768,
+      "bytes": 2517524,
+      "sha256": "2c472e21868246338a22323c25f699ca67cbcb9e6ca8eb6ee0bbec9fa1607420",
+      "status": "conceito não aprovado para produção"
+    },
+    {
+      "numero": 10,
+      "arquivo": "10-pintura-bioluminescente.png",
+      "titulo": "Pintura bioluminescente",
+      "tratamento": "Quitina pintada · âmbar luminoso · sombra violeta",
+      "beneficio": "Conexão direta com memória, essência e névoa.",
+      "validar": "Glow e textura precisam respeitar a leitura de ameaças.",
+      "largura": 1376,
+      "altura": 768,
+      "bytes": 2263244,
+      "sha256": "faa12ae66fe585f948fff568bd9a9138cc0014b1dcb0227996310b79fc3b645e",
+      "status": "conceito não aprovado para produção"
+    }
+  ],
+  "prompt_mestre": {
+    "id": "FUMIGA-PAPEL-v1",
+    "arquivo": "docs/arte/ESTILO_OFICIAL.md",
+    "data": "2026-10-08"
+  },
+  "integracao_producao": "pendente de piloto e aprovação",
+  "disponibilidade_originais": "Diretório art-source/estilos-2026-10-08 ausente nesta continuação; backup dos novos binários não confirmado.",
+  "backup_drive": {
+    "pasta_nome": "estilos Visuais",
+    "pasta_id": "1KCPo0hWZGmM_jeRsN0ec59lR8-IL4_sj",
+    "pasta_url": "https://drive.google.com/drive/folders/1KCPo0hWZGmM_jeRsN0ec59lR8-IL4_sj",
+    "data": "2026-10-08",
+    "imagens_confirmadas": 0,
+    "imagens_esperadas": 10,
+    "estado": "Histórico da v1: zero originais recuperados/enviados. A pasta agora contém dez NOVAS imagens v2 e pacotes, ver amostras-estilos-v2.json; não confundir os hashes.",
+    "rodada": "v1 — originais não recuperados"
+  },
+  "rodada": "v1",
+  "nova_rodada": "docs/arte/amostras-estilos-v2.json"
+}

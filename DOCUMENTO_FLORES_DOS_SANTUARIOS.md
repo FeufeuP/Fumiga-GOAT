@@ -1,5 +1,10 @@
 # 🌸 Documento — Como criar as flores dos próximos Santuários
 
+> **Direção artística vigente — 2026-10-08:** estilo **06 — papel recortado detalhado**, confirmado pelo usuário; sem aparência vazia/minimalista.
+> Para novas artes, usar [`FUMIGA-PAPEL-v2-DETALHADO`](docs/arte/ESTILO_OFICIAL.md). Referências a pixel art/Dead Cells
+> abaixo descrevem o histórico e as artes ainda instaladas, não a técnica obrigatória das próximas peças.
+> Migração por lotes após piloto aprovado; não substituir assets automaticamente.
+
 **Criado em:** 30 de setembro de 2026 · **Modelo v3 (cadência 9 + ⛔ + 9: 9 vivos regulares → pausa → 3 brotos mortos + 6 fases da Flor Suprema), aprovado pelo usuário em 01/10/2026**
 **Vale para:** Santuários do Pântano, do Deserto, do Outono, do Gelo e da Pálida
 (o da **Planície já está pronto** — seção 10 — e o da **Floresta também** — seção 10b, incluindo as respectivas Flores Supremas de 6 fases; ambos são modelos).

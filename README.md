@@ -59,6 +59,10 @@ Por trás dos seis degraus espera o sétimo: **A PÁLIDA**, a Névoa-Mãe — a 
 completa, do prólogo (a Noite Branca) à derrota final, está em
 [`LORE.md`](LORE.md).
 
+🧭 **Para chats e colaboradores:** [`GUIA.md`](GUIA.md) contém as perguntas para localizar
+os arquivos e seções de cada pedido. **Ler [`REGRAS_DE_TRABALHO.md`](REGRAS_DE_TRABALHO.md)
+por inteiro em todo pedido, independentemente do assunto.**
+
 📚 **Planejamento consolidado:** [`MEGA_ARQUIVO.md`](MEGA_ARQUIVO.md) reúne integralmente
 os quatro documentos de atualização, a lore e as regras de trabalho, com índice e
 verificação de integridade. Os seis arquivos originais foram mantidos intactos.
