@@ -1,0 +1,13 @@
+{
+  "data": "2026-10-08",
+  "estilo": 6,
+  "nome": "Papel recortado detalhado",
+  "prompt_mestre": "FUMIGA-PAPEL-v2-DETALHADO",
+  "guia": "docs/arte/ESTILO_OFICIAL.md",
+  "anterior": "FUMIGA-PAPEL-v1",
+  "historico": "docs/arte/historico/ESTILO_OFICIAL-v1.md",
+  "decisao_usuario": "Certo, decidi que o estilo oficial será o 6 papel recortado, porem quero que seja tudo bem detalhado para não passar um ar de vazio.",
+  "direcao_aprovada": true,
+  "refinamento_implementado_no_jogo": false,
+  "proxima_validacao": "piloto detalhado e composição das camadas aprovadas, com leitura e desempenho PC/mobile"
+}

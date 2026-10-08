@@ -1,5 +1,10 @@
 # 📜 Documento de Planejamento — Telas de Carregamento Temáticas (Estilo Dead Cells)
 
+> **Direção artística vigente — 2026-10-08:** estilo **06 — papel recortado detalhado**, confirmado pelo usuário; sem aparência vazia/minimalista.
+> Para novas artes, usar [`FUMIGA-PAPEL-v2-DETALHADO`](docs/arte/ESTILO_OFICIAL.md). Referências a pixel art/Dead Cells
+> abaixo descrevem o histórico e as artes ainda instaladas, não a técnica obrigatória das próximas peças.
+> Migração por lotes após piloto aprovado; não substituir assets automaticamente.
+
 > **Jogo**: FUMIGA — Colônia Eterna  
 > **Data de Criação**: 2026-09-29  
 > **Status Geral**: Fase 1 e 2 Concluídas (Planície do Amanhecer e Floresta de Musgo implementadas e validadas).  

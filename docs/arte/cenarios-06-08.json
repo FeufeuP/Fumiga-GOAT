@@ -1,0 +1,49 @@
+{
+  "data": "2026-10-08",
+  "pedido": "Amostra dos cenários nos estilos 6 e 8",
+  "bioma": "Planície do Amanhecer (amostra adotada nesta entrega)",
+  "tipo": "bases limpas top-down; estudo de terreno, não integração nem mapa jogável final",
+  "geracoes": 2,
+  "estilo_oficial_mantido": 6,
+  "pasta_drive_id": "1GgVrL5J2M6mZVg9s1N9oXZPVXNB4MZm6",
+  "pasta_drive_url": "https://drive.google.com/drive/folders/1GgVrL5J2M6mZVg9s1N9oXZPVXNB4MZm6",
+  "referencias_recuperadas_do_drive": [
+    {
+      "numero": 6,
+      "drive_id": "1GdC_qq28br_xO3bKlCXeLTtyJ6wQ3QR6",
+      "sha256": "1009f4dfd9ff945d5bd689dcafe40c5032d66239bbda1810341b9965d147b52e"
+    },
+    {
+      "numero": 8,
+      "drive_id": "1SQ54YQFLX70RT0b5Gr2V7cxZtcfeJflp",
+      "sha256": "ea142b5559af3e215fc307ba5d4083daebdd65a78f29d8796f110e2b28f68ca6"
+    }
+  ],
+  "metodo": "06: FUMIGA-PAPEL-v1 integral + ficha de base limpa + referência 06 v2. 08: estilo low-poly autorizado, usando a nova base 06 como guia de composição e a cena 08 v2 como referência de material. Downloads das referências conferidos por SHA e tamanho.",
+  "composicao": "Clareira central, trilha inferior esquerda→superior direita e ramificação inferior direita. Relevos periféricos suaves, verde oliva/musgo/verde-azulado e terra bege. Câmera vertical 90 graus, sem horizonte, sem props/vegetação individual, sem personagens, texto ou névoa embutida.",
+  "limites": "Mesma proposta de layout, não equivalência pixel a pixel. Não há colisões, margens de navegação, tiles nem integração testada. Sombras/escala/resolução finais dependem do piloto.",
+  "imagens": [
+    {
+      "arquivo": "06-planicie-papel-recortado.png",
+      "bytes": 2030366,
+      "largura": 1376,
+      "altura": 768,
+      "sha256": "3a76ab51e44b1cc70943a838a4bf9cc87e919a285765f9cee53fed4c6c3665f3",
+      "titulo": "06 — Papel recortado",
+      "drive_id": "1m-yVSdgpEr19Uc_00JrnfK2svgDh7pS0",
+      "drive_url": "https://drive.google.com/file/d/1m-yVSdgpEr19Uc_00JrnfK2svgDh7pS0/view",
+      "backup_verificado": true
+    },
+    {
+      "arquivo": "08-planicie-lowpoly.png",
+      "bytes": 1525976,
+      "largura": 1376,
+      "altura": 768,
+      "sha256": "d9d6f3c6da3c429ca15cfd3e97f153856f4c5641db4a12a0dee1b260e149664b",
+      "titulo": "08 — Low-poly ortográfico",
+      "drive_id": "1eiLixhuWRMFmUCACE7GQbKB03AViVOje",
+      "drive_url": "https://drive.google.com/file/d/1eiLixhuWRMFmUCACE7GQbKB03AViVOje/view",
+      "backup_verificado": true
+    }
+  ]
+}

@@ -1,18 +1,36 @@
 # AGENTS.md — mapa rápido para quem desenvolve o FUMIGA
 
+> **Todo pedido, sem exceção de assunto:** ler [`REGRAS_DE_TRABALHO.md`](REGRAS_DE_TRABALHO.md)
+> **por inteiro**, do começo ao fim, e usar [`GUIA.md`](GUIA.md) para responder às perguntas
+> de encaminhamento e localizar os arquivos/seções complementares. Este resumo não substitui as regras.
+
+> **Direção artística vigente — 2026-10-08:** estilo **06 — papel recortado detalhado**, confirmado pelo usuário; sem aparência vazia/minimalista.
+> Para novas artes, usar [`FUMIGA-PAPEL-v2-DETALHADO`](docs/arte/ESTILO_OFICIAL.md). Referências a pixel art/Dead Cells
+> abaixo descrevem o histórico e as artes ainda instaladas, não a técnica obrigatória das próximas peças.
+> Migração por lotes após piloto aprovado; não substituir assets automaticamente.
+
 Leia isto **antes** de mexer no código. É o resumo operacional; as regras obrigatórias
-continuam em [`REGRAS_DE_TRABALHO.md`](REGRAS_DE_TRABALHO.md) (fluxo: ler o MEGA → pesquisar →
+continuam em [`REGRAS_DE_TRABALHO.md`](REGRAS_DE_TRABALHO.md) (fluxo: ler regras integrais → ler o MEGA → responder GUIA → pesquisar →
 perguntar → implementar → mostrar arte → mobile → check-in → jogar → preview → salvar).
-Lore e planejamento: [`LORE.md`](LORE.md) e [`MEGA_ARQUIVO.md`](MEGA_ARQUIVO.md). **Não leia
-o MEGA_ARQUIVO inteiro** (120 KB); abra só a seção que interessa.
+Lore e planejamento: [`LORE.md`](LORE.md) e [`MEGA_ARQUIVO.md`](MEGA_ARQUIVO.md).
+**Nesta continuidade, o usuário solicitou leitura integral do MEGA.** Comece pelo
+[guia para novos chats](MEGA_ARQUIVO.md#continuidade-artistica), leia o prompt canônico
+integral e prossiga pelos registros; não tratar este resumo como dispensa da leitura.
+O MEGA distingue estudos históricos, backups verificados e a migração ainda pendente.
 
 **Flores dos Santuários:** antes de criar flores de um santuário novo, leia
-[`DOCUMENTO_FLORES_DOS_SANTUARIOS.md`](DOCUMENTO_FLORES_DOS_SANTUARIOS.md): **3 variações × 4
-sprites**, feitas **uma por vez, com a confirmação do usuário entre cada variação**.
+[`DOCUMENTO_FLORES_DOS_SANTUARIOS.md`](DOCUMENTO_FLORES_DOS_SANTUARIOS.md) e o
+[manual v3 do MEGA](MEGA_ARQUIVO.md#flores-v3). Cadência vigente: **9 vivos regulares →
+PARADA 1 → 3 brotos mortos + 6 fases da Suprema → PARADA 2**. Um santuário por entrega;
+o teto de dez imagens por rodada inclui cada alternativa. Prevalece o pedido de não
+adicionar opções extras nesta continuidade até revisão explícita do usuário.
 
 **Regra 12:** a cada implementação ou atualização, atualizar também `MEGA_ARQUIVO.md`
 na mesma entrega: mudanças, decisões, testes/resultados, limitações e próximos passos.
 Preservar o histórico; sincronizar blocos e hashes dos originais editados.
+
+**Verificação da memória artística:** `node tools/check_art_handoff.mjs` (prompt,
+âncoras, referências e consistência das decisões); complementar com `node game/test/docs.mjs`.
 
 ## 1. Começo de sessão (sempre)
 

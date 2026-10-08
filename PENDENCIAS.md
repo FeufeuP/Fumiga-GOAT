@@ -1,9 +1,18 @@
 # 🕓 Pendências abertas do FUMIGA — handoff
 
+> **Antes de qualquer pedido:** ler [as regras por inteiro](REGRAS_DE_TRABALHO.md) e responder
+> o [GUIA de encaminhamento](GUIA.md). As rotas e resumos não dispensam a leitura integral.
+
+> **Estado artístico vigente — 2026-10-08:** estilo 06 papel recortado **detalhado** confirmado;
+> composição detalhada/piloto F0b e migração por lotes ainda pendentes. Começar pelo
+> [guia de continuidade no MEGA](MEGA_ARQUIVO.md#continuidade-artistica).
+> O status “nenhum trabalho em aberto” abaixo é histórico da integração de 2026-10-05,
+> não conclusão da migração visual. Branches e caminhos abaixo também são históricos.
+
 **Criado em:** 5 de outubro de 2026
 **Branch da entrega anterior:** `arena/01a0f71c-fumiga-goat` · **branch desta integração:**
 `arena/01a10bcf-fumiga-goat`
-**Status:** **nenhum trabalho em aberto** — os 2 trabalhos sem decisão que este documento abriu foram
+**Status histórico da integração de 2026-10-05:** **nenhum trabalho em aberto** — os 2 trabalhos sem decisão que este documento abriu foram
 **resolvidos na integração desta branch** (seção 1). Permanecem as 2 limitações aceitas por decisão do
 usuário (seção 3, não são tarefas). O defeito offline aberto na primeira versão deste documento foi
 resolvido pelo PR #57 (seção 2, histórico). Tudo o que o jogo usa está no repositório, testado e
@@ -14,8 +23,8 @@ Este documento existe porque o sandbox do agente reinicia a cada pausa e perde `
 `MEGA_ARQUIVO.md` — registros **“Dica da cutscene por plataforma + área PULAR no toque e Noite Branca
 em 4+4+4 (2026-10-05)”** (topo), **“Versão nova recarrega sozinha, formiga do painel 3 conferida e
 originais de arte fora do Git (2026-10-05)”** e **“Distribuição nativa offline completa (2026-10-02,
-branch arena/01a0fc42)”** (perto do fim, seção da distribuição). **Não leia o MEGA inteiro**
-(≈270 KB); abra só esses registros.
+branch arena/01a0fc42)”** (perto do fim, seção da distribuição). **Orientação de leitura atualizada:** nesta continuidade o usuário solicitou leitura integral
+do MEGA. Começar pelo guia vigente e continuar pelos registros, incluindo os históricos abaixo.
 
 ## 0. Como usar (vale para qualquer item daqui — e para pendências futuras)
 
