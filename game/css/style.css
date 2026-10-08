@@ -85,3 +85,21 @@ body::before {
   z-index: 2;
 }
 #scan[hidden] { display: none; }
+
+/* Filtro PS1 (OPÇÕES → VÍDEO): canvas de pós-processamento SOBRE o jogo, no
+   mesmo lugar e tamanho do canvas (o fit() do main.js acompanha os dois). No
+   nível FIEL AO PS1 o buffer interno é 480x270 e o "pixelated" faz a ampliação
+   gorda; "pointer-events: none" garante que o clique continue chegando no jogo.
+   Fica ABAIXO das scanlines (z-index 2), porque a listra de CRT é a tela, e o
+   quadriculado é o sinal. */
+#psx {
+  position: absolute;
+  left: 50%; top: 50%;
+  transform: translate(-50%, -50%);
+  image-rendering: pixelated;
+  image-rendering: crisp-edges;
+  pointer-events: none;
+  z-index: 1;
+  background: #000;
+}
+#psx[hidden] { display: none; }

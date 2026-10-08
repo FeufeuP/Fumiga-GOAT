@@ -33,6 +33,9 @@
   <canvas id="game" width="960" height="540"></canvas>
   <!-- Scanlines retrô (OPÇÕES → VÍDEO): cobertura sobre o canvas, sem clique -->
   <div id="scan" hidden></div>
+  <!-- Filtro PS1 (OPÇÕES → VÍDEO): canvas de pós-processamento por cima do
+       jogo — dither Bayer 4x4 + 15 bits, sem tocar nos pixels do #game. -->
+  <canvas id="psx" hidden></canvas>
 </div>
 <!-- HUD de toque (botões virtuais) e faixa de rotação, criados por touch.js -->
 <div id="touch-hud" hidden></div>

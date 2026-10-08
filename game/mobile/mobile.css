@@ -61,6 +61,20 @@ body {
   z-index: 2;
 }
 
+/* Filtro PS1 (OPÇÕES → VÍDEO): pós-processamento sobre o canvas, encaixado
+   pixel a pixel pelo fit() do main.js (mesmo esquema do #scan, que fica por
+   cima). Sem cliques: o toque continua indo para o jogo. */
+#psx {
+  position: absolute;
+  left: 50%; top: 50%;
+  transform: translate(-50%, -50%);
+  image-rendering: pixelated;
+  image-rendering: crisp-edges;
+  pointer-events: none;
+  z-index: 1;
+  background: #000;
+}
+
 /* ---------------------------------------------------------------- HUD ----- */
 /* Botões virtuais da expedição. Eles NÃO ficam mais sobre o canvas: o
    touch.js os joga para a faixa livre (letterbox) ao lado/abaixo da tela do

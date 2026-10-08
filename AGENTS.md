@@ -32,7 +32,8 @@ npm run test:quick          # ~10 s: confirma que a base está verde
 | `npm run inspect:ui` | cliques/toques reais: páginas de Memórias/Profecias, replay, ninho, pausa e invocar | ~15 s |
 | `npm run inspect:hud` | HUD orgânico nos 6 biomas, tecla H, acessibilidade | ~40 s |
 | `npm run inspect:layout` | **auditoria de layout**: todas as telas PC + mobile, com e sem FONTE GRANDE — texto fora da tela, colidindo, vazando da caixa, botões sobrepostos, toque cobrindo o canvas | ~4 min |
-| `npm run inspect:pwa` | **app instalável**: pacote único completo (232 arquivos), **reinício do worker com a rede desligada**, update que falha de propósito (a cópia anterior tem que sobreviver), timeout e boot offline em PC + mobile; passo 6: atualização real (versão velha → nova) exige **uma** recarga automática do jogo, nunca com expedição em andamento | ~25 s |
+| `node game/test/psx-filter-browser.mjs` | **filtro PS1** (OPÇÕES → VÍDEO): canvas separado, `#game` intocado, alinhamento, padrão MÉDIO, três níveis, persistência e as rotas webgl/cpu em PC + mobile | ~40 s |
+| `npm run inspect:pwa` | **app instalável**: pacote único completo (233 arquivos), **reinício do worker com a rede desligada**, update que falha de propósito (a cópia anterior tem que sobreviver), timeout e boot offline em PC + mobile; passo 6: atualização real (versão velha → nova) exige **uma** recarga automática do jogo, nunca com expedição em andamento | ~25 s |
 | `npm run inspect:preload` | **pré-carregamento do TITLE** (Regra 14): boot leve, tudo pronto parado no TITLE, árvore → 7 santuários → replay → profecias sem tela de carregamento, clique cedo com CPU 4× mais lenta, sem rede, pixels idênticos | ~45 s |
 | `node game/test/native-packages.mjs` | Android GeckoView embutido + loopback/CSP + Electron/NSIS x64: sem rede externa no runtime e cobertura integral dos assets | ~1 s |
 | `npm run playtest` | lê os JSONs de teste de campo (pasta `playtest/` ou caminhos) e gera o relatório de balanceamento/PWA | ~1 s |
@@ -82,6 +83,7 @@ faltando e o último erro. No console: `FUMIGA.ajuda()`, `FUMIGA.go('RUN', {mapa
 | `combat.js` · `particles.js` · `lore_vfx.js` | projéteis/orbes · partículas com pooling · VFX por casta (orçamento `vfxAllow`) |
 | `lore_hud.js` | HUD orgânico por bioma, barra-gaster da rainha, visão de feromônio (H) |
 | `cutscenes.js` | cutscenes em camadas (Noite Branca etc.), biblioteca MEMÓRIAS (o replay toca dentro dela) |
+| `psx_filter.js` | **FILTRO PS1** (OPÇÕES → VÍDEO): pós-processamento 2D do quadro — dither Bayer 4x4 + 15 bits num canvas separado (`#psx`), em shader WebGL com reserva por CPU; nunca toca nos pixels do `#game` |
 | `preload.js` | **pré-carregamento do TITLE** (Regra 14): árvore, maçãs, flores, 7 santuários e Noite Branca preparados em fatias de poucos ms por quadro (geradores), sem tela de carregamento |
 | `tutorial.js` · `ui.js` · `font.js` | tutorial em cartões · primitivos de UI em canvas · tipografia Kiwi Soda (TTF), métricas e cores por tela |
 | `camera.js` · `input.js` · `fog.js` · `audio.js` · `utils.js` | câmera/zoom/shake · teclado+mouse em coords 960×540 · névoa de guerra · áudio procedural WebAudio · RNG/matemática |
@@ -101,7 +103,7 @@ faltando e o último erro. No console: `FUMIGA.ajuda()`, `FUMIGA.go('RUN', {mapa
   `MANIFEST` de `assets.js` (o `test/assets.mjs` acusa se faltar).
 - **Arte nova, arquivo movido ou qualquer byte mudado em `game/` ou `app/`** → subir `ASSET_V`, rodar
   `node tools/make_assets_list.mjs` e sincronizar os shells nativos com `node tools/sync-native-assets.mjs`.
-  `app/assets.json` alimenta o único download offline completo (232 arquivos, ~24,8 MB); `test/pwa.mjs`
+  `app/assets.json` alimenta o único download offline completo (233 arquivos, ~24,9 MB); `test/pwa.mjs`
   compara a lista com a árvore real. Arquivo de arte não usado vai para `art-source/` e deve ter
   cópia na pasta dedicada do projeto no Google Drive (Regra 13); se o Drive não estiver disponível,
   preservá-lo em outro local persistente.
@@ -150,6 +152,11 @@ faltando e o último erro. No console: `FUMIGA.ajuda()`, `FUMIGA.go('RUN', {mapa
   rodando, `game/js/main.js` recarrega **uma vez** — só no carregamento/PRETITLE/TÍTULO, nunca em
   expedição (fica pendente até voltar ao título; `sessionStorage` impede laço). Teste: passo 6 do
   `inspect:pwa`.
+- **Filtro PS1**: `settings.psx` (0–3, padrão 2) é chave nova do save; o filtro é um canvas SOBRE o jogo
+  (`#psx`, z-index 1, abaixo das scanlines) — os pixels do `#game` continuam 960x540 em todos os níveis, e
+  é isso que os testes de pixel leem. Em renderizador por software (SwiftShader/llvmpipe) e em qualquer
+  máquina abaixo de ~45 FPS de mediana o filtro cai para buffer 480x270 sozinho (nunca desliga). Arte nova
+  aqui não existe: mexeu no visual do filtro, suba o `ASSET_V` como em qualquer byte de `game/`.
 - **Testes headless** simulam DOM/canvas com Proxy: código novo que usa uma API de DOM
   diferente pode precisar de guarda (`typeof document !== "undefined"`). Em especial, módulo
   importado em teste de Node pode não ter `window` (ver a guarda da sessão do playtest em

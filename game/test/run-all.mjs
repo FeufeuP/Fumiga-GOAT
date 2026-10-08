@@ -63,6 +63,7 @@ const TESTS = [
   { name: "playtest", file: "playtest.mjs" },
   { name: "pwa-worker", file: "pwa-worker.mjs" },
   { name: "regressions-browser", file: "regressions-browser.mjs", slow: true, browser: true },
+  { name: "psx-filter-browser", file: "psx-filter-browser.mjs", slow: true, browser: true },
 ];
 
 const args = process.argv.slice(2);

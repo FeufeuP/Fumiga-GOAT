@@ -14,6 +14,10 @@ import { boot, update, render, setLastDt } from "./game.js";
 import { loadLoreHUD } from "./lore_hud.js";
 import { bakeBossSheets, hasTransition } from "./render.js";
 import { preloadLoadingScreens } from "./loading_screen.js";
+// FILTRO PS1 (OPÇÕES → VÍDEO): pós-processamento 2D do quadro — dither Bayer
+// 4x4 + 15 bits num canvas separado (#psx). Sem modelagem 3D e sem tocar nos
+// pixels do #game. Ver o cabeçalho de js/psx_filter.js.
+import { initPsxFilter, resizePsxFilter, drawPsxFilter, notaQuadroPsx } from "./psx_filter.js";
 
 const canvas = document.getElementById("game");
 const ctx = canvas.getContext("2d");
@@ -37,6 +41,8 @@ function fit() {
     scan.style.width = canvas.style.width;
     scan.style.height = canvas.style.height;
   }
+  // o filtro PS1 (quando ligado) cobre exatamente a área do jogo
+  resizePsxFilter(canvas.style.width, canvas.style.height);
 }
 window.addEventListener("resize", fit);
 fit();
@@ -177,6 +183,12 @@ function loop(t) {
   setLastDt(dt);
   update(dt);
   render(dt);
+  // só depois do quadro pronto: o filtro lê o canvas inteiro (mundo + HUD +
+  // menus, conforme a escolha "em tudo") e devolve no #psx
+  drawPsxFilter();
+  // vigia de desempenho do filtro (Regra 5): se o quadro passar de ~45 FPS de
+  // mediana com o filtro ligado, ele desce para meia resolução — nunca desliga
+  notaQuadroPsx(dt);
   endTick();
   if (dbg) dbg(ctx, dt, performance.now() - t0);
 }
@@ -225,6 +237,9 @@ function reloadForNewVersion() {
 async function bootAll() {
   watchNewVersion();
   loadSave();
+  // FILTRO PS1: descobre o #psx e aplica o nível salvo (a chamada é segura em
+  // teste headless — sem canvas de verdade o filtro fica desligado)
+  initPsxFilter(canvas);
   // Sessão do playtest ANTES das cargas: se algo falhar no boot, o diário já
   // registrou o aparelho e a rede de erros captura o motivo (ver playtest.js).
   ptInstalar();
