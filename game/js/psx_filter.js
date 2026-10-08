@@ -36,10 +36,12 @@ import { VIEW_W, VIEW_H } from "./config.js";
  * dessaturação e `scale` é a resolução interna (0.5 = 480x270 esticado).
  */
 export const PSX_OPTS = [
-  { label: "DESLIGADO",   color: "#5a4f78", dither: 0,         steps: 255, desat: 0,    scale: 1 },
-  { label: "LEVE",        color: "#7fd6a0", dither: 0.020,     steps: 255, desat: 0,    scale: 1 },
-  { label: "MÉDIO",       color: "#6db7ff", dither: 1 / 31,    steps: 31,  desat: 0.10, scale: 1 },
-  { label: "FIEL AO PS1", color: "#c77dff", dither: 1.15 / 31, steps: 31,  desat: 0.20, scale: 0.5 },
+  { label: "DESLIGADO",   color: "#5a4f78", dither: 0,        steps: 255, desat: 0,    scale: 1 },
+  // Calibrado para o look de Crow Country: dither 4x4 bem visível, cores
+  // achatadas (≈ 4 bits por canal) e sombras acinzentadas/dessaturadas.
+  { label: "LEVE",        color: "#7fd6a0", dither: 0.06,     steps: 24,  desat: 0.18, scale: 1 },
+  { label: "MÉDIO",       color: "#6db7ff", dither: 0.10,     steps: 15,  desat: 0.32, scale: 1 },
+  { label: "FIEL AO PS1", color: "#c77dff", dither: 0.13,     steps: 12,  desat: 0.45, scale: 0.5 },
 ];
 /** Nível padrão de fábrica (pedido do usuário: filtro LIGADO por padrão). */
 export const PSX_DEFAULT = 2;

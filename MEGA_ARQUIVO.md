@@ -4584,3 +4584,14 @@ Traduzido nas quatro escolhas da Regra 1 (perguntas com opções, respondidas pe
 - O filtro não entra nos vídeos/arte de cutscene por caminho próprio: ele é do quadro, então vale também para as cutscenes (que desenham no mesmo canvas).
 - Em aparelho sem WebGL, a reserva por CPU já se rebaixa para 480x270 se um passe passar de 8 ms; em caso extremo o jogo continua jogável com o filtro em meia resolução — nunca há travamento.
 - **Não houve teste em GPU dedicada real nem em Android físico**: o sandbox só tem rasterizador por software. O caminho rápido (0,2 ms) é a expectativa medida em placas reais de outros passeios por pixel; mesmo assim, o vigia de quadro cobre o caso de o passe custar caro.
+
+## Registro — FILTRO PS1 mais forte, calibrado no look de Crow Country (2026-10-08)
+
+**Pedido do usuário:** *"Quero que o filtro seja mais forte, idêntico ao estilo de Crow Country"*.
+**Substitui** os valores de intensidade do registro anterior (MÉDIO era dither 1/31 com 31 degraus e 10% de dessaturação).
+
+- Novos parâmetros: LEVE dither 0.06 / 24 degraus / dessat. 18% · **MÉDIO (padrão)** dither 0.10 / 15 degraus / dessat. 32% · FIEL AO PS1 dither 0.13 / 12 degraus / dessat. 45% (buffer 480x270).
+- Medido: diferença média do quadro com o filtro subiu de ~3,5 para ~10 (teste `psx-filter-browser`).
+- **Limite honesto:** é uma aproximação. O filtro cobre dither 4x4, cores achatadas e dessaturação. O look de Crow Country também tem vinheta escura, granulado e bordas mais sujas, que ainda não fazem parte do filtro.
+- Versão de assets: `20261008-filtro-crow`; pacote regenerado (233 arquivos / 24,9 MB).
+- Verificação: `node game/test/psx-filter-browser.mjs` passou (PC e mobile, webgl e cpu); capturas comparativas em `capturas-ps1/comparacao-crow.png` e `zoom-crow.png` (fora do Git).
