@@ -1,0 +1,170 @@
+{
+  "date": "2026-10-09",
+  "scope": "matte removal only: flood filled cream background, art and enclosed paper interiors untouched",
+  "solid_threshold": 96.0,
+  "clear_threshold": 58.0,
+  "pieces": [
+    {
+      "path": "game/assets/ui/paper/panel.png",
+      "size": [
+        960,
+        512
+      ],
+      "matte": [
+        245,
+        237,
+        216
+      ],
+      "cleared_px": 122110,
+      "feathered_px": 1081,
+      "transparent_ratio": 0.2484,
+      "bytes": 804840,
+      "sha256": "fbc7112dc28c7b31f164f26296f07666b90803087de63b9e6eb1900d29c5cf69",
+      "mode": "RGBA"
+    },
+    {
+      "path": "game/assets/ui/paper/button.png",
+      "size": [
+        960,
+        238
+      ],
+      "matte": [
+        244,
+        237,
+        219
+      ],
+      "cleared_px": 89902,
+      "feathered_px": 10523,
+      "transparent_ratio": 0.3935,
+      "bytes": 400230,
+      "sha256": "6ed4e12138614d6d2ede594dc19230f064d4d2cfef8c3535c4f8f4e13ba03e0c",
+      "mode": "RGBA"
+    },
+    {
+      "path": "game/assets/ui/paper/card.png",
+      "size": [
+        848,
+        1264
+      ],
+      "matte": [
+        245,
+        237,
+        216
+      ],
+      "cleared_px": 181189,
+      "feathered_px": 3352,
+      "transparent_ratio": 0.169,
+      "bytes": 1788042,
+      "sha256": "55ebdeb231981625748e3e1073b6ea4af5f9b3ec208d29bef4e1b66653d610b4",
+      "mode": "RGBA"
+    },
+    {
+      "path": "game/assets/ui/paper/banner.png",
+      "size": [
+        960,
+        192
+      ],
+      "matte": [
+        245,
+        237,
+        216
+      ],
+      "cleared_px": 51649,
+      "feathered_px": 570,
+      "transparent_ratio": 0.2802,
+      "bytes": 304982,
+      "sha256": "097749e7ca454e0a8320197cbd3866e50eac7fbc00e2fa60fba409ac43f3958d",
+      "mode": "RGBA"
+    },
+    {
+      "path": "game/assets/ui/paper/health.png",
+      "size": [
+        960,
+        135
+      ],
+      "matte": [
+        245,
+        237,
+        216
+      ],
+      "cleared_px": 38130,
+      "feathered_px": 581,
+      "transparent_ratio": 0.2942,
+      "bytes": 203269,
+      "sha256": "f7d63228e3fa1e19a88c55762353a011aed6a31e72b59c6abf940c1db111255d",
+      "mode": "RGBA"
+    },
+    {
+      "path": "game/assets/ui/paper/minimap.png",
+      "size": [
+        960,
+        717
+      ],
+      "matte": [
+        245,
+        237,
+        216
+      ],
+      "cleared_px": 134086,
+      "feathered_px": 935,
+      "transparent_ratio": 0.1948,
+      "bytes": 1058743,
+      "sha256": "ee057c3ac91e4bb56a1de53c6325407fa787b4ff18fa236395c8b3a6a65b7f28",
+      "mode": "RGBA"
+    },
+    {
+      "path": "game/assets/ui/paper/pause.png",
+      "size": [
+        928,
+        1152
+      ],
+      "matte": [
+        244,
+        236,
+        215
+      ],
+      "cleared_px": 189228,
+      "feathered_px": 3246,
+      "transparent_ratio": 0.177,
+      "bytes": 1680165,
+      "sha256": "e0d5f9ea51169b3c436a1530551a18fe88590ec5dd567f151a0443fcc41fb429",
+      "mode": "RGBA"
+    },
+    {
+      "path": "game/assets/ui/paper/tooltip.png",
+      "size": [
+        960,
+        475
+      ],
+      "matte": [
+        254,
+        255,
+        254
+      ],
+      "cleared_px": 98175,
+      "feathered_px": 8820,
+      "transparent_ratio": 0.2153,
+      "bytes": 701381,
+      "sha256": "19b102418d4ee21f05a9f212708f3831cefbcef051b53260c5b831d8dffd44a4",
+      "mode": "RGBA"
+    },
+    {
+      "path": "game/assets/sprites/icons/ember.png",
+      "size": [
+        128,
+        128
+      ],
+      "matte": [
+        245,
+        234,
+        212
+      ],
+      "cleared_px": 11650,
+      "feathered_px": 90,
+      "transparent_ratio": 0.7111,
+      "bytes": 20595,
+      "sha256": "29d81a1c6cbc0b80f0f13d4007c0193efae067f554de7a3ff73845918688ef04",
+      "mode": "RGBA"
+    }
+  ]
+}

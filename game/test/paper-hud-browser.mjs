@@ -15,10 +15,17 @@ try {
   ctx.fillStyle='#253524';ctx.fillRect(0,0,960,540);
   const hashes=[];const opts=[{}, {hot:true},{pressed:true},{selected:true},{disabled:true}];
   for(let i=0;i<5;i++) {
-   MOD.paper.drawPaper(ctx,'button',20,20+i*80,240,60,opts[i]);
-   const a=ctx.getImageData(20,20+i*80,240,60).data;let hash=0;
-   for(let j=0;j<a.length;j++){if(j%4===3&&a[j]!==255)throw Error('alpha');hash=(hash*31+a[j])|0;}
+   // Drawn on an isolated transparent tile: the sheet around the painting must
+   // stay empty (no matte, no state rectangle) while the art itself is opaque.
+   const t=document.createElement('canvas');t.width=240;t.height=60;
+   const tc=t.getContext('2d');MOD.paper.drawPaper(tc,'button',0,0,240,60,opts[i]);
+   const a=tc.getImageData(0,0,240,60).data;let hash=0,clear=0,solid=0;
+   for(let j=3;j<a.length;j+=4){if(a[j]===0)clear++;else if(a[j]===255)solid++;}
+   if(!clear)throw Error('button state '+i+' still has an opaque sheet');
+   if(solid<240*60*0.3)throw Error('button state '+i+' lost its painted body');
+   for(let j=0;j<a.length;j++)hash=(hash*31+a[j])|0;
    hashes.push(hash);
+   MOD.paper.drawPaper(ctx,'button',20,20+i*80,240,60,opts[i]);
   }
   // Dedicated new tooltip, not alias of the panel or rejected historical art.
   if(MOD.paper.paperSource('tooltip',420,240)!=='tooltip')throw Error('tooltip not integrated');
@@ -37,11 +44,13 @@ try {
   for(const y of [10,150,290]) {
     const data=tc.getImageData(0,y,30,1).data;
     let painted=0;for(let i=0;i<data.length;i+=4) {
-      if(data[i+3]!==255)throw Error('transparent tall frame');
-      if(data[i]<200)painted++;
+      if(data[i+3]>8&&data[i]<200)painted++;
     }
     if(!painted)throw Error('missing tall frame at '+y);
   }
+  // Interior paper stays opaque so text remains readable over the world.
+  const mid=tc.getImageData(60,150,1,1).data;
+  if(mid[3]!==255)throw Error('frame interior lost its paper');
   const geo=MOD.paper.paperGeometry('card',848,1264,120,300);
   if(geo.dx.at(-1)!==120||geo.dy.at(-1)!==300)throw Error('incomplete frame');
   const inside=MOD.font.paperAt(ctx,100,40),outside=MOD.font.paperAt(ctx,900,500);
@@ -54,5 +63,5 @@ try {
  fs.mkdirSync(OUT,{recursive:true});
  fs.writeFileSync(path.join(OUT,'estados-tooltip.png'),Buffer.from(result.png.split(',')[1],'base64'));
  assert.equal(await page.evaluate(()=>MOD.paper.paperState({disabled:true,pressed:true,selected:true,hot:true})),'disabled');
- console.log('PAPER HUD OK: cinco estados distintos, alpha255, tinta local e reset por frame');
+ console.log('PAPER HUD OK: cinco estados distintos, fundo recortado, interior opaco, tinta local e reset por frame');
 } finally {await browser.close();await server.close();}
