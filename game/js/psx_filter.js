@@ -32,16 +32,16 @@ import { VIEW_W, VIEW_H } from "./config.js";
 /**
  * Níveis do menu — o ÍNDICE é o valor salvo em settings.psx (0 a 3).
  * `dither` é a amplitude do padrão (em unidades 0..1 de cor), `steps` são os
- * degraus de quantização (31 = 32 níveis = 15 bits por pixel), `desat` é a
- * dessaturação e `scale` é a resolução interna (0.5 = 480x270 esticado).
+ * degraus de quantização (31 = 32 níveis = 15 bits por pixel), `contrast` é o
+ * ganho de contraste (1 = igual ao jogo) e `scale` é a resolução interna (0.5 = 480x270 esticado).
  */
 export const PSX_OPTS = [
-  { label: "DESLIGADO",   color: "#5a4f78", dither: 0,        steps: 255, desat: 0,    scale: 1 },
+  { label: "DESLIGADO",   color: "#5a4f78", dither: 0,        steps: 255, contrast: 1,    scale: 1 },
   // Calibrado para o look de Crow Country: dither 4x4 bem visível, cores
   // achatadas (≈ 4 bits por canal) e sombras acinzentadas/dessaturadas.
-  { label: "LEVE",        color: "#7fd6a0", dither: 0.06,     steps: 24,  desat: 0.18, scale: 1 },
-  { label: "MÉDIO",       color: "#6db7ff", dither: 0.10,     steps: 15,  desat: 0.32, scale: 1 },
-  { label: "FIEL AO PS1", color: "#c77dff", dither: 0.13,     steps: 12,  desat: 0.45, scale: 0.5 },
+  { label: "LEVE",        color: "#7fd6a0", dither: 0.06,     steps: 24,  contrast: 1.06, scale: 1 },
+  { label: "MÉDIO",       color: "#6db7ff", dither: 0.10,     steps: 15,  contrast: 1.12, scale: 1 },
+  { label: "FIEL AO PS1", color: "#c77dff", dither: 0.13,     steps: 12,  contrast: 1.16, scale: 0.5 },
 ];
 /** Nível padrão de fábrica (pedido do usuário: filtro LIGADO por padrão). */
 export const PSX_DEFAULT = 2;
@@ -84,7 +84,7 @@ varying vec2 vUV;
 uniform sampler2D uTex;
 uniform float uDither;
 uniform float uSteps;
-uniform float uDesat;
+uniform float uContrast;
 
 // Matriz Bayer 4x4 clássica (0..15), escrita por linhas. É o mesmo padrão
 // ordenado que a GPU do PS1 somava antes de truncar para 15 bits.
@@ -102,7 +102,7 @@ float bayer4(vec2 p) {
 void main() {
   // o canvas (origem no topo) vira textura com o eixo Y invertido
   vec3 c = texture2D(uTex, vec2(vUV.x, 1.0 - vUV.y)).rgb;
-  if (uDesat > 0.0) c = mix(vec3(dot(c, vec3(0.299, 0.587, 0.114))), c, 1.0 - uDesat);
+  c = (c - 0.5) * uContrast + 0.5;   // contraste do jogo preservado (sem dessaturar)
   c += (bayer4(gl_FragCoord.xy) - 0.5) * uDither;
   c = floor(c * uSteps + 0.5) / uSteps;
   gl_FragColor = vec4(clamp(c, 0.0, 1.0), 1.0);
@@ -137,7 +137,7 @@ function setupGL(cv) {
   g.linkProgram(p);
   if (!g.getProgramParameter(p, g.LINK_STATUS)) throw new Error("programa: " + g.getProgramInfoLog(p));
   g.useProgram(p);
-  for (const nome of ["uTex", "uDither", "uSteps", "uDesat"]) uni[nome] = g.getUniformLocation(p, nome);
+  for (const nome of ["uTex", "uDither", "uSteps", "uContrast"]) uni[nome] = g.getUniformLocation(p, nome);
   quad = g.createBuffer();
   g.bindBuffer(g.ARRAY_BUFFER, quad);
   g.bufferData(g.ARRAY_BUFFER, new Float32Array([-1, -1, 1, -1, -1, 1, 1, -1, 1, 1, -1, 1]), g.STATIC_DRAW);
@@ -174,7 +174,7 @@ function buildLuts(opt, idx) {
     const passo = (bayer[o] + 0.5) / 16 - 0.5;   // -0.5 .. +0.5
     const t = new Uint8Array(256);
     for (let v = 0; v < 256; v++) {
-      const c = v / 255 + passo * opt.dither;
+      const c = ((v / 255) - 0.5) * opt.contrast + 0.5 + passo * opt.dither;
       const q = Math.round(Math.min(1, Math.max(0, c)) * opt.steps) / opt.steps;
       t[v] = Math.round(Math.min(1, Math.max(0, q)) * 255);
     }
@@ -258,7 +258,7 @@ export function applyPsxFilter() {
     gl.viewport(0, 0, w, h);
     gl.uniform1f(uni.uDither, opt.dither);
     gl.uniform1f(uni.uSteps, opt.steps);
-    gl.uniform1f(uni.uDesat, opt.desat);
+    gl.uniform1f(uni.uContrast, opt.contrast);
   } else {
     cpuW = w; cpuH = h;
     cpuCtx = el.getContext("2d");
@@ -295,17 +295,12 @@ function cpuFrame() {
   const d = img.data, n = d.length;
   const tabs = luts[level];
   if (!tabs) return;
-  const desat = PSX_OPTS[level].desat;
   for (let y = 0, i = 0; y < cpuH; y++) {
     const base = (y & 3) * 4;
     for (let x = 0; x < cpuW; x++, i += 4) {
       if (i + 3 >= n) { y = cpuH; break; }   // DOM simulado devolve buffer curto
       const t = tabs[base + (x & 3)];
-      let r = d[i], g = d[i + 1], b = d[i + 2];
-      if (desat > 0) {
-        const l = (r * 77 + g * 150 + b * 29) >> 8;      // luma (Rec. 601)
-        r += (l - r) * desat; g += (l - g) * desat; b += (l - b) * desat;
-      }
+      const r = d[i], g = d[i + 1], b = d[i + 2];   // contraste já está na tabela
       d[i] = t[r | 0]; d[i + 1] = t[g | 0]; d[i + 2] = t[b | 0];
     }
   }

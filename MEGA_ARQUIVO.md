@@ -4595,3 +4595,12 @@ Traduzido nas quatro escolhas da Regra 1 (perguntas com opções, respondidas pe
 - **Limite honesto:** é uma aproximação. O filtro cobre dither 4x4, cores achatadas e dessaturação. O look de Crow Country também tem vinheta escura, granulado e bordas mais sujas, que ainda não fazem parte do filtro.
 - Versão de assets: `20261008-filtro-crow`; pacote regenerado (233 arquivos / 24,9 MB).
 - Verificação: `node game/test/psx-filter-browser.mjs` passou (PC e mobile, webgl e cpu); capturas comparativas em `capturas-ps1/comparacao-crow.png` e `zoom-crow.png` (fora do Git).
+
+## Registro — Filtro PS1: contraste preservado e documento próprio (2026-10-08)
+
+**Status: implementado e verificado.** Toda a documentação do filtro foi movida para **`FILTRO_PS1.md`** (raiz do repositório), que passa a ser a fonte única sobre o assunto. Os registros anteriores deste arquivo continuam como histórico.
+
+- Pedido do usuário: *"O filtro tirou o contraste do jogo, mantenha o contraste do jogo. E coloque tudo sobre o filtro dentro de um novo documento."*
+- Mudança: a **dessaturação foi removida** dos quatro níveis (era ela que achatava o contraste). Entrou um **ganho de contraste** por canal (1.06 / 1.12 / 1.16 nos níveis LEVE / MÉDIO / FIEL), aplicado igual no shader WebGL e na tabela do modo CPU.
+- Versão de assets: `20261008-filtro-contraste`.
+- Substitui os valores de intensidade dos registros anteriores deste arquivo (dessaturação de 18–45%).
