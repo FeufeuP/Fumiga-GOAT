@@ -160,9 +160,11 @@ try {
       // diferentes quando o jogo recarrega/atualiza o estado.
       let afterRetry = null;
       for (let i = 0; i < 300; i++) {
-        afterRetry = await page.evaluate(async () => ({
-          counts: { ...window.loadingCounts }, progress: (await M('loading_screen.js')).getLoadingProgress(),
-          ready: (await M('loading_screen.js')).isLoadingReady(), screen: FUMIGA.G.screen,
+        // All fields must come from the same browser task. Awaiting import
+        // between progress and ready lets a render frame advance in between.
+        afterRetry = await page.evaluate(() => ({
+          counts: { ...window.loadingCounts }, progress: MOD.loading.getLoadingProgress(),
+          ready: MOD.loading.isLoadingReady(), screen: FUMIGA.G.screen,
         }));
         if (afterRetry.counts.task >= 2 && afterRetry.ready) break;
         await page.waitForTimeout(50);

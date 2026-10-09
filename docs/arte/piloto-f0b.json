@@ -1,0 +1,387 @@
+{
+  "data": "2026-10-08",
+  "stage": "F0b candidates; approval and integration pending",
+  "prompt_mestre": "FUMIGA-PAPEL-v2-DETALHADO",
+  "generations": 6,
+  "files": [
+    {
+      "path": "baseline/mobile-ninho.png",
+      "bytes": 205240,
+      "sha256": "0cc47d3c1aa908d6049e95a0f7b439846e4fff259f302f0cd7c9b35df43d83d9",
+      "width": 1688,
+      "height": 780,
+      "mode": "RGB"
+    },
+    {
+      "path": "baseline/mobile-run-mapa1.png",
+      "bytes": 262244,
+      "sha256": "8c5b603aabbc952f0524672a0d3ff876616325b430c3814ae360db4b46b24326",
+      "width": 1688,
+      "height": 780,
+      "mode": "RGB"
+    },
+    {
+      "path": "baseline/mobile-title.png",
+      "bytes": 352419,
+      "sha256": "f90a4cb2ff3dabd6374568bcd382b586e8e013fda42469d6601e24345f7ecdca",
+      "width": 1688,
+      "height": 780,
+      "mode": "RGB"
+    },
+    {
+      "path": "baseline/pc-ninho.png",
+      "bytes": 155374,
+      "sha256": "acca6ac0828d048b5cd2c90857a099b7a350d7266bb548c14ed8bcde477b8a9a",
+      "width": 1280,
+      "height": 720,
+      "mode": "RGB"
+    },
+    {
+      "path": "baseline/pc-run-mapa1.png",
+      "bytes": 244971,
+      "sha256": "d4099319e523d4a6a4335428f5edfb8fd534e4a7cae68832409b52b2c7cb4b75",
+      "width": 1280,
+      "height": 720,
+      "mode": "RGB"
+    },
+    {
+      "path": "baseline/pc-title.png",
+      "bytes": 363308,
+      "sha256": "7f6c7868f49a0897cf9277525510ea954d32830ce6bf3ad2e610923d3be25efa",
+      "width": 1280,
+      "height": 720,
+      "mode": "RGB"
+    },
+    {
+      "path": "baseline/relatorio.json",
+      "bytes": 789,
+      "sha256": "69610330c414ac77194574a52e48a8e948e0fd08964a344f6c36e97faf42f9f0"
+    },
+    {
+      "path": "capturar_hud.mjs",
+      "bytes": 2303,
+      "sha256": "42ab6aca16f3c48a3f3f63980edaad48c15119ebe4485f5109f2441b794d5b6a"
+    },
+    {
+      "path": "fichas.md",
+      "bytes": 8722,
+      "sha256": "85437c06ff1dfb9826d35a4e1c363ccc9795c86378c6c40fc24decd38c052a73"
+    },
+    {
+      "path": "index.html",
+      "bytes": 6859,
+      "sha256": "ea3114f0273693f1cb0a3fddcd57e644e60e4ad92d2d46cb1cfa096ce29b16ea"
+    },
+    {
+      "path": "originais/base-planicie-limpa.png",
+      "bytes": 2488137,
+      "sha256": "6353eeab7f43959653b201faa500e04250a0da624c2f9781f23d875eb050b839",
+      "width": 1376,
+      "height": 768,
+      "mode": "RGB"
+    },
+    {
+      "path": "originais/base-planicie.png",
+      "bytes": 2570224,
+      "sha256": "8acfae8fc25651ea3213fe5255f194030d1cc928e5ba860d4f869cbbb44eddfe",
+      "width": 1376,
+      "height": 768,
+      "mode": "RGB"
+    },
+    {
+      "path": "originais/cortadeira.png",
+      "bytes": 1678489,
+      "sha256": "9eb5a56d3b485ad25d8f451872505de05327e6e1899f26d64ebf4e907907caca",
+      "width": 1024,
+      "height": 1024,
+      "mode": "RGB"
+    },
+    {
+      "path": "originais/cristal.png",
+      "bytes": 1570469,
+      "sha256": "0d7ab5bbf588ef055a15e0fcb4c824716dfa62c3564784eebb891c69db268e68",
+      "width": 1024,
+      "height": 1024,
+      "mode": "RGB"
+    },
+    {
+      "path": "originais/larva.png",
+      "bytes": 726823,
+      "sha256": "2fdac496a83a2fc8ca29ed3e4b553e568ea7e23e627f61f694ae8a25e420d5e5",
+      "width": 1408,
+      "height": 768,
+      "mode": "RGB"
+    },
+    {
+      "path": "originais/rainha.png",
+      "bytes": 1642373,
+      "sha256": "f8840cb079dde7489a3b2b92b02106577e7661d462d8ebc37f8db36389b045c2",
+      "width": 1024,
+      "height": 1024,
+      "mode": "RGB"
+    },
+    {
+      "path": "previews/base-planicie-960.png",
+      "bytes": 846124,
+      "sha256": "fe392ad86a66d687b09679e6d0bd83982a76bda1a7a91c9f323d881b2b049155",
+      "width": 960,
+      "height": 540,
+      "mode": "RGB"
+    },
+    {
+      "path": "previews/captura-hud.json",
+      "bytes": 101,
+      "sha256": "4fd648865b0b62ad8478c79f263ef0e911fe47ddd6f7df136faee151cb9cd737"
+    },
+    {
+      "path": "previews/cortadeira-45.png",
+      "bytes": 3851,
+      "sha256": "c39f86c9c0bd0d29eb47938eb359c38758ae7602a2d002ec3d354089fdaf07fc",
+      "width": 35,
+      "height": 45,
+      "mode": "RGBA"
+    },
+    {
+      "path": "previews/cortadeira-recorte.png",
+      "bytes": 1002702,
+      "sha256": "22e462bfac91f6f5692fe14a49b6cd2a6cfd63fc6c1c7ad0e3c6b63a268c0abd",
+      "width": 686,
+      "height": 887,
+      "mode": "RGBA"
+    },
+    {
+      "path": "previews/cristal-48.png",
+      "bytes": 4859,
+      "sha256": "763d1a782085cbfab8751a0a08b8e08cf8c6e9a479a4079340a33eb754c3edc7",
+      "width": 42,
+      "height": 48,
+      "mode": "RGBA"
+    },
+    {
+      "path": "previews/cristal-recorte.png",
+      "bytes": 1162990,
+      "sha256": "ed21e485c4c04bca783838c8fd78cea1f0393cd688efcddef8d48416632f4404",
+      "width": 754,
+      "height": 871,
+      "mode": "RGBA"
+    },
+    {
+      "path": "previews/galeria-mobile.png",
+      "bytes": 1115523,
+      "sha256": "958b130128cf2ce14d8dc8ff5c85bfe43cd3f82554d2266cfa6a894f6658c153",
+      "width": 390,
+      "height": 3620,
+      "mode": "RGB"
+    },
+    {
+      "path": "previews/galeria-pc.png",
+      "bytes": 3280092,
+      "sha256": "f438267b7204c621dd69c4c44d18860e2e0430c6411ad1ca8ddb5d0226cbeae0",
+      "width": 1280,
+      "height": 3509,
+      "mode": "RGB"
+    },
+    {
+      "path": "previews/larva-24.png",
+      "bytes": 1363,
+      "sha256": "9b1ee6648f44151f6744f5ffd0aa69004ec8383be17381a9bb5bb803f0399fc5",
+      "width": 24,
+      "height": 19,
+      "mode": "RGBA"
+    },
+    {
+      "path": "previews/larva-recorte.png",
+      "bytes": 477985,
+      "sha256": "1a8e8e324e213146c06d5103e8ea581012cadcec6dd7f128feb21d817592f42d",
+      "width": 666,
+      "height": 521,
+      "mode": "RGBA"
+    },
+    {
+      "path": "previews/mobile-baseline.png",
+      "bytes": 656671,
+      "sha256": "74c1df0ea13691a89bd52917fba810cf504c95a1b5331a20eecafb5f835ff028",
+      "width": 960,
+      "height": 540,
+      "mode": "RGBA"
+    },
+    {
+      "path": "previews/mobile-hud.png",
+      "bytes": 80736,
+      "sha256": "c61ee2e958ac3c96b1aaf534d55423a9957eec7edd4c567c155c1cc737f6f4b0",
+      "width": 960,
+      "height": 540,
+      "mode": "RGBA"
+    },
+    {
+      "path": "previews/mock-mobile.png",
+      "bytes": 747391,
+      "sha256": "602cebd0bfaebbb9ce8381c05747e35e7d78a24fc8e70d14baf8f559bb10ddf5",
+      "width": 960,
+      "height": 540,
+      "mode": "RGB"
+    },
+    {
+      "path": "previews/mock-pc.png",
+      "bytes": 756717,
+      "sha256": "7f5c252a35d500b4fac69ff341882b6596a19c579dc5f90b470df3677961ae51",
+      "width": 960,
+      "height": 540,
+      "mode": "RGB"
+    },
+    {
+      "path": "previews/pc-baseline.png",
+      "bytes": 666643,
+      "sha256": "4f1ab058ba8c80576fe6835d1c626905086c6e2915e07776f1ff407f955749f5",
+      "width": 960,
+      "height": 540,
+      "mode": "RGBA"
+    },
+    {
+      "path": "previews/pc-hud.png",
+      "bytes": 89988,
+      "sha256": "b282e96b6675036a1ea2e23ac35de1dd55d1a127e97d02048cbaf10bce2dd55b",
+      "width": 960,
+      "height": 540,
+      "mode": "RGBA"
+    },
+    {
+      "path": "previews/pecas.png",
+      "bytes": 280342,
+      "sha256": "a82818cd127151fd81ca4aa562a1473da04be6a009c7f2818be481541ed0223f",
+      "width": 1200,
+      "height": 780,
+      "mode": "RGB"
+    },
+    {
+      "path": "previews/rainha-189.png",
+      "bytes": 39499,
+      "sha256": "86a093619f3b8664f123d752f35eb0b0d345eb002c370abfc61e05d2d7dd3ead",
+      "width": 146,
+      "height": 189,
+      "mode": "RGBA"
+    },
+    {
+      "path": "previews/rainha-recorte.png",
+      "bytes": 1093917,
+      "sha256": "928e47d9a81e37ce738c1643127642bbd1d598ba66ca7facd96a91b8d36fda47",
+      "width": 685,
+      "height": 887,
+      "mode": "RGBA"
+    },
+    {
+      "path": "previews/rotacoes-mobile.png",
+      "bytes": 368308,
+      "sha256": "5538cb19315a7e9038b1645ec39a0024e1d26a3e6f32b8ac88e13f4a49400a23",
+      "width": 1200,
+      "height": 650,
+      "mode": "RGBA"
+    },
+    {
+      "path": "previews/rotacoes-pc.png",
+      "bytes": 368308,
+      "sha256": "5538cb19315a7e9038b1645ec39a0024e1d26a3e6f32b8ac88e13f4a49400a23",
+      "width": 1200,
+      "height": 650,
+      "mode": "RGBA"
+    },
+    {
+      "path": "previews/rotacoes.json",
+      "bytes": 937,
+      "sha256": "6dcbdc70c31d7f003e324093820335a60765abedb8dd258601f10d06165a1a89"
+    },
+    {
+      "path": "processar_piloto.py",
+      "bytes": 5307,
+      "sha256": "d72b2bc844bd25a2350b110157576bb316d595c3e08dc27306630dbd50f434a9"
+    },
+    {
+      "path": "prompt-mestre.txt",
+      "bytes": 4340,
+      "sha256": "48d7b4e473cf3d0ec3ac6779be5fc929edfa0f3b7a7609a6083baa7f427b29b2"
+    },
+    {
+      "path": "referencias/06-papel-recortado-v2.png",
+      "bytes": 2435838,
+      "sha256": "1009f4dfd9ff945d5bd689dcafe40c5032d66239bbda1810341b9965d147b52e",
+      "width": 1376,
+      "height": 768,
+      "mode": "RGB"
+    },
+    {
+      "path": "referencias/06-planicie-papel-recortado.png",
+      "bytes": 2030366,
+      "sha256": "3a76ab51e44b1cc70943a838a4bf9cc87e919a285765f9cee53fed4c6c3665f3",
+      "width": 1376,
+      "height": 768,
+      "mode": "RGB"
+    },
+    {
+      "path": "testar_rotacoes.mjs",
+      "bytes": 2700,
+      "sha256": "e151e899b13ea3933aca83d710280032a0700654d36524b70a47a9e84ac8949c"
+    },
+    {
+      "path": "validacao-final/mobile-ninho.png",
+      "bytes": 205231,
+      "sha256": "3c78a68d802af0d71489db882b5d893c87bd5d991e8059fcdb06aaad3a563e6c",
+      "width": 1688,
+      "height": 780,
+      "mode": "RGB"
+    },
+    {
+      "path": "validacao-final/mobile-run-mapa1.png",
+      "bytes": 261513,
+      "sha256": "ef43ed4324bd21eb9b517057552f5c4de687cab831573f625c44b3e3eaef9bdd",
+      "width": 1688,
+      "height": 780,
+      "mode": "RGB"
+    },
+    {
+      "path": "validacao-final/mobile-title.png",
+      "bytes": 353196,
+      "sha256": "fde3981c9ca6ee36246bb9a5fa7f705ff8101dfe8296a543ef9df6a701b6de1d",
+      "width": 1688,
+      "height": 780,
+      "mode": "RGB"
+    },
+    {
+      "path": "validacao-final/pc-ninho.png",
+      "bytes": 156280,
+      "sha256": "d3d9721bb8abba729b0792c17e8297e1ce5634b58330ba720254da6fe9b8d7cc",
+      "width": 1280,
+      "height": 720,
+      "mode": "RGB"
+    },
+    {
+      "path": "validacao-final/pc-run-mapa1.png",
+      "bytes": 242615,
+      "sha256": "e1ad622b21118e2e84082731f40cfd0be2b7747fd66ccd27f3329b2cb1fd9d0a",
+      "width": 1280,
+      "height": 720,
+      "mode": "RGB"
+    },
+    {
+      "path": "validacao-final/pc-title.png",
+      "bytes": 362641,
+      "sha256": "8de8cb1707b8a27c751a78e194826b68efb45422271b043aa2c271926ea10bc7",
+      "width": 1280,
+      "height": 720,
+      "mode": "RGB"
+    },
+    {
+      "path": "validacao-final/relatorio.json",
+      "bytes": 789,
+      "sha256": "992ac462dfdc9424639c6fc5aea841bcaebd46606483aa6f2f21e1e1f6317367"
+    }
+  ],
+  "backup": {
+    "file_id": "1_S1u9YYy2aFIGGggVrCYT6Ud4n2peaVY",
+    "parent_id": "1IMj_-7VQf_asmRmMoMSzKxIQ37M6DXlW",
+    "name": "FUMIGA-piloto-F0b-2026-10-08.zip",
+    "bytes": 31282672,
+    "sha256": "deaf41ae16fb9aa1440b2f1caa3d7bbf24f759db4fb93dd537b534273b6caba4",
+    "md5": "e8e03e81cec34279faa49a66ad622952",
+    "verified_by": "Google Drive get_file after upload: parent, size, SHA256 and MD5 match local ZIP"
+  }
+}

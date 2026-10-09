@@ -7,8 +7,10 @@
 > **Todo pedido, independentemente do assunto:** ler [`REGRAS_DE_TRABALHO.md`](REGRAS_DE_TRABALHO.md) **por inteiro**.
 > Usar [`GUIA.md`](GUIA.md) como roteiro de perguntas para localizar arquivos/seções; ele não substitui as regras nem a leitura do MEGA.
 > **Novo chat / criação de imagens:** começar pelo [guia de continuidade artística](#continuidade-artistica).
-> Direção vigente: **06 — papel recortado detalhado**, prompt **`FUMIGA-PAPEL-v2-DETALHADO`**.
-> As bases limpas anteriores não representam a densidade do cenário final; o rework ainda não foi integrado.
+> Direção vigente: **06 — papel recortado detalhado**, prompt **`FUMIGA-PAPEL-v3-PASTEL-ORGANICO`**.
+> As bases limpas anteriores não representam a densidade do cenário final; HUDs e brasa têm integração parcial, não o rework completo.
+
+> **Paleta vigente:** pastel terroso (terra/madeira castanha, laranja-âmbar, folhas/vinhas verdes). Roxo/azul-escuro rejeitados como base. Técnica de papel recortado preservada. F1 parcialmente integrado e ainda em revisão; F0 adiado.
 
 ## Como consultar este arquivo
 
@@ -34,6 +36,123 @@ repetições, datas, branches, checklists e notas históricas foram preservados.
 > comprovação do estado atual do código nem em limites da sessão atual.
 > Divergências permanecem visíveis, sem apagar conteúdo. O que efetivamente
 > funciona deve ser confirmado por testes e inspeção no preview.
+
+## Verificação final e preservação do lote de publicação — 2026-10-09
+
+**Suíte final37/37verde81,1s** após todas as alterações runtime; layout geral118estadosPC/mobile normal/grande limpos340s. Docs/handoff/diff/assetlist verificações verdes antes de commit. ZIP **18TJQjBVRqwtEAw_nhCaGk1oj7NEn-cB6**,59.882.132bytes,SHA256`df51212ac80fd7871655e43728301125cd938d77b2dbb02ef404d6c30522b058`, pasta1IMj_-7VQf_asmRmMoMSzKxIQ37M6DXlW, **upload e reconsulta remota concluídos**, tamanho/hash/parent correspondentes ao local. Inclui quatro originais, todos osPNGproduçãoHUD/brasa, galeria/prévias/capturas/manifestos/checksums; snapshot precede o registrofinalGitHub. Fontes atuais e backups em docs/arte/hud-publicacao.json; arquivos pesados permanecem foraGit. Preview8000vivo0.0.0.0, jogo/game/,mobile/game/mobile/,galeria/art-source/f1-publicacao/. Outros nove ícones anteriores não têm backup verificado nesta solicitação. Preservação atual não reatribui arte recriada a original antigo.
+
+GitHub: commit/push da brancharena/2221b4f0-fumiga-goat,PR/checks/merge em execução; número/resultado final registrados no check-in desta entrega, sem apagarbranch. Todo histórico acumulado de fontes/regras/decisõesHUD incluído no mesmo pedido de publicação. Limitações deF1/leituraMEGA mantidas no relatório; green não significa aprovação visual do usuário nem teste físico.
+
+## Brasa sem anéis e três novos HUDs integrados — 2026-10-09
+
+**Este registro é o estado atual e supera os status de 0/32, tooltip=panel e pausa anterior abaixo; histórico preservado.** Pedido explícito de integrar e salvar Drive/GitHub. Quatro novas imagens com v3 integral + ficha + referência binária de panel.png: chama brasa1024² sem círculos, botão2064×512 realmente horizontal, tooltip1456×720 curvo de fibras discretas, pausa928×1152 vertical. Originais anteriores da brasa/correção não disponíveis; chama é **recriação informada**, não original recuperado. Fonte RGB opaca, redução uniforme nos derivados. Produção128²/960×238/960×475/928×1152, respectivamente. Brasa instalada em i_ember (Brasa Interior/Brasa Contínua), **1/32 ícones migrados;31legados**. Novas fontes button/tooltip/pause realmente consumidas; tooltip deixou de aliaspanel, pausa explícita nas duas colunas. Sem copiar gameplay mobile, mudar fontes/seeds/preços/saves/hitboxes/filtros. Renderer limita cantos de botão/pausa e estende corredores calmos, não repete suas folhas; outros PNGs legados ainda têm repetição/limitações de ornamentos. Não declarar F1 completo ou aceite visual automático. Cenário/paleta fora dos painéis permanece legado.
+
+Quatro originais **upload concluído e remoto verificado** por tamanho/SHA256/parent, pasta1IMj_-7VQf_asmRmMoMSzKxIQ37M6DXlW: brasa1PyhCP8ZgR44euAZKn0vinuxcdCC1vyQT(1470057B), botão1V1vt_NA1SYtXMIoAH-YfFMXWgQgMH5Hk(1999618B), tooltip1ovKDKVrN0NLnAOrBS6sZzgvPFT8XEk57(1720465B), pausa1LCxyCfeDGuGDt-M4kCGR3RD_tcB5wqGK(1799646B). [Hashes/metadados atuais](docs/arte/hud-publicacao.json), [relatório/checklist](docs/arte/HUD_PUBLICACAO.md), galeria externaGit art-source/f1-publicacao/index.html. Arquivo complementar com originais/derivados/capturas/produção: status em manifesto e registro final de preservação abaixo; sem supor recuperação dos dez ícones antigos perdidos.
+
+Verificado nesta entrega: suite36/36verde69,6s antes do fluxo dedicado novo; testes atuais37 registram resultado final abaixo. Navegador30cenasPC/mobile seis mapas semJS404glifos, PC49,6–59FPS/mobile57,5–60FPS headless; layout geral finalmente **118estados limpos340s** +18focados55s. Capturas da brasa/tooltips, pausaPC/mobile e draftfontgrande abertas. Fluxo brasa real/tooltip/CONTINUARclique/toque passou. Cinco estados distintos e alfa255/tinta local/reset/cobertura testados. PWA242arquivos30,8MB reiniciouofflinePC/mobile e preservoucache apósupdatefalho; preloadTITLEPC/mobile passou. Corrigidoassertlegado14→12no replay (4+4+4 já no runtime), sem mudarcutscene; MANIFESTprivado no teste novo corrigido; listaPWAregenerada. UITESTflutuação na observação de saída do ninho isolado passou sem tocar lógica/asserção. ASSET_V20261009-hud-brasa-publicacao; espelhosnativos247runtime+26páginas cada, semcompilarAPK/EXE. Docs/handoff e publicação revalidados no registrofinal.
+
+Leitura das regras integral efetuada nesta solicitação; **leitura integralMEGA ainda não comprovada**. Novo pedido não autoriza lote32completo/F0/Pálida/mapa7. Fonte/backup/prompt/arte atual preservados, sem confiar apenas nos caminhos ignorados. Próximos: aceite visual da recriação/lote,31ícones restantes e acabamento das outras fontes, rodadas≤10.
+
+## Correção de enquadre no runtime — 2026-10-09
+
+Pedido continua aberto, não concluído. Implementado: seleção por proporção (card848×1264 retrato, pause960×798), grade5×5 com ornamentos em escala limitada e repetição de faixas de borda em vez de contain sobre base lisa; estados de corpo mais contrastantes; tooltip explicitamente no painel original, quebra de linhas e margens próprias; colônia com respiro, barras terrosas, draft propaga hover/pressão. CSS mobile agora usa fundo opaco e paleta terrosa. Fontes, saves, controles e hitboxes preservados. Nenhuma nova arte gerada ou ícone aprovado/migrado:10candidatos,22faltantes,0/32migrados.
+
+Inspeção visual de pausa/colônia/draft mostrou melhora do enquadre, mas repetição das folhas é visível e estatísticas da pausa ainda encostam na borda esquerda. Não considerar fidelidade final resolvida. Tooltip usa adaptação do painel, não arte própria revisada. Suíte35/35verde65,5s; layout focado18estadosPC/mobile/fontegrande limpos56s (antes da alteração CSS). Renderizador testado quanto à cobertura vertical e alpha255; teste anterior de contain substituído por esse contrato. ASSET_V20261009-hud-enquadre; pacote242/30,8MB e shells sincronizados, sem builds/GitHub. Capturas persistentes art-source/f1-correcao/tecnico/layout-corrigido. Sem novo upload remoto. Leitura integralMEGA ainda pendente. Não declarar F1 concluída.
+
+## Correção ativa F1 — dez ícones e limites de proporção (2026-10-09)
+
+**Continuação parcial, não conclusão aceita.** Lote de dez candidatos preparado: i_food, i_essence, i_shield, i_bolt, i_hourglass, i_snow, i_heal, i_egg, i_ember e i_potion. Nove novos com prompt v3 integral + referência binária da folha; alimento já apresentado. Originais RGB em art-source/f1-correcao/originais; nove1024×1024, poção1408×768 com corte apenas de margens vazias320,0,1088,768. Dez derivados128×128 RGB total222.933bytes, folha16/24/32/48px e galeria com módulos reais da UI. Metadados/hashes persistentes em [paper-icons-review.json](docs/arte/paper-icons-review.json). **0/32 migrados,22sem candidato; aceite visual pendente.** As candidatas anteriores botao/tooltip continuam mostradas na galeria, sem integração.
+
+Runtime20261009-hud-proporcoes: caixas altas contêm arte inteira em escala uniforme sobre creme opaco, sem alongar folhas. Não soluciona acabamento final: áreas lisas expostas e arte concentrada no centro. Faixas horizontais/estados/tinta local mantidos; tooltip usa painel original aprovado, sem ponteiro, não candidata nova. Pacote242arquivos30,8MB; espelhos nativos247runtime+26páginas cada, sem build. [Registro completo e checklist](docs/arte/F1_VARIACOES_FUNCAO.md#correção-ativa--estados-proporções-e-dez-ícones-2026-10-09).
+
+Suíte34/34verde74,4s após containment; teste paper específico passou (cinco hashes,alpha255,tinta local/reset/mundo,contain alto e tooltip pixel-idênticos ao esperado), agora incluído no runner com Playwright. Galeria PC/mobile carregou dez candidatos, clique/toque real sem JS/HTTP/overflow. Navegação PC/mobile passou. Inspeção TITLE/OPTIONS/RUN-MAPA1 6/6 sem JS/404/glifos (PC58,5FPS CPU10,16ms/mobile60FPS CPU10,91ms headless). Layout focado20estados PC/mobile/fonte normal-grande limpos geometricamente; geral excedeu360s sem relatório final e não conta como concluído.
+
+**Capturas abertas confirmaram defeitos restantes:** texto sobre ornamentos, base lisa em painéis altos, barras de opções/colônia e controles mobile ainda roxos/azulados, estados pequenos sutis e minimapa cobrindo moldura. O teste geométrico não detecta ornamentos do PNG. Não declarar formatos/estados/integração completos. Fontes, gameplay, saves, progressão, preços, seeds, hitboxes e filtros globais preservados. Pesquisa Lumino City pela fidelidade ao material artesanal, sem copiar assets: https://apps.apple.com/us/app/lumino-city/id958604518 .
+
+Preservação local em art-source/f1-correcao, fora do Git; sem novo upload remoto (transferência dispensada), sem GitHub/PR/merge/build. Regras lidas em blocos; leitura integral do MEGA ainda não comprovada. Próximo: revisão/aceite dos dez,22restantes em rodadas≤10, finalização de margens/formatos/estados/mobile e integração após aprovação. F0 adiado. Preview jogo8000 saudável; revisão8001, rota /art-source/f1-correcao/.
+
+**Verificação final desta continuação:** inclusão do teste paper elevou a suíte a35. Primeira execução34/35falhou em regressions-browser: progresso0,975 +ready=true, porque await import entre leituras permitia um frame no meio. Corrigida somente a leitura do teste para MOD.loading síncrono, sem relaxar≥0,98 nem mexer em loading_screen.js. Suíte completa posterior **35/35verde71,7s**. Docs/handoff/assets-list/diff verdes. Pendências visuais permanecem. Dez imagens abertas na folha atualizada; revisão ao vivo com link para jogo PC/mobile.
+
+## Correções técnicas efetivas do HUD — 2026-10-09
+
+Implementado em paper_hud.js: recortes específicos por peça, duas faixas horizontais extensíveis protegendo nó central, cache limitado a8M pixels, cinco estados de corpo (normal/hover/pressionado/selecionado/desabilitado) opacos. ui.js propaga estados também aos iconButtons e remove overlays antigos; fonte mantém Kiwi Soda, mas tinta agora é local à superfície/contexto/frame e não vaza para mundo. Tooltip rejeitado deixou de ser desenhado: usa a imagem orgânica original aprovada do painel, não candidata nova. Não há ponteiro nesta adaptação. Inspeção visual encontrou deformação ao reutilizar barra estreita como botão; retirada essa reutilização, mantendo fonte button e faixas horizontais. Ainda não é aceite de todos os formatos/estados.
+
+Versão20261009-hud-estados-recortes, manifest242/30,8MB e shells nativos sincronizados. Suíte34/34 verde antes do último ajuste de seleção da fonte button; teste novo paper-hud-browser valida cinco estados pixel-distintos, alpha255 e tinta local/reset. Inspeção TITLE/RUN-MAPA1 PC/mobile4/4 sem JS/404/glifos (PC50,2FPS, mobile60FPS headless), preview8000 HTTP200. Sem GitHub/build de instalador.
+
+Ícones: somente candidato i_food gerado nesta rodada com prompt v3 integral e referência binária do painel; arquivo art-source/f1-correcao/originais/i_food.png. Nenhum dos32 ícones foi migrado para produção. Restante e aceite visual seguem pendentes. Preservação local, sem novo upload remoto. Leitura integral MEGA ainda não comprovada. Não declarar conclusão do pedido.
+
+## Correção exigida do HUD — 2026-10-09
+
+Usuário rejeitou a entrega parcial: faltaram ajustes de formato, estados reais, 32 ícones e integração completa; tooltip reto/fibroso também foi rejeitado. O registro anterior NÃO representa conclusão aceita. Auditoria confirmou nove-fatias genérico e estado global de tinta; correções de código ainda não executadas nesta rodada.
+
+Duas candidatas geradas com prompt v3 integral e painel aprovado como referência binária, sem opções extras: `art-source/f1-correcao/originais/botao.png` e `tooltip.png`. Galeria no mesmo diretório; hashes/dimensões em manifest.json. Botão aproximadamente4:1, mas nós centrais ainda impedem alongamento arbitrário; tooltip organicamente curvo, material mais liso que original e sem ponteiro solicitado. Não aprovados, não integrados. Anúncio inicial de dez peças não foi cumprido: oito ícones anunciados NÃO gerados, todos32 permanecem pendentes, assim como estados e correção de integração. Fontes, controles, hitboxes, gameplay e runtime não mudaram nesta rodada. Preservação local persistente; nenhum novo upload remoto ou GitHub.
+
+Inspeção jogo atual TITLE/RUN-MAPA1 PC/mobile 4/4 sem JS/404/glifo; PC48,6FPS mobile58FPS headless, sem afirmar desempenho físico. Preview8000 HTTP200. Sem nova suíte completa; leitura integral MEGA ainda não comprovada. Próximo: aprovação/revisão destas duas candidatas e concluir lote de ícones/estados, sem usar a revisão parcial como fechamento de F1.
+
+## HUD opaco integrado — 2026-10-09
+
+Pedido “Faça tudo isto ... não quero que os HUDs fiquem transparente. De resto conclua tudo”. Integração funcional das imagens aprovadas em game/assets/ui/paper e módulos compartilhados; fundos RGB creme, sem alfa. Derivados preservam RGB da arte antes de redução; cantos de escala uniforme com faixas centrais extensíveis/cache160. Painéis/botões/barras/banners/minimapa/tooltip/cartão/modal, estados por borda, tinta escura Kiwi Soda. Não altera gameplay/saves/preços/controles/filtros. Ícones32 ainda legados; F1 artístico não100%. Detalhes e limites em docs/arte/F1_VARIACOES_FUNCAO.md. Testes suíte33/34 + regressão isolada verde (flutuação loading); HUD seis biomas e navegação PC/mobile verdes; layout RUN19PC+19mobile limpos; inspeção8/8, isolada59,5/60fps. Auditoria geral layout não concluída. Pacote242/30,8MB e espelhos nativos atualizados; sem build/publicação/upload. Derivados runtime salvos localmente; backup anterior preservado. Leitura integral MEGA não comprovada. Transferência remota dispensada pelo pedido.
+
+## HUD — lote 2 e preservação (2026-10-09)
+
+Backup lote1 revalidado no Drive (`1HLxMZjhiyBVSkloAK8LmP4PUzdHVziu5`, 9.581.571 bytes, SHA f1f61cb7ad97d37ba587f9e27d94ac4e2d42b7d7f462be2747486551721e8214). Geradas quatro variações adicionais com o painel aprovado como referência: minimapa, tooltip, cartão e pausa. Galeria sete funções em art-source/f1-funcoes-lote2, :8001. PNGs reais sem desenhos substitutos. Tooltip mais reto/fibroso que referência, revisão pendente; alfa/estados/atlas/ícones e integração ainda pendentes. Não declarar HUD funcional completo. Galeria PC/mobile 14 imagens por perfil decodificadas, sem erros/overflow; jogo antigo4/4 e docs/handoff aprovados. Fonte/controles/saves intactos, sem GitHub. Leitura integral do MEGA não comprovada. [Detalhes](docs/arte/F1_VARIACOES_FUNCAO.md).
+
+## Variações por função — lote 1 (2026-10-09)
+
+Usuário escolheu começar pelas funções da interface, mantendo a identidade da imagem de madeira e vinhas aprovada. Três gerações com prompt v3 e referência do painel aprovado: botão (1410×752), barra de vida (2736×384) e banner de onda (2320×464). [Registro](docs/arte/F1_VARIACOES_FUNCAO.md). As três imagens são os PNGs reais gerados, sem desenho substituto. O botão manteve altura excessiva (1.87:1); barra e banner vieram com xadrez pintado. Galeria art-source/f1-funcoes/index.html (:8001). Teste de galeria PC/mobile passou; inspeção do jogo antigo 4/4 sem erros. Nada integrado ao jogo. Próximo: minimapa, tooltip, cartão e pausa após revisão deste lote. Sem GitHub.
+
+## Correção de fidelidade — 2026-10-08
+
+Usuário: “A revisão que você me mostrou não mostra as imagens que você meostrou, quero que o HUD seja o que você me mostrou, nunca outro”. Rejeitada a interpretação simplificada. Usar a imagem mostrada como arte, não somente referência. Proibido substituir por desenho procedural, recolorir ou gerar alternativa silenciosamente. Fonte vinculada: `art-source/f1-pastel/originais/painel-vinhas.png`; SHA256 `f4e775e038a98cbf23bd1e12958ae77070e8da6996e94043e4872e6c245aa47e`.
+
+Prévia :8001 corrigida no mesmo endereço: original intacto, HUD com texto Kiwi Soda sobre o mesmo PNG e prova de escala. Cópia byte-idêntica em images/painel-original.png; derivado alfa remove apenas fundo neutro exterior, RGB de todos os pixels preservado. Nenhuma geração/recoloração/novo ornamento. O original local foi reaberto e medido em 1717×916 (difere da dimensão 1568×837 registrada anteriormente; não presumir equivalência binária com arquivo remoto antigo). Proporção preservada: 320×170,72, incompatível com caixa atual 320×118 sem adaptar layout. Não achatar nem substituir para caber; texto pequeno ainda não é layout final. Recorte/halos precisam revisão antes de produção.
+
+A revisão simplificada saiu da interface ativa e foi preservada em historico-rejeitado/ e no ZIP remoto anterior. Três cenas × três perfis verificadas, original pixel-idêntico ao drawImage direto, proporção preservada, controles por clique/toque, sem overflow/JS/HTTP. Inspeção do jogo antigo TITLE/RUN PC/mobile 4/4, sem erros. Sem integração, novos atlas, suíte completa ou publicação GitHub. Leitura integral do MEGA ainda não comprovada. Pesquisa Lumino City/National Videogame Museum apenas pela fidelidade de material, não autorização de novo design. Próximo: adaptar layout à arte escolhida, nunca trocar a arte por conveniência técnica.
+
+## HUDs claros — redesign do conjunto (2026-10-08)
+
+Usuário reforçou mudança de TODO o tom/design dos HUDs, não só moldura: pastel claro de terra, âmbar laranja e verdes vivos, galhos/árvores/vinhas. [Entrega e limites](docs/arte/F1_HUD_VIVO.md). Prévia navegável isolada art-source/f1-hud-vivo, seis cenas e perfis PC/mobile. Sem nova geração IA; derivados de material anterior e Canvas; sem integração no jogo, sem alteração de saves/controles/fontes/filtros. 18 cenas verificadas, clique/toque pausa/continuar nos três perfis, sem erros/overflow. Inspeção do jogo antigo 4/4. Ainda faltam atlas/ícones/estados completos e aceite; não declarar F1 concluída. Leitura integral do MEGA continua pendente. Preview :8001, jogo :8000. Sem GitHub.
+
+## Revisão F1 — pastel terroso e HUD vivo (2026-10-08)
+
+Usuário rejeitou âmbar com roxo/azul-escuro e pediu tons pastéis de terra/madeira, laranja de âmbar e folhas/vinhas verdes. Técnica papel recortado detalhado mantida; prompt v3-PASTEL-ORGANICO registrado no guia, direção e MEGA; v1/v2 preservados. Regra 6 e pontos de entrada atualizados; bloco de regras e hash sincronizados. Uma geração em art-source/f1-pastel: painel creme, madeira de papel, folhas largas e vinhas. Sem alternativas extras, sem integração. Original RGB 1568x837 com xadrez pintado e proporção diferente da solicitada: alfa, separação de ornamentos e adaptação 320x118 ainda pendentes. Não prometer atlas ou HUD funcional pronto. Inspeção TITLE/RUN PC/mobile 4/4 aprovada; docs/handoff aprovados. Produção, fonte, filtros, controles e gameplay intactos; sem suíte completa/aparelho físico. Preview jogo :8000, galeria /art-source/f1-pastel/. Leitura integral do MEGA ainda não comprovada; não declarar concluída. Próximo: aceite visual e ajuste técnico. Sem GitHub.
+
+## F1 iniciada diretamente — lote A (2026-10-08)
+
+Pedido explícito “Parta direto para F1”: supera a recomendação de terminar F0 primeiro; defeitos F0 continuam adiados. [Registro F1](docs/arte/F1_LOTE_A.md). Duas gerações novas (moldura Planície e folha tenra), cristal reaproveitado F0b; originais/derivados em art-source/f1, galeria index.html. Prompt v2 integral. Sem integração, atlas finais ou alterações de controles/fonte. Xadrez pintado na moldura recortado provisoriamente; cantos 8px perdem detalhes. Mock parcial com HUD real, não reestilização completa. Testes rápidos 29/29, HUD seis biomas e mobile por toque aprovados; capturas PC/mobile sem erros. Leitura integral do MEGA ainda não comprovada. Próximo: aceite visual e adaptação técnica, depois restante F1. Sem publicação GitHub.
+
+## Aceite do visual do piloto e apresentação da ordem completa (2026-10-08)
+
+**Pedido:** “Certo curti o estilo visual, agora me apresente a lista e ordem de implementação de todos os aseets do jogo”. Registrado aceite da aparência do piloto, sem presumir autorização de integração geral nem aprovação dos defeitos técnicos. Apresentado [roteiro de implementação](docs/arte/ORDEM_IMPLEMENTACAO.md) com inventário por família, 26 famílias procedurais, ordem F0–F9 e link ao CSV arquivo a arquivo. Contagens de 1.228 imagens/176 em game são do snapshot histórico, não nova auditoria. Fontes não utilizadas preservadas; áudio procedural/fonte não são reestilizados por tabela. Conteúdo novo/Pálida/câmera do ninho dependem de decisões próprias. Nenhuma imagem gerada ou runtime alterado; leitura integral do MEGA continua não comprovada. Validação documental e HTTP do preview no fechamento; não repetida suíte de gameplay por esta apresentação documental. Próximo: finalizar os ajustes técnicos do piloto, depois lote F1 mediante autorização. Sem GitHub.
+
+---
+
+## Piloto F0b iniciado — candidatos e mock, integração pendente (2026-10-08)
+
+**Pedido:** “Comece a mudança de estilo do jogo. Leia o GUIA”; após pesquisa/alternativas de escopo, usuário escolheu **A — piloto completo**: Rainha, Cortadeira, larva da colônia, cristal e pequena base limpa da Planície, em etapas com aprovação antes de produção. Não reabrir a escolha do estilo. Direção `FUMIGA-PAPEL-v2-DETALHADO`; nenhuma autorização para migrar tudo ou publicar no GitHub.
+
+**Produzido:** seis gerações sem opções extras: cinco peças e uma correção de base. Originais imutáveis em `art-source/piloto-f0b/originais/`; primeira base preservada como rejeitada por capim/folhas embutidos. A correção removeu os motivos botânicos, mas restam bordas serrilhadas a revisar. Todos os originais retornaram **RGB**, não alfa: Rainha/Cortadeira/cristal 1024×1024; larva 1408×768; bases 1376×768. Derivados RGBA **provisionais**, folha ampliada/nominal, mocks PC/mobile, prova de rotações, galeria e capturas preservados. Índice/checksums em [docs/arte/piloto-f0b.json](docs/arte/piloto-f0b.json); resumo/portas de aceite em [docs/arte/PILOTO_F0b.md](docs/arte/PILOTO_F0b.md).
+
+**Referências recuperadas e verificadas nesta sessão:** cena 06 v2 (Drive `1GdC_qq28br_xO3bKlCXeLTtyJ6wQ3QR6`, SHA `1009f4dfd9ff945d5bd689dcafe40c5032d66239bbda1810341b9965d147b52e`) e base histórica 06 (`1m-yVSdgpEr19Uc_00JrnfK2svgDh7pS0`, SHA `3a76ab51e44b1cc70943a838a4bf9cc87e919a285765f9cee53fed4c6c3665f3`). PNGs abertos antes da geração; são referências v1 de técnica/material, não aprovação de anatomia ou acabamento final. Inspiração pesquisada: [Lumino City / National Videogame Museum](https://thenvm.org/games/lumino-city/), riqueza tátil de papel/card, não câmera/gameplay.
+
+**Contratos e limites:** Rainha nominal 189 px / Cortadeira 45 px, sprites apontando para cima; apresentação LANCZOS separada da prova nearest do motor. Larva **da colônia/berçário**, não `e_runner`; estudo 24 px, não aplicada ao mapa ou ninho transversal. Cristal âmbar de memória, estudo 48 px; não recolorir os veios `crys_white1`/`crys_green1` da Planície. Base em Y só estudo, sem mudar seed/colisão/mundo 3200×2400. Mock inclui base, Rainha, quatro Cortadeiras e cristal com HUD real capturado; minimapa permanece da captura real, não desse estudo. Canvas bruto sem pós-filtro PS1 no mock; filtro/configuração de produção intactos. Sem decoração/construções novas: não afirmar que a densidade final está demonstrada.
+
+**Falhas e questões ainda abertas:** xadrez pintado na Cortadeira, removido por extração cromática; olhos neutros preservados por máscaras explícitas; seda branca parcialmente perdida. Halos claros na larva/cristal. Cortadeira copiou excessivamente a silhueta da Rainha; cintura/ligação das seis patas ao tórax e diadema precisam de revisão fina. Nearest+contorno atual deixa material pixelado, diferente do mock suave. Nenhum desses defeitos se torna aprovado só por gerar ou passar testes. Scripts locais de apresentação no ZIP, sem import pelo jogo; ficha exata dos cinco complementos desta continuação e prompt integral no pacote. Ficha da primeira Rainha disponível como registro técnico resumido, **não transcrição literal recuperada**.
+
+**Verificações reais:**
+- `npm run test:quick`: **29/29**, baseline. Não repetida suíte completa; nenhuma mudança de lógica/asset de produção.
+- Baseline `inspect` TITLE/NINHO/RUN-MAPA1: **6/6** PC/mobile sem JS/404/glifos; PC 57,5 FPS / mobile 46,6 FPS (mobile abaixo da meta). Inspeção final nas mesmas cenas: **6/6**, PC 56 / mobile 56,5 FPS, pior intervalo 33,4 ms nos dois. Não é melhora causada pelo piloto: runtime intacto, populações/execuções variaram. Capturas de RUN, NINHO e TITLE abertas para revisão; não campanha completa/aparelho físico.
+- Prova em chaves temporárias no `assets.js` carregado em página descartável: Rainha e Cortadeira, **24 rotações + 24 flashes** cada, em PC/mobile, nenhuma borda com pixel não transparente e nenhum erro JS/HTTP. Cache RGBA dos quadros estimado: Rainha **11.151.552 bytes**, Cortadeira **691.200 bytes**, fora overhead/fontes. Bake PC 72,6/38,9 ms; mobile 87,1/35,9 ms. Prova de cache não mede FPS de expedição integrada; não substitui revisão visual de aliasing/luz/pivot.
+- Galeria responsiva Chromium PC 1280×900/mobile 390×844: imagens decodificadas, troca jogo/mock funcionando, sem overflow horizontal/JS/HTTP com erro. Captura mobile aberta. Fechamento após acrescentar prova de rotação: **11 imagens** decodificadas por perfil, comparação alternada funcionando, sem overflow/JS/HTTP com erro nos dois perfis.
+- `docs.mjs`: seis originais intactos / **121.462 bytes**; `check_art_handoff.mjs` verde; `make_assets_list.mjs --check`: pacote vigente **233 arquivos / 24,9 MB**, `ASSET_V` inalterado `20261008-filtro-contraste`.
+
+**Preservação remota confirmada:** [ZIP do piloto no Drive](https://drive.google.com/file/d/1_S1u9YYy2aFIGGggVrCYT6Ud4n2peaVY/view), pasta existente `Fumiga-GOAT - Imagens do jogo` (`1IMj_-7VQf_asmRmMoMSzKxIQ37M6DXlW`). **31.282.672 bytes**, SHA-256 `deaf41ae16fb9aa1440b2f1caa3d7bbf24f759db4fb93dd537b534273b6caba4`, MD5 `e8e03e81cec34279faa49a66ad622952`. `get_file` pós-upload confirmou pasta/tamanho/SHA/MD5 iguais aos locais; ZIP local passou CRC. Inclui originais, rejeitada, referências, derivados, mocks, capturas, scripts, galeria e manifesto interno. Não apagadas as cópias locais. Metadados remotos em `docs/arte/piloto-f0b.json`.
+
+**Leitura/processo:** regras integrais e GUIA consultados em blocos; consumidores/canonical prompt revisados. **Leitura integral do MEGA ainda não comprovada:** saídas grandes anteriores truncaram e lacunas históricas não foram encerradas. Não declarar leitura completa nem tratar este piloto como dispensa; finalizar a leitura antes de integração. O estado é gerado/apresentado, **não aprovado/integrado**.
+
+**Próximo passo:** usuário revisar material/paleta/silhueta/escala na galeria; corrigir os defeitos técnicos e divergências anatômicas antes do aceite final; só então autorizar integração limitada e medir fluxo PC/mobile/cache/offline. F1–F9 continuam pendentes. Preview jogo :8000 e piloto :8001. Sem alteração de engine, fontes, filtros globais, saves, preços, hitboxes, sementes ou conteúdo Pálida. Sem commit/push/PR/merge.
+
+---
 
 ## Validação para salvar no GitHub — documentação da sessão (2026-10-08)
 
@@ -101,7 +220,7 @@ repetições, datas, branches, checklists e notas históricas foram preservados.
 | Item | Estado que o próximo chat deve respeitar |
 |---|---|
 | Técnica oficial | **06 — papel recortado artesanal, detalhado e harmonioso.** Não minimalista, não pixel art, não low-poly. Não pedir novamente qual dos dez estilos deve ser oficial. |
-| Prompt ativo | **`FUMIGA-PAPEL-v2-DETALHADO`**, integral neste MEGA no [bloco canônico](#prompt-mestre-vigente). Não reescrever silenciosamente; mudança de direção exige aprovação explícita e versão anterior preservada. |
+| Prompt ativo | **`FUMIGA-PAPEL-v3-PASTEL-ORGANICO`**, integral neste MEGA no [bloco canônico](#prompt-mestre-vigente). Não reescrever silenciosamente; mudança de direção exige aprovação explícita e versão anterior preservada. |
 | Escopo visual | Todo o conjunto: terrenos, personagens, fauna, vegetação, flores, recursos, construções, árvore/maçãs/santuários, UI/ícones, menus, carregamentos e cutscenes. O tipo de detalhe se adapta à função e ao tamanho. |
 | Acabamento | Riqueza orgânica, material tátil e recortes trabalhados, sem grandes áreas com aparência de rascunho vazio; a ação continua legível. |
 | Rodada original de dez imagens (v1) | PNGs não recuperados; metadados e hashes históricos preservados. Não usar outra imagem sob esses hashes nem dizer que foram restaurados. |
@@ -135,7 +254,7 @@ repetições, datas, branches, checklists e notas históricas foram preservados.
 
 **Densidade com intenção:** combinar agrupamentos irregulares, escalas e orientações plausíveis. Concentrar mais detalhe nas bordas, áreas não transitáveis e pontos de interesse. Áreas de combate/caminhos continuam trabalhadas em material de baixo contraste, com espaço visual para unidades, recursos e telegráficos. Não preencher todas as áreas com o mesmo padrão, nem confundir quantidade de objetos com qualidade de acabamento.
 
-**Paleta sem inventar valores aprovados:** violeta-escuro para identidade/sombra, âmbar-dourado para memória/essência, oliva/musgo/verde-azulado no ambiente da Planície, branco-osso com sombras lilases na Névoa. Outros biomas adaptam as cores de acordo com a lore sem mudar de técnica. Não há uma tabela nova de hexadecimais aprovada; extrair propostas das referências e validar antes de torná-las contrato.
+**Paleta vigente, sem hexadecimais aprovados:** tons pastéis terrosos de marrom/terra/madeira, laranja suave de âmbar e verde de folhas/vinhas. Não usar âmbar com roxo ou azul-escuro como base. Papel creme e texto castanho com contraste. Referências antigas valem pela técnica, não pela paleta rejeitada.
 
 **Luz:** alta à esquerda, suave; contato entre papéis curto/coerente. Para peças que giram, separar a sombra no chão quando necessário para não girar o sol junto do sprite. Não embutir sombras de árvores/personagens ausentes no terreno.
 
@@ -354,9 +473,25 @@ A auditoria protege a consistência da memória; não garante automaticamente a 
 
 **Decisão:** manter 06 como técnica oficial, agora exigindo acabamento rico e não minimalista em todas as famílias visuais. O 08 é comparação histórica, não estilo alternativo pendente de escolha. Terrenos de estudo limpos não demonstram nem definem a densidade do cenário final. Texturas e recortes de várias escalas devem enriquecer o material; decoração, vegetação, fungos, raízes e construções permanecem peças/camadas separadas aprovadas (Regra 19). Preservar áreas de passagem/combate, contraste de ameaças, texto, anatomia, câmera e desempenho. Não resolver vazio com ruído/repetição uniforme nem alterar gameplay.
 
-**Prompt-mestre atualizado com autorização expressa:** `FUMIGA-PAPEL-v2-DETALHADO`. Texto anterior `FUMIGA-PAPEL-v1` preservado nos registros anteriores e no guia integral `docs/arte/historico/ESTILO_OFICIAL-v1.md`. Guia ativo `docs/arte/ESTILO_OFICIAL.md`; decisão atual em `docs/arte/direcao-vigente.json`. Esta versão de prompt é distinta da numeração da rodada v2 de imagens, que continua historicamente associada ao prompt v1.
+**Prompt-mestre atualizado com autorização expressa:** `FUMIGA-PAPEL-v3-PASTEL-ORGANICO`. Texto anterior `FUMIGA-PAPEL-v1` preservado nos registros anteriores e no guia integral `docs/arte/historico/ESTILO_OFICIAL-v1.md`. Guia ativo `docs/arte/ESTILO_OFICIAL.md`; decisão atual em `docs/arte/direcao-vigente.json`. Esta versão de prompt é distinta da numeração da rodada v2 de imagens, que continua historicamente associada ao prompt v1.
 
 <a id="prompt-mestre-vigente"></a>
+<!-- INICIO PROMPT FUMIGA-PAPEL-v3-PASTEL-ORGANICO -->
+Crie uma única peça visual original para FUMIGA — Colônia Eterna no estilo oficial 06 de papel recortado artesanal, agora com acabamento rico e altamente detalhado, conforme a decisão explícita do usuário. A direção não é minimalista nem deve transmitir vazio ou aspecto de protótipo. Construa formas com camadas rasas de papel colorido, bordas de tesoura ligeiramente irregulares, fibras sutis e superfícies predominantemente foscas. O volume vem da sobreposição e de sombras de contato curtas e suaves; não de pixels aparentes, plástico, argila, metal realista ou modelagem low-poly. Use silhuetas reconhecíveis em tamanho pequeno, com recortes internos trabalhados e detalhes próprios da peça, com separação clara de personagem, recurso, ameaça e fundo. Evite contornos pretos grossos de cartoon: a borda cortada e o contraste entre papéis definem as formas.
+
+Distribua o detalhamento em três níveis: grandes formas que organizam a leitura, recortes médios que definem o assunto e detalhes finos de material. Mostre sobreposições elaboradas, fibras, variações sutis de pigmento e espessura, bordas artesanais e pequenos relevos coerentes, sem transformar papel em pintura lisa, plástico ou fotorrealismo. Evite áreas extensas uniformes sem tratamento, mas não preencha tudo com ruído, confetes ou peças repetidas. Em peças botânicas autorizadas, trabalhar nervuras, pétalas, filamentos e recortes delicados; em insetos, segmentos, placas, articulações e acessórios compatíveis com a anatomia; em UI, molduras trabalhadas com áreas limpas para texto e ícones. Aplicar apenas os detalhes pertinentes ao assunto solicitado, sem adicionar objetos de outras categorias a um sprite isolado.
+
+Em uma composição final de cenário, buscar abundância orgânica e sensação de lugar vivo por agrupamentos variados, sobreposições e transições cuidadas entre zonas. Concentrar o detalhe mais denso nas bordas, pontos de interesse e áreas não transitáveis; manter caminhos, personagens, recursos, ameaças e telegráficos destacados. Áreas de combate podem ter material rico de baixo contraste, sem virar superfícies vazias nem competir com a ação. A riqueza deve resultar da montagem de terreno, decoração, construções e efeitos em camadas independentes aprovadas, nunca da fusão desses elementos numa base de terreno. Para bases limpas, detalhar exclusivamente o material, as transições de cor e o relevo suave, sem incluir vegetação individual, raízes, pedras ou construções. Base limpa não significa cenário final vazio. Não gerar camadas ou assuntos além dos autorizados na ficha.
+
+Mantenha a identidade biológica e mítica do FUMIGA com a nova paleta pastel terrosa: marrons suaves de terra e madeira, papel creme e areia, laranja suave que lembre âmbar, verdes de folhas e vinhas como sálvia, oliva clara e musgo suave. Abandone a combinação anterior de âmbar com roxo ou azul-escuro: não usar esses tons como base, fundo, sombra ou acento dominante. Use sombras curtas castanhas e quentes; reserve marrom mais escuro a texto, separação e pequenos contatos necessários à leitura, sem grandes painéis escuros. Pastel não significa falta de contraste. A Névoa permanece branco-osso em camadas leves de papel, sem esconder ameaças. Quando a ficha autorizar HUD, dar vida às bordas com vinhas, folhas reconhecíveis e madeira traduzida em recortes de papel: agrupamentos orgânicos variados, veios e nervuras de escala média, não apenas fios decorativos minúsculos. Preservar áreas de texto e toque; separar ornamentos não extensíveis das faixas de nove fatias. Riqueza orgânica não autoriza animações novas automaticamente. Luz suave vindo do alto à esquerda. Preserve a anatomia animal: formigas com seis patas ligadas ao tórax, duas antenas e corpo segmentado; ferramentas e acessórios são proporcionais ao inseto. A Rainha Silenciosa tem gaster âmbar e diadema orgânico de fungo e seda, nunca coroa metálica humana. Proíba bipedia humana, rosto ou mãos humanos e roupas humanoides.
+
+Para personagens, objetos, terrenos, construções, santuários e flores, use vista ortográfica estritamente de cima, sem horizonte e sem câmera isométrica. Somente ilustrações de menus, carregamento, árvore de habilidades e maçãs podem usar outro enquadramento, explicitado na ficha da peça. Mantenha escala relativa, margem segura e âncora consistentes entre estados da mesma peça.
+
+Produza arte em alta resolução, com bordas legíveis e sem texto, logotipo, marca-d'água ou interface embutida. Sprite ou camada isolada: fundo transparente real e nenhuma cena ao redor; nunca pinte xadrez para simular transparência. Mapa-base: terreno completo e limpo, sem flores, árvores, arbustos, pedras, buracos, rachaduras ou construções; esses elementos serão peças separadas. Ilustração: composição única conforme a ficha, sem grade ou colagem de alternativas. A ficha técnica define o formato, dimensões, estado e partes a entregar; não invente novos personagens, mecânicas ou mudanças de lore.
+<!-- FIM PROMPT FUMIGA-PAPEL-v3-PASTEL-ORGANICO -->
+
+### Prompt v2 histórico — paleta superada pela revisão pastel
+
 <!-- INICIO PROMPT FUMIGA-PAPEL-v2-DETALHADO -->
 Crie uma única peça visual original para FUMIGA — Colônia Eterna no estilo oficial 06 de papel recortado artesanal, agora com acabamento rico e altamente detalhado, conforme a decisão explícita do usuário. A direção não é minimalista nem deve transmitir vazio ou aspecto de protótipo. Construa formas com camadas rasas de papel colorido, bordas de tesoura ligeiramente irregulares, fibras sutis e superfícies predominantemente foscas. O volume vem da sobreposição e de sombras de contato curtas e suaves; não de pixels aparentes, plástico, argila, metal realista ou modelagem low-poly. Use silhuetas reconhecíveis em tamanho pequeno, com recortes internos trabalhados e detalhes próprios da peça, com separação clara de personagem, recurso, ameaça e fundo. Evite contornos pretos grossos de cartoon: a borda cortada e o contraste entre papéis definem as formas.
 
@@ -2831,9 +2966,10 @@ Ao final de cada tarefa, apresentar um **checklist de conferência** com este fo
 - Toda imagem criada para o jogo (sprites, ícones, cenários, UI, capas) deve ser gerada em
   **alta resolução** e depois adequada ao tamanho de uso — nunca arte borrada ou subdimensionada.
 - **Estilo obrigatório para novas artes: papel recortado detalhado, não minimalista**, conforme o prompt-mestre
-  `FUMIGA-PAPEL-v2-DETALHADO` em [`docs/arte/ESTILO_OFICIAL.md`](docs/arte/ESTILO_OFICIAL.md) e no MEGA.
+  `FUMIGA-PAPEL-v3-PASTEL-ORGANICO` em [`docs/arte/ESTILO_OFICIAL.md`](docs/arte/ESTILO_OFICIAL.md) e no MEGA.
   Camadas rasas trabalhadas, fibras, recortes médios e finos, variações de material e sombras de contato;
-  identidade violeta/âmbar e leitura clara em tamanho pequeno. Arte antiga permanece até
+  paleta pastel terrosa (marrom, laranja-âmbar e verde), HUD com madeira/folhas/vinhas
+  e leitura clara em tamanho pequeno. Roxo/azul-escuro deixam de ser a base das novas artes. Arte antiga permanece até
   a migração aprovada por lote; escolher o estilo não aprova todos os detalhes do conceito.
 - **Refinamento explícito de 2026-10-08:** tudo deve ser bem detalhado, sem transmitir vazio.
   Base limpa não é cenário final: compor riqueza com decoração/construções em camadas
@@ -4687,7 +4823,7 @@ parte dos blocos originais.
 
 | Arquivo original | Bytes preservados | SHA-256 |
 |---|---:|---|
-| `REGRAS_DE_TRABALHO.md` | 25499 | `ac3037df2f3ae19cc16e08c211c82811b55e281d04ae768b75fd47035232050d` |
+| `REGRAS_DE_TRABALHO.md` | 25622 | `a6fc268fe3b56f68aa1b01af7394d6f4b2654389e0bf72570ea4aba2453fb97b` |
 | `LORE.md` | 15056 | `42075fe4334601f1a74834388c0155342b2a8a6c21e51afa6020e34a5260f493` |
 | `DOCUMENTO_MEGA_ATUALIZACAO_LORE_TOTAL.md` | 30473 | `c642dd06d14e527bba6566458afa5293f697b0a3b981ef6301f6fafdfb9e856e` |
 | `DOCUMENTO_DECISOES_MEGA_ATUALIZACAO.md` | 8179 | `2b05240cd9fef9fb33d8a08768164f60202437c886c1c5b83f250ee9cbb58637` |
@@ -5202,3 +5338,19 @@ Traduzido nas quatro escolhas da Regra 1 (perguntas com opções, respondidas pe
 - Mudança: a **dessaturação foi removida** dos quatro níveis (era ela que achatava o contraste). Entrou um **ganho de contraste** por canal (1.06 / 1.12 / 1.16 nos níveis LEVE / MÉDIO / FIEL), aplicado igual no shader WebGL e na tabela do modo CPU.
 - Versão de assets: `20261008-filtro-contraste`.
 - Substitui os valores de intensidade dos registros anteriores deste arquivo (dessaturação de 18–45%).
+
+### Backup F1-A confirmado
+Drive `14otsEq79FoHnAaYqA7WBFs67vtPqQ55F`, 16.843.467 bytes; SHA256 `f847e3c3331a8e23425cc2ea4b405ea3c66ddd75f33ccf217c9e1534c85f443a`, conferidos por get_file.
+
+### Backup F1 pastel confirmado
+Drive `1pVjVOcW4LJSGuA0HbCr8jMEl8HFKrcrQ`, 4.500.250 bytes, SHA256 `341902b7dd4bbde8cfa2ee017b3d4c9f1a728e876cec639060f1e32891e08eb3`, conferidos por get_file.
+
+Backup HUD vivo verificado: Drive `1gZnMnllAgMMKGjLxow2Ursan00Vo-5o8`, 7.479.163 bytes, SHA256 `0ef66f412341fef0a25608d55d7707ce1820aae373513e47d7dc578a11b6a92e`.
+
+Backup correção fiel confirmado: Drive `10DSsIRn5ioPTV8x61CtjHrUhIR76ofst`, 15.294.283 bytes, SHA256 `ea91e4df126ff3c947ff43dae832eb89fcc1b7bb74109208c17f5b85ae87db80`, get_file conferido.
+
+Backup lote 1 de funções confirmado: Drive `1HLxMZjhiyBVSkloAK8LmP4PUzdHVziu5`, 9.581.571 bytes, SHA256 `f1f61cb7ad97d37ba587f9e27d94ac4e2d42b7d7f462be2747486551721e8214`, get_file conferido.
+
+Backup sete funções confirmado por get_file: `1WkK4kBdYgXbBwKGb1JodPw6kXub12yIn`, 29.141.296 bytes, SHA256 `f38229a249e3fc2a3bc74f53222a714c8a310592b26b374d418e158c3167ff8c`. Inclui originais dos dois lotes, referência e galerias.
+
+Inspeção desta correção após CSS: TITLE/RUN PC/mobile4/4 sem JS/404/glifos, PC52,1FPS/mobile53,6FPS headless; preview8000HTTP200.

@@ -109,9 +109,10 @@ Ao final de cada tarefa, apresentar um **checklist de conferência** com este fo
 - Toda imagem criada para o jogo (sprites, ícones, cenários, UI, capas) deve ser gerada em
   **alta resolução** e depois adequada ao tamanho de uso — nunca arte borrada ou subdimensionada.
 - **Estilo obrigatório para novas artes: papel recortado detalhado, não minimalista**, conforme o prompt-mestre
-  `FUMIGA-PAPEL-v2-DETALHADO` em [`docs/arte/ESTILO_OFICIAL.md`](docs/arte/ESTILO_OFICIAL.md) e no MEGA.
+  `FUMIGA-PAPEL-v3-PASTEL-ORGANICO` em [`docs/arte/ESTILO_OFICIAL.md`](docs/arte/ESTILO_OFICIAL.md) e no MEGA.
   Camadas rasas trabalhadas, fibras, recortes médios e finos, variações de material e sombras de contato;
-  identidade violeta/âmbar e leitura clara em tamanho pequeno. Arte antiga permanece até
+  paleta pastel terrosa (marrom, laranja-âmbar e verde), HUD com madeira/folhas/vinhas
+  e leitura clara em tamanho pequeno. Roxo/azul-escuro deixam de ser a base das novas artes. Arte antiga permanece até
   a migração aprovada por lote; escolher o estilo não aprova todos os detalhes do conceito.
 - **Refinamento explícito de 2026-10-08:** tudo deve ser bem detalhado, sem transmitir vazio.
   Base limpa não é cenário final: compor riqueza com decoração/construções em camadas

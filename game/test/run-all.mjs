@@ -40,6 +40,7 @@ const TESTS = [
   { name: "sim-chefe6", file: "sim.mjs", env: { FORCE: "6" } },
   { name: "layout", file: "layout.mjs" },
   { name: "assets", file: "assets.mjs" },
+  { name: "hud-publication", file: "hud-publication.mjs" },
   { name: "stuck", file: "stuck.mjs" },
   { name: "title-parallax", file: "title-parallax.mjs" },
   { name: "cutscene-art", file: "cutscene-art.mjs" },
@@ -63,6 +64,8 @@ const TESTS = [
   { name: "playtest", file: "playtest.mjs" },
   { name: "pwa-worker", file: "pwa-worker.mjs" },
   { name: "regressions-browser", file: "regressions-browser.mjs", slow: true, browser: true },
+  { name: "paper-hud-browser", file: "paper-hud-browser.mjs", slow: true, browser: true },
+  { name: "hud-publication-browser", file: "hud-publication-browser.mjs", slow: true, browser: true },
   { name: "psx-filter-browser", file: "psx-filter-browser.mjs", slow: true, browser: true },
 ];
 

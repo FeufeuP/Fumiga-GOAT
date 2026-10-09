@@ -26,16 +26,30 @@ export function auditArtHandoff(read = diskRead) {
   const direction = JSON.parse(read('docs/arte/direcao-vigente.json'));
   assert.equal(direction.estilo, 6, 'direção oficial: estilo 06');
   assert.equal(direction.direcao_aprovada, true, 'direção explicitamente aprovada');
-  assert.equal(direction.refinamento_implementado_no_jogo, false,
-    'estado mudou: revisar o handoff antes de declarar refinamento integrado');
+  assert.equal(direction.refinamento_implementado_no_jogo, true, 'HUD parcial integrado por pedido explícito');
+  assert(direction.escopo_implementacao.startsWith('parcial:'), 'não declarar todo rework integrado');
+  const publication=JSON.parse(read('docs/arte/hud-publicacao.json'));
+  assert.equal(publication.lot.length,4, 'brasa e três novas molduras');
+  for(const piece of publication.lot) {
+    assert(piece.integration.includes('explicit user request'), 'autorização da integração');
+    assert.equal(piece.backup.verified,true,'backup verificado de cada original');
+    assert.equal(piece.backup.sha256,piece.source_sha256,'fonte correta preservada');
+  }
   const key = direction.prompt_mestre;
-  assert.equal(key, 'FUMIGA-PAPEL-v2-DETALHADO', 'mudança de prompt exige revisar este contrato de continuidade');
+  assert.equal(key, 'FUMIGA-PAPEL-v3-PASTEL-ORGANICO', 'mudança de prompt exige revisar este contrato de continuidade');
   const start = `<!-- INICIO PROMPT ${key} -->`;
   const end = `<!-- FIM PROMPT ${key} -->`;
   const prompt = oneBlock(mega, start, end, 'prompt no MEGA');
   assert.equal(prompt, oneBlock(guide, start, end, 'prompt no guia'),
     'prompt canônico deve ser idêntico no guia e MEGA');
   assert(prompt.trim().length > 0, 'prompt integral não pode estar vazio');
+
+  const v2Start = '<!-- INICIO PROMPT FUMIGA-PAPEL-v2-DETALHADO -->';
+  const v2End = '<!-- FIM PROMPT FUMIGA-PAPEL-v2-DETALHADO -->';
+  assert.equal(oneBlock(mega, v2Start, v2End, 'v2 histórico MEGA'),
+    oneBlock(read('docs/arte/historico/ESTILO_OFICIAL-v2.md'), v2Start, v2End, 'v2 histórico guia'),
+    'prompt v2 deve ser preservado após mudança de paleta');
+  assert(prompt.includes('paleta pastel terrosa') && prompt.includes('vinhas'), 'paleta e HUD orgânico vigentes');
 
   const oldKey = 'FUMIGA-PAPEL-v1';
   const oldStart = `<!-- INICIO PROMPT ${oldKey} -->`;

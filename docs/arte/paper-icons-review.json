@@ -1,0 +1,306 @@
+{
+  "date": "2026-10-09",
+  "images": [
+    {
+      "id": "i_food",
+      "label": "Alimento",
+      "source": "art-source/f1-correcao/originais/i_food.png",
+      "source_size": [
+        1024,
+        1024
+      ],
+      "crop": [
+        0,
+        0,
+        1024,
+        1024
+      ],
+      "source_sha256": "dec3b4f1de6777bdbd5fe9b38662a4665090a351634751920e595409cbd09624",
+      "review": "art-source/f1-correcao/icones/i_food.png",
+      "bytes": 22524,
+      "sha256": "01694bcf369ffac43ccdb1b167b5ba378424054f3dc132987e499e5671b04c94",
+      "status": "review-only",
+      "prompt": "FUMIGA-PAPEL-v3-PASTEL-ORGANICO + ficha de símbolo HUD, fundo opaco",
+      "reference": "art-source/f1-hud-vivo/images/painel-original.png",
+      "review_size": [
+        128,
+        128
+      ],
+      "source_mode": "RGB",
+      "approval": "pending",
+      "integrated": false,
+      "backup": "workspace only; no new remote upload"
+    },
+    {
+      "id": "i_essence",
+      "label": "Essência",
+      "source": "art-source/f1-correcao/originais/i_essence.png",
+      "source_size": [
+        1024,
+        1024
+      ],
+      "crop": [
+        0,
+        0,
+        1024,
+        1024
+      ],
+      "source_sha256": "e8b38c2ba7bccdb881552ab5196c526a78c137618a3fdc147401726f9c6b08a4",
+      "review": "art-source/f1-correcao/icones/i_essence.png",
+      "bytes": 22383,
+      "sha256": "7eb91d9c25a7fc4d450d4b05da9769954b2180e01afaaaea439861cf9b79f35c",
+      "status": "review-only",
+      "prompt": "FUMIGA-PAPEL-v3-PASTEL-ORGANICO + ficha de símbolo HUD, fundo opaco",
+      "reference": "art-source/f1-correcao/originais/i_food.png",
+      "review_size": [
+        128,
+        128
+      ],
+      "source_mode": "RGB",
+      "approval": "pending",
+      "integrated": false,
+      "backup": "workspace only; no new remote upload"
+    },
+    {
+      "id": "i_shield",
+      "label": "Defesa",
+      "source": "art-source/f1-correcao/originais/i_shield.png",
+      "source_size": [
+        1024,
+        1024
+      ],
+      "crop": [
+        0,
+        0,
+        1024,
+        1024
+      ],
+      "source_sha256": "2c424b3ca34d9c94e0d532c0d5aa89b58b4313df6cea852c24bc0e81895c1b4b",
+      "review": "art-source/f1-correcao/icones/i_shield.png",
+      "bytes": 27640,
+      "sha256": "9ab455517b4cc74b35bdc8c6c6f67e090e996492dc9c733cfe23bc684d5e329e",
+      "status": "review-only",
+      "prompt": "FUMIGA-PAPEL-v3-PASTEL-ORGANICO + ficha de símbolo HUD, fundo opaco",
+      "reference": "art-source/f1-correcao/originais/i_food.png",
+      "review_size": [
+        128,
+        128
+      ],
+      "source_mode": "RGB",
+      "approval": "pending",
+      "integrated": false,
+      "backup": "workspace only; no new remote upload"
+    },
+    {
+      "id": "i_bolt",
+      "label": "Energia",
+      "source": "art-source/f1-correcao/originais/i_bolt.png",
+      "source_size": [
+        1024,
+        1024
+      ],
+      "crop": [
+        0,
+        0,
+        1024,
+        1024
+      ],
+      "source_sha256": "c50c7943295801193d6df11de5e3b554e46d59a6a8dd757ead4148e853652117",
+      "review": "art-source/f1-correcao/icones/i_bolt.png",
+      "bytes": 12345,
+      "sha256": "7537755abcdd563a64472a8332b994ef34bab1ed8fdb853ff63301474e49aff2",
+      "status": "review-only",
+      "prompt": "FUMIGA-PAPEL-v3-PASTEL-ORGANICO + ficha de símbolo HUD, fundo opaco",
+      "reference": "art-source/f1-correcao/originais/i_food.png",
+      "review_size": [
+        128,
+        128
+      ],
+      "source_mode": "RGB",
+      "approval": "pending",
+      "integrated": false,
+      "backup": "workspace only; no new remote upload"
+    },
+    {
+      "id": "i_hourglass",
+      "label": "Tempo",
+      "source": "art-source/f1-correcao/originais/i_hourglass.png",
+      "source_size": [
+        1024,
+        1024
+      ],
+      "crop": [
+        0,
+        0,
+        1024,
+        1024
+      ],
+      "source_sha256": "dae0542f770090935f437571311e3391899d633b7cc5ca4d549ff66b15fe01eb",
+      "review": "art-source/f1-correcao/icones/i_hourglass.png",
+      "bytes": 16433,
+      "sha256": "0128bc034206bb96d6ea0abeba073eeca0cf921c199a7cba4a9f6f78d9b576f3",
+      "status": "review-only",
+      "prompt": "FUMIGA-PAPEL-v3-PASTEL-ORGANICO + ficha de símbolo HUD, fundo opaco",
+      "reference": "art-source/f1-correcao/originais/i_food.png",
+      "review_size": [
+        128,
+        128
+      ],
+      "source_mode": "RGB",
+      "approval": "pending",
+      "integrated": false,
+      "backup": "workspace only; no new remote upload"
+    },
+    {
+      "id": "i_snow",
+      "label": "Frio",
+      "source": "art-source/f1-correcao/originais/i_snow.png",
+      "source_size": [
+        1024,
+        1024
+      ],
+      "crop": [
+        0,
+        0,
+        1024,
+        1024
+      ],
+      "source_sha256": "7a342b367a602e2511f800c271638e004bd9a3bab6298f215e5f3691bf1dd705",
+      "review": "art-source/f1-correcao/icones/i_snow.png",
+      "bytes": 28384,
+      "sha256": "dd5b60d506f4804d0d99e690167cc951f8bd028f99a7c91a12526e3e69b4a4e3",
+      "status": "review-only",
+      "prompt": "FUMIGA-PAPEL-v3-PASTEL-ORGANICO + ficha de símbolo HUD, fundo opaco",
+      "reference": "art-source/f1-correcao/originais/i_food.png",
+      "review_size": [
+        128,
+        128
+      ],
+      "source_mode": "RGB",
+      "approval": "pending",
+      "integrated": false,
+      "backup": "workspace only; no new remote upload"
+    },
+    {
+      "id": "i_heal",
+      "label": "Cura",
+      "source": "art-source/f1-correcao/originais/i_heal.png",
+      "source_size": [
+        1024,
+        1024
+      ],
+      "crop": [
+        0,
+        0,
+        1024,
+        1024
+      ],
+      "source_sha256": "f2f0d6ba32a5dc308d38d5a96cc664c22abd9f6fed244aa66cfc866f9c592917",
+      "review": "art-source/f1-correcao/icones/i_heal.png",
+      "bytes": 22762,
+      "sha256": "96a2ba438bc414b7bff99527febce961f765371b4098157eb2f10b7757b8e29e",
+      "status": "review-only",
+      "prompt": "FUMIGA-PAPEL-v3-PASTEL-ORGANICO + ficha de símbolo HUD, fundo opaco",
+      "reference": "art-source/f1-correcao/originais/i_food.png",
+      "review_size": [
+        128,
+        128
+      ],
+      "source_mode": "RGB",
+      "approval": "pending",
+      "integrated": false,
+      "backup": "workspace only; no new remote upload"
+    },
+    {
+      "id": "i_egg",
+      "label": "Prole",
+      "source": "art-source/f1-correcao/originais/i_egg.png",
+      "source_size": [
+        1024,
+        1024
+      ],
+      "crop": [
+        0,
+        0,
+        1024,
+        1024
+      ],
+      "source_sha256": "51ea5ba0c56e0718bccb44cf59ae55ff0c665755882c9641964c15576fc3b424",
+      "review": "art-source/f1-correcao/icones/i_egg.png",
+      "bytes": 23375,
+      "sha256": "196619957cfb2a8b7c7fa5d16a7d65db64d34eaac6edfb4af15599f0e4c0e61e",
+      "status": "review-only",
+      "prompt": "FUMIGA-PAPEL-v3-PASTEL-ORGANICO + ficha de símbolo HUD, fundo opaco",
+      "reference": "art-source/f1-correcao/originais/i_food.png",
+      "review_size": [
+        128,
+        128
+      ],
+      "source_mode": "RGB",
+      "approval": "pending",
+      "integrated": false,
+      "backup": "workspace only; no new remote upload"
+    },
+    {
+      "id": "i_ember",
+      "label": "Brasa",
+      "source": "art-source/f1-correcao/originais/i_ember.png",
+      "source_size": [
+        1024,
+        1024
+      ],
+      "crop": [
+        0,
+        0,
+        1024,
+        1024
+      ],
+      "source_sha256": "5ce05a5654c48bf6d1123fed95a3e02e094dfd5ef60dda3c89a06d6005005434",
+      "review": "art-source/f1-correcao/icones/i_ember.png",
+      "bytes": 30942,
+      "sha256": "5e96f930d157b85a283cfa9ec18827b099163364a9a8bbdfc0561514256dc5fc",
+      "status": "review-only",
+      "prompt": "FUMIGA-PAPEL-v3-PASTEL-ORGANICO + ficha de símbolo HUD, fundo opaco",
+      "reference": "art-source/f1-correcao/originais/i_food.png",
+      "review_size": [
+        128,
+        128
+      ],
+      "source_mode": "RGB",
+      "approval": "pending",
+      "integrated": false,
+      "backup": "workspace only; no new remote upload"
+    },
+    {
+      "id": "i_potion",
+      "label": "Poção",
+      "source": "art-source/f1-correcao/originais/i_potion.png",
+      "source_size": [
+        1408,
+        768
+      ],
+      "crop": [
+        320,
+        0,
+        1088,
+        768
+      ],
+      "source_sha256": "78459e0f411242054fdb77b4b8312b8b641b169996d747f9d7dc5f1c51feda6a",
+      "review": "art-source/f1-correcao/icones/i_potion.png",
+      "bytes": 16145,
+      "sha256": "3e82a2ad6f888f1195d1927b6729b4ae11140219d47581d7ec0ace67a7c7f67e",
+      "status": "review-only",
+      "prompt": "FUMIGA-PAPEL-v3-PASTEL-ORGANICO + ficha de símbolo HUD, fundo opaco",
+      "reference": "art-source/f1-correcao/originais/i_food.png",
+      "review_size": [
+        128,
+        128
+      ],
+      "source_mode": "RGB",
+      "approval": "pending",
+      "integrated": false,
+      "backup": "workspace only; no new remote upload"
+    }
+  ],
+  "current_status_note": "Historical review lot: local sources absent on 2026-10-09; backup of these ten not asserted. Only i_ember replaced by new recreated flame; see hud-publicacao.json (1/32 migrated,31legacy)."
+}

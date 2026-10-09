@@ -1,5 +1,5 @@
 {
-  "version": "20261008-filtro-contraste",
+  "version": "20261009-hud-brasa-publicacao",
   "geradoPor": "tools/make_assets_list.mjs",
   "grupos": [
     {
@@ -40,6 +40,7 @@
         "game/js/meta.js",
         "game/js/mutations.js",
         "game/js/nest.js",
+        "game/js/paper_hud.js",
         "game/js/particles.js",
         "game/js/playtest.js",
         "game/js/preload.js",
@@ -74,7 +75,7 @@
         7089,
         2993,
         1576,
-        20971,
+        21284,
         11449,
         21721,
         2553,
@@ -85,18 +86,19 @@
         14561,
         38797,
         3248,
-        14617,
+        16539,
         10280,
         14824,
-        140263,
+        139492,
         4785,
         27441,
-        23168,
+        23435,
         13052,
         12536,
         46646,
         1342,
         43782,
+        7481,
         15085,
         14081,
         4494,
@@ -106,7 +108,7 @@
         6938,
         7119,
         8157,
-        20158,
+        18985,
         56951,
         4378,
         11211,
@@ -114,12 +116,12 @@
         911,
         2657,
         945,
-        7917,
+        7936,
         19399,
         8826,
         899
       ],
-      "bytes": 1365235
+      "bytes": 1373293
     },
     {
       "id": "assets",
@@ -294,6 +296,14 @@
         "game/assets/ui/maca_palida.png",
         "game/assets/ui/maca_pantano.png",
         "game/assets/ui/maca_planicie.png",
+        "game/assets/ui/paper/banner.png",
+        "game/assets/ui/paper/button.png",
+        "game/assets/ui/paper/card.png",
+        "game/assets/ui/paper/health.png",
+        "game/assets/ui/paper/minimap.png",
+        "game/assets/ui/paper/panel.png",
+        "game/assets/ui/paper/pause.png",
+        "game/assets/ui/paper/tooltip.png",
         "game/assets/ui/README.md",
         "game/assets/ui/santuario_deserto.png",
         "game/assets/ui/santuario_floresta.png",
@@ -373,7 +383,7 @@
         1202,
         1206,
         1162,
-        1347,
+        18008,
         1271,
         1209,
         1172,
@@ -474,6 +484,14 @@
         543518,
         580045,
         628252,
+        274740,
+        334285,
+        1589130,
+        182838,
+        940699,
+        728728,
+        1499784,
+        600515,
         9857,
         615281,
         615627,
@@ -484,7 +502,7 @@
         839032,
         656076
       ],
-      "bytes": 24704038
+      "bytes": 30871418
     }
   ]
 }

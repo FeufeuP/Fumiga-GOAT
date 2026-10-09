@@ -1,7 +1,7 @@
 # FUMIGA — estudo de estilos, inventário e plano de reestilização
 
 **Data:** 2026-10-08 · **Base auditada:** `53c9f572656113fbc5ddfad77877c6dec3b6c091`\
-**Status atual:** estilo **06 — papel recortado detalhado** confirmado pelo usuário em 2026-10-08; prompt-mestre vigente `FUMIGA-PAPEL-v2-DETALHADO`. Acabamento rico, sem aparência vazia ou minimalista. Inventário concluído; plano de integração proposto; piloto **pendente**. Nenhum asset de produção foi substituído.
+**Status atual:** estilo **06 — papel recortado detalhado** confirmado pelo usuário em 2026-10-08; prompt-mestre vigente `FUMIGA-PAPEL-v3-PASTEL-ORGANICO`. Acabamento rico, sem aparência vazia ou minimalista. Inventário concluído; plano de integração proposto; piloto **pendente**. Nenhum asset de produção foi substituído.
 
 **Guia vigente:** [`docs/arte/ESTILO_OFICIAL.md`](docs/arte/ESTILO_OFICIAL.md). A seleção de estilo está concluída; dimensões finais, recortes, sombras em movimento e aprovação das peças serão validados no piloto.
 
@@ -27,7 +27,7 @@ O `MEGA_ARQUIVO.md` foi percorrido integralmente, inclusive registros após o í
 - Pedido explícito atual de ler o MEGA inteiro prevalece sobre a orientação antiga de AGENTS de consultar só seções.
 - Regras 8/17: corpo de inseto, acessórios moderados e câmera top-down no mundo, santuários e flores.
 - Regra 19: amostras são cenas conceituais autorizadas, **não mapas-base**. Terrenos definitivos serão gerados limpos; decoração e construções em passadas separadas.
-- Regra 18: escolha definitiva registrada — **06, papel recortado**. O prompt-mestre canônico vigente `FUMIGA-PAPEL-v2-DETALHADO`, com referência, técnica, paleta, luz, enquadramento e proibições, está no guia e no MEGA. Os demais estudos são alternativas históricas.
+- Regra 18: escolha definitiva registrada — **06, papel recortado**. O prompt-mestre canônico vigente `FUMIGA-PAPEL-v3-PASTEL-ORGANICO`, com referência, técnica, paleta, luz, enquadramento e proibições, está no guia e no MEGA. Os demais estudos são alternativas históricas.
 - Noite Branca vigente: **3 painéis × 4 camadas**, substitui o histórico de 8 camadas. TITLE: 4 camadas.
 - Árvore sem correntes/cadeados sobre frutos; não ressuscitar assets removidos. O ícone genérico `sprites/icons/lock.png` é distinto dessas antigas artes.
 - Flores: prevalece o método v3 (9 vivos + parada + 3 mortos e 6 fases da Suprema + parada). O texto antigo de AGENTS e partes do manual ainda descrevem o método anterior. O teto de **10 imagens inclui alternativas**, portanto as levas podem precisar de sub-rodadas de escolha para não somar 12 gerações na mesma rodada.
@@ -259,7 +259,7 @@ Foram produzidas duas bases limpas top-down da Planície do Amanhecer, nos estil
 
 ## 11. Confirmação do estilo 06 com riqueza de detalhe — 2026-10-08
 
-O usuário decidiu definitivamente pelo papel recortado e exigiu que tudo seja bem detalhado, sem sensação de vazio. O guia e a Regra 6 agora usam `FUMIGA-PAPEL-v2-DETALHADO`; versão anterior preservada no histórico. O estudo 08 não é mais alternativa pendente de escolha.
+O usuário decidiu definitivamente pelo papel recortado e exigiu que tudo seja bem detalhado, sem sensação de vazio. O guia e a Regra 6 agora usam `FUMIGA-PAPEL-v3-PASTEL-ORGANICO`; versão anterior preservada no histórico. O estudo 08 não é mais alternativa pendente de escolha.
 
 As bases limpas entregues não são padrão de densidade do cenário final. F0b deve validar grandes formas + detalhes médios + finos, com uma prévia composta das camadas aprovadas: terreno texturizado → decoração → construções/VFX pertinentes, respeitando a Regra 19 e as aprovações por passada. Material rico de baixo contraste nas áreas jogáveis; maior densidade nas bordas e pontos de interesse. UI/ícones e silhuetas não podem perder leitura, especialmente no mobile. A mesma exigência de acabamento vale para todas as famílias F1–F9, sem ampliar mecânicas nem conteúdo futuro.
 

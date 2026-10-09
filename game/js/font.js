@@ -205,7 +205,44 @@ export function setOptionsFontAccent(color) {
 }
 
 /** Cor efetiva: a tela colore textos neutros, sem roubar as cores semânticas. */
-export function resolveFontColor(color = null) {
+// Surfaces are frame-local and context-local, not a sticky global palette.
+// Store the inverse transform at paint time, so scaled/translated UI is safe.
+let paperSurfaces = new WeakMap();
+export function clearPaperSurfaces() { paperSurfaces = new WeakMap(); }
+export function registerPaperSurface(ctx,x,y,w,h) {
+  if (!ctx.getTransform) return;
+  const t=ctx.getTransform();
+  if (!t || typeof t.inverse !== 'function') return;
+  let surfaces=paperSurfaces.get(ctx);
+  if(!surfaces) { surfaces=[];paperSurfaces.set(ctx,surfaces); }
+  surfaces.push({x,y,w,h,inverse:t.inverse()});
+}
+export function paperAt(ctx,x,y) {
+  if(layoutRec.layer==='world') return false;
+  const surfaces=paperSurfaces.get(ctx);
+  if(!surfaces || !ctx.getTransform) return false;
+  const t=ctx.getTransform();
+  const px=t.a*x+t.c*y+t.e, py=t.b*x+t.d*y+t.f;
+  for(let i=surfaces.length-1;i>=0;i--) {
+    const r=surfaces[i],m=r.inverse;
+    const qx=m.a*px+m.c*py+m.e, qy=m.b*px+m.d*py+m.f;
+    if(qx>=r.x && qx<=r.x+r.w && qy>=r.y && qy<=r.y+r.h) return true;
+  }
+  return false;
+}
+export function resolveFontColor(color = null, paper = false) {
+  if (paper) {
+    if(color == null) return '#493521';
+    const k = String(color).toLowerCase();
+    const mapped = {
+      '#efe9ff':'#493521','#f0eaff':'#493521','#9a8fc0':'#685139','#8f7bb5':'#685139',
+      '#6b5a8a':'#776348','#5a4f78':'#776348','#ffffff':'#493521','#fff':'#493521',
+      '#ffd479':'#8b4e18','#ffb347':'#8b4e18','#7fd6a0':'#456032','#37e6c8':'#356847',
+      '#c77dff':'#705334','#8f6fd6':'#705334','#6db7ff':'#456032','#7fd6ff':'#456032',
+      '#bfffa8':'#456032','#e8f4ff':'#456032','#ff9a5c':'#8b4e18','#ff8a94':'#a8342b',
+    };
+    return mapped[k] || color;
+  }
   const palette = screenTextPalette();
   if (color == null) return palette.body;
   const key = String(color).trim().toLowerCase();
@@ -247,7 +284,7 @@ export function textHeight(text, { font = "small", scale = 1 } = {}) {
 /** Renderiza (com cache) uma linha de texto e a desenha em ctx. */
 export function drawText(ctx, text, x, y, {
   font = "small", scale = 1, color = null, align = "left", shadow = true,
-  shadowColor = "rgba(10,8,18,0.9)", alpha = 1, maxWidth = Infinity,
+  shadowColor = "rgba(10,8,18,0.9)", alpha = 1, maxWidth = Infinity, paper = null,
 } = {}) {
   text = String(text).toUpperCase();
   // Acessibilidade aumenta 30% antes da restrição por maxWidth, para o texto
@@ -259,7 +296,11 @@ export function drawText(ctx, text, x, y, {
   }
   const baseWidth = Math.max(1, lineWidth(text, { font, scale: 1 }));
   if (Number.isFinite(maxWidth)) scale = Math.min(scale, Math.max(0.01, maxWidth / baseWidth));
-  const resolvedColor = resolveFontColor(color);
+  const width=baseWidth*scale;
+  const centerX=align==='center'?x:align==='right'?x-width/2:x+width/2;
+  const onPaper=paper ?? paperAt(ctx,centerX,y+FONT[font === 'big' ? 'big' : 'small'].size*scale/2);
+  if(onPaper) shadow=false;
+  const resolvedColor = resolveFontColor(color,onPaper);
   const cv = lineCanvas(text, font, scale, resolvedColor);
   let dx = x;
   if (align === "center") dx = x - cv.width / 2;

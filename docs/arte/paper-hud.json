@@ -1,0 +1,224 @@
+{
+  "decision": "2026-10-09: opaque HUD; original artwork, no alpha",
+  "images": [
+    {
+      "id": "panel",
+      "source": "art-source/f1-hud-vivo/images/painel-original.png",
+      "source_sha256": "f4e775e038a98cbf23bd1e12958ae77070e8da6996e94043e4872e6c245aa47e",
+      "source_size": [
+        1717,
+        916
+      ],
+      "size": [
+        960,
+        512
+      ],
+      "mode": "RGB",
+      "exterior_pixels": 388517,
+      "art_rgb_unchanged_before_resize": true,
+      "bytes": 728728,
+      "sha256": "0cae78f5118ad44a4c07f0e1d061b76b289e44f45ffc7008da33f64e4dcc70f8"
+    },
+    {
+      "id": "button",
+      "source": "art-source/f1-publicacao/originais/botao.png",
+      "source_sha256": "2759ca12b4a01d253dd53baaea89dcba2479da262ea920623356cad252b44c96",
+      "source_size": [
+        2064,
+        512
+      ],
+      "size": [
+        960,
+        238
+      ],
+      "mode": "RGB",
+      "exterior_pixels": 0,
+      "art_rgb_unchanged_before_resize": true,
+      "bytes": 334285,
+      "sha256": "3b8d8eb4b20e854549dc7061ff4cda6500425a722603946bde331633e9f8698f",
+      "predecessor": {
+        "id": "button",
+        "source": "art-source/f1-funcoes/originais/botao.png",
+        "source_sha256": "e8d0bc0db1079943a58a04391a3c73a67cf32d4515be1da225427931bac4f23f",
+        "source_size": [
+          1410,
+          752
+        ],
+        "size": [
+          960,
+          512
+        ],
+        "mode": "RGB",
+        "exterior_pixels": 264965,
+        "art_rgb_unchanged_before_resize": true,
+        "bytes": 683120,
+        "sha256": "6bea3ceaf52cfebe06fa163fe724efca58939ec61e034bbd7345907379b73c31"
+      },
+      "backup": {
+        "drive_id": "1V1vt_NA1SYtXMIoAH-YfFMXWgQgMH5Hk",
+        "sha256": "2759ca12b4a01d253dd53baaea89dcba2479da262ea920623356cad252b44c96",
+        "bytes": 1999618,
+        "parent": "1IMj_-7VQf_asmRmMoMSzKxIQ37M6DXlW",
+        "verified": true
+      }
+    },
+    {
+      "id": "health",
+      "source": "art-source/f1-funcoes/originais/barra-vida.png",
+      "source_sha256": "7bd388f0ff6092cac8e5f856e393c6af677065c17471663c0844e6f1e72c1735",
+      "source_size": [
+        2736,
+        384
+      ],
+      "size": [
+        960,
+        135
+      ],
+      "mode": "RGB",
+      "exterior_pixels": 305427,
+      "art_rgb_unchanged_before_resize": true,
+      "bytes": 182838,
+      "sha256": "779d636347895da6bda6470d8756f04e22ffaa05e7a44e5496ac9015a5a0419f"
+    },
+    {
+      "id": "banner",
+      "source": "art-source/f1-funcoes/originais/banner-onda.png",
+      "source_sha256": "2dce618027f8fea8f8761546f25431fca25d54813f3b45c8855c8f06cc556057",
+      "source_size": [
+        2320,
+        464
+      ],
+      "size": [
+        960,
+        192
+      ],
+      "mode": "RGB",
+      "exterior_pixels": 297544,
+      "art_rgb_unchanged_before_resize": true,
+      "bytes": 274740,
+      "sha256": "553eb0312b7b3904fcf8fa3be718d11abd5180a8af76fe2b391e1558d9e01f38"
+    },
+    {
+      "id": "minimap",
+      "source": "art-source/f1-funcoes-lote2/originais/minimapa.png",
+      "source_sha256": "bfe9376c1101bf2092acc51d5408402fb86bc75f9a7b6d86bf566b3c2d1af4b1",
+      "source_size": [
+        1200,
+        896
+      ],
+      "size": [
+        960,
+        717
+      ],
+      "mode": "RGB",
+      "exterior_pixels": 206349,
+      "art_rgb_unchanged_before_resize": true,
+      "bytes": 940699,
+      "sha256": "d29fdd8e2ffcd517e92d51e2b515c96a55449b41c7f4d4635cd4855505719569"
+    },
+    {
+      "id": "tooltip",
+      "source": "art-source/f1-publicacao/originais/tooltip.png",
+      "source_sha256": "cb0b703d042b3e9f2ac54d492d92abe3ad3ba1694bc70e7f503902615e2813d9",
+      "source_size": [
+        1456,
+        720
+      ],
+      "size": [
+        960,
+        475
+      ],
+      "mode": "RGB",
+      "exterior_pixels": 0,
+      "art_rgb_unchanged_before_resize": true,
+      "bytes": 600515,
+      "sha256": "87b040fcab7e269b01e214871231396eb47838076d11d4dd7b924327f385df4e",
+      "predecessor": {
+        "id": "tooltip",
+        "source": "art-source/f1-funcoes-lote2/originais/tooltip.png",
+        "source_sha256": "217a460bf28dfb2ed5dc772805d36347077002a2d09e8f59d39b30cf976eab15",
+        "source_size": [
+          1456,
+          720
+        ],
+        "size": [
+          960,
+          475
+        ],
+        "mode": "RGB",
+        "exterior_pixels": 291709,
+        "art_rgb_unchanged_before_resize": true,
+        "bytes": 584960,
+        "sha256": "0932ed41f9fad2351a4c61ead6c5d0928596945164d23750234a42dac59a49cd"
+      },
+      "backup": {
+        "drive_id": "1ovKDKVrN0NLnAOrBS6sZzgvPFT8XEk57",
+        "sha256": "cb0b703d042b3e9f2ac54d492d92abe3ad3ba1694bc70e7f503902615e2813d9",
+        "bytes": 1720465,
+        "parent": "1IMj_-7VQf_asmRmMoMSzKxIQ37M6DXlW",
+        "verified": true
+      }
+    },
+    {
+      "id": "card",
+      "source": "art-source/f1-funcoes-lote2/originais/cartao.png",
+      "source_sha256": "dd5075f33f875b495749508571a721ebec0a02b72277e7f24731e2096d6883a1",
+      "source_size": [
+        848,
+        1264
+      ],
+      "size": [
+        848,
+        1264
+      ],
+      "mode": "RGB",
+      "exterior_pixels": 178541,
+      "art_rgb_unchanged_before_resize": true,
+      "bytes": 1589130,
+      "sha256": "622422b5a64c2de23af437f95a5b8a0548c6503d8c5d2a937ad334b56afbb347"
+    },
+    {
+      "id": "pause",
+      "source": "art-source/f1-publicacao/originais/pausa.png",
+      "source_sha256": "e29ba76bc6d1d6ad37f18cd3e8892bfdd162636ee53a1fe65fade2f082bb118b",
+      "source_size": [
+        928,
+        1152
+      ],
+      "size": [
+        928,
+        1152
+      ],
+      "mode": "RGB",
+      "exterior_pixels": 0,
+      "art_rgb_unchanged_before_resize": true,
+      "bytes": 1499784,
+      "sha256": "fd73dc83b5160766a7ebe4ae1859e41b1b5eba1d569338ac0781c22ba243c299",
+      "predecessor": {
+        "id": "pause",
+        "source": "art-source/f1-funcoes-lote2/originais/pausa.png",
+        "source_sha256": "3baaa4a066c45eab4616dab03977ab24555c911cb3b5a397a71fd1b223dba62b",
+        "source_size": [
+          1136,
+          944
+        ],
+        "size": [
+          960,
+          798
+        ],
+        "mode": "RGB",
+        "exterior_pixels": 185802,
+        "art_rgb_unchanged_before_resize": true,
+        "bytes": 1197632,
+        "sha256": "673064245712173bc950a2fa6784d4b064907981ffdff466061681942e57ad8f"
+      },
+      "backup": {
+        "drive_id": "1LCxyCfeDGuGDt-M4kCGR3RD_tcB5wqGK",
+        "sha256": "e29ba76bc6d1d6ad37f18cd3e8892bfdd162636ee53a1fe65fade2f082bb118b",
+        "bytes": 1799646,
+        "parent": "1IMj_-7VQf_asmRmMoMSzKxIQ37M6DXlW",
+        "verified": true
+      }
+    }
+  ]
+}

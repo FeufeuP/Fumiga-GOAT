@@ -1,13 +1,15 @@
 {
   "data": "2026-10-08",
   "estilo": 6,
-  "nome": "Papel recortado detalhado",
-  "prompt_mestre": "FUMIGA-PAPEL-v2-DETALHADO",
+  "nome": "Papel recortado detalhado — pastel terroso e orgânico",
+  "prompt_mestre": "FUMIGA-PAPEL-v3-PASTEL-ORGANICO",
   "guia": "docs/arte/ESTILO_OFICIAL.md",
-  "anterior": "FUMIGA-PAPEL-v1",
-  "historico": "docs/arte/historico/ESTILO_OFICIAL-v1.md",
-  "decisao_usuario": "Certo, decidi que o estilo oficial será o 6 papel recortado, porem quero que seja tudo bem detalhado para não passar um ar de vazio.",
+  "anterior": "FUMIGA-PAPEL-v2-DETALHADO",
+  "historico": "docs/arte/historico/ESTILO_OFICIAL-v2.md",
+  "decisao_usuario": "Esqueça este estilo ambar com roxo ou azul escuro, quero tons pastéis, tons da paleta do marrom que remeta a terra, laranja que lembre ambar, verde que lembre folhas e vinhas. Também dê vida ao HUD, vinhas, folhas, madeira...",
   "direcao_aprovada": true,
-  "refinamento_implementado_no_jogo": false,
-  "proxima_validacao": "piloto detalhado e composição das camadas aprovadas, com leitura e desempenho PC/mobile"
+  "refinamento_implementado_no_jogo": true,
+  "proxima_validacao": "aceite visual dos três novos HUDs e brasa; 31 ícones antigos permanecem; F1 completo ainda não entregue",
+  "escopo_implementacao": "parcial: HUDs opacos e brasa; restante do rework não integrado",
+  "registro_implementacao": "docs/arte/HUD_PUBLICACAO.md"
 }
