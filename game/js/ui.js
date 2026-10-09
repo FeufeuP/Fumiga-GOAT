@@ -3,11 +3,13 @@
 // Painéis refinados, botões com profundidade, caixas de texto in-game
 // ============================================================================
 import { PAL, VIEW_W, VIEW_H } from "./config.js";
-import { drawText, textWidth, FONT, layoutBox } from "./font.js";
+import { drawText, textWidth, FONT, layoutBox, clearPaperSurfaces, fontScale, wrapText } from "./font.js";
 import { mouse, touchMode } from "./input.js";
 import { SFX } from "./audio.js";
 import { G } from "./state.js";
 import { drawLoreTextbox, hudBiome, drawWoodBarFrame } from "./lore_hud.js";
+
+import { drawPaper, drawPaperBar } from "./paper_hud.js";
 
 let buttons = [];
 // Animação de interface: hover/pressão de cada botão são NÚMEROS que correm
@@ -17,6 +19,7 @@ const anim = new Map();
 let lastT = 0, frameDt = 1 / 60;
 
 export function uiBegin() {
+  clearPaperSurfaces();
   buttons = [];
   frameDt = Math.max(0.001, Math.min(0.05, G.time - lastT || 1 / 60));
   lastT = G.time;
@@ -98,6 +101,7 @@ function hitRect(x, y, w, h) {
 /** Painel com borda dupla, cantos chanfrados e estética Dead Cells refinada */
 export function panel(ctx, x, y, w, h, opt = {}) {
   layoutBox(ctx, opt.kind || "painel", x, y, w, h, opt.layoutId);
+  if(opt.paper !== false && drawPaper(ctx, opt.paperKind || (opt.kind === 'botao' ? 'button' : 'panel'), x,y,w,h,opt)) return;
   const r = opt.r !== undefined ? opt.r : 6;
   const fill = opt.fill || PAL.panel;
   const border = opt.border || PAL.border;
@@ -220,70 +224,28 @@ export function button(ctx, opt) {
   const pr = dis ? 0 : A.press;
 
   // o botão "levanta" no hover e afunda no clique
-  const lift = -1.6 * hv + 1.2 * pr;
+  const lift = down ? 1.5 : -1.6 * hv;
   const bx = x, by = y + lift;
-  const pulse = 0.5 + Math.sin(G.time * 3) * 0.5;
 
-  const border = dis ? "#2c2440" : mix(PAL.border, PAL.borderHi, hv);
-  const fill = dis ? "#171222" : mix(PAL.panel, PAL.panelHi, hv * 0.9);
-
-  panel(ctx, bx, by, w, h, {
-    kind: "botao", layoutId: opt.id || opt.label,
-    fill,
-    border,
-    r: 5,
-    glow: hv > 0.02 ? (opt.accent || PAL.borderHi) : null,
-    accentLine: opt.accent && !dis ? opt.accent : null,
-  });
-
-  // banho de luz no hover (gradiente de cima, some suave ao sair)
-  if (hv > 0.01) {
-    const hg = ctx.createLinearGradient(bx, by, bx, by + h);
-    hg.addColorStop(0, "rgba(255,212,121," + (0.10 * hv).toFixed(3) + ")");
-    hg.addColorStop(1, "rgba(255,212,121," + (0.02 * hv).toFixed(3) + ")");
-    ctx.fillStyle = hg;
-    chamfer(ctx, bx + 1, by + 1, w - 2, h - 2, 4);
-    ctx.fill();
-
-    // brilho pulsante na borda
-    ctx.strokeStyle = opt.accent || PAL.amber;
-    ctx.globalAlpha = (0.12 + pulse * 0.18) * hv;
-    ctx.lineWidth = 1;
-    chamfer(ctx, bx + 2, by + 2, w - 4, h - 4, 3);
-    ctx.stroke();
-    ctx.globalAlpha = 1;
-  }
-
-  if (opt.accent && !dis) {
-    // barra de accent: cresce no hover
-    const bw = 3 + 2 * hv;
-    const ag = ctx.createLinearGradient(bx, by, bx, by + h);
-    ag.addColorStop(0, lighten(opt.accent, 0.12 * hv));
-    ag.addColorStop(1, darken(opt.accent, 0.3));
-    ctx.fillStyle = ag;
-    ctx.globalAlpha = 0.6 + 0.4 * hv;
-    ctx.fillRect(bx + 2, by + 2, bw, h - 4);
-    ctx.save();
-    ctx.globalCompositeOperation = "lighter";
-    ctx.globalAlpha = 0.15 + 0.3 * hv;
-    ctx.fillRect(bx + 2, by + 2, bw + 4, h - 4);
-    ctx.restore();
-    ctx.globalAlpha = 1;
+  layoutBox(ctx,'botao',bx,by,w,h,opt.id || opt.label);
+  const paperButton=drawPaper(ctx,'button',bx,by,w,h,{disabled:dis,hot:hot,pressed:down,selected:opt.selected});
+  if(!paperButton) {
+    panel(ctx,bx,by,w,h,{paper:false,kind:'botao',fill:PAL.panel,border:PAL.border});
   }
 
   // ícone opcional à esquerda
   if (opt.icon) {
-    ctx.globalAlpha = dis ? 0.3 : 1;
-    ctx.drawImage(opt.icon, bx + 10, by + h / 2 - 8, 16, 16);
+    ctx.globalAlpha = 1;
+    ctx.drawImage(opt.icon, bx + 22, by + h / 2 - 8, 16, 16);
     ctx.globalAlpha = 1;
   }
 
   // rótulo: clareia e cresce um toque no hover (o texto acompanha o botão)
-  const col = dis ? "#5a4f78" : (opt.color || mix(PAL.text, "#ffffff", hv * 0.55));
+  const col = paperButton ? (dis ? "#675b48" : "#493521") : dis ? "#5a4f78" : (opt.color || PAL.text);
   const scale = (opt.scale || 1) * (1 + 0.05 * hv - 0.02 * pr);
-  drawText(ctx, opt.label, bx + w / 2 + (opt.icon ? 10 : 0),
+  drawText(ctx, opt.label, bx + w / 2 + (opt.icon ? 12 : 0) - (opt.selected ? 8 : 0),
     by + h / 2 - (opt.font === "big" ? 15 : 8) - 2,
-    { font: opt.font || "small", scale, color: col, align: "center", shadow: true, maxWidth: w - (opt.icon ? 40 : 20) });
+    { font: opt.font || "small", scale, color: col, align: "center", shadow: true, paper: paperButton, maxWidth: Math.max(8,w - (paperButton ? Math.min(w*.5,h*2.02) : 48) - (opt.icon ? 24 : 0) - (opt.selected ? 18 : 0)) });
 
   // o retângulo publicado é o da HITBOX: é ele que decide se o toque é da UI
   // (uiCapture) — publicar o desenho deixaria o dedo "atravessar" a borda do
@@ -351,32 +313,13 @@ export function iconButton(ctx, opt) {
 
   panel(ctx, x, y + lift, w, h, {
     kind: "botao", layoutId: "ic:" + (opt.id || ""),
+    disabled: dis, hot: hot && !dis, pressed: hot && mouse.down && !dis, selected: opt.selected,
     fill: mix(PAL.panel, PAL.panelHi, hv),
     border,
     r: 4,
     glow: (hv > 0.02 || sel) && !dis ? (opt.frame || PAL.amber) : null,
     accentLine: opt.selected ? (opt.frame || PAL.amber) : null,
   });
-
-  if (opt.selected) {
-    ctx.strokeStyle = opt.frame || PAL.amber;
-    ctx.globalAlpha = 0.85;
-    ctx.lineWidth = 2;
-    ctx.strokeRect(x + 2.5, y + lift + 2.5, w - 5, h - 5);
-    // inner glow
-    ctx.save();
-    ctx.globalCompositeOperation = "lighter";
-    ctx.globalAlpha = 0.15;
-    ctx.fillStyle = opt.frame || PAL.amber;
-    ctx.fillRect(x + 3, y + lift + 3, w - 6, h - 6);
-    ctx.restore();
-    ctx.globalAlpha = 1;
-  }
-
-  if (hv > 0.01 && !opt.selected) {
-    ctx.fillStyle = "rgba(255,255,255," + (0.06 * hv).toFixed(3) + ")";
-    ctx.fillRect(x + 2, y + lift + 2, w - 4, h - 4);
-  }
 
   // idem button(): publica a hitbox, para o toque não vazar para o mundo
   buttons.push({ x: hr.x, y: hr.y, w: hr.w, h: hr.h, id: opt.id, disabled: dis });
@@ -387,6 +330,7 @@ export function iconButton(ctx, opt) {
 /** Barra de vida / progresso refinada — estilo Dead Cells */
 export function bar(ctx, x, y, w, h, frac, opt = {}) {
   frac = Math.max(0, Math.min(1, frac));
+  if (drawPaperBar(ctx,x,y,w,h,frac,opt)) return;
   // fundo com profundidade
   ctx.fillStyle = opt.bg || "#0e0a18";
   ctx.fillRect(x, y, w, h);
@@ -447,6 +391,7 @@ export function bar(ctx, x, y, w, h, frac, opt = {}) {
 /** Caixa de diálogo / tooltip refinada */
 export function dialogBox(ctx, x, y, w, h, opt = {}) {
   layoutBox(ctx, "caixa", x, y, w, h, opt.layoutId);
+  if(drawPaper(ctx,opt.paperKind || "panel",x,y,w,h,opt)) return;
   const border = opt.border || PAL.borderHi;
   // sombra
   ctx.fillStyle = "rgba(0,0,0,0.6)";
@@ -480,36 +425,29 @@ export function dialogBox(ctx, x, y, w, h, opt = {}) {
 
 /** Tooltip flutuante */
 export function tooltip(ctx, x, y, lines, opt = {}) {
-  const pad = 12;
-  const lineH = 16;
-  const w = opt.w || 240;
-  const h = pad * 2 + lines.length * lineH + (opt.title ? 28 : 0);
-
-  // ajusta posição para não sair da tela
-  let tx = x, ty = y;
-  if (tx + w > 950) tx = 950 - w;
-  if (ty + h > 530) ty = y - h - 10;
-  if (tx < 10) tx = 10;
-  if (ty < 10) ty = 10;
-
-  dialogBox(ctx, tx, ty, w, h, {
-    border: opt.border || PAL.borderHi,
-    fill: "#1a1628",
-    r: 5,
-    accent: opt.accent,
-  });
-
-  let cy = ty + pad + 4;
-  if (opt.title) {
-    drawText(ctx, opt.title, tx + pad, cy, { font: "small", color: opt.accent || "#ffd479" });
-    cy += 22;
-    ctx.fillStyle = "rgba(74,58,110,0.6)";
-    ctx.fillRect(tx + pad, cy - 4, w - pad*2, 1);
+  // The image border needs real content insets; wrap against those insets,
+  // including large-font metrics, instead of laying text over left foliage.
+  const w=Math.min(VIEW_W-20,Math.max(96,opt.w||240));
+  const padX=27,padY=16,lineH=Math.ceil(20*fontScale());
+  const maxW=w-padX*2;
+  const body=lines.flatMap(line=>wrapText(line,maxW));
+  const title=opt.title?wrapText(opt.title,maxW):[];
+  const h=padY*2+(body.length+title.length)*lineH+(title.length?8:0);
+  let tx=Math.max(10,Math.min(x,VIEW_W-w-10));
+  let ty=y+h>VIEW_H-10?y-h-10:y;
+  ty=Math.max(10,Math.min(ty,VIEW_H-h-10));
+  dialogBox(ctx,tx,ty,w,h,{paperKind:'tooltip'});
+  let cy=ty+padY;
+  for(const line of title) {
+    drawText(ctx,line,tx+padX,cy,{color:'#6b471e',maxWidth:maxW});cy+=lineH;
   }
-  for (const line of lines) {
-    drawText(ctx, line, tx + pad, cy, { color: opt.color || PAL.text });
-    cy += lineH;
+  if(title.length) {
+    ctx.fillStyle='#bea779';ctx.fillRect(tx+padX,cy+1,maxW,1);cy+=8;
   }
+  for(const line of body) {
+    drawText(ctx,line,tx+padX,cy,{color:opt.color||PAL.text,maxWidth:maxW});cy+=lineH;
+  }
+  return {x:tx,y:ty,w,h};
 }
 
 /** Texto com ícone à esquerda */

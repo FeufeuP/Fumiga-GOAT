@@ -3,6 +3,15 @@
 // ============================================================================
 
 const MANIFEST = {
+  paper_panel: "ui/paper/panel.png",
+  paper_button: "ui/paper/button.png",
+  paper_health: "ui/paper/health.png",
+  paper_banner: "ui/paper/banner.png",
+  paper_minimap: "ui/paper/minimap.png",
+  paper_tooltip: "ui/paper/tooltip.png",
+  paper_card: "ui/paper/card.png",
+  paper_pause: "ui/paper/pause.png",
+
   // Árvore ancestral aprovada: recorte RGBA, a saturação é restaurada em cache.
   tree_ancestral: "ui/tree_ancestral.png",
   // Maçãs dos sete mundos (douradas; a Pálida é branca) — 320×320, no boot:
@@ -183,7 +192,7 @@ const WROT = {};         // silhuetas brancas rotacionadas (hit flash)
 // ANTIGA nos mesmos nomes de arquivo (foi assim que o rework dos inimigos da
 // Fase 2 "não apareceu" para quem já tinha jogado antes dele).
 // ---------------------------------------------------------------------------
-export const ASSET_V = "20261008-filtro-contraste";
+export const ASSET_V = "20261009-hud-brasa-publicacao";
 
 /**
  * URL final de um asset do jogo: base certa para a página atual + anti-cache.

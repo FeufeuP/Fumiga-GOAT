@@ -1,3 +1,4 @@
+import { drawPaper, drawPaperBar } from "./paper_hud.js";
 import { G, metaBonus } from "./state.js";
 import { drawText, layoutBox } from "./font.js";
 import { MAPS } from "./config.js";
@@ -265,6 +266,7 @@ function blitMolt(ctx, kind, styleId, x, y, w, h, L) {
 }
 
 export function drawBiomeTexture(ctx, x, y, w, h, biome, time) {
+  if(drawPaper(ctx,"panel",x,y,w,h)) return;
   w = Math.max(1, Math.round(w)); h = Math.max(1, Math.round(h));
   const style = getBiomeHUD(biome);
   noteBiome(style.id);
@@ -282,6 +284,7 @@ export function drawBiomeTexture(ctx, x, y, w, h, biome, time) {
 // Caixa de texto orgânica 9-slice do bioma (diálogos, tooltips, menus).
 // Retorna false sem arte carregada — o chamador volta ao painel procedural.
 export function drawLoreTextbox(ctx, x, y, w, h, biome) {
+  if(drawPaper(ctx,"tooltip",x,y,w,h)) return true;
   if (!art.textbox) return false;
   const id = BIOME_HUD[biome] ? biome : "colonia";
   noteBiome(id);
@@ -291,6 +294,7 @@ export function drawLoreTextbox(ctx, x, y, w, h, biome) {
 
 // Tábua-seta de madeira do bioma para banners (onda/mapa/muda).
 export function drawWoodBanner(ctx, x, y, w, h, biome) {
+  if(drawPaper(ctx,"banner",x,y,w,h)) return true;
   if (!art.kit) return false;
   const id = BIOME_HUD[biome] ? biome : "colonia";
   noteBiome(id);
@@ -345,6 +349,7 @@ export function drawTrailAnt(ctx, x, y, time) {
 
 // Desenha barra de vida como gaster da rainha com coroa fungo/seda
 export function drawGasterBar(ctx, x, y, w, h, frac, biome, low, time) {
+  if(drawPaperBar(ctx,x,y-h*.25,w,h*1.5,frac,{low})) return;
   const style = getBiomeHUD(biome);
   frac = Math.max(0, Math.min(1, Number.isFinite(frac) ? frac : 0));
   if (art.gaster && w >= 80 && w <= 160 && h >= 10) {

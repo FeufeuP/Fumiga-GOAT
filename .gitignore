@@ -64,3 +64,6 @@ installers/windows/web/
 installers/windows/dist/
 installers/windows/win-unpacked/
 installers/windows/linux-unpacked/
+
+# Python authoring tools only (Pillow); never ship the virtual environment
+.venv/

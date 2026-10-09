@@ -177,7 +177,7 @@ try {
     await s.page.waitForTimeout(400);
     await s.page.screenshot({ path: OUT + "/" + profile.id + "-memoria-replay.png" });
     assert.equal(await s.page.evaluate(() => MOD.state.G.run), null, "replay sem expedição por trás");
-    assert.equal(s.net.noite, 14, "camadas vieram do pré-carregamento");
+    assert.equal(s.net.noite, 12, "12 camadas vieram do pré-carregamento sem novo download (4 + 4 + 4)");
     await s.page.keyboard.press("Escape");
     await s.reach("G.screen === 'MEMORY' && !cs.isCutsceneActive()", profile.id + " fim do replay");
     await s.button("memBack");

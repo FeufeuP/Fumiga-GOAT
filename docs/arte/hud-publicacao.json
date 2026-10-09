@@ -1,0 +1,127 @@
+{
+  "date": "2026-10-09",
+  "lot": [
+    {
+      "id": "brasa",
+      "source": "art-source/f1-publicacao/originais/brasa.png",
+      "source_size": [
+        1024,
+        1024
+      ],
+      "source_sha256": "13bdc06b3704ff00cfb9669b0f4ed7b0c6ec28751b4f40ade9c1a2257d27a035",
+      "runtime": "game/assets/sprites/icons/ember.png",
+      "runtime_size": [
+        128,
+        128
+      ],
+      "runtime_sha256": "c016d6131ab51f7af7e60a893a6dec049d010c221581deca454f5eaab2e352ff",
+      "runtime_bytes": 18008,
+      "mode": "RGB",
+      "reference": "game/assets/ui/paper/panel.png",
+      "prompt": "FUMIGA-PAPEL-v3-PASTEL-ORGANICO",
+      "integration": "explicit user request 2026-10-09",
+      "visual_approval": "not separately claimed",
+      "backup": {
+        "drive_id": "1PyhCP8ZgR44euAZKn0vinuxcdCC1vyQT",
+        "sha256": "13bdc06b3704ff00cfb9669b0f4ed7b0c6ec28751b4f40ade9c1a2257d27a035",
+        "bytes": 1470057,
+        "parent": "1IMj_-7VQf_asmRmMoMSzKxIQ37M6DXlW",
+        "verified": true
+      }
+    },
+    {
+      "id": "botao",
+      "source": "art-source/f1-publicacao/originais/botao.png",
+      "source_size": [
+        2064,
+        512
+      ],
+      "source_sha256": "2759ca12b4a01d253dd53baaea89dcba2479da262ea920623356cad252b44c96",
+      "runtime": "game/assets/ui/paper/button.png",
+      "runtime_size": [
+        960,
+        238
+      ],
+      "runtime_sha256": "3b8d8eb4b20e854549dc7061ff4cda6500425a722603946bde331633e9f8698f",
+      "runtime_bytes": 334285,
+      "mode": "RGB",
+      "reference": "game/assets/ui/paper/panel.png",
+      "prompt": "FUMIGA-PAPEL-v3-PASTEL-ORGANICO",
+      "integration": "explicit user request 2026-10-09",
+      "visual_approval": "not separately claimed",
+      "backup": {
+        "drive_id": "1V1vt_NA1SYtXMIoAH-YfFMXWgQgMH5Hk",
+        "sha256": "2759ca12b4a01d253dd53baaea89dcba2479da262ea920623356cad252b44c96",
+        "bytes": 1999618,
+        "parent": "1IMj_-7VQf_asmRmMoMSzKxIQ37M6DXlW",
+        "verified": true
+      }
+    },
+    {
+      "id": "tooltip",
+      "source": "art-source/f1-publicacao/originais/tooltip.png",
+      "source_size": [
+        1456,
+        720
+      ],
+      "source_sha256": "cb0b703d042b3e9f2ac54d492d92abe3ad3ba1694bc70e7f503902615e2813d9",
+      "runtime": "game/assets/ui/paper/tooltip.png",
+      "runtime_size": [
+        960,
+        475
+      ],
+      "runtime_sha256": "87b040fcab7e269b01e214871231396eb47838076d11d4dd7b924327f385df4e",
+      "runtime_bytes": 600515,
+      "mode": "RGB",
+      "reference": "game/assets/ui/paper/panel.png",
+      "prompt": "FUMIGA-PAPEL-v3-PASTEL-ORGANICO",
+      "integration": "explicit user request 2026-10-09",
+      "visual_approval": "not separately claimed",
+      "backup": {
+        "drive_id": "1ovKDKVrN0NLnAOrBS6sZzgvPFT8XEk57",
+        "sha256": "cb0b703d042b3e9f2ac54d492d92abe3ad3ba1694bc70e7f503902615e2813d9",
+        "bytes": 1720465,
+        "parent": "1IMj_-7VQf_asmRmMoMSzKxIQ37M6DXlW",
+        "verified": true
+      }
+    },
+    {
+      "id": "pausa",
+      "source": "art-source/f1-publicacao/originais/pausa.png",
+      "source_size": [
+        928,
+        1152
+      ],
+      "source_sha256": "e29ba76bc6d1d6ad37f18cd3e8892bfdd162636ee53a1fe65fade2f082bb118b",
+      "runtime": "game/assets/ui/paper/pause.png",
+      "runtime_size": [
+        928,
+        1152
+      ],
+      "runtime_sha256": "fd73dc83b5160766a7ebe4ae1859e41b1b5eba1d569338ac0781c22ba243c299",
+      "runtime_bytes": 1499784,
+      "mode": "RGB",
+      "reference": "game/assets/ui/paper/panel.png",
+      "prompt": "FUMIGA-PAPEL-v3-PASTEL-ORGANICO",
+      "integration": "explicit user request 2026-10-09",
+      "visual_approval": "not separately claimed",
+      "backup": {
+        "drive_id": "1LCxyCfeDGuGDt-M4kCGR3RD_tcB5wqGK",
+        "sha256": "e29ba76bc6d1d6ad37f18cd3e8892bfdd162636ee53a1fe65fade2f082bb118b",
+        "bytes": 1799646,
+        "parent": "1IMj_-7VQf_asmRmMoMSzKxIQ37M6DXlW",
+        "verified": true
+      }
+    }
+  ],
+  "scope": "one recreated flame without rings, three new HUD paintings; no approval of lost prior icons inferred",
+  "archive": {
+    "drive_id": "18TJQjBVRqwtEAw_nhCaGk1oj7NEn-cB6",
+    "name": "FUMIGA-brasa-novos-HUDs-integrados-2026-10-09.zip",
+    "bytes": 59882132,
+    "sha256": "df51212ac80fd7871655e43728301125cd938d77b2dbb02ef404d6c30522b058",
+    "parent": "1IMj_-7VQf_asmRmMoMSzKxIQ37M6DXlW",
+    "verified": true,
+    "contains": "four high-resolution originals, all production HUD PNGs and ember, gallery, screenshots, manifests, checksums; archive snapshot precedes final publication status"
+  }
+}

@@ -1,3 +1,4 @@
+import { drawPaper } from "./paper_hud.js";
 import { fruitSight } from "./fruit_effects.js";
 // DIÁRIO DE PLAYTEST: ganchos de expedição, draft, fim de run e a aba TESTE
 // das OPÇÕES (exportar/apagar). Módulo local, sem PII; ver playtest.js.
@@ -55,7 +56,7 @@ import {
   isLoadingFadingOut, dismissLoadingScreen, handleLoadingInput,
   shouldUseLoadingScreen, runWithLoadingScreen,
 } from "./loading_screen.js";
-import { uiBegin, uiButtons, button, iconButton, panel, bar, pointInRect, dialogBox, isTouchUI, touchPad } from "./ui.js";
+import { uiBegin, uiButtons, button, iconButton, panel, bar, pointInRect, dialogBox, isTouchUI, touchPad, tooltip } from "./ui.js";
 import { startTutorial, stopTutorial, updateTutorial, drawTutorial, tutEvent, TUT, tutorialCardRect } from "./tutorial.js";
 import {
   nest, nestEnter, nestExit, nestUpdate, nestDraw, nestClick, nestHover,
@@ -1534,13 +1535,13 @@ function optVolRow(y, TX, RR, oy, V, FS, id, label, color) {
   }
   // barra (toque/arraste ajustam: updateOptions traduz o gesto em volume)
   const tx0 = TX + bw + 10, tw = (RR - bw - 10) - tx0, th = 14, ty = by + oy + (bh - th) / 2;
-  ctx.fillStyle = "rgba(10,8,16,0.8)";
+  ctx.fillStyle = "#dfcba7";
   ctx.fillRect(tx0, ty, tw, th);
-  ctx.strokeStyle = "#4a3a6e"; ctx.lineWidth = 1;
+  ctx.strokeStyle = "#a18150"; ctx.lineWidth = 1;
   ctx.strokeRect(tx0 + 0.5, ty + 0.5, tw - 1, th - 1);
   const grad = ctx.createLinearGradient(tx0, ty, tx0, ty + th);
-  grad.addColorStop(0, color);
-  grad.addColorStop(1, "#1a1430");
+  grad.addColorStop(0, "#e4ba70");
+  grad.addColorStop(1, "#aa7438");
   ctx.fillStyle = grad;
   ctx.fillRect(tx0 + 2, ty + 2, (tw - 4) * v, th - 4);
   const hx = tx0 + 2 + (tw - 4) * v;
@@ -1946,7 +1947,7 @@ function drawHUD() {
 
   // --------------------------------------- painel orgânico da colônia (quitina/cera por bioma) ----
   const pw = 320;
-  const ph = run.modeDef ? 118 + (fontScale() > 1 ? 14 : 0) : 100;
+  const ph = run.modeDef ? 140 + (fontScale() > 1 ? 14 : 0) : 122;
   // fundo com textura biome
   drawBiomeTexture(ctx, 10, 8, pw, ph, biomeId, G.time);
   panel(ctx, 10, 8, pw, ph, { border: bh.border, accentLine: bh.accent, fill: "rgba(0,0,0,0)" });
@@ -1959,7 +1960,7 @@ function drawHUD() {
   // botão "+"/"-" orgânico — no toque a ÁREA sensível cresce (o desenho não)
   const moreR = touchPad(304, 12, 18, 16);
   const moreHot = pointInRect(mouse.x, mouse.y, moreR.x, moreR.y, moreR.w, moreR.h);
-  ctx.fillStyle = moreHot ? "rgba(58,48,84,0.9)" : "rgba(36,28,56,0.85)";
+  ctx.fillStyle = moreHot ? "#d8c69f" : "#eadbb9";
   ctx.fillRect(304, 12, 18, 16);
   ctx.strokeStyle = bh.border; ctx.lineWidth = 1;
   ctx.strokeRect(304.5, 12.5, 17, 15);
@@ -1971,7 +1972,7 @@ function drawHUD() {
   // do bioma em escala 1 se tocavam quando o texto crescia com FONTE GRANDE).
   const hudFS = fontScale();
   const rowH = 18 * hudFS;
-  let yy = 12;
+  let yy = 23;
   // O contador de irmãs (à direita) e o nome do bioma (à esquerda) dividem a
   // MESMA faixa: a largura do bioma sai do que o contador não usa. Sem isso,
   // com FONTE GRANDE o "VASO DA PLANÍCIE" encostava no "IRMÃS 5/16".
@@ -1980,41 +1981,41 @@ function drawHUD() {
   const infAnts = !!(tp && tp.infAnts);
   const popTxt = "IRMÃS " + popUsed() + "/" + (infAnts ? "∞" : popCapTotal());
   const popW = Math.min(118, textWidth(popTxt, { scale: 1 }));
-  const biomeW = Math.min(168, Math.max(96, 278 - popW - 10));
+  const biomeW = Math.min(168, Math.max(96, 258 - popW - 10));
   if (run.modeDef) {
-    drawText(ctx, run.modeDef.name + (era ? " • ERA " + era : ""), 20, yy, { color: run.modeDef.color, font: "small", maxWidth: 278 });
+    drawText(ctx, run.modeDef.name + (era ? " • ERA " + era : ""), 36, yy, { color: run.modeDef.color, font: "small", maxWidth: 258 });
     yy += rowH;
     // bioma à esquerda, irmãs à direita: cada um com a sua largura reservada
-    drawText(ctx, bh.loreName, 20, yy, { color: bh.border, scale: 1, maxWidth: biomeW });
+    drawText(ctx, bh.loreName, 36, yy, { color: bh.border, scale: 1, maxWidth: biomeW });
     yy += 22 * hudFS;
   } else {
-    drawText(ctx, bh.loreName, 20, yy, { color: bh.border, scale: 1, maxWidth: biomeW });
+    drawText(ctx, bh.loreName, 36, yy, { color: bh.border, scale: 1, maxWidth: biomeW });
     yy += rowH;
   }
   const hpFrac = q && q.maxHp ? clamp(q.hp / q.maxHp, 0, 1) : 0;
   const low = hpFrac < 0.30;
   // Label lore: SILENCIOSA (Rainha Silenciosa)
-  drawText(ctx, low ? "FERIDA!" : "SILENCIOSA", 20, yy, { color: low ? "#ff4d5a" : "#ffd479", font: "small", scale: 1, maxWidth: 88 });
+  drawText(ctx, low ? "FERIDA!" : "SILENCIOSA", 36, yy, { color: low ? "#ff4d5a" : "#ffd479", font: "small", scale: 1, maxWidth: 88 });
   // gaster bar orgânico com coroa fungo/seda
-  drawGasterBar(ctx, 116, yy + 1, 102, 12, hpFrac, biomeId, low, G.time);
+  drawGasterBar(ctx, 130, yy + 1, 88, 12, hpFrac, biomeId, low, G.time);
   if (q && q.maxHp) drawText(ctx, Math.ceil(q.hp) + "/" + q.maxHp, 298, yy, { color: low ? "#ff8a94" : PAL.textDim, align: "right", scale: 1, maxWidth: 74 });
   yy += 18;
   // XP como ANÉIS DA ÁRVORE
-  drawText(ctx, "ANEL " + run.level, 20, yy, { color: "#ffd479", scale: 1, maxWidth: 53 });
+  drawText(ctx, "ANEL " + run.level, 36, yy, { color: "#ffd479", scale: 1, maxWidth: 53 });
   const xpFrac = run.xpNext > 0 ? clamp(run.xp / run.xpNext, 0, 1) : 0;
-  drawTreeRings(ctx, 84, yy+6, xpFrac, biomeId);
+  drawTreeRings(ctx, 100, yy+6, xpFrac, biomeId);
   // comida por bioma (a essência desce conforme a fonte, senão as duas faixas
   // ficavam a 2px uma da outra com FONTE GRANDE)
   const essRow = Math.ceil(19 * hudFS);
-  drawFoodIcon(ctx, biomeId, 104, yy-1);
-  drawText(ctx, bh.foodLabel + " " + (infMoney ? "∞" : fmt(run.food)), 124, yy, { color: bh.foodColor, scale: 1, maxWidth: 190 });
+  drawFoodIcon(ctx, biomeId, 120, yy-1);
+  drawText(ctx, bh.foodLabel + " " + (infMoney ? "∞" : fmt(run.food)), 140, yy, { color: bh.foodColor, scale: 1, maxWidth: 162 });
   // essência cristal geométrico
-  drawEssenceCrystal(ctx, 26, yy + essRow + 4, 14, bh.essenceColor, G.time);
-  drawText(ctx, bh.essenceLabel + " " + (infMoney ? "∞" : fmt(run.essencePool)), 38, yy + essRow, { color: bh.essenceColor, scale: 1, maxWidth: 272 });
+  drawEssenceCrystal(ctx, 42, yy + essRow + 4, 14, bh.essenceColor, G.time);
+  drawText(ctx, bh.essenceLabel + " " + (infMoney ? "∞" : fmt(run.essencePool)), 54, yy + essRow, { color: bh.essenceColor, scale: 1, maxWidth: 248 });
   {
     // na linha do nome do bioma (nunca em cima do nome do modo)
     const used = popUsed(), cap = popCapTotal();
-    const popY = run.modeDef ? 12 + rowH : 12;
+    const popY = run.modeDef ? 23 + rowH : 23;
     drawText(ctx, popTxt, 298, popY, { color: (!infAnts && used >= cap) ? "#ff4d5a" : PAL.text, align: "right", scale: 1, maxWidth: popW });
   }
 
@@ -2051,43 +2052,42 @@ function drawHUD() {
     // Com FONTE GRANDE cada linha de texto cresce 30%: o painel também cresce
     // e o passo entre as linhas sai da tinta real (antes as duas primeiras
     // linhas encostavam nas barras de necessidade).
-    const eph = 104 + (eFS > 1 ? 20 : (isTouchUI() ? 10 : 0));
+    const eph = 124 + (eFS > 1 ? 20 : (isTouchUI() ? 10 : 0));
     const ey = mutY + (mutLog.length > 0 ? 26 : 6);
     drawBiomeTexture(ctx, 10, ey, pw, eph, biomeId, G.time*0.3);
     panel(ctx, 10, ey, pw, eph, { border: bh.border, fill: "rgba(0,0,0,0)" });
     const n = colony.needs, hc = colony.headcount;
     const eStep = Math.ceil(16 * eFS);
-    drawText(ctx, "COLÔNIA PENSA EM FEROMÔNIO", 20, ey + 8, { color: bh.border, scale: 0.85, maxWidth: 300 });
-    drawText(ctx, "ABATES " + run.kills + " • " + bh.waveLabel, 20, ey + 8 + eStep,
-      { color: PAL.textDim, scale: 0.8, maxWidth: 300 });
-    const cy = ey + 8 + 2 * eStep;
-    let bx = 20;
+    drawText(ctx, "COLÔNIA PENSA EM FEROMÔNIO", 36, ey + 16, { color: bh.border, scale: 0.85, maxWidth: 270 });
+    drawText(ctx, "ABATES " + run.kills + " • " + bh.waveLabel, 36, ey + 16 + eStep,
+      { color: PAL.textDim, scale: 0.8, maxWidth: 270 });
+    const cy = ey + 16 + 2 * eStep;
+    let bx = 36;
     const needBar = (label, v, col) => {
       // Largura e passo saem do TEXTO medido: o passo fixo de 74px fazia o
       // "CURA" encostar no "GUERRA" com FONTE GRANDE (0px de folga).
       const lw = Math.max(56, textWidth(label, { scale: 0.8 }));
       drawText(ctx, label, bx, cy, { color: col, scale: 0.8, maxWidth: lw });
       // Reservas de seiva: separadas dos rótulos mesmo com fonte grande.
-      ctx.fillStyle = "#241c38"; ctx.fillRect(bx, cy + 18, lw, 4);
+      ctx.fillStyle = "#c9b28b"; ctx.fillRect(bx, cy + 18, lw, 4);
       ctx.fillStyle = col; ctx.fillRect(bx, cy + 18, lw * clamp(v, 0, 1), 4);
       bx += lw + 18;
     };
-    needBar("FOME", n.food, "#ffd479");
-    needBar("GUERRA", n.defense, "#ff4d5a");
-    needBar("CURA", n.medical, "#7fd6a0");
-    drawText(ctx, "COLETA " + hc.gather + " • EXPLORAÇÃO " + hc.explore, 20, cy + 28, { color: bh.border, scale: 0.8, maxWidth: 300 });
+    needBar("FOME", n.food, "#b77728");
+    needBar("GUERRA", n.defense, "#b34b38");
+    needBar("CURA", n.medical, "#647d43");
+    drawText(ctx, "COLETA " + hc.gather + " • EXPLORAÇÃO " + hc.explore, 36, cy + 28, { color: bh.border, scale: 0.8, maxWidth: 270 });
     if (isTouchUI()) {
       if (button(ctx, { x:20, y:cy+(eFS > 1 ? 52 : 46), w:280, h:22, compact:true, label:keys.KeyH ? "OLFATO: LIGADO" : "OLFATO: DESLIGADO", id:"touchScent", scale:0.7, accent:bh.accent })) keys.KeyH = !keys.KeyH;
     } else {
-      drawText(ctx, "[H] SEGURE PARA VER FEROMÔNIOS", 20, cy + 28 + Math.ceil(18 * 0.8 * fontScale()), { color: PAL.textDim, scale: 0.75, maxWidth: 300 });
+      drawText(ctx, "[H] SEGURE PARA VER FEROMÔNIOS", 36, cy + 28 + Math.ceil(18 * 0.8 * fontScale()), { color: PAL.textDim, scale: 0.75, maxWidth: 270 });
     }
     leftStackBottom = ey + eph + 6;
   }
 
   // ------------------------------------ status da invasão como TRILHA FEROMÔNIO (topo-centro) ----
   const cw = 300, cx0 = 338;
-  drawBiomeTexture(ctx, cx0, 8, cw, 62, biomeId, G.time*0.2);
-  panel(ctx, cx0, 8, cw, 62, { border: bh.minimapBorder, fill: "rgba(0,0,0,0)" });
+  drawPaper(ctx,"banner",cx0,8,cw,62);
   if (run.status === "running") {
     if (director.phase === "calm") {
       const rest = calmFrac();
@@ -2360,11 +2360,7 @@ function drawHUD() {
   hudFloorY = Math.max(leftStackBottom, bossBottom);
 
   if (mutTip && !shopTooltip) {
-    const lines = wrapText(mutTip.name + " — " + mutTip.desc, 220, {});
-    const th = 22 + lines.length * 15;
-    drawBiomeTexture(ctx, 12, mutY + 24, 236, th, biomeId, G.time*0.4);
-    panel(ctx, 12, mutY + 24, 236, th, { border: RARITY[mutTip.rar].color, fill: "rgba(0,0,0,0)" });
-    lines.forEach((L, li) => drawText(ctx, L, 20, mutY + 30 + li * 15, { color: PAL.text }));
+    tooltip(ctx,12,mutY+24,[mutTip.desc],{title:mutTip.name,w:280});
   }
 
   const sc = selectedCount();
@@ -2423,10 +2419,9 @@ function drawMinimap() {
   const mw = MINI.w, mh = MINI.h;
   const mx = VIEW_W - mw - 10, my = 10;
   uiButtons().push({ x: mx - 3, y: my - 3, w: mw + 6, h: mh + 6, id: "minimap" });
-  drawBiomeTexture(ctx, mx - 5, my - 5, mw + 10, mh + 10, biomeId, G.time*0.2);
-  panel(ctx, mx - 5, my - 5, mw + 10, mh + 10, { fill: "rgba(0,0,0,0)", border: bh.minimapBorder, r: 3 });
+  drawPaper(ctx,"minimap",mx-10,my-10,mw+20,mh+20);
   if (world.mini) {
-    ctx.save(); ctx.globalAlpha = 0.35; ctx.drawImage(world.mini, mx, my); ctx.restore();
+    ctx.save(); ctx.globalAlpha = 1; ctx.drawImage(world.mini, mx, my); ctx.restore();
   }
   drawScentMinimap(ctx, mx, my, mw, mh, world.mini, WORLD_W, WORLD_H, foodTrailAt, dangerAt, G.time);
   ctx.strokeStyle = bh.minimapBorder; ctx.lineWidth = 1.2;
@@ -2484,7 +2479,7 @@ function drawBanner(b) {
   if (!drawWoodBanner(ctx, VIEW_W/2 - bw/2, y - 14, bw, 84, hudBiome())) {
     dialogBox(ctx, VIEW_W/2 - bw/2, y - 14, bw, 84, { border: "#ffd479", accent: "#ffd479" });
   }
-  drawText(ctx, b.title, VIEW_W / 2, y, { font: "big", scale: 2, color: "#ffd479", align: "center", maxWidth: bw-40 });
+  drawText(ctx, b.title, VIEW_W / 2, y, { font: "big", scale: 2, color: "#ffd479", align: "center", maxWidth: bw-100 });
   if (b.sub) {
     const lines = wrapText(b.sub, 560, {});
     lines.forEach((L, li) => drawText(ctx, L, VIEW_W / 2, y + 48 + li * 18, { color: PAL.text, align: "center" }));
@@ -2521,20 +2516,11 @@ function drawDraft(draft) {
     ctx.fillStyle = "rgba(0,0,0,0.5)";
     ctx.fillRect(x + 4, y + 6 - lift, cw, ch);
 
-    panel(ctx, x, y - lift, cw, ch, { border: rare.color, accentLine: rare.color, glow: hot ? rare.color : null });
-    ctx.fillStyle = rare.color;
-    ctx.fillRect(x, y - lift, cw, 5);
-    if (hot) {
-      ctx.save();
-      ctx.globalCompositeOperation = "lighter";
-      ctx.globalAlpha = 0.2;
-      ctx.fillRect(x, y - lift, cw, 24);
-      ctx.restore();
-    }
+    panel(ctx, x, y - lift, cw, ch, { paperKind:"card", hot, pressed:hot && mouse.down });
 
     const icon = IMG["i_" + mm.icon];
     if (icon) {
-      ctx.fillStyle = "rgba(0,0,0,0.4)";
+      ctx.fillStyle = "#ddc6a1";
       ctx.fillRect(x + cw / 2 - 36, y + 26 - lift, 72, 72);
       ctx.strokeStyle = rare.color; ctx.lineWidth = 2;
       ctx.strokeRect(x + cw / 2 - 36, y + 26 - lift, 72, 72);
@@ -2551,11 +2537,11 @@ function drawDraft(draft) {
     drawText(ctx, rare.name, x + cw / 2, y + 112 - lift, { color: rare.color, align: "center", maxWidth: cw - 16 });
     // passo pelo tamanho real da tinta: com FONTE GRANDE o nome (big) cobria a raridade
     drawText(ctx, mm.name, x + cw / 2, y + 112 - lift + Math.ceil(20 * fontScale()),
-      { font: "big", scale: 1, color: "#efe9ff", align: "center", maxWidth: cw - 12 });
-    const lines = wrapText(mm.desc, cw - 30, {});
+      { font: "big", scale: 1, color: "#efe9ff", align: "center", maxWidth: cw - 58 });
+    const lines = wrapText(mm.desc, cw - 64, {});
     const descY = y + 166 + (fontScale() > 1 ? 5 : 0) - lift;
-    lines.slice(0, 4).forEach((L, li) => drawText(ctx, L, x + cw / 2, descY + li * 19 * fontScale(), { color: PAL.text, align: "center", maxWidth: cw - 18 }));
-    ctx.fillStyle = hot ? rare.color : "#2a2340";
+    lines.slice(0, 4).forEach((L, li) => drawText(ctx, L, x + cw / 2, descY + li * 19 * fontScale(), { color: PAL.text, align: "center", maxWidth: cw - 58 }));
+    ctx.fillStyle = hot ? "#8d9c58" : "#d6bf95";
     ctx.fillRect(x + cw/2 - 18, y + ch - 28 - lift, 36, 20);
     ctx.strokeStyle = rare.color; ctx.lineWidth = 1; ctx.globalAlpha = 0.6;
     ctx.strokeRect(x + cw/2 - 18 + 0.5, y + ch - 28 - lift + 0.5, 35, 19);
@@ -2637,7 +2623,7 @@ function drawPause() {
   const panelH = Math.min(mobile ? 500 : 440, VIEW_H - py - 16);
 
   // painel esquerda - botões
-  dialogBox(ctx, startX, py, leftW, panelH, { border: "#8f6fd6", accent: "#37e6c8" });
+  dialogBox(ctx, startX, py, leftW, panelH, { paperKind:"pause", border: "#8f6fd6", accent: "#37e6c8" });
   drawText(ctx, "PAUSA", startX + leftW/2, py + 18, { font: "big", scale: 2, color: "#ffd479", align: "center" });
 
   const run = G.run;
@@ -2700,7 +2686,7 @@ function drawPause() {
 
   // painel direita - mapa + stats
   const rx = startX + leftW + 24;
-  dialogBox(ctx, rx, py, rightW, panelH, { border: "#4a3a6e", accent: "#ffd479" });
+  dialogBox(ctx, rx, py, rightW, panelH, { paperKind:"pause", border: "#4a3a6e", accent: "#ffd479" });
   drawText(ctx, "MAPA E STATUS", rx + rightW/2, py + 18, { font: "big", color: "#ffd479", align: "center" });
 
   // mini-mapa maior na pausa - FASE 5 FINAL: interativo clique move câmera + hover + stats expandidos
@@ -2750,7 +2736,7 @@ function drawPause() {
   // opcionais (invencível/dashes/rali) o bloco passava da borda da caixa.
   let sy2 = miniY + miniH + 20;
   if (run) {
-    const statW = rightW - 32;
+    const statW = rightW - 60;
     const pFS = fontScale();
     const lines = [];
     lines.push(["MODO: " + (run.modeDef ? run.modeDef.name : "CAMPANHA"), run.modeDef ? run.modeDef.color : "#37e6c8", 1]);
@@ -2770,7 +2756,7 @@ function drawPause() {
     const footTop = py + panelH - 40;
     const pitch = Math.max(12, Math.min(18 * pFS, (footTop - sy2) / Math.max(1, lines.length)));
     lines.forEach(([txt, col, sc], i) => {
-      drawText(ctx, txt, rx + 16, sy2 + i * pitch, { color: col, scale: sc, maxWidth: statW });
+      drawText(ctx, txt, rx + 30, sy2 + i * pitch, { color: col, scale: sc, maxWidth: statW });
     });
   }
 

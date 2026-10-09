@@ -4,10 +4,11 @@
 > **por inteiro**, do começo ao fim, e usar [`GUIA.md`](GUIA.md) para responder às perguntas
 > de encaminhamento e localizar os arquivos/seções complementares. Este resumo não substitui as regras.
 
-> **Direção artística vigente — 2026-10-08:** estilo **06 — papel recortado detalhado**, confirmado pelo usuário; sem aparência vazia/minimalista.
-> Para novas artes, usar [`FUMIGA-PAPEL-v2-DETALHADO`](docs/arte/ESTILO_OFICIAL.md). Referências a pixel art/Dead Cells
+> **Direção artística vigente — 2026-10-08:** estilo **06 — papel recortado detalhado**, confirmado pelo usuário; sem aparência vazia/minimalista. Paleta atual pastel terrosa; HUD com madeira, folhas e vinhas, sem base roxa/azul-escura.
+> Para novas artes, usar [`FUMIGA-PAPEL-v3-PASTEL-ORGANICO`](docs/arte/ESTILO_OFICIAL.md). Referências a pixel art/Dead Cells
 > abaixo descrevem o histórico e as artes ainda instaladas, não a técnica obrigatória das próximas peças.
-> Migração por lotes após piloto aprovado; não substituir assets automaticamente.
+> Migração por lotes, sem substituir assets automaticamente. 2026-10-09: HUDs e brasa parcialmente integrados por pedido explícito; ver docs/arte/HUD_PUBLICACAO.md. Não é o rework completo.
+> HUD: usar a própria arte mostrada; não reinterpretar em desenhos simplificados. Ver `docs/arte/F1_HUD_VIVO.md`.
 
 Leia isto **antes** de mexer no código. É o resumo operacional; as regras obrigatórias
 continuam em [`REGRAS_DE_TRABALHO.md`](REGRAS_DE_TRABALHO.md) (fluxo: ler regras integrais → ler o MEGA → responder GUIA → pesquisar →

@@ -6,7 +6,7 @@
 //   1. Árvore da Evolução — pesos de cor por pixel + 1º assado (tree_art.js)
 //   2. frutos — maçãs da árvore (cinza nos bloqueados) e do santuário, flores (meta.js)
 //   3. os 7 santuários — download (~5,7 MB) + cor do jardim (meta.js)
-//   4. camadas pintadas da NOITE BRANCA (10 PNGs 320×180, ~0,6 MB), por último (cutscenes.js)
+//   4. camadas pintadas da NOITE BRANCA (12 PNGs 320×180, ~0,6 MB), por último (cutscenes.js)
 //
 // Como o GDevelop (baixa as cenas seguintes enquanto o jogador está no menu) e
 // o Terraria/tModLoader (texturas assíncronas, porque pedir na hora "derruba 2

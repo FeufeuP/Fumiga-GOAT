@@ -1,17 +1,13 @@
 # FUMIGA — estilo oficial 06: papel recortado detalhado
 
-**Decisão vigente — 2026-10-08:** “Esqueça este estilo ambar com roxo ou azul escuro, quero tons pastéis, tons da paleta do marrom que remeta a terra, laranja que lembre ambar, verde que lembre folhas e vinhas. Também dê vida ao HUD, vinhas, folhas, madeira...”
+**Decisão vigente — 2026-10-08:** “Certo, decidi que o estilo oficial será o 6 papel recortado, porem quero que seja tudo bem detalhado para não passar um ar de vazio.”
 
-A técnica 06 de papel recortado detalhado permanece. A paleta anterior foi rejeitada; a primeira aplicação é a revisão de F1, sem recolorir automaticamente o restante do jogo.
+**Prompt-mestre:** `FUMIGA-PAPEL-v2-DETALHADO`\
+**Estado:** técnica confirmada e exigência de riqueza visual aprovada; execução por piloto/lotes ainda pendente. Não houve migração do jogo nesta atualização.
 
-**Prompt-mestre:** `FUMIGA-PAPEL-v3-PASTEL-ORGANICO`\
-**Estado atual — 2026-10-09:** migração parcial de HUDs opacos e brasa integrada por pedido explícito. Três novas molduras e uma chama em [HUD_PUBLICACAO.md](HUD_PUBLICACAO.md); não equivale ao rework completo nem ao aceite visual de todas as peças.
-
-**Para novos chats:** o [guia de continuidade no MEGA](../../MEGA_ARQUIVO.md#continuidade-artistica) reúne neste mesmo arquivo de memória as decisões, receitas de ficha, referências/recuperação, execução por camadas e checklist. O prompt v3 abaixo incorpora a mudança explícita de paleta e HUD orgânico; o v2 está preservado no histórico.
+**Para novos chats:** o [guia de continuidade no MEGA](../../MEGA_ARQUIVO.md#continuidade-artistica) reúne neste mesmo arquivo de memória as decisões, receitas de ficha, referências/recuperação, execução por camadas e checklist. O prompt abaixo permanece inalterado.
 
 ## 1. Direção e precedência
-
-**Fidelidade obrigatória (2026-10-08):** o HUD deve usar a arte mostrada ao usuário, nunca substitutos simplificados. Ver [fonte e revisão](F1_HUD_VIVO.md). Sem redesenho, recoloração ou nova geração não solicitados. Ajustar layout com aprovação quando necessário, não deformar a arte para ocultar incompatibilidades.
 
 - **Papel recortado detalhado, não minimalista:** recortes trabalhados, camadas rasas, textura tátil, variações de material e acabamento rico, conservando silhuetas legíveis.
 - Vale para **todo o conjunto visual**: personagens, fauna, vegetação, flores, recursos, cenários, construções, ícones, UI, árvore, menus, loading e cutscenes. O nível/tipo de detalhe se adapta ao tamanho e à função; um ícone pequeno não recebe a densidade de uma tela de carregamento.
@@ -23,19 +19,19 @@ A técnica 06 de papel recortado detalhado permanece. A paleta anterior foi reje
 
 Usar integralmente o bloco seguinte em toda nova geração/edição, acrescentando a ficha da peça. Passar somente referências binárias realmente disponíveis. O refinamento foi autorizado pela decisão acima; mudanças futuras exigem nova aprovação e histórico preservado. **A versão do prompt não é o número da rodada de imagens**: a cena 06 da rodada v2 e a base 06 foram geradas com `FUMIGA-PAPEL-v1`; os outros estilos usaram instruções específicas de comparação.
 
-<!-- INICIO PROMPT FUMIGA-PAPEL-v3-PASTEL-ORGANICO -->
+<!-- INICIO PROMPT FUMIGA-PAPEL-v2-DETALHADO -->
 Crie uma única peça visual original para FUMIGA — Colônia Eterna no estilo oficial 06 de papel recortado artesanal, agora com acabamento rico e altamente detalhado, conforme a decisão explícita do usuário. A direção não é minimalista nem deve transmitir vazio ou aspecto de protótipo. Construa formas com camadas rasas de papel colorido, bordas de tesoura ligeiramente irregulares, fibras sutis e superfícies predominantemente foscas. O volume vem da sobreposição e de sombras de contato curtas e suaves; não de pixels aparentes, plástico, argila, metal realista ou modelagem low-poly. Use silhuetas reconhecíveis em tamanho pequeno, com recortes internos trabalhados e detalhes próprios da peça, com separação clara de personagem, recurso, ameaça e fundo. Evite contornos pretos grossos de cartoon: a borda cortada e o contraste entre papéis definem as formas.
 
 Distribua o detalhamento em três níveis: grandes formas que organizam a leitura, recortes médios que definem o assunto e detalhes finos de material. Mostre sobreposições elaboradas, fibras, variações sutis de pigmento e espessura, bordas artesanais e pequenos relevos coerentes, sem transformar papel em pintura lisa, plástico ou fotorrealismo. Evite áreas extensas uniformes sem tratamento, mas não preencha tudo com ruído, confetes ou peças repetidas. Em peças botânicas autorizadas, trabalhar nervuras, pétalas, filamentos e recortes delicados; em insetos, segmentos, placas, articulações e acessórios compatíveis com a anatomia; em UI, molduras trabalhadas com áreas limpas para texto e ícones. Aplicar apenas os detalhes pertinentes ao assunto solicitado, sem adicionar objetos de outras categorias a um sprite isolado.
 
 Em uma composição final de cenário, buscar abundância orgânica e sensação de lugar vivo por agrupamentos variados, sobreposições e transições cuidadas entre zonas. Concentrar o detalhe mais denso nas bordas, pontos de interesse e áreas não transitáveis; manter caminhos, personagens, recursos, ameaças e telegráficos destacados. Áreas de combate podem ter material rico de baixo contraste, sem virar superfícies vazias nem competir com a ação. A riqueza deve resultar da montagem de terreno, decoração, construções e efeitos em camadas independentes aprovadas, nunca da fusão desses elementos numa base de terreno. Para bases limpas, detalhar exclusivamente o material, as transições de cor e o relevo suave, sem incluir vegetação individual, raízes, pedras ou construções. Base limpa não significa cenário final vazio. Não gerar camadas ou assuntos além dos autorizados na ficha.
 
-Mantenha a identidade biológica e mítica do FUMIGA com a nova paleta pastel terrosa: marrons suaves de terra e madeira, papel creme e areia, laranja suave que lembre âmbar, verdes de folhas e vinhas como sálvia, oliva clara e musgo suave. Abandone a combinação anterior de âmbar com roxo ou azul-escuro: não usar esses tons como base, fundo, sombra ou acento dominante. Use sombras curtas castanhas e quentes; reserve marrom mais escuro a texto, separação e pequenos contatos necessários à leitura, sem grandes painéis escuros. Pastel não significa falta de contraste. A Névoa permanece branco-osso em camadas leves de papel, sem esconder ameaças. Quando a ficha autorizar HUD, dar vida às bordas com vinhas, folhas reconhecíveis e madeira traduzida em recortes de papel: agrupamentos orgânicos variados, veios e nervuras de escala média, não apenas fios decorativos minúsculos. Preservar áreas de texto e toque; separar ornamentos não extensíveis das faixas de nove fatias. Riqueza orgânica não autoriza animações novas automaticamente. Luz suave vindo do alto à esquerda. Preserve a anatomia animal: formigas com seis patas ligadas ao tórax, duas antenas e corpo segmentado; ferramentas e acessórios são proporcionais ao inseto. A Rainha Silenciosa tem gaster âmbar e diadema orgânico de fungo e seda, nunca coroa metálica humana. Proíba bipedia humana, rosto ou mãos humanos e roupas humanoides.
+Mantenha a identidade biológica e mítica do FUMIGA: sombras violeta-escuras, memória em âmbar-dourado, vegetação oliva e verde-azulada; adapte os acentos ao bioma sem mudar a técnica. A Névoa é branco-osso com sombras lilases, expressa por camadas leves de papel, sem esconder ameaças. Luz suave vindo do alto à esquerda. Preserve a anatomia animal: formigas com seis patas ligadas ao tórax, duas antenas e corpo segmentado; ferramentas e acessórios são proporcionais ao inseto. A Rainha Silenciosa tem gaster âmbar e diadema orgânico de fungo e seda, nunca coroa metálica humana. Proíba bipedia humana, rosto ou mãos humanos e roupas humanoides.
 
 Para personagens, objetos, terrenos, construções, santuários e flores, use vista ortográfica estritamente de cima, sem horizonte e sem câmera isométrica. Somente ilustrações de menus, carregamento, árvore de habilidades e maçãs podem usar outro enquadramento, explicitado na ficha da peça. Mantenha escala relativa, margem segura e âncora consistentes entre estados da mesma peça.
 
 Produza arte em alta resolução, com bordas legíveis e sem texto, logotipo, marca-d'água ou interface embutida. Sprite ou camada isolada: fundo transparente real e nenhuma cena ao redor; nunca pinte xadrez para simular transparência. Mapa-base: terreno completo e limpo, sem flores, árvores, arbustos, pedras, buracos, rachaduras ou construções; esses elementos serão peças separadas. Ilustração: composição única conforme a ficha, sem grade ou colagem de alternativas. A ficha técnica define o formato, dimensões, estado e partes a entregar; não invente novos personagens, mecânicas ou mudanças de lore.
-<!-- FIM PROMPT FUMIGA-PAPEL-v3-PASTEL-ORGANICO -->
+<!-- FIM PROMPT FUMIGA-PAPEL-v2-DETALHADO -->
 
 ### Ficha obrigatória por peça
 
@@ -80,18 +76,18 @@ Usar contratos do inventário/consumidor atual; não inventar dimensões ou quad
 - [ ] Anatomia, câmera, luz, escala e lore coerentes; custos/memória avaliados com o jogo em movimento.
 - [ ] Aprovação visual antes de migrar o lote; preservar originais no Drive e conferir bytes/hash.
 
-A próxima validação é o aceite visual do lote integrado de HUD F1 em pastel terroso, madeira, folhas e vinhas. F0 foi adiado por pedido explícito. Isso **não é autorização para converter o jogo inteiro de uma vez**. O restante do piloto de Rainha, Cortadeira, larva, cristal, alfa e escalas permanece no plano F0b.
+A próxima validação deve aplicar o acabamento detalhado à Planície, por passadas separadas, e mostrar sua composição. Isso **não é autorização para converter o jogo inteiro de uma vez**. O restante do piloto de Rainha, Cortadeira, larva, cristal, alfa e escalas permanece no plano F0b.
 
 ## 5. Referências e recuperação
 
 - [Pasta estilos Visuais no Drive](https://drive.google.com/drive/folders/1KCPo0hWZGmM_jeRsN0ec59lR8-IL4_sj).
-- [Cena 06 da rodada v2](https://drive.google.com/file/d/1GdC_qq28br_xO3bKlCXeLTtyJ6wQ3QR6/view): referência histórica de técnica, não da paleta vigente; não estabelece sozinha o novo nível de detalhe. SHA-256 `1009f4dfd9ff945d5bd689dcafe40c5032d66239bbda1810341b9965d147b52e`.
+- [Cena 06 da rodada v2](https://drive.google.com/file/d/1GdC_qq28br_xO3bKlCXeLTtyJ6wQ3QR6/view): referência de técnica e paleta; não estabelece sozinha o novo nível de detalhe. SHA-256 `1009f4dfd9ff945d5bd689dcafe40c5032d66239bbda1810341b9965d147b52e`.
 - [Base limpa 06](https://drive.google.com/file/d/1m-yVSdgpEr19Uc_00JrnfK2svgDh7pS0/view): estudo de terreno, **não padrão de preenchimento final**. SHA-256 `3a76ab51e44b1cc70943a838a4bf9cc87e919a285765f9cee53fed4c6c3665f3`.
 - IDs, hashes e arquivos de cada rodada em `amostras-estilos-v2.json`, `pacotes-estilos-v2.json` e `cenarios-06-08.json`. Downloads das referências 06/08 da rodada v2 já foram recuperados e conferidos na entrega de cenários; não depender de caminhos locais antigos.
-- Os registros originais de confirmação não incluíam novas imagens; consultar o lote F1 pastel para a revisão atual. A implementação visual do acabamento detalhado ainda será validada; não rotular artes anteriores como se tivessem usado o novo prompt.
+- Nenhuma nova imagem foi gerada nesta confirmação. A implementação visual do acabamento detalhado ainda será validada; não rotular artes anteriores como se tivessem usado o novo prompt.
 
 ## 6. Histórico preservado
 
-`FUMIGA-PAPEL-v1` e o guia anterior completo estão em [`historico/ESTILO_OFICIAL-v1.md`](historico/ESTILO_OFICIAL-v1.md), sem alteração retroativa dos hashes/prompts das imagens produzidas. O prompt atual está também em registro próprio no MEGA. O v2 acrescentou detalhe; o v3 troca a paleta e exige HUD orgânico por pedido explícito. O guia v2 integral foi preservado em [`historico/ESTILO_OFICIAL-v2.md`](historico/ESTILO_OFICIAL-v2.md).
+`FUMIGA-PAPEL-v1` e o guia anterior completo estão em [`historico/ESTILO_OFICIAL-v1.md`](historico/ESTILO_OFICIAL-v1.md), sem alteração retroativa dos hashes/prompts das imagens produzidas. O prompt atual está também em registro próprio no MEGA. A mudança de versão decorre exclusivamente da confirmação do estilo 06 **com mais detalhe e sem sensação de vazio**.
 
 A confirmação de técnica/detalhamento não aprova automaticamente cada asset, cada ornamento ou um upload futuro. Preservar também o limite de gerações, a preferência vigente por não apresentar opções extras, a cadência das flores e as exceções de câmera previamente aprovadas.

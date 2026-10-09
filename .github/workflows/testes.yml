@@ -65,6 +65,11 @@ jobs:
         run: node game/test/lorehud-browser.mjs
         env:
           HUD_SHOTS: ${{ runner.temp }}/fumiga-inspect/hud
+      - name: papel opaco e fontes funcionais do HUD
+        run: node game/test/paper-hud-browser.mjs && node game/test/hud-publication-browser.mjs
+        env:
+          PAPER_SHOTS: ${{ runner.temp }}/fumiga-inspect/paper
+          PUBLICATION_SHOTS: ${{ runner.temp }}/fumiga-inspect/paper
       - name: regressões no navegador (diário/playtest, janela estreita, erro/retry, save)
         run: node game/test/regressions-browser.mjs
         env:
