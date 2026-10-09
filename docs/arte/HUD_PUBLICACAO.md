@@ -47,6 +47,6 @@ Arquivo complementar do lote: originais, todos os PNGs de produção do HUD/bras
 |2|Novos HUDs|3 gerados e integrados|`game/assets/ui/paper/{button,tooltip,pause}.png`|
 |3|Salvar Drive|Originais verificados; arquivo complementar no manifesto|Pasta e URLs acima|
 |4|Implementar imagens no jogo|Feito, motor compartilhado PC/mobile|`assets.js`, `paper_hud.js`, `ui.js`, `game.js`, CSS mobile|
-|5|Salvar GitHub|Fluxo push→PR→checks→merge registrado no MEGA|Branch fixa da sessão|
+|5|Salvar GitHub|Commit`b06c3e1` publicado, [PR65](https://github.com/FeufeuP/Fumiga-GOAT/pull/65); merge após checks verdes|Branch fixa da sessão; resultado autoritativo no PR|
 
 Aceite visual do usuário não inferido da integração. Próximos: revisão dos novos componentes/escala,31ícones antigos por rodadas≤10, fontes restantes e leitura integral do MEGA (ainda não comprovada). F0/Pálida/mapa7 continuam fora do escopo.
