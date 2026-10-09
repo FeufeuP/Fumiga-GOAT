@@ -14,9 +14,9 @@
         128,
         128
       ],
-      "runtime_sha256": "c016d6131ab51f7af7e60a893a6dec049d010c221581deca454f5eaab2e352ff",
-      "runtime_bytes": 18008,
-      "mode": "RGB",
+      "runtime_sha256": "29d81a1c6cbc0b80f0f13d4007c0193efae067f554de7a3ff73845918688ef04",
+      "runtime_bytes": 20595,
+      "mode": "RGBA",
       "reference": "game/assets/ui/paper/panel.png",
       "prompt": "FUMIGA-PAPEL-v3-PASTEL-ORGANICO",
       "integration": "explicit user request 2026-10-09",
@@ -27,7 +27,8 @@
         "bytes": 1470057,
         "parent": "1IMj_-7VQf_asmRmMoMSzKxIQ37M6DXlW",
         "verified": true
-      }
+      },
+      "matte": "removed 2026-10-09 by tools/strip_paper_matte.py; flood filled cream sheet only, drawing and enclosed paper interior untouched"
     },
     {
       "id": "botao",
@@ -42,9 +43,9 @@
         960,
         238
       ],
-      "runtime_sha256": "3b8d8eb4b20e854549dc7061ff4cda6500425a722603946bde331633e9f8698f",
-      "runtime_bytes": 334285,
-      "mode": "RGB",
+      "runtime_sha256": "6ed4e12138614d6d2ede594dc19230f064d4d2cfef8c3535c4f8f4e13ba03e0c",
+      "runtime_bytes": 400230,
+      "mode": "RGBA",
       "reference": "game/assets/ui/paper/panel.png",
       "prompt": "FUMIGA-PAPEL-v3-PASTEL-ORGANICO",
       "integration": "explicit user request 2026-10-09",
@@ -55,7 +56,8 @@
         "bytes": 1999618,
         "parent": "1IMj_-7VQf_asmRmMoMSzKxIQ37M6DXlW",
         "verified": true
-      }
+      },
+      "matte": "removed 2026-10-09 by tools/strip_paper_matte.py; flood filled cream sheet only, drawing and enclosed paper interior untouched"
     },
     {
       "id": "tooltip",
@@ -70,9 +72,9 @@
         960,
         475
       ],
-      "runtime_sha256": "87b040fcab7e269b01e214871231396eb47838076d11d4dd7b924327f385df4e",
-      "runtime_bytes": 600515,
-      "mode": "RGB",
+      "runtime_sha256": "19b102418d4ee21f05a9f212708f3831cefbcef051b53260c5b831d8dffd44a4",
+      "runtime_bytes": 701381,
+      "mode": "RGBA",
       "reference": "game/assets/ui/paper/panel.png",
       "prompt": "FUMIGA-PAPEL-v3-PASTEL-ORGANICO",
       "integration": "explicit user request 2026-10-09",
@@ -83,7 +85,8 @@
         "bytes": 1720465,
         "parent": "1IMj_-7VQf_asmRmMoMSzKxIQ37M6DXlW",
         "verified": true
-      }
+      },
+      "matte": "removed 2026-10-09 by tools/strip_paper_matte.py; flood filled cream sheet only, drawing and enclosed paper interior untouched"
     },
     {
       "id": "pausa",
@@ -98,9 +101,9 @@
         928,
         1152
       ],
-      "runtime_sha256": "fd73dc83b5160766a7ebe4ae1859e41b1b5eba1d569338ac0781c22ba243c299",
-      "runtime_bytes": 1499784,
-      "mode": "RGB",
+      "runtime_sha256": "e0d5f9ea51169b3c436a1530551a18fe88590ec5dd567f151a0443fcc41fb429",
+      "runtime_bytes": 1680165,
+      "mode": "RGBA",
       "reference": "game/assets/ui/paper/panel.png",
       "prompt": "FUMIGA-PAPEL-v3-PASTEL-ORGANICO",
       "integration": "explicit user request 2026-10-09",
@@ -111,10 +114,11 @@
         "bytes": 1799646,
         "parent": "1IMj_-7VQf_asmRmMoMSzKxIQ37M6DXlW",
         "verified": true
-      }
+      },
+      "matte": "removed 2026-10-09 by tools/strip_paper_matte.py; flood filled cream sheet only, drawing and enclosed paper interior untouched"
     }
   ],
-  "scope": "one recreated flame without rings, three new HUD paintings; no approval of lost prior icons inferred",
+  "scope": "one recreated flame without rings, three new HUD paintings, all delivered with the cream matte flood filled away; no approval of lost prior icons inferred",
   "archive": {
     "drive_id": "18TJQjBVRqwtEAw_nhCaGk1oj7NEn-cB6",
     "name": "FUMIGA-brasa-novos-HUDs-integrados-2026-10-09.zip",

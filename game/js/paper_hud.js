@@ -64,7 +64,10 @@ function tileFor(img, kind, w, h, state) {
   if (old) { pixels -= old.canvas.width*old.canvas.height; cache.delete(key); }
   const tile = document.createElement('canvas'); tile.width=w; tile.height=h;
   const c=tile.getContext('2d');
-  c.fillStyle='#f5edd8'; c.fillRect(0,0,w,h);
+  // The paintings no longer carry a cream matte: the sheet around the drawing
+  // is transparent, so the tile starts empty and only the art is composited.
+  // The enclosed paper interior of each frame is still opaque in the source,
+  // so text keeps a readable surface.
   c.imageSmoothingEnabled=true;
   if(kind==='button'||kind==='pause') {
     const cuts=kind==='button'?{x:[.25,.75],y:[.2,.8],cap:.15}:{x:[.32,.76],y:[.3,.75],cap:.055};
@@ -94,7 +97,10 @@ function tileFor(img, kind, w, h, state) {
   }
   // State treatment changes depth and adds a readable selection mark, never
   // reduces background opacity or puts a generic stroke around the rectangle.
+  // It is clipped to the painted pixels ('source-atop') so no state repaints a
+  // rectangle over the transparent sheet that was just removed.
   if(state !== 'normal') {
+    c.globalCompositeOperation='source-atop';
     const inset = Math.max(2, Math.min(6,h*.12));
     const g=c.createLinearGradient(0,0,0,h);
     if(state==='pressed') {
@@ -108,10 +114,12 @@ function tileFor(img, kind, w, h, state) {
     }
     c.fillStyle=g; c.fillRect(inset,inset,w-inset*2,h-inset*2);
     if(state==='selected') {
+      c.globalCompositeOperation='source-over'; // the mark must stay readable
       const s=Math.max(4,Math.min(9,h*.19)), x=w-inset-s*2.5,y=h*.5;
       c.strokeStyle='#456032';c.lineWidth=Math.max(2,s*.3);c.lineCap='round';
       c.beginPath();c.moveTo(x,y);c.lineTo(x+s*.55,y+s*.5);c.lineTo(x+s*1.5,y-s*.6);c.stroke();
     }
+    c.globalCompositeOperation='source-over';
   }
   while(cache.size && (cache.size>=160 || pixels+w*h>MAX_PIXELS)) {
     const first=cache.keys().next().value, entry=cache.get(first);
