@@ -2,6 +2,9 @@ import { fruitSight } from "./fruit_effects.js";
 // DIÁRIO DE PLAYTEST: ganchos de expedição, draft, fim de run e a aba TESTE
 // das OPÇÕES (exportar/apagar). Módulo local, sem PII; ver playtest.js.
 import { ptEvento, ptPoderes, ptResumo, ptAtivo, ptLigar, ptApagar, ptEntregar } from "./playtest.js";
+// FILTRO PS1 (OPÇÕES → VÍDEO): níveis e aplicação do pós-processamento 2D —
+// dither Bayer 4x4 + 15 bits num canvas sobre o jogo, sem modelagem 3D.
+import { PSX_OPTS, applyPsxFilter } from "./psx_filter.js";
 // ============================================================================
 // FUMIGA — orquestrador V3: PRETITLE -> TITLE -> MODE -> OPTIONS -> RUN + Planície Viva
 // ============================================================================
@@ -1468,6 +1471,37 @@ function optToggle(y, TX, RR, oy, V, FS, o) {
   return dy + 11 * FS;
 }
 
+// Linha com opções mutuamente exclusivas (mesmo desenho da VELOCIDADE): rótulo
+// à esquerda, botões medidos de verdade à direita e a descrição embaixo. Usada
+// pelo FILTRO PS1; serve para qualquer ajuste de vários níveis dentro da rolagem.
+function optChoice(y, TX, RR, oy, V, FS, o) {
+  drawText(ctx, o.label, TX, y + oy + 6, { color: o.color, scale: 0.95, maxWidth: 150 });
+  // largura: caber os N botões na linha (com FONTE GRANDE o rótulo cresce, então
+  // a medida usa a mesma escala do desenho) sem passar da margem direita
+  const x0 = TX + 170, gap = 8;
+  const maxW = Math.max(64, Math.min(148, Math.floor(((RR - x0) - gap * (o.items.length - 1)) / o.items.length)));
+  let bw = 0;
+  for (const it of o.items) bw = Math.max(bw, textWidth(it.label, { scale: 0.8 * FS }));
+  bw = Math.min(maxW, Math.ceil(bw) + 22);
+  let bx = TX + 170;
+  o.items.forEach((it, i) => {
+    const sel = o.value === i;
+    if (button(ctx, {
+      x: bx, y: y + oy, w: bw, h: 30, label: it.label, id: o.id + "_" + i,
+      accent: it.color, color: sel ? "#000" : undefined, tap: true, clip: V, scale: 0.8,
+    })) o.pick(i);
+    bx += bw + 8;
+  });
+  let dy = y + 30 + 12 * FS;
+  if (o.desc) {
+    for (const ln of wrapText(o.desc, RR - TX, { scale: 0.8 * FS })) {
+      drawText(ctx, ln, TX, dy + oy, { color: "#6b5a8a", scale: 0.8, maxWidth: RR - TX });
+      dy += 16 * FS;
+    }
+  }
+  return dy + 11 * FS;
+}
+
 // Painel de aviso com quebra de linha medida. Retorna a altura ocupada.
 function optNote(y, TX, RR, oy, FS, lines, border, color) {
   const pad = 8, maxW = RR - TX - pad * 2;
@@ -1544,6 +1578,16 @@ function optContentVideo(TX, RR, oy, V, FS) {
     label: "TREMOR DE TELA", on: s.screenshake, id: "vid_screenshake", color: "#ffb347",
     desc: "A CÂMERA BALANÇA NOS GOLPES FORTES",
     flip() { s.screenshake = !s.screenshake; persistSave(); },
+  });
+  // FILTRO PS1 (decisão do usuário, 2026-10-08): dither Bayer 4x4 + 15 bits,
+  // em TUDO (mundo, HUD e menus), ligado por padrão no MÉDIO. É só filtro 2D —
+  // nenhuma arte foi remodelada em 3D (ver js/psx_filter.js).
+  cy = optChoice(cy, TX, RR, oy, V, FS, {
+    id: "vid_psx", label: "FILTRO PS1", color: "#c77dff",
+    value: clamp(G.save.settings.psx ?? 2, 0, PSX_OPTS.length - 1),
+    items: PSX_OPTS.map(o => ({ label: o.label, color: o.color })),
+    desc: "QUADRICULADO (DITHER 4x4) + CORES DE 15 BITS, COMO NO PLAYSTATION 1",
+    pick(i) { G.save.settings.psx = i; persistSave(); applyPsxFilter(); },
   });
   cy = optToggle(cy, TX, RR, oy, V, FS, {
     label: "SCANLINES RETRÔ", on: s.scanline, id: "vid_scanline", color: "#6db7ff",
@@ -3095,4 +3139,13 @@ export const __debug = {
   },
   openNest() { if (G.run && G.screen === "RUN") openNest(G.run); },
   skipWave() { if (G.run && G.screen === "RUN") return skipWave(); return false; },
+  // FILTRO PS1 (OPÇÕES → VÍDEO): troca o nível pelas MESMAS vias do menu —
+  // usado pelas capturas comparativas e pelo teste de regressão do filtro.
+  psxLevel(n) {
+    const i = clamp(n | 0, 0, PSX_OPTS.length - 1);
+    G.save.settings.psx = i;
+    persistSave();
+    applyPsxFilter();
+    return i;
+  },
 };

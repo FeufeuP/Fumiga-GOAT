@@ -5130,3 +5130,75 @@ Nenhum APK Android de Release assinado foi produzido e nenhuma Release pública 
 **Pré-validação sem compartilhar chave (2026-10-04):** como `.signing/` e Actions secrets continuam ausentes, o push para a branch Arena usa `bash tools/build-android.sh debug` para compilar um APK Android completo assinado somente com a chave debug descartável do Gradle; o nome `FUMIGA-Android-DEBUG.apk` e o artifact `apk-android-prevalidacao-debug` deixam explícito que não é para distribuição. O instalador Windows x64 também é artifact temporário. Acionamento manual e Release continuam exigindo a keystore privada estável e geram APK release assinado; somente `release.published` anexa APK, EXE e checksums à Release. `native-packages.mjs` verifica essa separação. `npm test -- -j 2` passou nos 30 testes locais; regressions-browser foi pulado apenas localmente por falta de Playwright.
 
 **Resultado do CI nativo (2026-10-04):** a primeira execução falhou no setup do Android SDK antes do Gradle: `android-actions/setup-android@v3` ainda pedia o pacote obsoleto `tools` [2](https://github.com/android-actions/setup-android/issues/537). A workflow passou a usar `android-actions/setup-android@v4.0.4`, e o teste estrutural confere a versão nos dois jobs. Na execução seguinte (`37244124093`, commit `aeed941`), o APK debug completo passou pela compilação e pelas verificações GeckoView ARM64/ARMv7/assets; o instalador Windows NSIS x64 também foi gerado com sucesso. A bateria headless e a inspeção Chromium PC/mobile passaram (`37244124035`). Os artifacts são temporários, sem assinatura de Release, e não substituem teste em dispositivos; `.signing/` não existe e nenhuma keystore/secret foi incluída. Nenhuma Release pública foi criada.
+
+## Registro — FILTRO PS1: dither Bayer 4x4 + 15 bits (2026-10-08, branch arena/76cd99cb-fumiga-goat)
+
+**Status: implementado, testado e visível no preview.**
+
+**Pedido do usuário:** *"quero que vc agr aplique um filtro de ps1 estilo resident evil com os gráficos low poly quero apenas aquele filtro quadriculado sem a modelagem 3d"*.
+Traduzido nas quatro escolhas da Regra 1 (perguntas com opções, respondidas pelo usuário em 2026-10-08):
+**(1)** entregar os três níveis com capturas comparativas; **(2)** padrão Bayer 4x4 (o dither real do hardware PS1, como em Resident Evil 1 e Silent Hill); **(3)** filtro **em tudo** (mundo, HUD e menus); **(4)** **ligado por padrão**, com opção no menu.
+
+### O que é (e o que NÃO é)
+
+- É um **pós-processamento 2D do quadro** — exatamente o que a GPU do PlayStation 1 fazia na saída de vídeo, e a origem do "quadriculado" de RE/Silent Hill:
+  dither **ordenado 4x4 (matriz Bayer)** + quantização para **15 bits por pixel** (5 bits por canal = 32 níveis), com dessaturação leve nos níveis mais fortes.
+- **Nenhuma modelagem 3D foi criada, nenhum sprite foi reassado e nenhum pixel do `#game` é alterado.** Não existe arte "low poly" nova: o "low poly" pedido é o *filtro*, aplicado à pixel art que já existia.
+- Pesquisa da Regra 2 (fontes): dither 4x4 + 15 bits do PS1 [1](https://github.com/Gageformer/Ember/issues/52); receita de shader PS1 (color_depth 5, matriz 4x4, resolution_scale) [3](https://godotshaders.com/shader/ps1-post-processing/); como o look PSX é usado hoje por *Signalis*, *Crow Country*, *Dusk* e *Mouthwashing* [1](https://www.reddit.com/r/gamedev/comments/1dvpyl2/are_people_tired_of_ps1like_retro_styled_games/), [2](https://www.reddit.com/r/IndieGaming/comments/1jew4hl/modern_games_with_that_ps1_low_poly_style/); granulado de VHS/PSX de *Puppet Combo*/*Bloodwash* [5](https://www.reddit.com/r/gamingsuggestions/comments/1eh0c83/looking_for_modern_low_poly_games_that_arent/).
+
+### Arquitetura (JS puro, sem build, sem dependências novas)
+
+| Peça | Onde | Papel |
+|---|---|---|
+| Filtro | `game/js/psx_filter.js` (novo) | Níveis, shader WebGL e reserva por CPU |
+| Canvas | `#psx` em `game/index.html` e `game/mobile/index.html` | Pós-processamento SEPARADO do `#game` |
+| Encaixe | `game/js/main.js` | `initPsxFilter` depois do `loadSave`, `resizePsxFilter` no `fit()` e `drawPsxFilter` no fim do quadro |
+| Menu | `optChoice` + item "FILTRO PS1" em OPÇÕES → VÍDEO (`game/js/game.js`) | DESLIGADO / LEVE / MÉDIO / FIEL AO PS1 |
+| Save | `settings.psx` (`game/js/state.js`) | Inteiro 0–3, validado na leitura; padrão `2` (MÉDIO) |
+| CSS | `#psx` em `game/css/style.css` e `game/mobile/mobile.css` | `position: absolute` alinhado ao canvas, `pointer-events: none`, `z-index: 1` (abaixo das scanlines) |
+
+- **Rotas:** `webgl` (normal — o canvas vira TEXTURA e o shader faz dither + quantização na GPU, sem `getImageData`) e `cpu` (reserva para aparelho sem WebGL: a mesma matemática por LUT, em meia resolução, com rebaixamento por desempenho).
+- **Níveis:** LEVE = só o xadrez (`dither 0.020`, 255 degraus); MÉDIO = dither de 1 degrau por nível (`1/31`), 31 passos e 10% de dessaturação, em 960x540; FIEL AO PS1 = mesma cor com 15% mais de amplitude e 20% de dessaturação, com **buffer 480x270 esticado** (pixels gordos) — o `#game` continua 960x540 nos quatro níveis.
+- **Desempenho (Regra 5):** em GPU de verdade o passe custa ~0,2 ms; em rasterizador **por software** (SwiftShader/llvmpipe — emuladores, máquinas sem GPU) o mesmo passe custa ~8,7 ms e derrubava o jogo para 39 FPS. Por isso o filtro (a) detecta renderizador por software e já começa em meia resolução e (b) tem um **vigia de mediana de quadro** (`notaQuadroPsx`): se a mediana passar de 22 ms (~45 FPS) com o filtro ligado, o buffer cai para meia resolução uma única vez — o filtro nunca desliga sozinho e nunca toca no motor. Medido no sandbox (SwiftShader): 60 FPS com o filtro ligado.
+- **Convive com o CRT:** o filtro fica ABAIXO das scanlines (`z-index 1` vs `2`) — a listra de CRT é a tela; o quadriculado é o sinal. O toggle SCANLINES RETRÔ continua funcionando igual.
+
+### Validação
+
+| Verificação | Resultado |
+|---|---|
+| `npm test -- -j 4` | **34/34 passaram** (inclui o navegador) |
+| `npm run test:quick` | 29/29 passaram |
+| `node game/test/psx-filter-browser.mjs` (novo) | OK nas 4 combinações (PC/mobile × webgl/cpu): canvas separado, `#game` sempre 960x540, `#psx` alinhado (tela cheia e letterbox), padrão MÉDIO, FIEL em 480x270, persistência após recarregar, cliques atravessam, sem erros de JS/HTTP |
+| `npm run inspect` (Chromium, PC + mobile, todas as telas, 6 mapas) | **✓ nenhum erro de JS, 404 ou glifo faltando**; 56–60 FPS nas 12 expedições com o filtro ligado |
+| Capturas comparativas | 4 níveis no mesmo cenário (`capturas-ps1/comparacao-niveis.png` e `zoom-xadrez.png`, fora do Git) — o xadrez do MÉDIO aparece nas sombras e nos gradientes, como no PS1 |
+| `node tools/make_assets_list.mjs --check` | em dia — `20261008-filtro-ps1`, shell 55 + assets 178, **233 arquivos / 24,9 MB** (era 232; entrou `js/psx_filter.js`) |
+| `node tools/sync-native-assets.mjs` | shells Android/Electron sincronizados (238 arquivos) |
+| `node game/test/pwa.mjs` | lista de 233 arquivos e `ASSET_V` cruzados com `assets.json` |
+
+### Decisões e limitações
+
+- `settings.psx` é chave NOVA no save: saves antigos não quebram (a leitura valida 0–3 e cai no padrão de fábrica). Com o padrão `2`, **quem abre o jogo já vê o filtro MÉDIO ligado** — quem não quiser desliga em OPÇÕES → VÍDEO.
+- Ordem do `#psx` na pilha: ele fica por cima de TUDO o que é desenhado no canvas (inclusive pausa e avisos), por escolha explícita do usuário ("em tudo"); o HUD de toque do mobile é DOM e fica por cima do filtro, sempre legível.
+- O filtro não entra nos vídeos/arte de cutscene por caminho próprio: ele é do quadro, então vale também para as cutscenes (que desenham no mesmo canvas).
+- Em aparelho sem WebGL, a reserva por CPU já se rebaixa para 480x270 se um passe passar de 8 ms; em caso extremo o jogo continua jogável com o filtro em meia resolução — nunca há travamento.
+- **Não houve teste em GPU dedicada real nem em Android físico**: o sandbox só tem rasterizador por software. O caminho rápido (0,2 ms) é a expectativa medida em placas reais de outros passeios por pixel; mesmo assim, o vigia de quadro cobre o caso de o passe custar caro.
+
+## Registro — FILTRO PS1 mais forte, calibrado no look de Crow Country (2026-10-08)
+
+**Pedido do usuário:** *"Quero que o filtro seja mais forte, idêntico ao estilo de Crow Country"*.
+**Substitui** os valores de intensidade do registro anterior (MÉDIO era dither 1/31 com 31 degraus e 10% de dessaturação).
+
+- Novos parâmetros: LEVE dither 0.06 / 24 degraus / dessat. 18% · **MÉDIO (padrão)** dither 0.10 / 15 degraus / dessat. 32% · FIEL AO PS1 dither 0.13 / 12 degraus / dessat. 45% (buffer 480x270).
+- Medido: diferença média do quadro com o filtro subiu de ~3,5 para ~10 (teste `psx-filter-browser`).
+- **Limite honesto:** é uma aproximação. O filtro cobre dither 4x4, cores achatadas e dessaturação. O look de Crow Country também tem vinheta escura, granulado e bordas mais sujas, que ainda não fazem parte do filtro.
+- Versão de assets: `20261008-filtro-crow`; pacote regenerado (233 arquivos / 24,9 MB).
+- Verificação: `node game/test/psx-filter-browser.mjs` passou (PC e mobile, webgl e cpu); capturas comparativas em `capturas-ps1/comparacao-crow.png` e `zoom-crow.png` (fora do Git).
+
+## Registro — Filtro PS1: contraste preservado e documento próprio (2026-10-08)
+
+**Status: implementado e verificado.** Toda a documentação do filtro foi movida para **`FILTRO_PS1.md`** (raiz do repositório), que passa a ser a fonte única sobre o assunto. Os registros anteriores deste arquivo continuam como histórico.
+
+- Pedido do usuário: *"O filtro tirou o contraste do jogo, mantenha o contraste do jogo. E coloque tudo sobre o filtro dentro de um novo documento."*
+- Mudança: a **dessaturação foi removida** dos quatro níveis (era ela que achatava o contraste). Entrou um **ganho de contraste** por canal (1.06 / 1.12 / 1.16 nos níveis LEVE / MÉDIO / FIEL), aplicado igual no shader WebGL e na tabela do modo CPU.
+- Versão de assets: `20261008-filtro-contraste`.
+- Substitui os valores de intensidade dos registros anteriores deste arquivo (dessaturação de 18–45%).
