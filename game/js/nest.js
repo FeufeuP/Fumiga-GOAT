@@ -38,8 +38,8 @@ const ROOMS = [
   { id: "royal",     x: 380, y: 112, w: 204, h: 94, accent: "#ffd479" },
   { id: "pantry",    x: 658, y: 232, w: 178, h: 88, accent: "#ffb347" },
   { id: "barracks",  x: 372, y: 300, w: 196, h: 92, accent: "#8fd3ff" },
-  { id: "fungus",    x: 92,  y: 348, w: 176, h: 84, accent: "#c77dff" },
-  { id: "refinery",  x: 664, y: 340, w: 180, h: 84, accent: "#c77dff" },
+  { id: "fungus",    x: 92,  y: 348, w: 176, h: 84, accent: "#ffb347" },
+  { id: "refinery",  x: 664, y: 340, w: 180, h: 84, accent: "#ffb347" },
 ];
 const ROOM_BY_ID = Object.fromEntries(ROOMS.map((r) => [r.id, r]));
 const EDGES = [
@@ -953,7 +953,7 @@ function drawRefinery(ctx, time) {
     const pulse = 0.6 + Math.sin(time * 2 + i) * 0.25;
     ctx.globalAlpha = pulse;
     // MEGA LORE: cristais geométricos hexagonais
-    ctx.fillStyle = "#c77dff";
+    ctx.fillStyle = "#ffb347";
     ctx.strokeStyle = "#e8d5ff";
     ctx.lineWidth = 1;
     ctx.beginPath();
@@ -996,10 +996,10 @@ function drawNestHud(ctx) {
   drawText(ctx, foodStr, bx + 24, y1, { font: "big", scale: 1, color: "#ffd479", maxWidth: 90 });
   bx += 24 + Math.max(46, textWidth(foodStr, { font: "big" })) + 16;
   if (IMG.i_essence) drawSprite(ctx, IMG.i_essence, "i_essence", bx, y1 - 2, 18, 18);
-  drawText(ctx, essStr, bx + 24, y1, { font: "big", scale: 1, color: "#c77dff", maxWidth: 90 });
+  drawText(ctx, essStr, bx + 24, y1, { font: "big", scale: 1, color: "#ffd479", maxWidth: 90 });
   bx += 24 + Math.max(46, textWidth(essStr, { font: "big" })) + 16;
   const lvlTxt = "NÍVEL " + (run ? run.level : 0);
-  drawText(ctx, lvlTxt, bx, y1, { font: "big", scale: 1, color: "#6db7ff", maxWidth: 150 });
+  drawText(ctx, lvlTxt, bx, y1, { font: "big", scale: 1, color: "#7fd6a0", maxWidth: 150 });
   bx += Math.min(150, textWidth(lvlTxt, { font: "big" })) + 18;
 
   const mapTxt = "MAPA " + ((run ? run.mapIdx : 0) + 1) + "/" + MAPS.length +

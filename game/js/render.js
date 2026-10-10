@@ -1316,7 +1316,7 @@ function bakePreTitleBg() {
 
   // runas / símbolos no fundo + silhueta de formigueiro gigante
   c.globalAlpha = 0.04;
-  c.fillStyle = "#c77dff";
+  c.fillStyle = "#ffb347";
   for (let i = 0; i < 30; i++) {
     const x = Math.random() * VIEW_W;
     const y = Math.random() * VIEW_H;
@@ -1475,7 +1475,7 @@ function bakeTitleBg() {
     const x = 50 + Math.random() * (VIEW_W - 100);
     if (Math.abs(x - VIEW_W/2) < 120) continue; // não no centro
     const y = 80 + Math.random() * 200;
-    const col = i % 3 === 0 ? "#c77dff" : i % 3 === 1 ? "#37e6c8" : "#6db7ff";
+    const col = i % 3 === 0 ? "#ffb347" : i % 3 === 1 ? "#37e6c8" : "#7fd6a0";
     c.fillStyle = col;
     c.globalAlpha = 0.5;
     c.beginPath();
@@ -1527,7 +1527,7 @@ export function drawPreTitle(ctx, time) {
   // subtítulo
   const subAlpha = 0.6 + Math.sin(time * 1.2) * 0.15;
   ctx.globalAlpha = subAlpha;
-  drawText(ctx, "COLONIA ETERNA", cx, baseY + 110, { font: "small", scale: 2, color: "#8f6fd6", align: "center" });
+  drawText(ctx, "COLONIA ETERNA", cx, baseY + 110, { font: "small", scale: 2, color: "#ffb347", align: "center" });
   ctx.globalAlpha = 1;
 
   // linha decorativa
@@ -1571,7 +1571,7 @@ export function drawPreTitle(ctx, time) {
     const ang = time * 0.5 + i * (TAU/3);
     const rx = cx + Math.cos(ang) * (120 + Math.sin(time + i) * 10);
     const ry = baseY + Math.sin(ang) * 30;
-    ctx.fillStyle = i === 0 ? "#c77dff" : i === 1 ? "#37e6c8" : "#ffd479";
+    ctx.fillStyle = i === 0 ? "#7fd6a0" : i === 1 ? "#37e6c8" : "#ffd479";
     ctx.globalAlpha = 0.15 + Math.sin(time * 2 + i) * 0.1;
     ctx.beginPath(); ctx.arc(rx, ry, 3, 0, TAU); ctx.fill();
   }
@@ -1589,7 +1589,7 @@ function drawBigTitle(ctx, cx, y, time, isShadow) {
     ctx.globalAlpha = 0.15;
     drawText(ctx, "FUMIGA", cx - 3 + jitter, y + 1, { font: "big", scale, color: "#37e6c8", align: "center" });
     // camada roxa deslocada
-    drawText(ctx, "FUMIGA", cx + 3 - jitter, y - 1, { font: "big", scale, color: "#c77dff", align: "center" });
+    drawText(ctx, "FUMIGA", cx + 3 - jitter, y - 1, { font: "big", scale, color: "#ffb347", align: "center" });
     ctx.globalAlpha = 1;
   }
 
@@ -1777,15 +1777,15 @@ const ease = {
 const TRANS_LANG = {
   "PRETITLE>TITLE": { type: "bloom",    dur: 0.55, tint: "#ffd479" },
   "TITLE>MODE":     { type: "swipe",    dur: 0.40, dir:  1, tint: "#37e6c8" },
-  "MODE>TITLE":     { type: "swipe",    dur: 0.34, dir: -1, tint: "#8f6fd6" },
-  "TITLE>TREE":     { type: "zoom",     dur: 0.44, dir:  1, tint: "#c77dff" },
-  "TREE>TITLE":     { type: "zoom",     dur: 0.40, dir: -1, tint: "#c77dff" },
-  "RUN>TREE":       { type: "zoom",     dur: 0.44, dir:  1, tint: "#c77dff" },
-  "TREE>RUN":       { type: "zoom",     dur: 0.40, dir: -1, tint: "#c77dff" },
-  "TITLE>HELP":     { type: "iris",     dur: 0.34, dir:  1, tint: "#6db7ff" },
-  "HELP>TITLE":     { type: "iris",     dur: 0.30, dir: -1, tint: "#6db7ff" },
-  "RUN>HELP":       { type: "iris",     dur: 0.32, dir:  1, tint: "#6db7ff" },
-  "HELP>RUN":       { type: "iris",     dur: 0.30, dir: -1, tint: "#6db7ff" },
+  "MODE>TITLE":     { type: "swipe",    dur: 0.34, dir: -1, tint: "#ffb347" },
+  "TITLE>TREE":     { type: "zoom",     dur: 0.44, dir:  1, tint: "#ffb347" },
+  "TREE>TITLE":     { type: "zoom",     dur: 0.40, dir: -1, tint: "#ffb347" },
+  "RUN>TREE":       { type: "zoom",     dur: 0.44, dir:  1, tint: "#ffb347" },
+  "TREE>RUN":       { type: "zoom",     dur: 0.40, dir: -1, tint: "#ffb347" },
+  "TITLE>HELP":     { type: "iris",     dur: 0.34, dir:  1, tint: "#7fd6a0" },
+  "HELP>TITLE":     { type: "iris",     dur: 0.30, dir: -1, tint: "#7fd6a0" },
+  "RUN>HELP":       { type: "iris",     dur: 0.32, dir:  1, tint: "#7fd6a0" },
+  "HELP>RUN":       { type: "iris",     dur: 0.30, dir: -1, tint: "#7fd6a0" },
   "TITLE>OPTIONS":  { type: "swipe",    dur: 0.36, dir:  1, tint: "#ffb347" },
   "OPTIONS>TITLE":  { type: "swipe",    dur: 0.32, dir: -1, tint: "#ffb347" },
   "RUN>OPTIONS":    { type: "zoom",     dur: 0.36, dir:  1, tint: "#ffb347" },
@@ -1795,7 +1795,7 @@ const TRANS_LANG = {
   "RUN>MODE":       { type: "dissolve", dur: 0.50, tint: "#ffb347" },
   "RUN>TITLE":      { type: "dissolve", dur: 0.55, tint: "#ff4d5a" },
 };
-const DEFAULT_LANG = { type: "fade", dur: 0.36, tint: "#8f6fd6" };
+const DEFAULT_LANG = { type: "fade", dur: 0.36, tint: "#ffb347" };
 
 let transition = null;   // { type, t, dur, from, to, cb, dir, tint }
 let maskCv = null;       // canvas auxiliar (dissolve / íris)
@@ -1831,7 +1831,7 @@ export function startTransition(type, from, to, dur, cb) {
     dur: dur || lang.dur,
     t: 0, from, to, cb, midFired: false,
     dir: lang.dir || 1,
-    tint: lang.tint || "#8f6fd6",
+    tint: lang.tint || "#ffb347",
     // o foco da íris/dissolve nasce onde o jogador clicou (feedback direto)
     fx: lastPointer.x, fy: lastPointer.y,
   };

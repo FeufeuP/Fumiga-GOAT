@@ -40,8 +40,8 @@ export const PSX_OPTS = [
   // Calibrado para o look de Crow Country: dither 4x4 bem visível, cores
   // achatadas (≈ 4 bits por canal) e sombras acinzentadas/dessaturadas.
   { label: "LEVE",        color: "#7fd6a0", dither: 0.06,     steps: 24,  contrast: 1.06, scale: 1 },
-  { label: "MÉDIO",       color: "#6db7ff", dither: 0.10,     steps: 15,  contrast: 1.12, scale: 1 },
-  { label: "FIEL AO PS1", color: "#c77dff", dither: 0.13,     steps: 12,  contrast: 1.16, scale: 0.5 },
+  { label: "MÉDIO",       color: "#7fd6a0", dither: 0.10,     steps: 15,  contrast: 1.12, scale: 1 },
+  { label: "FIEL AO PS1", color: "#ffb347", dither: 0.13,     steps: 12,  contrast: 1.16, scale: 0.5 },
 ];
 /** Nível padrão de fábrica (pedido do usuário: filtro LIGADO por padrão). */
 export const PSX_DEFAULT = 2;

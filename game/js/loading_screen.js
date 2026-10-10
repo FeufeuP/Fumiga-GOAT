@@ -189,7 +189,7 @@ const BIOME_LORE = {
       "DICA: CADA NÓ EVOLUÍDO RESTAURA A COR VIVA DA ÁRVORE ANCESTRAL.",
       "DICA: CUMPRIR PROFECIAS DA MATRIARCA CONCEDE ESSÊNCIA PERMANENTE.",
     ],
-    accent: "#c77dff",
+    accent: "#ffb347",
     secondary: "#ffd479",
     tint: "rgba(38, 20, 62, 0.38)",
   },
@@ -211,7 +211,7 @@ function resetSpores() {
       size: 1 + Math.random() * 2.5,
       alpha: 0.2 + Math.random() * 0.6,
       pulse: Math.random() * 6.28,
-      color: Math.random() > 0.4 ? "#37e6c8" : (Math.random() > 0.5 ? "#c77dff" : "#ffd479"),
+      color: Math.random() > 0.4 ? "#37e6c8" : (Math.random() > 0.5 ? "#7fd6a0" : "#ffd479"),
     });
   }
 }
@@ -679,7 +679,7 @@ export function drawLoadingScreen(ctx, time) {
     const barGrad = ctx.createLinearGradient(barX, barY, barX + barW, barY);
     barGrad.addColorStop(0, "#37e6c8");
     barGrad.addColorStop(0.6, "#8f6fd6");
-    barGrad.addColorStop(1, "#c77dff");
+    barGrad.addColorStop(1, "#ffb347");
     ctx.fillStyle = barGrad;
     ctx.fillRect(barX, barY, fillW, barH);
 

@@ -37,6 +37,20 @@ repetições, datas, branches, checklists e notas históricas foram preservados.
 > Divergências permanecem visíveis, sem apagar conteúdo. O que efetivamente
 > funciona deve ser confirmado por testes e inspeção no preview.
 
+## Cadência de aprovação reinstalada + lote 2 GERADO (aguarda aprovação) + chrome sem roxo (2026-10-10)
+
+**Pedido:** “Finalize tudo que está em parcial, seguindo a regra: gere 10 imagens > aprovação minha > mais 10 imagens…” — o gate **gerar → mostrar → aprovar → integrar** volta a valer (prevalece sobre “execute tudo”). Rodadas restantes para os parciais: **R2 (hoje) → R3 (egg v2 + wing_gem + 8 glifos sk_) → R4 (sk_time + sk_tornado + 5 atlas lore_) → R5 (piloto F0b: Rainha, Cortadeira, larva, cristal, base Planície)**. Teto de 10 imagens/turno da plataforma coincide com a cadência.
+
+**Lote 2 GERADO — NÃO INTEGRADO (aguarda aprovação do usuário):** 10 ícones em `art-source/f1-lote2/originais/` (clover, fire_sword, fist, fungo, horseshoe, lock, scale, spider, spider_gold, sun), prompt-mestre v3 integral + ficha §4, sem alternativas extras. Preparados em **`art-source/_revisao-r2/`** via `--out-root` (runtime real verificado intocado); folha de revisão apresentada (Regra 10). Só após aprovação: rodar o prepare sem `--out-root`, `ASSET_V` + listas + sync + testes + commit (mesmo ciclo do lote 1).
+
+**Chrome UI sem roxo/azul (item do parcial fechado):** recoloração de **acentos de UI** para pastel terrosa (`#c77dff`→`#ffb347` âmbar; `#6db7ff`→`#7fd6a0` sálvia; texto de essência→`#ffd479`): opções (linhas de volume/vídeo/acessibilidade/idioma, chips do filtro PS1), colônia (salas fungus/refinery, barra, contadores), menu (botões ÁRVORE/COMO JOGAR, OBJETIVO, logo FUMIGA + subtítulo), telas (screenAccent TREE/MEMORY/HELP + tintas de transição), barra de boot (gradiente roxo→sálvia/âmbar), loading (acento/partículas/gradiente), HUD de lore (bordas, gasterVein âmbar, minimapa, essência), runas/dots decorativos de menu. Mobile: verificado sem ocorrências. **Mantidos por identidade semântica (não são chrome):** RARITY (ÉPICA/RARA), categorias H/shop, cores de bioma/fruta, identidade de essência no mundo (nós/carry/+ESS/VFX magia), céu/ambiente, `lore_vfx`, tinta de remap do `resolveFontColor`. Se quiser a identidade de essência/raridade também fora do roxo, é decisão sua com impacto de leitura de recurso — a confirmar.
+
+**Tipografia/estados (parcial):** tinta de texto em superfícies de papel já era mapeada (`resolveFontColor`); com o chrome recolorado, rótulos/títulos/contadores seguem pastel em qualquer superfície. Estados dos cinco botões (normal/hover/pressionado/selecionado/desabilitado) já tratados no lote de HUD anterior; restam ornamentos antigos próximos do texto (fecham com os atlas novos em R4).
+
+**Verificado nesta rodada:** `test:quick` **30/30**; suíte completa **37/37**; `node --check` nos 8 arquivos tocados; runtime de arte intocado (`git status` limpo antes das edições de código). Preview :8000 ativo.
+
+**Próximos:** aprovação do lote 2 → integrar lote 2 + gerar R3 (10) → aprovação → R4 (7) → aprovação → R5 (5) → fechar parciais; depois o escopo “não começado” (F2 inteiro) por encomenda.
+
 ## F1 lote 1 INTEGRADO — 10 ícones de papel + suavização por chave (2026-10-10)
 
 **Pedido:** “Siga com os próximos passos” — continuar o backlog na ordem registrada, sem gate de aprovação por lote (decisão “Execute tudo” vigente), mas com toda arte apresentada (Regra 10) e rollback documentado.

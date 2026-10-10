@@ -140,7 +140,7 @@ let modeSwipeX = null;
 let modeScrollOffset = 0;
 const OPTIONS_TABS = [
   { id: "audio", label: "ÁUDIO", color: "#37e6c8" },
-  { id: "video", label: "VÍDEO", color: "#6db7ff" },
+  { id: "video", label: "VÍDEO", color: "#7fd6a0" },
   { id: "controles", label: "CONTROLES", color: "#ffb347" },
   { id: "acess", label: "ACESSO", color: "#7fd6a0" },
   { id: "idioma", label: "IDIOMA", color: "#ffd479" },
@@ -800,7 +800,7 @@ function worldTick(simDt, run) {
     ring(A2.x, A2.y, { r0: 24, r1: 190, life: 0.7, color: "#6db7ff", width: 4 });
     levelUpBurst(A2.x, A2.y - 20);
     floatText(A2.x, A2.y - 150, "NÍVEL " + run.level + "! A COLÔNIA FICOU MAIS FORTE", {
-      color: "#6db7ff", life: 2.2, scale: 2,
+      color: "#7fd6a0", life: 2.2, scale: 2,
     });
   }
 
@@ -838,7 +838,7 @@ function checkRunOutcome(run) {
       q.hp = q.maxHp * META_POWER.r_ren;
       q.flash = 0.4;
       SFX.rebirth();
-      ring(world.anthill.x, world.anthill.y, { r0: 14, r1: 260, life: 0.9, color: "#c77dff", width: 6 });
+      ring(world.anthill.x, world.anthill.y, { r0: 14, r1: 260, life: 0.9, color: "#ffb347", width: 6 });
       burst(world.anthill.x, world.anthill.y, { n: 46, color: ["#c77dff", "#ffd479", "#efe9ff"], spMin: 40, spMax: 220, life: 0.9, glow: true });
       floatText(world.anthill.x, world.anthill.y - 110, "RENASCIMENTO REAL!", { color: "#c77dff", life: 2.2, scale: 2 });
     } else {
@@ -1259,9 +1259,9 @@ function renderTitle() {
   const btnH = 46;
   const btns = [
     { label: "JOGAR", id: "start", accent: "#37e6c8", h: btnH, font: "big" },
-    { label: "ÁRVORE DA EVOLUÇÃO", id: "tree", accent: "#c77dff", h: 42, font: "big" },
+    { label: "ÁRVORE DA EVOLUÇÃO", id: "tree", accent: "#ffb347", h: 42, font: "big" },
     { label: "OPÇÕES", id: "options", accent: "#ffb347", h: 40, font: "big" },
-    { label: "COMO JOGAR", id: "help", accent: "#6db7ff", h: 38 },
+    { label: "COMO JOGAR", id: "help", accent: "#7fd6a0", h: 38 },
   ];
   // Navegação estilo Dead Cells (pedido 2026-10-10): ↑↓/W-S circulam a seleção
   // com wrap, Enter/Espaço confirma; o hover do ponteiro sincroniza a seleção
@@ -1578,7 +1578,7 @@ function optVolRow(y, TX, RR, oy, V, FS, id, label, color) {
 
 function optContentAudio(TX, RR, oy, V, FS) {
   let cy = 8;
-  cy = optVolRow(cy, TX, RR, oy, V, FS, "music", "MÚSICA", "#c77dff");
+  cy = optVolRow(cy, TX, RR, oy, V, FS, "music", "MÚSICA", "#ffb347");
   cy = optToggle(cy, TX, RR, oy, V, FS, {
     label: "SOM", on: !G.muted, id: "muteBtn", color: "#ff4d5a",
     desc: touchMode.on ? "USE ESTE BOTÃO PARA SILENCIAR TUDO" : "A TECLA M TAMBÉM LIGA E DESLIGA",
@@ -1609,20 +1609,20 @@ function optContentVideo(TX, RR, oy, V, FS) {
   // em TUDO (mundo, HUD e menus), ligado por padrão no MÉDIO. É só filtro 2D —
   // nenhuma arte foi remodelada em 3D (ver js/psx_filter.js).
   cy = optChoice(cy, TX, RR, oy, V, FS, {
-    id: "vid_psx", label: "FILTRO PS1", color: "#c77dff",
+    id: "vid_psx", label: "FILTRO PS1", color: "#ffb347",
     value: clamp(G.save.settings.psx ?? 2, 0, PSX_OPTS.length - 1),
     items: PSX_OPTS.map(o => ({ label: o.label, color: o.color })),
     desc: "QUADRICULADO (DITHER 4x4) + CORES DE 15 BITS, COMO NO PLAYSTATION 1",
     pick(i) { G.save.settings.psx = i; persistSave(); applyPsxFilter(); },
   });
   cy = optToggle(cy, TX, RR, oy, V, FS, {
-    label: "SCANLINES RETRÔ", on: s.scanline, id: "vid_scanline", color: "#6db7ff",
+    label: "SCANLINES RETRÔ", on: s.scanline, id: "vid_scanline", color: "#7fd6a0",
     desc: "LISTRAS DE CRT SOBRE A IMAGEM",
     flip() { s.scanline = !s.scanline; persistSave(); applyScanlines(); },
   });
   const isFull = typeof document !== "undefined" && !!document.fullscreenElement;
   cy = optToggle(cy, TX, RR, oy, V, FS, {
-    label: "TELA CHEIA", on: isFull, id: "fullscreen", color: "#c77dff",
+    label: "TELA CHEIA", on: isFull, id: "fullscreen", color: "#ffb347",
     desc: "F11 TAMBÉM ALTERNA NO NAVEGADOR",
     flip() {
       try {
@@ -1673,9 +1673,9 @@ function optContentAccess(TX, RR, oy, V, FS) {
   const rows = [
     { key: "invincible", label: "RAINHA INVENCÍVEL", desc: "A RAINHA NÃO MORRE: VOLTA COM 30% DA VIDA", color: "#7fd6a0" },
     { key: "infiniteDash", label: "AÇÕES SEM RECARGA", desc: "RALI (F) E ATAQUES SEM TEMPO DE ESPERA", color: "#37e6c8" },
-    { key: "slowMo", label: "CÂMERA LENTA", desc: "TUDO RODA NA METADE DA VELOCIDADE", color: "#6db7ff" },
+    { key: "slowMo", label: "CÂMERA LENTA", desc: "TUDO RODA NA METADE DA VELOCIDADE", color: "#7fd6a0" },
     { key: "bigFont", label: "FONTE GRANDE", desc: "TEXTOS 30% MAIORES EM TODO O JOGO", color: "#ffd479" },
-    { key: "reducedParticles", label: "POUCAS PARTÍCULAS", desc: "MENOS EFEITOS E DISTRAÇÕES VISUAIS", color: "#c77dff" },
+    { key: "reducedParticles", label: "POUCAS PARTÍCULAS", desc: "MENOS EFEITOS E DISTRAÇÕES VISUAIS", color: "#ffb347" },
     { key: "highContrast", label: "ALTO CONTRASTE", desc: "CONTORNOS FORTES NOS TEXTOS", color: "#ff4d5a" },
   ];
   for (const o of rows) {
@@ -1716,7 +1716,7 @@ function optContentLang(TX, RR, oy, V, FS) {
   const s = G.save.settings;
   const langs = [
     { id: "pt-BR", tag: "[BR]", label: "PORTUGUÊS", desc: "TRADUÇÃO COMPLETA E REVISADA", color: "#7fd6a0", ready: true },
-    { id: "en-US", tag: "[US]", label: "ENGLISH", desc: "ENGLISH TRANSLATION", color: "#6db7ff", ready: false },
+    { id: "en-US", tag: "[US]", label: "ENGLISH", desc: "ENGLISH TRANSLATION", color: "#7fd6a0", ready: false },
     { id: "es", tag: "[ES]", label: "ESPAÑOL", desc: "TRADUCCIÓN AL ESPAÑOL", color: "#ffb347", ready: false },
   ];
   let cy = 8;
@@ -1828,13 +1828,13 @@ function renderHelp() {
   const goalLines = HELP_GOAL.flatMap((t) => wrapText(t, colW, { scale: 0.9 }));
 
   const drawGoal = (x, y) => {
-    drawText(ctx, "OBJETIVO", x, y, { font: "big", color: "#c77dff", maxWidth: colW });
+    drawText(ctx, "OBJETIVO", x, y, { font: "big", color: "#ffb347", maxWidth: colW });
     let yy = y + bigStep;
     for (const L of goalLines) { drawText(ctx, L, x, yy, { color: PAL.text, scale: 0.9, maxWidth: colW }); yy += lineGoal; }
     return yy;
   };
   const drawTips = (x, y, scale) => {
-    drawText(ctx, "DICAS", x, y, { font: "big", color: "#c77dff", maxWidth: colW });
+    drawText(ctx, "DICAS", x, y, { font: "big", color: "#ffb347", maxWidth: colW });
     const step = Math.ceil(20 * scale * helpFS);
     let yy = y + bigStep;
     for (const t of HELP_TIPS) {
@@ -1846,7 +1846,7 @@ function renderHelp() {
   const drawControls = (x, y, labScale, descScale) => {
     let descX = 120;
     for (const [k] of controlsTable) descX = Math.max(descX, textWidth(k, { scale: labScale }) + 12);
-    drawText(ctx, touchMode.on ? "CONTROLES (TOQUE)" : "CONTROLES", x, y, { font: "big", color: "#c77dff", maxWidth: colW });
+    drawText(ctx, touchMode.on ? "CONTROLES (TOQUE)" : "CONTROLES", x, y, { font: "big", color: "#ffb347", maxWidth: colW });
     const dStep = Math.ceil(18 * descScale * helpFS);
     let yy = y + bigStep + 2;
     for (const [k, d] of controlsTable) {
@@ -2355,8 +2355,8 @@ function drawHUD() {
       x: tx, y: ty, w: tw, h: 24, compact: true,
       label: "ONDAS ∞: " + (tp.infWaves ? "SIM" : "NÃO"),
       id: "testInfWaves",
-      accent: tp.infWaves ? "#c77dff" : "#5a4f78",
-      color: tp.infWaves ? "#c77dff" : PAL.textDim,
+      accent: tp.infWaves ? "#ffb347" : "#5a4f78",
+      color: tp.infWaves ? "#ffb347" : PAL.textDim,
       scale: 0.72 * tChrome,
     }) && live) {
       tp.infWaves = !tp.infWaves;
@@ -2519,9 +2519,9 @@ function drawDraft(draft) {
   ctx.save();
   ctx.globalCompositeOperation = "lighter";
   ctx.globalAlpha = 0.15;
-  drawText(ctx, "MUTAÇÃO DISPONÍVEL", VIEW_W / 2, 34, { font: "big", scale: 2.1, color: "#c77dff", align: "center" });
+  drawText(ctx, "MUTAÇÃO DISPONÍVEL", VIEW_W / 2, 34, { font: "big", scale: 2.1, color: "#ffb347", align: "center" });
   ctx.restore();
-  drawText(ctx, "MUTAÇÃO DISPONÍVEL", VIEW_W / 2, 34, { font: "big", scale: 2, color: "#c77dff", align: "center", maxWidth: 640 });
+  drawText(ctx, "MUTAÇÃO DISPONÍVEL", VIEW_W / 2, 34, { font: "big", scale: 2, color: "#ffb347", align: "center", maxWidth: 640 });
   drawKitIcon(ctx, 2, VIEW_W / 2 - 220, 30, 22); drawKitIcon(ctx, 2, VIEW_W / 2 + 198, 30, 22);
   // o subtítulo desce para fora da tinta do título (que com FONTE GRANDE chega
   // a 100px de altura) — antes as duas linhas ficavam na mesma faixa
@@ -2660,8 +2660,8 @@ function drawPause() {
   const pauseBtns = [
     { label: "CONTINUAR", id: "resume", accent: "#37e6c8" },
     { label: "OPÇÕES", id: "pauseOptions", accent: "#ffb347" },
-    { label: "ÁRVORE DA EVOLUÇÃO", id: "pauseTree", accent: "#c77dff" },
-    { label: "COMO JOGAR", id: "pauseHelp", accent: "#6db7ff" },
+    { label: "ÁRVORE DA EVOLUÇÃO", id: "pauseTree", accent: "#ffb347" },
+    { label: "COMO JOGAR", id: "pauseHelp", accent: "#7fd6a0" },
     { label: "REINICIAR EXPEDIÇÃO", id: "restart", accent: "#ffb347" },
     { label: "SAIR PARA O MENU", id: "quit", accent: "#ff4d5a" },
   ];
@@ -2768,7 +2768,7 @@ function drawPause() {
     lines.push(["MAPA: " + (run.mapIdx + 1) + "/" + MAPS.length + " - " + MAPS[run.mapIdx].name, PAL.text, 1]);
     lines.push(["ONDA: " + run.wave + " • ABATES: " + run.kills, PAL.textDim, 1]);
     lines.push(["NÍVEL: " + run.level + " • COMIDA: " + fmt(run.food), PAL.textDim, 1]);
-    lines.push(["ESSÊNCIA: " + fmt(run.essencePool) + " • MUTAÇÕES: " + run.mutationLog.length, "#c77dff", 0.85]);
+    lines.push(["ESSÊNCIA: " + fmt(run.essencePool) + " • MUTAÇÕES: " + run.mutationLog.length, "#ffb347", 0.85]);
     lines.push(["POP: " + popUsed() + "/" + popCapTotal() + " • TEMPO: " + Math.floor(run.elapsed) + "s", PAL.textDim, 0.85]);
     const n = colony.needs, hc = colony.headcount;
     lines.push(["COLÔNIA: FOME " + Math.round(n.food*100) + "% • GUERRA " + Math.round(n.defense*100) + "% • CURA " + Math.round(n.medical*100) + "%", "#8f7bb5", 0.75]);
@@ -2856,10 +2856,10 @@ function renderProphecyScreen() {
     { color: PAL.textDim, scale: 0.8, maxWidth: 398 }));
   const done = Object.keys(G.save.prophecies || {}).length;
 
-  panel(ctx, VIEW_W - 520, 10, 160, 70, { border: "#c77dff" });
+  panel(ctx, VIEW_W - 520, 10, 160, 70, { border: "#ffb347" });
   const ic = IMG.i_essence;
   if (ic) drawSprite(ctx, ic, "i_essence", VIEW_W - 512, 22, 34, 34);
-  drawText(ctx, G.save.essence, VIEW_W - 468, 28, { font: "big", scale: 1, color: "#c77dff", maxWidth: 88 });
+  drawText(ctx, G.save.essence, VIEW_W - 468, 28, { font: "big", scale: 1, color: "#ffb347", maxWidth: 88 });
 
   if (button(ctx, { x: VIEW_W - 180, y: 18, w: 156, h: 44, label: "VOLTAR", id: "prophecyBack", font: "small", accent: "#ff4d5a" })) {
     backFromProphecies();
@@ -2880,7 +2880,7 @@ function renderProphecyScreen() {
     const descY = y + 16 + names.length * step;
     wrapText(p.desc, w - 28, { scale: 0.9 }).forEach((line, j) =>
       drawText(ctx, line, x + 14, descY + j * step, { scale: 0.9, color: PAL.text }));
-    drawText(ctx, "+" + p.reward + " ESSÊNCIA", x + 14, y + h - 27, { color: "#c77dff", scale: 0.85 });
+    drawText(ctx, "+" + p.reward + " ESSÊNCIA", x + 14, y + h - 27, { color: "#ffb347", scale: 0.85 });
   });
   prophecyPage = drawPageControls("prophecy", prophecyPage, pages, 454);
 
@@ -2927,12 +2927,12 @@ function drawEnd(run) {
     ["INIMIGOS ABATIDOS", String(run.kills), PAL.text],
     ["NÍVEL DA COLÔNIA", String(run.level), PAL.text],
     ["MUTAÇÕES", String(run.mutationLog.length), PAL.text],
-    ["RELÍQUIA (10%)", String(p.relic), "#c77dff"],
-    ["BÔNUS DE ONDAS", "+" + p.waveBonus, "#c77dff"],
-    ["BÔNUS DE MAPAS", "+" + p.mapBonus, "#c77dff"],
-    ["BÔNUS DE ABATES", "+" + p.killBonus, "#c77dff"],
+    ["RELÍQUIA (10%)", String(p.relic), "#ffb347"],
+    ["BÔNUS DE ONDAS", "+" + p.waveBonus, "#ffb347"],
+    ["BÔNUS DE MAPAS", "+" + p.mapBonus, "#ffb347"],
+    ["BÔNUS DE ABATES", "+" + p.killBonus, "#ffb347"],
   ];
-  if (p.winBonus) rows.push(["VITÓRIA ÉPICA", "+" + p.winBonus, "#c77dff"]);
+  if (p.winBonus) rows.push(["VITÓRIA ÉPICA", "+" + p.winBonus, "#ffb347"]);
   if (p.ascension) rows.push(["ASCENSÃO DA NÉVOA", "NV " + p.ascension + " (x" + p.ascMult.toFixed(2) + ")", "#ff8a96"]);
   if (p.prophecies) for (const pr of p.prophecies) rows.push(["PROFECIA: " + pr.name, "+" + pr.reward, "#6ee7ff"]);
   if (p.mult > 1) rows.push(["MULTIPLICADOR", "x" + p.mult.toFixed(2), "#ffd479"]);
@@ -2976,7 +2976,7 @@ function drawEnd(run) {
 
   ctx.fillStyle = "#3a3054";
   ctx.fillRect(PX + 24, sepY, PW - 48, 2);
-  drawText(ctx, "TOTAL DE GELÉIA REAL", PX + 24, sepY + 14, { font: "big", scale: 1, color: "#c77dff", maxWidth: PW / 2 - 40 });
+  drawText(ctx, "TOTAL DE GELÉIA REAL", PX + 24, sepY + 14, { font: "big", scale: 1, color: "#ffb347", maxWidth: PW / 2 - 40 });
   drawText(ctx, "+" + p.total, PX + PW - 24, sepY + 8, { font: "big", scale: 2, color: "#ffd479", align: "right", maxWidth: PW / 2 - 40 });
 
   if (button(ctx, { x: VIEW_W / 2 - 230, y: by, w: 220, h: btnH, label: "NOVA EXPEDIÇÃO", id: "again", accent: "#37e6c8" })) {
@@ -2985,7 +2985,7 @@ function drawEnd(run) {
     startRunWithLoading(run.modeDef);
     return;
   }
-  if (button(ctx, { x: VIEW_W / 2 + 10, y: by, w: 220, h: btnH, label: "ÁRVORE DA EVOLUÇÃO", id: "goTree", accent: "#c77dff" })) {
+  if (button(ctx, { x: VIEW_W / 2 + 10, y: by, w: 220, h: btnH, label: "ÁRVORE DA EVOLUÇÃO", id: "goTree", accent: "#ffb347" })) {
     notePointer(mouse.x, mouse.y);
     openTreeScreen("TITLE");
     return;

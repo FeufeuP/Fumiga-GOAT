@@ -177,10 +177,10 @@ function screenAccent() {
   }
   const screens = {
     BOOT: "#37e6c8", PRETITLE: "#37e6c8", TITLE: "#37e6c8",
-    MODE: "#ffd479", TREE: "#c77dff", HELP: "#6db7ff",
-    PROPHECY: "#6ee7ff", MEMORY: "#c77dff",
+    MODE: "#ffd479", TREE: "#ffb347", HELP: "#7fd6a0",
+    PROPHECY: "#6ee7ff", MEMORY: "#ffb347",
   };
-  return screens[G.screen] || "#c77dff";
+  return screens[G.screen] || "#ffb347";
 }
 
 function screenTextPalette() {

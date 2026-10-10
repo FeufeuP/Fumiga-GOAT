@@ -118,9 +118,9 @@ function drawLoading() {
   ctx.strokeRect(bx + 0.5, by + 0.5, bw - 1, bh - 1);
   // preenchimento com gradiente
   const grad = ctx.createLinearGradient(bx, by, bx + bw, by);
-  grad.addColorStop(0, "#37e6c8");
-  grad.addColorStop(0.5, "#8f6fd6");
-  grad.addColorStop(1, "#c77dff");
+  grad.addColorStop(0, "#7fd6a0");
+  grad.addColorStop(0.5, "#e0b24a");
+  grad.addColorStop(1, "#ffb347");
   ctx.fillStyle = grad;
   const fillW = (bw - 4) * progress;
   ctx.fillRect(bx + 2, by + 2, fillW, bh - 4);
