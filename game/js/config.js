@@ -888,6 +888,7 @@ export const HELP_GOAL = [
   "cada um termina num CHEFÃO. Derrote o DEVASTADOR no fim.",
 ];
 export const HELP_CONTROLS = [
+  ["SETAS + ENTER", "No TITLE: navegar e confirmar o menu"],
   ["ESQ. (ARRASTAR)", "Mover a câmera / explorar o mapa"],
   ["ESQ. (CLIQUE)", "Ordenar unidades selecionadas"],
   ["DIR. (ARRASTAR)", "Caixa de seleção"],
@@ -903,6 +904,7 @@ export const HELP_CONTROLS = [
 ];
 // Controles da VERSÃO MOBILE (camada de toque game/mobile/touch.js)
 export const HELP_CONTROLS_TOUCH = [
+  ["TOQUE NO ITEM", "Menus: o toque escolhe na hora"],
   ["ARRASTAR (1 DEDO)", "Mover a câmera / explorar o mapa"],
   ["TOQUE", "Ordenar formigas selecionadas"],
   ["TOQUE NA FORMIGA", "Selecionar (modo gesto inteligente)"],
