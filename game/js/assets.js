@@ -192,7 +192,7 @@ const WROT = {};         // silhuetas brancas rotacionadas (hit flash)
 // ANTIGA nos mesmos nomes de arquivo (foi assim que o rework dos inimigos da
 // Fase 2 "não apareceu" para quem já tinha jogado antes dele).
 // ---------------------------------------------------------------------------
-export const ASSET_V = "20261010-hud-sem-esticar";
+export const ASSET_V = "20261010-migracao-prep";
 
 /**
  * URL final de um asset do jogo: base certa para a página atual + anti-cache.
@@ -331,17 +331,23 @@ const ROT_ANGLES = 24;
 // alterar UMA cor sequer da arte. Tudo é aplicado ANTES da rotação, então gira
 // junto com a formiga e continua alinhado à grade de pixels.
 const OUTLINE_COL = "#08060f";
+// Chaves migradas para arte de papel (fonte suave em alta): a assação e o
+// contorno usam interpolação; sprites legados pixel-art preservam o corte
+// sem suavização. Preencher a lista junto da troca dos PNGs (lote de migração).
+export const SMOOTH_KEYS = new Set();
+export function markSmoothSprite(key) { SMOOTH_KEYS.add(key); }
+function smoothFor(img, key) { return SMOOTH_KEYS.has(key) || img.width > 256 || img.height > 256; }
 // 8 direções: contorno de 1px ao redor da silhueta
 const OUT_DIRS = [[1, 0], [-1, 0], [0, 1], [0, -1], [1, 1], [1, -1], [-1, 1], [-1, -1]];
 
 const FINISHED = new Map();
 
 /** Silhueta sólida de um sprite (para contorno / rim / sombra). */
-function silhouette(img, color) {
+function silhouette(img, color, key) {
   const cv = document.createElement("canvas");
   cv.width = img.width; cv.height = img.height;
   const c = cv.getContext("2d");
-  c.imageSmoothingEnabled = false;
+  c.imageSmoothingEnabled = smoothFor(img, key);
   c.drawImage(img, 0, 0);
   c.globalCompositeOperation = "source-in";
   c.fillStyle = color;
@@ -354,7 +360,7 @@ function finishSprite(key) {
   let f = FINISHED.get(key);
   if (f) return f;
   const body = IMG[key];
-  f = { body, out: silhouette(body, OUTLINE_COL) };
+  f = { body, out: silhouette(body, OUTLINE_COL, key) };
   FINISHED.set(key, f);
   return f;
 }
@@ -373,7 +379,7 @@ export function bakeRot(key, outSize) {
     const cv = document.createElement("canvas");
     cv.width = cv.height = pad;
     const c = cv.getContext("2d");
-    c.imageSmoothingEnabled = false;
+    c.imageSmoothingEnabled = smoothFor(img, key);
     c.translate(pad / 2, pad / 2);
     c.rotate((i / ROT_ANGLES) * Math.PI * 2 + Math.PI / 2); // sprite aponta "para cima"
     // 1) contorno
@@ -383,15 +389,16 @@ export function bakeRot(key, outSize) {
     frames.push(cv);
   }
   ROT[key] = { frames, size: pad };
-  WROT[key] = bakeWhiteOf(frames);
+  WROT[key] = bakeWhiteOf(frames, smoothFor(img, key));
   return ROT[key];
 }
 
-function bakeWhiteOf(frames) {
+function bakeWhiteOf(frames, smooth) {
   const white = frames.map((f) => {
     const cv = document.createElement("canvas");
     cv.width = f.width; cv.height = f.height;
     const c = cv.getContext("2d");
+    c.imageSmoothingEnabled = !!smooth;
     c.drawImage(f, 0, 0);
     c.globalCompositeOperation = "source-in";
     c.fillStyle = "#ffffff";

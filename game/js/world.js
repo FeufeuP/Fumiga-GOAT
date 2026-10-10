@@ -289,6 +289,18 @@ function bakePileSprite(rng) {
   const cv = document.createElement("canvas");
   cv.width = 56; cv.height = 40;
   const c = cv.getContext("2d");
+  // Pilha em arte de papel quando o PNG do lote existir; sem ele, o desenho
+  // procedural legado continua como está (nada de placeholder no runtime).
+  const art = typeof IMG !== "undefined" && IMG.pile_food;
+  if (art) {
+    c.imageSmoothingEnabled = true;
+    const flip = rng() < 0.5;
+    if (flip) { c.translate(56, 0); c.scale(-1, 1); }
+    const k = 0.92 + rng() * 0.16;
+    const w = 56 * k, h = 40 * k;
+    c.drawImage(art, (56 - w) / 2, 40 - h, w, h);
+    return cv;
+  }
   c.imageSmoothingEnabled = false;
   // monte de terra
   c.fillStyle = "#4a3226";

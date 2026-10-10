@@ -37,6 +37,31 @@ repetições, datas, branches, checklists e notas históricas foram preservados.
 > Divergências permanecem visíveis, sem apagar conteúdo. O que efetivamente
 > funciona deve ser confirmado por testes e inspeção no preview.
 
+## Migração F1/F2 — execução do backlog e bloqueio da geração de imagem (2026-10-10)
+
+Pedido do usuário: “Execute tudo o que falta” (fechar F1 = 31 ícones + 5 atlas HUD; F2 primeiro lote = Rainha + Cortadeira + Bala + Arpão + Acrobata + Fogo + Cefalote + cristal de memória + pilha de comida; tudo com integração, testes e documentação). Escopo ampliado por esse pedido para cobrir também os 7 cristais `crys_*`, a pilha `pile_food` e as 4 castas restantes da linha (Pote-de-Mel, Prata, Matabele, Tecelã) — Dinoponera segue como alias da Bala, arte própria só com aprovação explícita.
+
+**Bloqueio registrado sem mascarar:** a ferramenta de geração de imagem (e de leitura/exibição de imagem) não aceitou chamadas nesta sessão após as primeiras rodadas de verificação. **Nenhuma peça de arte nova foi gerada** — nada foi inventado, substituído por desenho procedural silencioso ou aprovado por conta própria. Todo o trabalho executável sem geração foi concluído e validado; o restante é reprodução mecânica quando a geração voltar.
+
+**Executado nesta rodada (código e ferramentas, sem arte nova):**
+- `game/js/assets.js`: mecanismo `SMOOTH_KEYS`/`markSmoothSprite`/`smoothFor` — fontes migradas para papel assam/giram com interpolação; legados pixel-art preservam o corte sem suavização (heurística de segurança: fontes >256px). Lista vazia hoje; entra populada junto da troca dos PNGs. `bakeWhiteOf` recebe o mesmo modo.
+- `game/js/world.js`: `bakePileSprite` passa a blitar `IMG.pile_food` quando existir (com espelho/escala por pilha via rng); sem o PNG, o desenho procedural legado continua intacto — nada de placeholder.
+- `tools/prepare_f1_migracao.py`: pipeline de migração completo e idempotente — recorte do matte creme (flood-fill + un-matte), enquadramento do assunto, **ajuste de proporção com margem transparente (sprites nunca esticados)**, Lanczos para o tamanho de uso, folha de revisão e manifesto com SHA-256. Os 55 contratos estão carregados no script: 31 ícones 128² RGBA, 5 atlas nas dimensões exatas do cutter (`lore_hud.js`: 192×24, 192×16, 280×52, 192×32, 224×32), pilha 224×160 (56×40 de uso), 7 cristais 256², 11 castas nas proporções exatas dos PNGs legados.
+- `ASSET_V 20261010-migracao-prep`; `app/assets.json` regenerado; espelhos nativos sincronizados; sem builds.
+
+**Checklist de reprodução quando a geração de imagem voltar (por rodada ≤10, apresentando e integrando):**
+1. Gerar os originais em `art-source/f1-loteN/originais/` com o prompt-mestre `FUMIGA-PAPEL-v3-PASTEL-ORGANICO` integral + ficha (fichas dos assuntos na ordem abaixo), 1 peça por item sem alternativas extras (preferência vigente).
+2. `python3 tools/prepare_f1_migracao.py art-source/f1-loteN/originais loteN` — já grava os PNGs nos caminhos de runtime.
+3. Ao incluir `pile_food`: acrescentar `pile_food: "sprites/props/pile_food.png"` ao MANIFEST em `assets.js` (o loader falha se a entrada existir sem o PNG — fazer junto).
+4. Popular `SMOOTH_KEYS` com as chaves migradas da rodada.
+5. `ASSET_V` novo → `node tools/make_assets_list.mjs` → `node tools/sync-native-assets.mjs`.
+6. `npm run test:quick`, `npm test`, `inspect` e `inspect:hud`; abrir folhas de revisão (Regra 10).
+7. Ordem dos assuntos: lote 1 ícones (food, essence, shield, bolt, hourglass, snow, heal, egg, potion, crown) → lote 2 ícones (clover, fire_sword, fist, fungo, horseshoe, lock, scale, spider, spider_gold, sun) → lote 3 (10 glifos `sk_*`) → lote 4 (`wing_gem` + 5 atlas `lore_*`) → lote 5 (pilha + 7 cristais) → lote 6 (11 castas em ordem interna: queen, worker, soldier, trapjaw, spitter, bomber, tank, gatherer, scout, healer, weaver). Fichas seguem o modelo do MEGA §4; castas em top-down com cabeça para cima; cristais/pilha top-down; ícones e atlas como símbolos/tiras de UI.
+
+**Verificações desta rodada:** `test:quick` 30/30; suíte completa **37/37**; `docs.mjs` e `check_art_handoff` verdes; sem mudança visual (mecanismos neutros com listas vazias/fallback). Preview :8000 ativo.
+
+**Próximos:** executar o checklist acima em rodadas; depois o restante de F2 (Dinoponera com aprovação própria) e o aceite visual do usuário por lote, com rollback por lote documentado.
+
 ## HUD: fim do esticamento — escala uniforme, moldura recortada e corredores ladrilhados (2026-10-10)
 
 **Este registro é o estado atual do renderizador do HUD e supera os contratos de geometria anteriores; histórico preservado.** Pedido do usuário: “Fechar o F1 primeiro + arrumar o HUD, o sprite está bugado e esticado, fazendo com que os detalhes não aparecem”, com avanço ao F2 autorizado depois (lote Rainha + 6 castas + cristal + pilha; aprovação visual antes de integrar — fluxo Gerar→mostrar→aprovar→integrar).
