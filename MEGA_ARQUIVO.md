@@ -37,6 +37,20 @@ repetições, datas, branches, checklists e notas históricas foram preservados.
 > Divergências permanecem visíveis, sem apagar conteúdo. O que efetivamente
 > funciona deve ser confirmado por testes e inspeção no preview.
 
+## Lote 5 (piloto F0b) APROVADO+INTEGRADO — Rainha/Cortadeira no jogo · R6 (pile_food + 7 crys) GERADO (aguarda aprovação) (2026-10-10)
+
+**Pedido:** “Aprovado” (lote 5) — cadência: integrar o lote aprovado + gerar a próxima rodada (≤10) e parar para aprovação.
+
+**Lote 5 INTEGRADO (piloto F0b, aprovado):** Rainha → `game/assets/sprites/ants/queen.png` (208×256) e Cortadeira → `game/assets/sprites/ants/worker.png` (176×240) via staging `art-source/f0b-r5/spec/{queen,worker}.png` + `prepare_f1_migracao.py ... f0b-integrado`; `SMOOTH_KEYS = ["queen","worker"]` (bakeRot das castas agora suaviza a arte de papel; antes vazio — castas não são auto-marcadas por `loadAll`); `ASSET_V 20261010-f0b-r5` + listas + sync. **2/11 castas migradas** (queen 1º conforme fila). `Cortadeira` = casta `worker` confirmado (`config.js`: FORMIGA-CORTADEIRA, A AGRICULTORA). As outras 3 peças do piloto (**larva do berçário**, **cristal âmbar de memória**, **base limpa Planície em Y**) estão APROVADAS como referência do F0b mas sem contrato de runtime neste momento — entram pelo mock/produção do F0b (portas de aceite em `docs/arte/PILOTO_F0b.md`). Defeitos do piloto antigo (2026-10-08) evitados: xadrez, silhueta copiada, halos claros, botânica embutida.
+
+**R6 GERADO — NÃO INTEGRADO (aguarda aprovação):** 8 peças em `art-source/f1-lote6/originais/` (prompt-mestre v3 integral + ficha §4): `pile_food` (pilha de folhas/cogumelos/seiva, 224×160) + 7 `crys_*` 256² top-down — **identidade semântica aplicada:** `crys_blue1`/`crys_blue2`/`crys_violet1` em pastéis TEAL/ÁGUA (nomes legados mantidos, sem roxo/azul-escuro — decisão "Pode migrar também"), `crys_yellow1` âmbar, `crys_white1` branco-osso da Névoa, `crys_green1` verde-folha, `crys_red1` terracota; veios de essência `#ffd479` em todos. Preparados em `art-source/_revisao-r6/` via `--out-root` (runtime intocado); **8/8 contratos exatos**; folha apresentada (Regra 10). Observação de revisão: `crys_white1` saiu mais filiforme/etéreo que as irmãs (leitura de coral/filamento) — refinar se você quiser.
+
+**Integração pós-aprovação do R6 (checklist):** prepare sem `--out-root` + **acrescentar `pile_food: "sprites/props/pile_food.png"` ao MANIFEST de `assets.js` no mesmo commit** (o loader quebra se a chave existir sem PNG, e `bakePileSprite` só usa `IMG.pile_food` com a entrada) + marcar `pile_food`/`crys_*` em `SMOOTH_KEYS` + `ASSET_V` + listas + sync + testes.
+
+**Verificado nesta rodada:** `test:quick` **30/30** e suíte completa **37/37** com Rainha/Cortadeira de papel no jogo (`ASSET_V 20261010-f0b-r5`); lote6 8/8 dimensões de contrato. Preview :8000 ativo.
+
+**Fila restante:** aprovação do R6 → integrar (crys + pile_food fecham os props de mundo) → R7 = 9 castas restantes (soldier, trapjaw, spitter, bomber, tank, gatherer, scout, healer, weaver — cabe em 1 rodada; Dinoponera = alias `giant`→`soldier` sem sprite próprio) → depois F2–F9 por encomenda (cenário legado, flores, árvore etc.).
+
 ## Lote 4 APROVADO+INTEGRADO — F1 FECHADO (32/32 ícones + 5 atlas + paleta) · R5 piloto F0b GERADO (aguarda aprovação) (2026-10-10)
 
 **Pedido:** “Aprovado” (lote 4) — cadência: integrar o lote aprovado + gerar a próxima rodada (≤10) e parar para aprovação.
