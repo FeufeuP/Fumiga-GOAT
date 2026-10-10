@@ -209,25 +209,52 @@ export function button(ctx, opt) {
     hr = (x1 > x0 && y1 > y0) ? { x: x0, y: y0, w: x1 - x0, h: y1 - y0 } : null;
     if (!hr) hr = { x: -9999, y: -9999, w: 0, h: 0, hidden: true };
   }
-  const hot = pointInRect(mouse.x, mouse.y, hr.x, hr.y, hr.w, hr.h);
+  const pointerHot = pointInRect(mouse.x, mouse.y, hr.x, hr.y, hr.w, hr.h);
+  // opt.selected = seleção de menu por teclado (estilo Dead Cells): acende o
+  // item exatamente como o hover do ponteiro, sem precisar do mouse em cima.
+  const hot = pointerHot || !!opt.selected;
   const dis = !!opt.disabled;
-  const down = hot && mouse.down && !dis;
+  const down = pointerHot && mouse.down && !dis;
   // opt.tap: botão dentro de área rolável — dispara ao SOLTAR sem ter
   // arrastado (mouse.clickX/Y guardam onde o gesto começou), então rolar a
   // lista por cima do botão não o aciona por acidente. Botão normal dispara
   // ao pressionar, como sempre.
-  const tapped = hot && mouse.justUp && !dis &&
+  const tapped = pointerHot && mouse.justUp && !dis &&
     Math.hypot(mouse.x - mouse.clickX, mouse.y - mouse.clickY) <= (opt.tapSlop || 14);
-  const clicked = opt.tap ? tapped : (hot && mouse.justDown && !dis);
+  const clicked = opt.tap ? tapped : (pointerHot && mouse.justDown && !dis);
   const A = animOf(opt.id || (opt.label + x + y), hot && !dis, down);
   const hv = dis ? 0 : A.hover;
   const pr = dis ? 0 : A.press;
+  const textMode = opt.style === "text";
 
-  // o botão "levanta" no hover e afunda no clique
-  const lift = down ? 1.5 : -1.6 * hv;
+  // o botão "levanta" no hover e afunda no clique (só com caixa; texto flutua)
+  const lift = textMode ? 0 : (down ? 1.5 : -1.6 * hv);
   const bx = x, by = y + lift;
 
   layoutBox(ctx,'botao',bx,by,w,h,opt.id || opt.label);
+  if (textMode) {
+    // Estilo Dead Cells pedido no TITLE: só a escrita, SEM caixa/HUD atrás —
+    // o texto clareia e desliza no hover/seleção, com um losango na cor do
+    // item marcando a seleção. Quantizado p/ não encher o cache de glifos.
+    const q = Math.round(hv * 16) / 16;
+    const scale = (opt.scale || 1) * (1 + 0.08 * q - 0.02 * pr);
+    const col = dis ? "#5a4f78" : mix("#cdc3e0", "#ffffff", q);
+    const ty = by + h / 2 - (opt.font === "big" ? 15 : 8) - 2;
+    const tx = bx + 20 + 6 * q;
+    if (!dis && q > 0.02) {
+      const s = opt.font === "big" ? 6 : 5;
+      const mx = bx + 5, my = by + h / 2 - 1;
+      ctx.save();
+      ctx.globalAlpha = q;
+      ctx.fillStyle = opt.accent || PAL.teal;
+      ctx.beginPath();
+      ctx.moveTo(mx, my - s); ctx.lineTo(mx + s, my); ctx.lineTo(mx, my + s); ctx.lineTo(mx - s, my);
+      ctx.closePath(); ctx.fill();
+      ctx.restore();
+    }
+    drawText(ctx, opt.label, tx, ty,
+      { font: opt.font || "small", scale, color: col, align: "left", shadow: true, maxWidth: VIEW_W - tx - 24 });
+  } else {
   const paperButton=drawPaper(ctx,'button',bx,by,w,h,{disabled:dis,hot:hot,pressed:down,selected:opt.selected});
   if(!paperButton) {
     panel(ctx,bx,by,w,h,{paper:false,kind:'botao',fill:PAL.panel,border:PAL.border});
@@ -246,6 +273,7 @@ export function button(ctx, opt) {
   drawText(ctx, opt.label, bx + w / 2 + (opt.icon ? 12 : 0) - (opt.selected ? 8 : 0),
     by + h / 2 - (opt.font === "big" ? 15 : 8) - 2,
     { font: opt.font || "small", scale, color: col, align: "center", shadow: true, paper: paperButton, maxWidth: Math.max(8,w - (paperButton ? Math.min(w*.5,h*2.02) : 48) - (opt.icon ? 24 : 0) - (opt.selected ? 18 : 0)) });
+  }
 
   // o retângulo publicado é o da HITBOX: é ele que decide se o toque é da UI
   // (uiCapture) — publicar o desenho deixaria o dedo "atravessar" a borda do

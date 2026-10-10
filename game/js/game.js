@@ -1258,10 +1258,30 @@ function renderTitle() {
     { label: "OPÇÕES", id: "options", accent: "#ffb347", h: 40, font: "big" },
     { label: "COMO JOGAR", id: "help", accent: "#6db7ff", h: 38 },
   ];
+  // Navegação estilo Dead Cells (pedido 2026-10-10): ↑↓/W-S circulam a seleção
+  // com wrap, Enter/Espaço confirma; o hover do ponteiro sincroniza a seleção
+  // (hover = seleção). No toque não há seleção persistente — o dedo aciona direto.
+  const keyboardUI = !isTouchUI();
+  if (pressed["ArrowDown"] || pressed["KeyS"]) titleSel = (titleSel + 1) % btns.length;
+  else if (pressed["ArrowUp"] || pressed["KeyW"]) titleSel = (titleSel - 1 + btns.length) % btns.length;
+  if (titleSel < 0 || titleSel >= btns.length) titleSel = 0;
+  const titleConfirm = keyboardUI && (pressed["Enter"] || pressed["NumpadEnter"] || pressed["Space"]);
+
   // FONTE GRANDE no PC: 6px a mais de respiro entre o subtítulo e o 1º botão
   let by = mobile ? 252 : (tFS > 1 ? 258 : 252);
-  for (const b of btns) {
-    if (button(ctx, { x: bx, y: by, w: bw, h: b.h, label: b.label, font: b.font || "small", scale: b.id === "options" ? 0.9 : 1, id: b.id, accent: b.accent })) {
+  if (keyboardUI) {
+    for (let i = 0; i < btns.length; i++) {
+      if (pointInRect(mouse.x, mouse.y, bx, by, bw, btns[i].h)) titleSel = i;
+      by += btns[i].h + (mobile ? 22 : 10);
+    }
+    by = mobile ? 252 : (tFS > 1 ? 258 : 252);
+  }
+  for (let i = 0; i < btns.length; i++) {
+    const b = btns[i];
+    const sel = keyboardUI && i === titleSel;
+    const clicked = button(ctx, { x: bx, y: by, w: bw, h: b.h, label: b.label, font: b.font || "small", scale: b.id === "options" ? 0.9 : 1, id: b.id, accent: b.accent, style: "text", selected: sel });
+    if (sel && titleConfirm && !clicked) SFX.uiClick();
+    if (clicked || (sel && titleConfirm)) {
       if (b.id === "start") {
         notePointer(mouse.x, mouse.y);
         initAudio();
@@ -1834,19 +1854,17 @@ function renderHelp() {
   };
 
   const contentY = helpTitleY + helpTitleH + 12;
+  // A tabela de CONTROLES (13 linhas no PC com a navegação do TITLE, 10 no
+  // toque) ocupa sozinha a coluna da direita; OBJETIVO + DICAS ficam na
+  // esquerda. Tudo cabe dentro da caixa, sem rolagem — também com FONTE GRANDE.
   if (helpFS > 1) {
-    // FONTE GRANDE: a tabela de controles (12 linhas, quase todas com descrição
-    // de 2 linhas) não cabe embaixo do OBJETIVO — ela passa a ocupar a coluna
-    // da direita sozinha, e OBJETIVO + DICAS ficam na esquerda. Tudo cabe
-    // dentro da caixa, sem rolagem.
     let yl = drawGoal(colX[0], contentY);
     drawTips(colX[0], yl + 18, 0.8);
     drawControls(colX[1], contentY, 0.7, 0.7);
   } else {
-    let y = contentY;
-    y = drawGoal(colX[0], y);
-    drawControls(colX[0], y + 18, 0.85, 0.85);
-    drawTips(colX[1], contentY, 0.9);
+    let yl = drawGoal(colX[0], contentY);
+    drawTips(colX[0], yl + 18, 0.9);
+    drawControls(colX[1], contentY, 0.85, 0.85);
   }
 
   const helpMobile = isMobileLayout();
@@ -2774,6 +2792,9 @@ function settleAbandon() {
 
 let helpReturn = "TITLE";
 let treeReturn = "TITLE";
+// Seleção de menu do TITLE por teclado (↑↓/Enter, estilo Dead Cells). O hover
+// do ponteiro sincroniza; no toque a seleção não é usada.
+let titleSel = 0;
 
 // Regra 14: árvore, santuários, profecias e memórias foram preparados no TITLE
 // (preload.js). Entrar e voltar dessas telas é só a transição rápida.
