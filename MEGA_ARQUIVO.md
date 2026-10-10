@@ -37,6 +37,18 @@ repetições, datas, branches, checklists e notas históricas foram preservados.
 > Divergências permanecem visíveis, sem apagar conteúdo. O que efetivamente
 > funciona deve ser confirmado por testes e inspeção no preview.
 
+## Lote 4 APROVADO+INTEGRADO — F1 FECHADO (32/32 ícones + 5 atlas + paleta) · R5 piloto F0b GERADO (aguarda aprovação) (2026-10-10)
+
+**Pedido:** “Aprovado” (lote 4) — cadência: integrar o lote aprovado + gerar a próxima rodada (≤10) e parar para aprovação.
+
+**Lote 4 INTEGRADO (aprovado):** 7 peças no runtime — `sk_time`, `sk_tornado` em `game/assets/sprites/icons/` + os 5 atlas `game/assets/ui/lore_*.png` (gaster 192×24, icons 192×16, kit 280×52, panels 192×32, textbox 224×32) via `prepare_f1_migracao.py art-source/f1-lote4/originais lote4` + `ASSET_V 20261010-f1-lote4` + listas + sync. **F1 está FECHADO:** 32/32 ícones + 5 atlas do HUD + paleta semântica migrada; tipografia/estados ganham os ornamentos de papel novos (tínhamos deixado registrado que fechavam com os atlas do R4).
+
+**R5 GERADO — piloto F0b NÃO INTEGRADO (aguarda aprovação):** 5 peças em `art-source/f0b-r5/originais/` (prompt-mestre v3 integral + ficha §4, sem alternativas extras): `rainha` (top-down, gaster âmbar + diadema orgânico de fungo/seda, nominal 189px, proporção queen 208×256), `cortadeira` (operária esguia com fragmento de folha, silhueta distinta da Rainha, nominal 45px, proporção worker 176×240), `larva` (berçário da colônia — NÃO e_runner; sem halo claro), `cristal` (cristal ÂMBAR de memória, estudo 48px, sem halo — não toca os veios crys_white1/crys_green1 da Planície), `base_planicie` (base limpa top-down com caminhos em Y, NENHUMA decoração embutida — Regra 19). Folha de revisão própria (`art-source/f0b-r5/folha-revisao-f0b-r5.png`) — os contratos do prepare não cobrem larva/base, então sem pipeline de runtime nesta rodada. Defeitos do piloto antigo (2026-10-08) evitados nas fichas: xadrez, silhueta copiada, halos claros, botânica embutida na base.
+
+**Verificado nesta rodada:** lote 4 integrado com `test:quick` **30/30** e suíte completa **37/37** (`ASSET_V 20261010-f1-lote4`); R5 5/5 originais em alta resolução (rainha 1132×1390, cortadeira 1088×1446, larva/cristal 1254², base 1536×1024). Preview :8000 ativo.
+
+**Fila restante:** aprovação do R5 → integrar/validar piloto F0b (mock com HUD real já tem porta de aceite em `docs/arte/PILOTO_F0b.md`; decidir na aprovação o que vira runtime: queen/worker pelos contratos do prepare) → R6 = `pile_food` + 7 `crys_*` (blue1/blue2/violet1 como pastéis teal/água; nomes mantidos) → R7/R8 = 11 castas (Rainha 1º; Dinoponera = alias `giant` sem sprite próprio). Depois F2–F9 por encomenda.
+
 ## Lote 3 APROVADO+INTEGRADO — 32/32 ícones F1 fechados · R4 GERADO (aguarda aprovação) (2026-10-10)
 
 **Pedido:** “Aprovado” (lote 3) — cadência vigente: integrar o lote aprovado + gerar a próxima rodada (≤10) e parar para aprovação.
