@@ -4,7 +4,7 @@ import { PAL, META_BRANCHES, META_STAGES, VIEW_W, VIEW_H, FRUIT_TREES } from "./
 import { G, metaLevel, metaCanBuy, metaBuy, isFruitUnlocked, isSupremeFlowerUnlocked, supremeProgress, isTreeStageUnlocked, treeStageRequirement } from "./state.js";
 import { FRUIT_POWER_PREFIX } from "./fruit_skills.js";
 import { drawText, textWidth, wrapText, fontScale, layoutRec } from "./font.js";
-import { IMG, loadSantuario } from "./assets.js";
+import { IMG, loadSantuario, drawSprite} from "./assets.js";
 import { panel, button, hitArea, pointInRect, isTouchUI } from "./ui.js";
 import { mouse } from "./input.js";
 import { SFX } from "./audio.js";
@@ -205,11 +205,12 @@ function drawNode(ctx, n) {
     ctx.strokeStyle = "#ffd479"; nodePath(ctx, p.x, p.y, radius + 5, tier); ctx.stroke();
     ctx.globalAlpha = 1;
   }
-  const icon = IMG[n.sprite] || IMG["i_" + n.icon];
+  const ikey = IMG[n.sprite] ? n.sprite : "i_" + n.icon;
+  const icon = IMG[ikey];
   if (icon) {
     const size = Math.max(9, Math.min(radius * 1.5, 46 * zoom));
     ctx.globalAlpha = relevant ? (lvl || unlocked ? 1 : .50) : .35;
-    ctx.drawImage(icon, Math.round(p.x - size / 2), Math.round(p.y - size / 2), size, size);
+    drawSprite(ctx, icon, ikey, Math.round(p.x - size / 2), Math.round(p.y - size / 2), size, size);
     ctx.globalAlpha = 1;
   }
   if (!relevant || zoom < .32 && !hot) return;

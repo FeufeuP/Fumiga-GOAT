@@ -144,17 +144,12 @@ def fit_icon(im: Image.Image) -> Image.Image:
     return sq.resize((128, 128), Image.Resampling.LANCZOS)
 
 def fit_atlas(im: Image.Image, tw: int, th: int) -> Image.Image:
-    """Tira central na proporção exata do contrato (o original traz a tira)."""
-    w, h = im.size
-    ratio = tw / th
-    bh = int(w / ratio)
-    if bh <= h:
-        y0 = (h - bh) // 2
-        im = im.crop((0, y0, w, y0 + bh))
-    else:
-        bw = int(h * ratio)
-        x0 = (w - bw) // 2
-        im = im.crop((x0, 0, x0 + bw, h))
+    """Tira de UI: matte creme removido e conteúdo preenche o quadro exato do cutter.
+    Preencher o bbox (leve esticamento) é intencional SÓ aqui: alinha as células
+    dos cutters (16px/64px) — os atlas legados são majoritariamente transparentes."""
+    im = strip_matte(im)
+    bbox = im.getbbox()
+    if bbox: im = im.crop(bbox)
     return im.convert('RGBA').resize((tw, th), Image.Resampling.LANCZOS)
 
 def rel_or_abs(p: Path) -> str:

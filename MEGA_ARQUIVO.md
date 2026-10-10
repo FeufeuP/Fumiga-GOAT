@@ -37,6 +37,30 @@ repetições, datas, branches, checklists e notas históricas foram preservados.
 > Divergências permanecem visíveis, sem apagar conteúdo. O que efetivamente
 > funciona deve ser confirmado por testes e inspeção no preview.
 
+## F1 lote 1 INTEGRADO — 10 ícones de papel + suavização por chave (2026-10-10)
+
+**Pedido:** “Siga com os próximos passos” — continuar o backlog na ordem registrada, sem gate de aprovação por lote (decisão “Execute tudo” vigente), mas com toda arte apresentada (Regra 10) e rollback documentado.
+
+**Geração de imagem voltou** nesta rodada; a plataforma impõe teto próprio de **10 imagens por turno** (erro explícito ao estourar, alinhado à Regra 16). R1 gerou 10/10; R2–R6 (45 peças) continuam nos turnos seguintes na ordem já registrada.
+
+**Prompt:** `FUMIGA-PAPEL-v3-PASTEL-ORGANICO` integral + ficha por peça (modelo §4), 1 peça por item sem alternativas extras (preferência vigente). Originais 1024² fundo creme opaco uniforme.
+
+**Gerado (originais):** `art-source/f1-lote1/originais/{food,essence,shield,bolt,hourglass,snow,heal,egg,potion,crown}.png` (10). Espelho preparado + `folha-revisao.png` + `manifest.json` (sha256 origem/runtime) em `art-source/f1-lote1-preparado/`.
+
+**Integrado (runtime):** 10 ícones em `game/assets/sprites/icons/*.png` — 128² RGBA, matte creme recortado, símbolo enquadrado sem esticar. **11/32 ícones migrados** (com a brasa); restam 21 legados. Consumidores intactos (caminhos idênticos).
+
+**Mecanismo novo:** `drawSprite(ctx, img, key, x, y, w, h)` em `assets.js` (suavização conforme `SMOOTH_KEYS`/origem grande; legado preserva corte) aplicado nos 8 pontos de desenho de ícone (`game.js`×5, `nest.js`×2, `meta.js`×1); chaves `i_*` de fonte ≥128² são marcadas automaticamente no `loadAll`. `fit_atlas` do prepare agora remove matte e preenche o quadro do cutter (os 5 atlas legados têm 34–66% de transparência; o plano antigo de tira central deixaria fundo creme indevido).
+
+**Verificado:** sanidade do prepare 10/10 (dimensões/alfa), `test:quick` **30/30**, suíte completa **37/37**. Apresentação da folha de revisão ao usuário na entrega (Regra 10); aceite visual **não** é inferido por testes.
+
+**Backup (Regra 13):** pasta Drive `f1-lote1-icones-preparado` (id `1ZnAlWyreQoiKLKlS-y2W-BZu-AjRv0Oq`) dentro de `1IMj_-7VQf_asmRmMoMSzKxIQ37M6DXlW`, com 10 originais 1024² + folha de revisão + manifesto (12 arquivos, ~25 MB, upload confirmado).
+
+**Rollback por lote:** `git revert` do commit deste lote restaura os 10 PNGs legados e o código anterior; originais/derivados permanecem em `art-source/` e no Drive.
+
+**Observação de revisão:** o ícone `egg` ficou com baixo contraste contra o creme (quase some no fundo) — candidato a re-geração com pigmento mais definido nos próximos turnos; decisão final é do usuário. Os demais 9 lêem bem ampliados; aceite visual do usuário pendente de confirmação explícita.
+
+**Próximos (turnos seguintes, na ordem):** R2 ícones (clover, fire_sword, fist, fungo, horseshoe, lock, scale, spider, spider_gold, sun) → R3 (wing_gem + 9 glifos sk_*) → R4 (sk_tornado + 5 atlas lore_*) → R5 (pile_food + 7 crys + queen + worker) → R6 (9 castas restantes) → tipografia/estados + barras roxas legadas (F1) → Dinoponera só com aprovação.
+
 ## Migração F1/F2 — execução do backlog e bloqueio da geração de imagem (2026-10-10)
 
 Pedido do usuário: “Execute tudo o que falta” (fechar F1 = 31 ícones + 5 atlas HUD; F2 primeiro lote = Rainha + Cortadeira + Bala + Arpão + Acrobata + Fogo + Cefalote + cristal de memória + pilha de comida; tudo com integração, testes e documentação). Escopo ampliado por esse pedido para cobrir também os 7 cristais `crys_*`, a pilha `pile_food` e as 4 castas restantes da linha (Pote-de-Mel, Prata, Matabele, Tecelã) — Dinoponera segue como alias da Bala, arte própria só com aprovação explícita.

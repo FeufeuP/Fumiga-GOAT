@@ -192,7 +192,7 @@ const WROT = {};         // silhuetas brancas rotacionadas (hit flash)
 // ANTIGA nos mesmos nomes de arquivo (foi assim que o rework dos inimigos da
 // Fase 2 "não apareceu" para quem já tinha jogado antes dele).
 // ---------------------------------------------------------------------------
-export const ASSET_V = "20261010-migracao-prep";
+export const ASSET_V = "20261010-f1-lote1";
 
 /**
  * URL final de um asset do jogo: base certa para a página atual + anti-cache.
@@ -303,6 +303,7 @@ export async function loadAll(onProgress) {
       }
       if (img) {
         IMG[k] = img;
+        if (k.startsWith("i_") && img.width >= 128 && img.height >= 128) markSmoothSprite(k);
         LOAD.done++;
         if (onProgress) onProgress(LOAD.done / keys.length);
       } else {
@@ -337,6 +338,15 @@ const OUTLINE_COL = "#08060f";
 export const SMOOTH_KEYS = new Set();
 export function markSmoothSprite(key) { SMOOTH_KEYS.add(key); }
 function smoothFor(img, key) { return SMOOTH_KEYS.has(key) || img.width > 256 || img.height > 256; }
+
+// Desenha qualquer sprite/ícone com a suavização adequada à origem:
+// chave migrada (papel) ou fonte grande = suave; legado pixel-art = corte exato.
+export function drawSprite(ctx, img, key, x, y, w, h) {
+  const prev = ctx.imageSmoothingEnabled;
+  ctx.imageSmoothingEnabled = smoothFor(img, key);
+  ctx.drawImage(img, x, y, w, h);
+  ctx.imageSmoothingEnabled = prev;
+}
 // 8 direções: contorno de 1px ao redor da silhueta
 const OUT_DIRS = [[1, 0], [-1, 0], [0, 1], [0, -1], [1, 1], [1, -1], [-1, 1], [-1, -1]];
 

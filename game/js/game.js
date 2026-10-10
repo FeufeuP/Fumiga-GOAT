@@ -18,7 +18,7 @@ import { fogReset, fogUpdate, fogDraw, fogVisible, fogExplored, fogDrawMini } fr
 import {
   G, mods, metaBonus, mutBonus, toggleMute, persistSave, loadSave, checkProphecies,
 } from "./state.js";
-import { IMG, rotFrame } from "./assets.js";
+import { IMG, rotFrame,  drawSprite } from "./assets.js";
 import { drawText, textWidth, textHeight, wrapText, fitTextBlock, layoutRec, fontScale, setOptionsFontAccent } from "./font.js";
 import { keys, pressed, mouse, initInput, touchMode } from "./input.js";
 import { cam, camReset, updateCam, panCam, zoomCam, shake, screenToWorld, worldToScreen, visibleWorldRect } from "./camera.js";
@@ -2056,7 +2056,7 @@ function drawHUD() {
       ctx.fillRect(ix, mutY, 20, 20);
       ctx.strokeStyle = RARITY[mm.rar].color; ctx.lineWidth = 1;
       ctx.strokeRect(ix + 0.5, mutY + 0.5, 19, 19);
-      if (icon) ctx.drawImage(icon, ix + 2, mutY + 2, 16, 16);
+      if (icon) drawSprite(ctx, icon, "i_" + mm.icon, ix + 2, mutY + 2, 16, 16);
       // brilho seiva por baixo
       ctx.fillStyle = RARITY[mm.rar].color;
       ctx.globalAlpha = 0.18;
@@ -2248,8 +2248,9 @@ function drawHUD() {
     const nw = 142, nx2 = VIEW_W - 10 - nw;
     drawBiomeTexture(ctx, nx2, footY, nw, 64, biomeId, G.time*0.12);
     const rNest = iconButton(ctx, { x: nx2, y: footY, w: nw, h: 64, id: "nestBtn", frame: bh.accent });
-    const nestImg = IMG.nest || IMG.i_essence;
-    if (nestImg) ctx.drawImage(nestImg, nx2 + nw / 2 - 14, footY + 2, 28, 28);
+    const nestKey = IMG.nest ? "nest" : "i_essence";
+    const nestImg = IMG[nestKey];
+    if (nestImg) drawSprite(ctx, nestImg, nestKey, nx2 + nw / 2 - 14, footY + 2, 28, 28);
     {
       const t = G.time * 2.2;
       for (let i = 0; i < 3; i++) {
@@ -2555,7 +2556,7 @@ function drawDraft(draft) {
         ctx.fillRect(x + cw / 2 - 36, y + 26 - lift, 72, 72);
         ctx.restore();
       }
-      ctx.drawImage(icon, x + cw / 2 - 30, y + 32 - lift, 60, 60);
+      drawSprite(ctx, icon, "i_" + mm.icon, x + cw / 2 - 30, y + 32 - lift, 60, 60);
     }
     drawText(ctx, rare.name, x + cw / 2, y + 112 - lift, { color: rare.color, align: "center", maxWidth: cw - 16 });
     // passo pelo tamanho real da tinta: com FONTE GRANDE o nome (big) cobria a raridade
@@ -2857,7 +2858,7 @@ function renderProphecyScreen() {
 
   panel(ctx, VIEW_W - 520, 10, 160, 70, { border: "#c77dff" });
   const ic = IMG.i_essence;
-  if (ic) { ctx.imageSmoothingEnabled = false; ctx.drawImage(ic, VIEW_W - 512, 22, 34, 34); }
+  if (ic) drawSprite(ctx, ic, "i_essence", VIEW_W - 512, 22, 34, 34);
   drawText(ctx, G.save.essence, VIEW_W - 468, 28, { font: "big", scale: 1, color: "#c77dff", maxWidth: 88 });
 
   if (button(ctx, { x: VIEW_W - 180, y: 18, w: 156, h: 44, label: "VOLTAR", id: "prophecyBack", font: "small", accent: "#ff4d5a" })) {
@@ -2965,7 +2966,7 @@ function drawEnd(run) {
     let ix = PX + 24;
     for (const mm of run.mutationLog.slice(0, maxIcons)) {
       const icon = IMG["i_" + mm.icon];
-      if (icon) ctx.drawImage(icon, ix, iy, 20, 20);
+      if (icon) drawSprite(ctx, icon, "i_" + mm.icon, ix, iy, 20, 20);
       ix += 26;
     }
     if (run.mutationLog.length > maxIcons) {

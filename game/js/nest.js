@@ -14,7 +14,7 @@
 // ============================================================================
 import { CHAMBERS, MAPS, PAL, VIEW_W, VIEW_H } from "./config.js";
 import { G, mods } from "./state.js";
-import { IMG, rotFrame, rotDrawSize } from "./assets.js";
+import { IMG, rotFrame, rotDrawSize, drawSprite} from "./assets.js";
 import { drawOutsideEye, PIP } from "./render.js";
 import { drawText, textWidth, wrapText, fitTextBlock, fontScale } from "./font.js";
 import { button, panel, bar, pointInRect, isTouchUI } from "./ui.js";
@@ -992,10 +992,10 @@ function drawNestHud(ctx) {
   const foodStr = infMoney ? "∞" : String(run ? run.food : 0);
   const essStr = infMoney ? "∞" : String(run ? run.essencePool : 0);
   let bx = 16;
-  if (IMG.i_food) ctx.drawImage(IMG.i_food, bx, y1 - 2, 18, 18);
+  if (IMG.i_food) drawSprite(ctx, IMG.i_food, "i_food", bx, y1 - 2, 18, 18);
   drawText(ctx, foodStr, bx + 24, y1, { font: "big", scale: 1, color: "#ffd479", maxWidth: 90 });
   bx += 24 + Math.max(46, textWidth(foodStr, { font: "big" })) + 16;
-  if (IMG.i_essence) ctx.drawImage(IMG.i_essence, bx, y1 - 2, 18, 18);
+  if (IMG.i_essence) drawSprite(ctx, IMG.i_essence, "i_essence", bx, y1 - 2, 18, 18);
   drawText(ctx, essStr, bx + 24, y1, { font: "big", scale: 1, color: "#c77dff", maxWidth: 90 });
   bx += 24 + Math.max(46, textWidth(essStr, { font: "big" })) + 16;
   const lvlTxt = "NÍVEL " + (run ? run.level : 0);
