@@ -37,6 +37,22 @@ repetições, datas, branches, checklists e notas históricas foram preservados.
 > Divergências permanecem visíveis, sem apagar conteúdo. O que efetivamente
 > funciona deve ser confirmado por testes e inspeção no preview.
 
+## Lote 2 APROVADO+INTEGRADO · paleta semântica migrada · lote 3 GERADO (aguarda aprovação) (2026-10-10)
+
+**Pedido:** “Aprovado. Pode migrar também.” — (1) aprovação do lote 2 → integrar + gerar próxima rodada (cadência 10→aprovação→10 segue ativa); (2) migrar também os acentos semânticos mantidos (raridade/essência/categorias/biomas/VFX) para a paleta pastel terrosa.
+
+**Lote 2 INTEGRADO (aprovado):** 10 ícones (clover, fire_sword, fist, fungo, horseshoe, lock, scale, spider, spider_gold, sun) em `game/assets/sprites/icons/` via prepare + `ASSET_V 20261010-f1-lote2` + listas + sync. **21/32 ícones migrados** (ember + lote1 + lote2); restam 11 (wing_gem + 10 glifos) = lote 3.
+
+**Migração semântica completa (sem roxo/azul-escuro no código):** identidades fechadas — **essência/memória = `#ffd479`** (âmbar-dourado, bate com o ícone aprovado), **nó âmbar = `#e8a24a`**, **magia/renascimento/VFX = `#37e6c8`** (ciano-esmeralda), **RARA = `#c9a86a`** (bronze), **ÉPICA = `#c75b4a`** (terracota), **CRIAÇÃO/care = `#9aa84e`** (oliva), **FLORESTA = `#8fae4e`**, **NÉVOA-MÃE = `#e8e0cc`** (branco-osso quente), **GELO = `#e8f4ff`** (unificado nos dois mapas de cores). Além disso: céu do TITLE (dia e noite — sombras violeta-escuras → castanhas quentes), flores/ambiente (`#c26be0`/`#c98df5` → terracota/areia), rampas de sombra ardósia de `config.js` → castanhas, `PAL.{blue,violet,essence,borderHi}`, tutorial, cutscenes, lore_hud (todos os temas), meta, loading, particles, combat, enemies, units, waves, lore_vfx. **Preservados por design:** tokens de texto legados (`#9a8fc0`/`#5a4f78`/`#6b5a8a`/`#8f7bb5`) e a tabela de remap de tinta do `resolveFontColor` (são a ponte legado→tinta; intocados), ciano de energia (`#37e6c8`/`#6ee7ff`) eᾗ materiais claros de gelo. Crys futuras seguem a identidade: essência (nós) em família ciano/teal — **fichas de R5/R5b devem gerar crys_blue1/blue2/violet1 como pastéis de água/teal, não roxo** (decisão registrada; nomes de arquivo permanecem).
+
+**Incidente `pwa` (transparência):** após as mudanças de código em `game/js`, `test:quick` e `npm test` falharam no teste `pwa` (lista de assets desatualizada). Rotina executada: `ASSET_V 20261010-paleta-terrosa` + `make_assets_list` + `sync-native` → **30/30 e 37/37 verdes**.
+
+**Glitch de exibição (transparência):** `read_file` da folha do lote 3 serviu a imagem do lote 2 duas vezes; verificado em disco por md5 distinto + amostragem de pixels das células + peça isolada (`sk_heart` terracota no centro); cópia `folha-revisao-lote3.png` (nome novo) exibiu corretamente. Nada de arte foi trocado.
+
+**Lote 3 GERADO — NÃO INTEGRADO (aguarda aprovação):** egg **v2 com contraste alto** (manchas marmoreadas + sombra definida), wing_gem, sk_acid, sk_banner, sk_bomb, sk_frost, sk_fury, sk_heart, sk_rico, sk_slash — originais em `art-source/f1-lote3/originais/`, preparados em `art-source/_revisao-r3/`, folha apresentada (Regra 10).
+
+**Fila restante dos parciais:** R4 = sk_time + sk_tornado + 5 atlas `lore_*` (7 peças) → R5 = piloto F0b (Rainha, Cortadeira, larva, cristal, base Planície — 5 peças). Com R3+R4+R5 integrados, F1 fecha (32/32 ícones + 5 atlas + paleta) e o piloto F0b deixa de ser parcial.
+
 ## Cadência de aprovação reinstalada + lote 2 GERADO (aguarda aprovação) + chrome sem roxo (2026-10-10)
 
 **Pedido:** “Finalize tudo que está em parcial, seguindo a regra: gere 10 imagens > aprovação minha > mais 10 imagens…” — o gate **gerar → mostrar → aprovar → integrar** volta a valer (prevalece sobre “execute tudo”). Rodadas restantes para os parciais: **R2 (hoje) → R3 (egg v2 + wing_gem + 8 glifos sk_) → R4 (sk_time + sk_tornado + 5 atlas lore_) → R5 (piloto F0b: Rainha, Cortadeira, larva, cristal, base Planície)**. Teto de 10 imagens/turno da plataforma coincide com a cadência.

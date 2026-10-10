@@ -70,14 +70,14 @@ export const ANT_VFX = {
   scout: {
     name: "PRATA",
     lore: "A veloz que vê longe. Antenas captam feromônio a 300 passos.",
-    aura: "#6db7ff",
-    particle: "#8fd3ff",
+    aura: "#37e6c8",
+    particle: "#bfe8dc",
     icon: "👁️",
     onScout: (a) => {
       SFX.pheromone();
-      if (!vfxAllow(3)) { ring(a.x, a.y, { r0: 8, r1: 28, life: 0.4, color: "#6db7ff", width: 1 }); return; }
-      ring(a.x, a.y, { r0: 8, r1: 28, life: 0.4, color: "#6db7ff", width: 1 });
-      for (let i = 0; i < 3; i++) spawnPart({ x: a.x, y: a.y, vx: (Math.random() - 0.5) * 30, vy: (Math.random() - 0.5) * 30, life: 0.5, size: 1.5, color: "#8fd3ff", glow: true });
+      if (!vfxAllow(3)) { ring(a.x, a.y, { r0: 8, r1: 28, life: 0.4, color: "#37e6c8", width: 1 }); return; }
+      ring(a.x, a.y, { r0: 8, r1: 28, life: 0.4, color: "#37e6c8", width: 1 });
+      for (let i = 0; i < 3; i++) spawnPart({ x: a.x, y: a.y, vx: (Math.random() - 0.5) * 30, vy: (Math.random() - 0.5) * 30, life: 0.5, size: 1.5, color: "#bfe8dc", glow: true });
     },
   },
   soldier: {
@@ -89,7 +89,7 @@ export const ANT_VFX = {
     onAttack: (a, target) => {
       // som base já é o bite() em units.js — aqui só o clarão roxo da ferroada
       if (!vfxAllow(6)) { ring(target.x, target.y, { r0: 2, r1: 10, life: 0.2, color: "#ff4d5a", width: 2 }); return; }
-      burst(a.x, a.y, { n: 6, color: ["#ff4d5a", "#ff8a94", "#c77dff"], spMin: 20, spMax: 70, life: 0.35, sizeMin: 1, sizeMax: 2.5 });
+      burst(a.x, a.y, { n: 6, color: ["#ff4d5a", "#ff8a94", "#ffd479"], spMin: 20, spMax: 70, life: 0.35, sizeMin: 1, sizeMax: 2.5 });
       ring(target.x, target.y, { r0: 2, r1: 10, life: 0.2, color: "#ff4d5a", width: 2 });
     },
   },
@@ -110,15 +110,15 @@ export const ANT_VFX = {
   spitter: {
     name: "ACROBATA",
     lore: "A bailarina que cospe veneno corrosivo girando. Dança da morte.",
-    aura: "#c77dff",
-    particle: "#e8a8ff",
+    aura: "#ffd479",
+    particle: "#ffd9a0",
     icon: "🕸️",
     onAttack: (a, target) => {
       SFX.spore(); // borrifo corrosivo
       if (!vfxAllow(9)) return;
-      burst(a.x, a.y, { n: 5, color: ["#c77dff", "#e8a8ff"], spMin: 15, spMax: 60, life: 0.5, glow: true });
+      burst(a.x, a.y, { n: 5, color: ["#ffd479", "#ffd9a0"], spMin: 15, spMax: 60, life: 0.5, glow: true });
       // trilha de veneno até o alvo
-      for (let i = 0; i < 4; i++) spawnPart({ x: a.x + (target.x - a.x) * i / 4, y: a.y + (target.y - a.y) * i / 4, vx: 0, vy: -10, life: 0.6, size: 1.8, color: "#c77dff", glow: true });
+      for (let i = 0; i < 4; i++) spawnPart({ x: a.x + (target.x - a.x) * i / 4, y: a.y + (target.y - a.y) * i / 4, vx: 0, vy: -10, life: 0.6, size: 1.8, color: "#ffd479", glow: true });
     },
   },
   bomber: {
@@ -137,19 +137,19 @@ export const ANT_VFX = {
   tank: {
     name: "CEFALOTE",
     lore: "A porta-viva. Cabeça em forma de rolha bloqueia túneis. Guarda.",
-    aura: "#8f6fd6",
+    aura: "#e8a24a",
     particle: "#9a8fc0",
     icon: "🛡️",
     onGuard: (a) => {
       SFX.pheromone();
-      if (!vfxAllow(4)) { ring(a.x, a.y, { r0: a.bodyR, r1: a.bodyR + 14, life: 0.6, color: "#8f6fd6", width: 2 }); return; }
-      ring(a.x, a.y, { r0: a.bodyR, r1: a.bodyR + 14, life: 0.6, color: "#8f6fd6", width: 2 });
-      burst(a.x, a.y, { n: 4, color: ["#8f6fd6", "#9a8fc0"], spMin: 8, spMax: 25, life: 0.5, glow: true });
+      if (!vfxAllow(4)) { ring(a.x, a.y, { r0: a.bodyR, r1: a.bodyR + 14, life: 0.6, color: "#e8a24a", width: 2 }); return; }
+      ring(a.x, a.y, { r0: a.bodyR, r1: a.bodyR + 14, life: 0.6, color: "#e8a24a", width: 2 });
+      burst(a.x, a.y, { n: 4, color: ["#e8a24a", "#9a8fc0"], spMin: 8, spMax: 25, life: 0.5, glow: true });
     },
     onAttack: (a, target) => {
       if (!vfxAllow(4)) return;
-      burst(a.x, a.y, { n: 4, color: ["#8f6fd6", "#9a8fc0"], spMin: 15, spMax: 55, life: 0.35, glow: true });
-      ring(target.x, target.y, { r0: 2, r1: 10, life: 0.2, color: "#8f6fd6", width: 2 });
+      burst(a.x, a.y, { n: 4, color: ["#e8a24a", "#9a8fc0"], spMin: 15, spMax: 55, life: 0.35, glow: true });
+      ring(target.x, target.y, { r0: 2, r1: 10, life: 0.2, color: "#e8a24a", width: 2 });
     },
   },
   healer: {
@@ -236,7 +236,7 @@ export function drawAllyAura(ctx, dx, dy, z, type, bodyR, time) {
 }
 
 // Cristal de memória geométrico — hexágono com luz interna.
-// Âmbar #ffd479 = memória da Colônia · violeta #c77dff = Névoa.
+// Âmbar #ffd479 = memória da Colônia · violeta #ffd479 = Névoa.
 export function drawHexCrystal(ctx, x, y, size, color, time) {
   const r = size / 2;
   const pulse = reducedFX() ? 0 : Math.sin(time * 3) * 0.08;
@@ -278,7 +278,7 @@ export function drawHexCrystal(ctx, x, y, size, color, time) {
 
 // VFX cristal memória geométrico no mundo — hexágonos reais que sobem.
 export function spawnMemoryCrystal(x, y, isViolet = false) {
-  const color = isViolet ? "#c77dff" : "#ffd479";
+  const color = isViolet ? "#ffd479" : "#ffd479";
   SFX.crystal();
   if (!vfxAllow(12)) { ring(x, y, { r0: 4, r1: 18, life: 0.6, color, width: 2 }); return; }
   burst(x, y, { n: 8, color: [color, "#fff", "#e8f4ff"], spMin: 15, spMax: 70, life: 0.8, glow: true, sizeMin: 1.5, sizeMax: 3, shape: "hex" });

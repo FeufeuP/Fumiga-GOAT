@@ -92,7 +92,7 @@ function drawLoading() {
   ctx.fillText("FUMIGA", VIEW_W/2, VIEW_H/2 - 90);
 
   // anéis animados
-  ctx.strokeStyle = "#4a3a6e";
+  ctx.strokeStyle = "#46331f";
   ctx.lineWidth = 2.5;
   const cx = VIEW_W / 2, cy = VIEW_H / 2 - 20;
   const time = performance.now() / 1000;
@@ -113,7 +113,7 @@ function drawLoading() {
   // fundo
   ctx.fillStyle = "#1d1730";
   ctx.fillRect(bx, by, bw, bh);
-  ctx.strokeStyle = "#4a3a6e";
+  ctx.strokeStyle = "#46331f";
   ctx.lineWidth = 1.5;
   ctx.strokeRect(bx + 0.5, by + 0.5, bw - 1, bh - 1);
   // preenchimento com gradiente

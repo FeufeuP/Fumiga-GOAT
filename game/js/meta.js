@@ -224,7 +224,7 @@ function drawNode(ctx, n) {
   const py = p.y + radius + 13, th = Math.ceil(18 * scale * fontScale()) + 4;
   // Preços fora do recorte não passam por baixo de painéis/botões.
   if (py + th < TREE_VIEW.y + TREE_VIEW.h && p.x - tw / 2 >= TREE_VIEW.x && p.x + tw / 2 <= TREE_VIEW.x + viewWidth()) {
-    ctx.fillStyle = "#17121fe8"; ctx.fillRect(p.x - tw / 2, py, tw, th);
+    ctx.fillStyle = "#1c1610e8"; ctx.fillRect(p.x - tw / 2, py, tw, th);
     drawText(ctx, label, p.x, py + 1, { align: "center", scale, color: lvl >= max ? "#ffd479" : unlocked ? PAL.text : PAL.textDim });
   }
 }
@@ -356,7 +356,7 @@ function drawTreeHUD(ctx, growth) {
   drawText(ctx, "ÁRVORE DA EVOLUÇÃO", 26, 18, { font: "big", color: "#ffd479", maxWidth: 338 });
   drawText(ctx, growth.ownedNodes + "/" + TREE_ALL.length + " MEMÓRIAS • COR " + growth.restoredPercent + "%", 26, 58,
     { scale: .72, color: PAL.textDim, maxWidth: 338 });
-  panel(ctx, 386, 10, 154, 82, { border: "#8f6fd6" });
+  panel(ctx, 386, 10, 154, 82, { border: "#e8a24a" });
   drawText(ctx, "ESSÊNCIA", 400, 17, { scale: .7, color: PAL.textDim });
   drawText(ctx, G.save.essence, 400, 44, { font: "big", color: "#d7a2ff", maxWidth: 126 });
   if (button(ctx, { x: 552, y: 14, w: 124, h: 44, compact: true, label: "MEMÓRIAS", id: "treeMemories", scale: .85, accent: "#ffd479" })) return "memories";
@@ -518,7 +518,7 @@ function gardenColor(hex, saturation) {
 }
 function drawSanctuaryBackground(ctx, fruit, saturation) {
   const map = fruitAssetName(fruit), state = SANTUARIO_IMAGES.get(map);
-  ctx.fillStyle = "#17121f"; ctx.fillRect(0, 0, 960, 540);
+  ctx.fillStyle = "#1c1610"; ctx.fillRect(0, 0, 960, 540);
   if (state?.image) {
     ctx.imageSmoothingEnabled = false;
     const art = sanctuaryRestorer(map)(state.image, saturation) || state.image;
@@ -563,7 +563,7 @@ function drawSanctuarySeal(ctx) {
   // Sem corrente atravessando a tela (decisão do usuário, 2026-09-29): o
   // santuário da Pálida é a arte do bioma + a maçã branca + este aviso, que
   // continua explicando por que o fruto não abre nesta versão.
-  panel(ctx, 112, 419, 736, 76, { border: "#d9b8ff", fill: "#17121feF", noise: false });
+  panel(ctx, 112, 419, 736, 76, { border: "#e8e0cc", fill: "#1c1610eF", noise: false });
   const lines = wrapText("A COPA ABRE APÓS O PICO, MAS ESTE FRUTO AGUARDA O SÉTIMO MUNDO E A DERROTA DA PÁLIDA. NENHUMA VITÓRIA NO DEVASTADOR PERMITE COMPRAR SEUS PODERES.", 700, { scale: .64 });
   lines.forEach((line, i) => drawText(ctx, line, 480, 433 + i * Math.ceil(16 * .64 * fontScale()),
     { align: "center", scale: .64, color: "#eee5f3" }));
@@ -898,7 +898,7 @@ function drawFruitMini(ctx) {
   else drawSanctuaryFlowers(ctx, f, visibleFruitNodes(), garden.saturation);
   layoutRec.layer = "ui";
   // O cabeçalho não esconde a clareira inteira e conserva os dados do fruto.
-  panel(ctx, 12, 10, 936, 96, { border: f.color, fill: "#17121fdc", noise: false });
+  panel(ctx, 12, 10, 936, 96, { border: f.color, fill: "#1c1610dc", noise: false });
   drawText(ctx, f.name, 26, 15, { font: "big", color: f.color, maxWidth: 630 });
   drawText(ctx, unlocked ? "FRUTO CONQUISTADO • PODERES GLOBAIS" : "PRÉVIA BLOQUEADA • " + (f.pending ? "PÁLIDA: FUTURO" : "DERROTE " + f.bossName),
     26, 48, { scale: .73, color: unlocked ? PAL.text : PAL.textDim, maxWidth: 630 });

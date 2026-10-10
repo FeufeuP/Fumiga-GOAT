@@ -385,7 +385,7 @@ export function drawCutscene(ctx, time) {
   // segura a leitura.
   ctx.fillStyle = "rgba(10,8,16,0.7)";
   ctx.fillRect(margin, boxY, innerW, boxH);
-  ctx.strokeStyle = "#4a3a6e";
+  ctx.strokeStyle = "#46331f";
   ctx.lineWidth = 1;
   ctx.strokeRect(margin, boxY, innerW, boxH);
   lines.forEach((line, i) => drawText(ctx, line, margin + 12, boxY + 8 + i * lineH, {
@@ -396,7 +396,7 @@ export function drawCutscene(ctx, time) {
   ctx.fillRect(margin, VIEW_H - 68, innerW, 52);
   for (let i = 0; i < def.panels.length; i++) {
     const dotX = VIEW_W / 2 + (i - (def.panels.length - 1) / 2) * 20;
-    ctx.fillStyle = i === active.panelIdx ? "#ffd479" : "#4a3a6e";
+    ctx.fillStyle = i === active.panelIdx ? "#ffd479" : "#46331f";
     ctx.beginPath();
     ctx.arc(dotX, VIEW_H - 58, i === active.panelIdx ? 4 : 3, 0, Math.PI * 2);
     ctx.fill();

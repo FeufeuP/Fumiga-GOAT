@@ -172,7 +172,7 @@ function screenAccent() {
   if (G.screen === "OPTIONS") return optionsAccent;
   if (G.screen === "RUN" && G.run?.baseOpen) return "#ffb347";
   if (G.screen === "RUN") {
-    const biomes = ["#7fd6a0", "#a8e6a1", "#37e6c8", "#ffb347", "#ff9a5c", "#7fd6ff"];
+    const biomes = ["#7fd6a0", "#8fae4e", "#37e6c8", "#ffb347", "#ff9a5c", "#e8f4ff"];
     return biomes[Math.max(0, Math.min(biomes.length - 1, G.run?.mapIdx | 0))];
   }
   const screens = {
@@ -239,6 +239,7 @@ export function resolveFontColor(color = null, paper = false) {
       '#6b5a8a':'#776348','#5a4f78':'#776348','#ffffff':'#493521','#fff':'#493521',
       '#ffd479':'#8b4e18','#ffb347':'#8b4e18','#7fd6a0':'#456032','#37e6c8':'#356847',
       '#c77dff':'#705334','#8f6fd6':'#705334','#6db7ff':'#456032','#7fd6ff':'#456032',
+      '#e8a24a':'#8b4e18','#c9a86a':'#705334','#c75b4a':'#a8342b','#9aa84e':'#456032','#8fae4e':'#456032','#e8e0cc':'#705334',
       '#bfffa8':'#456032','#e8f4ff':'#456032','#ff9a5c':'#8b4e18','#ff8a94':'#a8342b',
     };
     return mapped[k] || color;

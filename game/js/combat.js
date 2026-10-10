@@ -208,7 +208,7 @@ export function updateOrbs(dt, anthill, queenAlive) {
     if (d < 40) {
       gained += o.amt * (1 + mods().fruitEssOrb + fruitOrbExtra());
       essenceCollect(o.x, o.y);
-      spawnPart({ x: o.x, y: o.y, life: 0.5, size: 3, sizeEnd: 0.4, color: "#c77dff", glow: true, drag: 1, shape: "circle" });
+      spawnPart({ x: o.x, y: o.y, life: 0.5, size: 3, sizeEnd: 0.4, color: "#37e6c8", glow: true, drag: 1, shape: "circle" });
       orbs.splice(i, 1);
     }
   }
@@ -224,12 +224,12 @@ export function drawOrbs(ctx, w2s, time) {
     const wob = Math.sin(time * 6 + o.phase) * 1.8;
     const pulse = 0.8 + Math.sin(time * 4 + o.x * 0.01) * 0.2;
     // glow
-    ctx.fillStyle = "#c77dff";
+    ctx.fillStyle = "#37e6c8";
     ctx.globalAlpha = 0.25 * pulse;
     ctx.beginPath(); ctx.arc(s.x, s.y + wob, 8, 0, TAU); ctx.fill();
     // FASE 2 (P11): núcleo hexagonal — cristal de memória, não orbe genérico
     ctx.globalAlpha = 0.9 * pulse;
-    ctx.fillStyle = "#d8b4ff";
+    ctx.fillStyle = "#ffd9a0";
     ctx.beginPath();
     for (let i = 0; i < 6; i++) {
       const a = i / 6 * TAU - Math.PI / 2;

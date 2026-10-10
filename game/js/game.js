@@ -84,7 +84,7 @@ const SHOP = [
   { type: "weaver",   label: "TECELÃ",    group: "care" },
   { type: "giant",    label: "DINOPONERA", iconScale: 0.13, accent: "#ffd479", group: "colossus" },
 ];
-const SHOP_GROUPS = { combat: "#ff4d5a", gather: "#7fd6a0", care: "#6db7ff", colossus: "#ffd479" };
+const SHOP_GROUPS = { combat: "#ff4d5a", gather: "#7fd6a0", care: "#9aa84e", colossus: "#ffd479" };
 const SHOP_W = 38, SHOP_PITCH = 42; // cards compactos da loja (rework HUD minimalista)
 let shopOpen = false;
 let rallyCooldown = 0; // FASE 4: cooldown rally F quando infiniteDash desligado
@@ -797,7 +797,7 @@ function worldTick(simDt, run) {
     recomputeAllies();
     SFX.chime();
     const A2 = world.anthill;
-    ring(A2.x, A2.y, { r0: 24, r1: 190, life: 0.7, color: "#6db7ff", width: 4 });
+    ring(A2.x, A2.y, { r0: 24, r1: 190, life: 0.7, color: "#37e6c8", width: 4 });
     levelUpBurst(A2.x, A2.y - 20);
     floatText(A2.x, A2.y - 150, "NÍVEL " + run.level + "! A COLÔNIA FICOU MAIS FORTE", {
       color: "#7fd6a0", life: 2.2, scale: 2,
@@ -839,8 +839,8 @@ function checkRunOutcome(run) {
       q.flash = 0.4;
       SFX.rebirth();
       ring(world.anthill.x, world.anthill.y, { r0: 14, r1: 260, life: 0.9, color: "#ffb347", width: 6 });
-      burst(world.anthill.x, world.anthill.y, { n: 46, color: ["#c77dff", "#ffd479", "#efe9ff"], spMin: 40, spMax: 220, life: 0.9, glow: true });
-      floatText(world.anthill.x, world.anthill.y - 110, "RENASCIMENTO REAL!", { color: "#c77dff", life: 2.2, scale: 2 });
+      burst(world.anthill.x, world.anthill.y, { n: 46, color: ["#37e6c8", "#ffd479", "#efe9ff"], spMin: 40, spMax: 220, life: 0.9, glow: true });
+      floatText(world.anthill.x, world.anthill.y - 110, "RENASCIMENTO REAL!", { color: "#37e6c8", life: 2.2, scale: 2 });
     } else {
       q.dead = true;
       endRun(false);
@@ -950,7 +950,7 @@ function updateRun(dt) {
     run.draft = { options: rollDraft(), t: 0 };
     SFX.chime();
     const A = world.anthill;
-    magicOrb(A.x, A.y - 40, "#c77dff");
+    magicOrb(A.x, A.y - 40, "#37e6c8");
   }
   if (run.draft) {
     run.draft.t += dt;
@@ -1451,14 +1451,14 @@ function renderOptions() {
     ctx.fillRect(sbX, V.y, 8, V.h);
     const hh = Math.max(30, V.h * V.h / optionsContentH);
     const hy = V.y + (V.h - hh) * (optionsScroll / maxScroll);
-    ctx.fillStyle = "#8f6fd6";
+    ctx.fillStyle = "#e8a24a";
     ctx.fillRect(sbX, hy, 8, hh);
-    ctx.fillStyle = "#c9b8f5";
+    ctx.fillStyle = "#ffd9a0";
     ctx.fillRect(sbX + 2, hy + 2, 4, hh - 4);
   }
 
   // rodapé fixo (fora da área rolável: nunca some nem colide com o conteúdo)
-  if (button(ctx, { x: VIEW_W / 2 - 250, y: VIEW_H - 48, w: 220, h: 36, label: "VOLTAR", id: "optionsBack", accent: "#8f6fd6", scale: chrome })) {
+  if (button(ctx, { x: VIEW_W / 2 - 250, y: VIEW_H - 48, w: 220, h: 36, label: "VOLTAR", id: "optionsBack", accent: "#e8a24a", scale: chrome })) {
     notePointer(mouse.x, mouse.y);
     startTransition("auto", "OPTIONS", optionsReturn, 0, () => { G.screen = optionsReturn; });
   }
@@ -1773,7 +1773,7 @@ function optContentTeste(TX, RR, oy, V, FS) {
   );
   if (r.ultima) linhas.push("ÚLTIMA: " + (PT_MODO_NOME[r.ultima.modo] || "?") + " • MAPA " + ((r.ultima.mapa | 0) + 1) + " • " + (r.ultima.venceu ? "VITÓRIA" : "DERROTA"));
   for (const ln of linhas) {
-    drawText(ctx, ln, TX, cy + oy, { color: r.ativo ? "#c9b8f5" : "#ff9ecb", scale: 0.85, maxWidth: RR - TX });
+    drawText(ctx, ln, TX, cy + oy, { color: r.ativo ? "#ffd9a0" : "#ff9ecb", scale: 0.85, maxWidth: RR - TX });
     cy += 17 * FS;
   }
   cy += 2;
@@ -1800,7 +1800,7 @@ function optContentTeste(TX, RR, oy, V, FS) {
   cy += 20 * FS;
   cy = optNote(cy, TX, RR, oy, FS, [
     "OS DADOS FICAM SÓ NESTE APARELHO: EXPORTE E ENVIE NO FIM DO TESTE.",
-  ], "#8f6fd6", "#c9b8f5");
+  ], "#e8a24a", "#ffd9a0");
   return cy + 8;
 }
 
@@ -1812,7 +1812,7 @@ function renderHelp() {
   ctx.fillRect(0, 0, VIEW_W, VIEW_H);
 
   const PX = 32, PY = 20, PW = VIEW_W - 64, PH = VIEW_H - 56;
-  dialogBox(ctx, PX, PY, PW, PH, { border: "#8f6fd6", accent: "#ffd479" });
+  dialogBox(ctx, PX, PY, PW, PH, { border: "#e8a24a", accent: "#ffd479" });
   const helpFS = fontScale();
   const helpTitleY = PY + 16;
   const helpTitleH = textHeight("COMO JOGAR", { font: "big", scale: 2 });
@@ -1873,7 +1873,7 @@ function renderHelp() {
   }
 
   const helpMobile = isMobileLayout();
-  if (button(ctx, { x: VIEW_W / 2 - 100, y: VIEW_H - 44, w: helpMobile ? 240 : 200, h: 36, label: "VOLTAR", id: "helpBack", accent: "#8f6fd6" })) {
+  if (button(ctx, { x: VIEW_W / 2 - 100, y: VIEW_H - 44, w: helpMobile ? 240 : 200, h: 36, label: "VOLTAR", id: "helpBack", accent: "#e8a24a" })) {
     notePointer(mouse.x, mouse.y);
     startTransition("auto", "HELP", helpReturn, 0, () => { G.screen = helpReturn; helpReturn = "TITLE"; });
   }
@@ -2205,7 +2205,7 @@ function drawHUD() {
       // fundo orgânico por card
       drawBiomeTexture(ctx, x, footY, SHOP_W, 64, biomeId, G.time*0.1 + i);
       const r = iconButton(ctx, { x, y: footY, w: SHOP_W, h: 64, id: "shop" + sp.type, disabled: !canBuy, frame: sp.accent, maxPadX: 2 });
-      ctx.fillStyle = SHOP_GROUPS[sp.group] || "#4a3a6e";
+      ctx.fillStyle = SHOP_GROUPS[sp.group] || "#46331f";
       ctx.globalAlpha = 0.9;
       ctx.fillRect(x + 3, footY + 3, SHOP_W - 6, 3);
       ctx.globalAlpha = 1;
@@ -2455,7 +2455,7 @@ function drawMinimap() {
   const sx = mw / WORLD_W, sy = mh / WORLD_H;
   for (const a of allies) {
     if (a.dead) continue;
-    ctx.fillStyle = a.def.role === "worker" ? "#37e6c8" : "#8fd3ff";
+    ctx.fillStyle = a.def.role === "worker" ? "#37e6c8" : "#bfe8dc";
     ctx.fillRect(mx + a.x * sx - 1, my + a.y * sy - 1, 2, 2);
   }
   for (const f of foes) {
@@ -2647,7 +2647,7 @@ function drawPause() {
   const panelH = Math.min(mobile ? 500 : 440, VIEW_H - py - 16);
 
   // painel esquerda - botões
-  dialogBox(ctx, startX, py, leftW, panelH, { paperKind:"pause", border: "#8f6fd6", accent: "#37e6c8" });
+  dialogBox(ctx, startX, py, leftW, panelH, { paperKind:"pause", border: "#e8a24a", accent: "#37e6c8" });
   drawText(ctx, "PAUSA", startX + leftW/2, py + 18, { font: "big", scale: 2, color: "#ffd479", align: "center" });
 
   const run = G.run;
@@ -2710,12 +2710,12 @@ function drawPause() {
 
   // painel direita - mapa + stats
   const rx = startX + leftW + 24;
-  dialogBox(ctx, rx, py, rightW, panelH, { paperKind:"pause", border: "#4a3a6e", accent: "#ffd479" });
+  dialogBox(ctx, rx, py, rightW, panelH, { paperKind:"pause", border: "#46331f", accent: "#ffd479" });
   drawText(ctx, "MAPA E STATUS", rx + rightW/2, py + 18, { font: "big", color: "#ffd479", align: "center" });
 
   // mini-mapa maior na pausa - FASE 5 FINAL: interativo clique move câmera + hover + stats expandidos
   const miniX = rx + 16, miniY = py + 44, miniW = rightW - 32, miniH = 160;
-  panel(ctx, miniX - 2, miniY - 2, miniW + 4, miniH + 4, { fill: "rgba(10,8,16,0.9)", border: "#4a3a6e", r: 3 });
+  panel(ctx, miniX - 2, miniY - 2, miniW + 4, miniH + 4, { fill: "rgba(10,8,16,0.9)", border: "#46331f", r: 3 });
   if (world.mini) {
     ctx.drawImage(world.mini, miniX, miniY, miniW, miniH);
   }
@@ -2723,7 +2723,7 @@ function drawPause() {
   const sx = miniW / WORLD_W, sy = miniH / WORLD_H;
   for (const a of allies) {
     if (a.dead) continue;
-    ctx.fillStyle = a.def.role === "worker" ? "#37e6c8" : a.type === "healer" ? "#7fd6a0" : "#8fd3ff";
+    ctx.fillStyle = a.def.role === "worker" ? "#37e6c8" : a.type === "healer" ? "#7fd6a0" : "#bfe8dc";
     ctx.fillRect(miniX + a.x * sx - 1, miniY + a.y * sy - 1, 2, 2);
   }
   for (const f of foes) {
@@ -3072,7 +3072,7 @@ function renderMemoryScreen() {
     const x = 48 + (i % 2) * 438, y = 124 + Math.floor(i / 2) * 158;
     const w = 426, h = 150, step = Math.ceil(16 * FS);
     const hot = memoryHover === i;
-    panel(ctx, x, y, w, h, { border: hot ? "#ffd479" : "#4a3a6e" });
+    panel(ctx, x, y, w, h, { border: hot ? "#ffd479" : "#46331f" });
     drawKitIcon(ctx, seen ? 0 : 1, x + 12, y + 10, 13);
     const titles = wrapText(def.title, w - 52, { scale: 0.9 });
     titles.forEach((line, j) => drawText(ctx, line, x + 32, y + 8 + j * step, { scale: 0.9, color: seen ? "#ffd479" : PAL.textDim }));
@@ -3085,7 +3085,7 @@ function renderMemoryScreen() {
   });
   memoryPage = drawPageControls("memory", memoryPage, pages, 446);
 
-  if (button(ctx, { x: VIEW_W/2-120, y: 446, w: 240, h: 44, label:"VOLTAR ÁRVORE", id:"memBack", accent:"#8f6fd6" })) {
+  if (button(ctx, { x: VIEW_W/2-120, y: 446, w: 240, h: 44, label:"VOLTAR ÁRVORE", id:"memBack", accent:"#e8a24a" })) {
     backFromMemories();
   }
   drawText(ctx, (isTouchUI() ? "TOQUE NO CARTÃO PARA REVER • " : "ESC: VOLTAR • CLIQUE PARA REVER CUTSCENE • ") + "320x180 8 LAYERS",

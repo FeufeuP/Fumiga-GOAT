@@ -212,7 +212,7 @@ export function drawTutorial(ctx, VIEW_W) {
   const hot = pointInRect(mouse.x, mouse.y, bx, by, bw, bh);
   ctx.fillStyle = hot ? "#3a3054" : "#2c2444";
   ctx.fillRect(bx, by, bw, bh);
-  ctx.strokeStyle = hot ? "#8f7bd6" : "#4a3a6e";
+  ctx.strokeStyle = hot ? "#e8a24a" : "#46331f";
   ctx.lineWidth = 1;
   ctx.strokeRect(bx + 0.5, by + 0.5, bw - 1, bh - 1);
   const padY = Math.max(6, Math.round((bh - 14 * CS.FS) / 2) + 1);

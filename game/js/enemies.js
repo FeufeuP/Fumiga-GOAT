@@ -316,7 +316,7 @@ function killBoss(b) {
   shake(1.2);
   explosion(b.x, b.y, 140, "#ffd479");
   ring(b.x, b.y, { r0: 10, r1: 190, life: 0.7, color: "#ffd479", width: 5 });
-  burst(b.x, b.y, { n: 70, color: ["#ffd479", "#ff7a3d", "#ff4d5a", "#c77dff", "#fff"], spMin: 40, spMax: 280, life: 1, sizeMin: 1.8, sizeMax: 4.5, glow: true });
+  burst(b.x, b.y, { n: 70, color: ["#ffd479", "#ff7a3d", "#ff4d5a", "#37e6c8", "#fff"], spMin: 40, spMax: 280, life: 1, sizeMin: 1.8, sizeMax: 4.5, glow: true });
   levelUpBurst(b.x, b.y);
   SFX.roar();
   SFX.slam();
@@ -355,9 +355,9 @@ export function updateBoss(dt, allies) {
     b.phase2T = 2.5;
     const p2 = b.def.phase2;
     // VFX névoa branca despertando
-    burst(b.x, b.y, { n: 40, color: ["#e8f4ff", "#c77dff", "#ffd479", "#fff"], spMin: 30, spMax: 180, life: 1.2, glow: true });
+    burst(b.x, b.y, { n: 40, color: ["#e8f4ff", "#37e6c8", "#ffd479", "#fff"], spMin: 30, spMax: 180, life: 1.2, glow: true });
     ring(b.x, b.y, { r0: 20, r1: 260, life: 1.0, color: "#e8f4ff", width: 6 });
-    ring(b.x, b.y, { r0: 10, r1: 180, life: 0.8, color: "#c77dff", width: 4 });
+    ring(b.x, b.y, { r0: 10, r1: 180, life: 0.8, color: "#37e6c8", width: 4 });
     floatText(b.x, b.y - 80, p2 ? p2.phrase : "A NÉVOA DESPERTA!", { color: "#ffd479", life: 2.4, scale: 2 });
     SFX.roar();
     // Era-specific buffs applied in per-boss updaters via b.phase2 check
@@ -371,7 +371,7 @@ export function updateBoss(dt, allies) {
         const dur = p2.invertDur * (1 - (m.fruitShriekResist || 0));
         G.run.invertT = dur;
       }
-      floatText(world.anthill.x, world.anthill.y - 100, "CONTROLES INVERTIDOS!", { color: "#a8c8e8", life: 1.2, scale: 1.5 });
+      floatText(world.anthill.x, world.anthill.y - 100, "CONTROLES INVERTIDOS!", { color: "#cfe8dd", life: 1.2, scale: 1.5 });
     } else if (b.kind === "matriarch") {
       // frenesi imediato
       matriarchFrenzy(b, p2.summonCount);
@@ -647,11 +647,11 @@ function updateGrouse(b, dt, allies, q, A) {
   if (b.sub === "recover") { b.t -= dt; if (b.t <= 0) b.sub = "walk"; return; }
   if (b.sub === "shriekAim") {
     b.t -= dt;
-    if (Math.random() < dt * 30) spawnPart({ x: b.x + rand(-26, 26), y: b.y + rand(-20, 10), vy: -30, life: 0.4, size: 2.4, sizeEnd: 0.4, color: "#a8c8e8", glow: true, drag: 1 });
+    if (Math.random() < dt * 30) spawnPart({ x: b.x + rand(-26, 26), y: b.y + rand(-20, 10), vy: -30, life: 0.4, size: 2.4, sizeEnd: 0.4, color: "#cfe8dd", glow: true, drag: 1 });
     if (b.t <= 0) {
       b.sub = "walk";
       shake(0.45); SFX.roar();
-      ring(b.x, b.y, { r0: 12, r1: D.shriekRange, life: 0.6, color: "#a8c8e8", width: 4 });
+      ring(b.x, b.y, { r0: 12, r1: D.shriekRange, life: 0.6, color: "#cfe8dd", width: 4 });
       // o grito fere os ouvidos: aliadas ficam lentas e fracas
       for (const a of allies) {
         if (a.dead || a.dying) continue;
@@ -664,7 +664,7 @@ function updateGrouse(b, dt, allies, q, A) {
       for (let i = 0; i < 6; i++) {
         const ang = b.angle + (i - 2.5) * 0.35;
         spawnProj({ x: b.x + Math.cos(ang) * 30, y: b.y + Math.sin(ang) * 30,
-          vx: Math.cos(ang) * 230, vy: Math.sin(ang) * 230, dmg: 9, faction: "enemy", color: "#a8c8e8" });
+          vx: Math.cos(ang) * 230, vy: Math.sin(ang) * 230, dmg: 9, faction: "enemy", color: "#cfe8dd" });
       }
     }
     return;
@@ -727,10 +727,10 @@ function updateMatriarch(b, dt, allies, q, A) {
       const ang = ang0 + (start + i) * spread;
       spawnProj({ x: b.x + Math.cos(ang) * 42, y: b.y + Math.sin(ang) * 42,
         vx: Math.cos(ang) * 250, vy: Math.sin(ang) * 250,
-        dmg: D.spitDmg, faction: "enemy", color: isP2 ? "#e8f4ff" : "#c86bff", size: 3 });
+        dmg: D.spitDmg, faction: "enemy", color: isP2 ? "#e8f4ff" : "#37e6c8", size: 3 });
     }
     SFX.spit();
-    burst(b.x + Math.cos(ang0) * 40, b.y + Math.sin(ang0) * 40, { n: 6, color: "#c86bff", spMin: 20, spMax: 70, life: 0.4, glow: true });
+    burst(b.x + Math.cos(ang0) * 40, b.y + Math.sin(ang0) * 40, { n: 6, color: "#37e6c8", spMin: 20, spMax: 70, life: 0.4, glow: true });
   }
 
   // marcha rumo à rainha
@@ -751,14 +751,14 @@ function updateMatriarch(b, dt, allies, q, A) {
 function matriarchFrenzy(b, n) {
   const run = G.run;
   shake(0.4); SFX.stinger();
-  floatText(b.x, b.y - 76, "A MATRIARCA BOTA MAIS SOLDADOS!", { color: "#c86bff", life: 1.5 });
+  floatText(b.x, b.y - 76, "A MATRIARCA BOTA MAIS SOLDADOS!", { color: "#37e6c8", life: 1.5 });
   for (let i = 0; i < n; i++) {
     const a = rand(0, TAU);
     const type = Math.random() < 0.55 ? "runner" : Math.random() < 0.75 ? "reaper" : "espitter";
     spawnEnemy(type, b.x + Math.cos(a) * 70, b.y + Math.sin(a) * 70, run ? run.wave : 12);
   }
-  ring(b.x, b.y, { r0: 10, r1: 120, life: 0.5, color: "#c86bff", width: 3 });
-  burst(b.x, b.y, { n: 18, color: ["#c86bff", "#8a3dd6"], spMin: 30, spMax: 120, life: 0.5, glow: true });
+  ring(b.x, b.y, { r0: 10, r1: 120, life: 0.5, color: "#37e6c8", width: 3 });
+  burst(b.x, b.y, { n: 18, color: ["#37e6c8", "#8a3dd6"], spMin: 30, spMax: 120, life: 0.5, glow: true });
 }
 
 // ----------------------------------------------------- MAPA 5: O GALHADA ---

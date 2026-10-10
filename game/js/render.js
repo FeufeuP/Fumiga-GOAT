@@ -100,7 +100,7 @@ function drawWorldCore(ctx, w2s, vis, zoom, box, dt) {
     ctx.fillStyle = rg;
     ctx.beginPath(); ctx.arc(s.x, s.y - 8, 46 * zoom, 0, TAU); ctx.fill();
     ctx.restore();
-    amountBar(ctx, s.x, s.y + 18, n.amount / n.max, "#c77dff");
+    amountBar(ctx, s.x, s.y + 18, n.amount / n.max, "#ffd479");
   }
 
   // --------------------------------------------------------- lista de desenho
@@ -275,7 +275,7 @@ export function drawOutsideEye(ctx, x, y, w = PIP.w, h = PIP.h) {
       { color: PAL.textDim, scale: 0.8, align: "right", maxWidth: w / 2 - 8 });
   }
   drawText(ctx, "FORA " + outside, x + 5, y + h - bandB + (bandB - 16) / 2,
-    { color: "#8fd3ff", scale: 0.75, maxWidth: w / 2 - 8 });
+    { color: "#bfe8dc", scale: 0.75, maxWidth: w / 2 - 8 });
   drawText(ctx, "DENTRO " + insideCount(), x + w - 5, y + h - bandB + (bandB - 16) / 2,
     { color: "#7fd6a0", scale: 0.75, align: "right", maxWidth: w / 2 - 8 });
 }
@@ -366,7 +366,7 @@ function drawNest(ctx, w2s, A, labels = true) {
     const efrac = 1 - egg.tLeft / egg.tTotal;
     ctx.fillStyle = "#201733";
     ctx.beginPath(); ctx.ellipse(ex, ey, 4.5 * z, 5.5 * z, 0, 0, TAU); ctx.fill();
-    ctx.strokeStyle = "#4a3a6e"; ctx.lineWidth = 1; ctx.stroke();
+    ctx.strokeStyle = "#46331f"; ctx.lineWidth = 1; ctx.stroke();
     ctx.fillStyle = "#ffd479";
     ctx.beginPath();
     ctx.ellipse(ex, ey + 5.5 * z - 11 * z * efrac, 3.2 * z, Math.max(1.2, 4 * efrac) * z, 0, 0, TAU);
@@ -382,7 +382,7 @@ function drawNest(ctx, w2s, A, labels = true) {
     grad.addColorStop(0, "#ffd479"); grad.addColorStop(1, "#ff7a3d");
     ctx.fillStyle = grad;
     ctx.fillRect(bx, by, bw * frac2, 5);
-    ctx.strokeStyle = "#4a3a6e"; ctx.lineWidth = 1;
+    ctx.strokeStyle = "#46331f"; ctx.lineWidth = 1;
     ctx.strokeRect(bx - 2.5, by - 2.5, bw + 5, 10);
     if (labels) drawText(ctx, "RAINHA", s.x, by - 18 * z, { scale: 1, color: frac2 < 0.3 ? "#ff4d5a" : "#ffb347", align: "center" });
   } else if (q && q.dead && labels) {
@@ -495,7 +495,7 @@ function drawAnt(ctx, u, w2s) {
   }
 
   if (u.carry > 0 && u.carryKind) {
-    ctx.fillStyle = u.carryKind === "essence" ? "#c77dff" : u.carryKind === "amber" ? "#ffd479" : "#ffb347";
+    ctx.fillStyle = u.carryKind === "essence" ? "#ffd479" : u.carryKind === "amber" ? "#e8a24a" : "#ffb347";
     ctx.beginPath();
     ctx.arc(dx, dy - (u.bodyR + 10) * z, 3 * z, 0, TAU);
     ctx.fill();
@@ -800,7 +800,7 @@ function ensureMotes() {
       vy: -Math.random() * 18 - 4,
       size: Math.random() * 2 + 0.5,
       alpha: Math.random() * 0.6 + 0.1,
-      col: Math.random() < 0.5 ? "#c77dff" : Math.random() < 0.7 ? "#37e6c8" : "#ffd479",
+      col: Math.random() < 0.5 ? "#8ff2e0" : Math.random() < 0.7 ? "#37e6c8" : "#ffd479",
       phase: Math.random() * TAU,
     });
   }
@@ -827,7 +827,7 @@ function ensureMotes() {
       vy: Math.random() * 14 + 8, // 8-22 px/s mais lenta que pollen mas com sway
       size: Math.random() * 2.2 + 1.0,
       alpha: Math.random() * 0.4 + 0.15,
-      col: Math.random() < 0.6 ? "#e8f4ff" : "#c8e6ff",
+      col: Math.random() < 0.6 ? "#e8f4ff" : "#cfe8dd",
       phase: Math.random() * TAU,
       sway: 1.2 + Math.random() * 2.5, // sway maior que pollen
       rot: Math.random() * TAU,
@@ -869,7 +869,7 @@ function ensureMotes() {
       vy: - (12 + Math.random() * 18),
       size: 0.8 + Math.random() * 1.6,
       alpha: 0.3 + Math.random() * 0.5,
-      col: Math.random() < 0.5 ? "#c77dff" : Math.random() < 0.75 ? "#ffd479" : "#37e6c8",
+      col: Math.random() < 0.5 ? "#8ff2e0" : Math.random() < 0.75 ? "#ffd479" : "#37e6c8",
       phase: Math.random() * TAU,
       life: Math.random(),
     });
@@ -991,7 +991,7 @@ export function drawTitleMotes(ctx, time) {
     ctx.fillStyle = "rgba(0,0,0,0.3)";
     ctx.beginPath(); ctx.ellipse(ax, ay + 4, 6, 2.5, 0, 0, TAU); ctx.fill();
     // corpo simplificado
-    const col = ant.type === "worker" ? "#37e6c8" : ant.type === "soldier" ? "#8fd3ff" : "#ffd479";
+    const col = ant.type === "worker" ? "#37e6c8" : ant.type === "soldier" ? "#bfe8dc" : "#ffd479";
     ctx.fillStyle = col;
     ctx.fillRect(ax - 3, ay + bobY - 2, 6, 3);
     ctx.fillStyle = "#efe9ff";
@@ -1140,12 +1140,12 @@ export function drawTitleBg(ctx) {
   
   const skyGrad = ctx.createLinearGradient(0, 0, 0, 280);
   if (dayT > 0.5) {
-    skyGrad.addColorStop(0, lerpColor("#6db7ff", "#151122", 1-dayT));
-    skyGrad.addColorStop(0.3, lerpColor("#8fd3ff", "#1a1430", 1-dayT));
-    skyGrad.addColorStop(0.6, lerpColor("#ffd479", "#2a2340", 1-dayT));
-    skyGrad.addColorStop(1, lerpColor("#ffb347", "#0f0c1a", 1-dayT));
+    skyGrad.addColorStop(0, lerpColor("#9fd4c8", "#221a12", 1-dayT));
+    skyGrad.addColorStop(0.3, lerpColor("#c8e8dd", "#2a2016", 1-dayT));
+    skyGrad.addColorStop(0.6, lerpColor("#ffd479", "#35291c", 1-dayT));
+    skyGrad.addColorStop(1, lerpColor("#ffb347", "#1a140e", 1-dayT));
   } else {
-    skyGrad.addColorStop(0, "#0a0812");
+    skyGrad.addColorStop(0, "#17110b");
     skyGrad.addColorStop(0.4, "#151122");
     skyGrad.addColorStop(0.7, "#1e1a30");
     skyGrad.addColorStop(1, "#0f0c1a");

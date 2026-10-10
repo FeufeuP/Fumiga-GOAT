@@ -124,7 +124,7 @@ export function critBurst(x, y) {
   spawnDecal(x, y, { r: 18, color: "rgba(255,212,121,0.15)", life: 3, type: "light" });
 }
 
-export function slashTrail(x, y, angle, color = "#8fd3ff") {
+export function slashTrail(x, y, angle, color = "#bfe8dc") {
   // rastro de corte — 3 partículas alongadas
   for (let i = 0; i < 5; i++) {
     const off = (i - 2) * 6;
@@ -148,9 +148,9 @@ export function healPulse(x, y) {
 }
 
 export function levelUpBurst(x, y) {
-  burst(x, y, { n: 28, color: ["#6db7ff", "#8fd3ff", "#c77dff", "#fff"], spMin: 30, spMax: 160, life: 0.85, sizeMin: 1.8, sizeMax: 4, glow: true, up: 30 });
-  ring(x, y, { r0: 12, r1: 120, life: 0.7, color: "#6db7ff", width: 4 });
-  ring(x, y, { r0: 8, r1: 90, life: 0.5, color: "#c77dff", width: 2.5 });
+  burst(x, y, { n: 28, color: ["#37e6c8", "#8ff2e0", "#ffd479", "#fff"], spMin: 30, spMax: 160, life: 0.85, sizeMin: 1.8, sizeMax: 4, glow: true, up: 30 });
+  ring(x, y, { r0: 12, r1: 120, life: 0.7, color: "#37e6c8", width: 4 });
+  ring(x, y, { r0: 8, r1: 90, life: 0.5, color: "#8ff2e0", width: 2.5 });
   // estrelas cadentes
   for (let i = 0; i < 8; i++) {
     const a = rand(0, TAU);
@@ -175,8 +175,8 @@ export function bloodSplatter(x, y, color = "#a32e46") {
   spawnDecal(x, y, { r: rand(6,14), color: color+"cc", life: 7, type: "blood" });
 }
 
-export function magicOrb(x, y, color = "#c77dff") {
-  burst(x, y, { n: 10, color: [color, "#fff", "#8f6fd6"], spMin: 5, spMax: 40, life: 0.7, sizeMin: 1.5, sizeMax: 3, glow: true, drag: 0.96 });
+export function magicOrb(x, y, color = "#37e6c8") {
+  burst(x, y, { n: 10, color: [color, "#fff", "#e8a24a"], spMin: 5, spMax: 40, life: 0.7, sizeMin: 1.5, sizeMax: 3, glow: true, drag: 0.96 });
   spawnPart({ x, y, vx: 0, vy: -20, life: 0.9, size: 5, sizeEnd: 1, color, glow: true, shape: "circle" });
 }
 
@@ -185,7 +185,7 @@ export function dashTrail(x, y, color = "#37e6c8") {
 }
 
 export function essenceCollect(x, y) {
-  burst(x, y, { n: 8, color: ["#c77dff", "#9a6bff", "#fff"], spMin: 10, spMax: 50, life: 0.45, sizeMin: 1.2, sizeMax: 2.5, glow: true, up: 10 });
+  burst(x, y, { n: 8, color: ["#37e6c8", "#8ff2e0", "#fff"], spMin: 10, spMax: 50, life: 0.45, sizeMin: 1.2, sizeMax: 2.5, glow: true, up: 10 });
 }
 
 export function updateParticles(dt) {

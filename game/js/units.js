@@ -408,7 +408,7 @@ export function spawnAnt(typeId, x, y, opts = {}) {
       const mm = mods();
       // ESQUIVA: golpe perdido por completo
       if (mm.dodge > 0 && Math.random() < mm.dodge) {
-        floatText(this.x, this.y - this.bodyR - 10, "ESQUIVA!", { color: "#8fd3ff", life: 0.8 });
+        floatText(this.x, this.y - this.bodyR - 10, "ESQUIVA!", { color: "#bfe8dc", life: 0.8 });
         return;
       }
       // ESPINHOS DE QUITINA: quem morde leva de volta
@@ -437,7 +437,7 @@ export function spawnAnt(typeId, x, y, opts = {}) {
         const c = collide(this.x + Math.cos(ja) * 62, this.y + Math.sin(ja) * 62, this.bodyR);
         this.x = c.x; this.y = c.y;
         dustPoof(this.x, this.y, 5);
-        floatText(this.x, this.y - this.bodyR - 8, "SALTO!", { color: "#8fd3ff", life: 0.7, scale: 0.9 });
+        floatText(this.x, this.y - this.bodyR - 8, "SALTO!", { color: "#bfe8dc", life: 0.7, scale: 0.9 });
       }
       // ESTIGMERGIA: quem apanha perfuma o chão de alarme — as irmãs desviam
       markDanger(this.x, this.y, 0.55);
@@ -679,7 +679,7 @@ function moveToward(a, tx, ty, dt, speedMult = 1) {
     if (a.dashBoost > 0) {
       a.dashBoost -= dt;
       sp *= 1.9;
-      if (Math.random() < dt * 26) spawnPart({ x: a.x, y: a.y, life: 0.3, size: 1.6, sizeEnd: 0.3, color: "#c8e6ff", glow: true, drag: 1 });
+      if (Math.random() < dt * 26) spawnPart({ x: a.x, y: a.y, life: 0.3, size: 1.6, sizeEnd: 0.3, color: "#cfe8dd", glow: true, drag: 1 });
     }
   }
   const dx = tx - a.x, dy = ty - a.y;
@@ -739,7 +739,7 @@ function attackMelee(a, target, dt) {
   // inimigos já abatidos - golpe em dobro quando a vítima está abaixo de 22%
   if (a.type === "trapjaw" && target.hp / (target.maxHp || 1) < 0.22 + mm.ceifaBonus) {
     dmg *= 2;
-    floatText(target.x, target.y - (target.bodyR + 12), "CEIFA!", { color: "#8fd3ff", life: 0.9, scale: 1.1, pop: 0.5 });
+    floatText(target.x, target.y - (target.bodyR + 12), "CEIFA!", { color: "#bfe8dc", life: 0.9, scale: 1.1, pop: 0.5 });
   }
   target.takeDamage(dmg, "ally", a);
   // FORMIGA-BALA (Paraponera): poneratoxina - a ferroada deixa o inimigo lento
@@ -1047,7 +1047,7 @@ function updateWorker(a, dt, foes, think, m, run) {
         a.carry += take;
         a.carryKind = isEssence ? "essence" : (tgt.kind === "amber" ? "amber" : "food");
         SFX.chomp();
-        burst(a.x, a.y - 4, { n: 3, color: isEssence ? "#c77dff" : "#ffb347", spMin: 8, spMax: 40, life: 0.4, sizeMin: 1, sizeMax: 2, glow: isEssence });
+        burst(a.x, a.y - 4, { n: 3, color: isEssence ? "#ffd479" : "#ffb347", spMin: 8, spMax: 40, life: 0.4, sizeMin: 1, sizeMax: 2, glow: isEssence });
     // LORE VFX médio
     triggerAntVFX(a.type, "gather", a);
     if (isEssence) spawnMemoryCrystal(a.x, a.y, true);
@@ -1140,7 +1140,7 @@ function deposit(a, m, run) {
   } else if (K === "essence") {
     const v = a.carry + m.crystalYield;
     dropOrb(a.x, a.y, v);
-    floatText(a.x, a.y - 12, "+" + v + " ESS", { color: "#c77dff", life: 1 });
+    floatText(a.x, a.y - 12, "+" + v + " ESS", { color: "#ffd479", life: 1 });
     tutEvent("essence");
   }
   SFX.pickup();

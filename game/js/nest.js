@@ -37,7 +37,7 @@ const ROOMS = [
   { id: "nursery",   x: 128, y: 196, w: 178, h: 88, accent: "#7fd6a0" },
   { id: "royal",     x: 380, y: 112, w: 204, h: 94, accent: "#ffd479" },
   { id: "pantry",    x: 658, y: 232, w: 178, h: 88, accent: "#ffb347" },
-  { id: "barracks",  x: 372, y: 300, w: 196, h: 92, accent: "#8fd3ff" },
+  { id: "barracks",  x: 372, y: 300, w: 196, h: 92, accent: "#bfe8dc" },
   { id: "fungus",    x: 92,  y: 348, w: 176, h: 84, accent: "#ffb347" },
   { id: "refinery",  x: 664, y: 340, w: 180, h: 84, accent: "#ffb347" },
 ];
@@ -983,7 +983,7 @@ function drawNestHud(ctx) {
   const y1 = FS > 1 ? 10 : 13;
   ctx.fillStyle = "rgba(8,6,4,0.82)";
   ctx.fillRect(0, 0, VIEW_W, barH);
-  ctx.strokeStyle = "#4a3a6e"; ctx.lineWidth = 1;
+  ctx.strokeStyle = "#46331f"; ctx.lineWidth = 1;
   ctx.beginPath(); ctx.moveTo(0, barH + 0.5); ctx.lineTo(VIEW_W, barH + 0.5); ctx.stroke();
 
   // linha 1: recursos medidos (os números crescem durante a partida)
@@ -1025,7 +1025,7 @@ function drawNestHud(ctx) {
   // rodapé: sair + dica
   ctx.fillStyle = "rgba(8,6,4,0.82)";
   ctx.fillRect(0, BOTTOM, VIEW_W, VIEW_H - BOTTOM);
-  ctx.strokeStyle = "#4a3a6e";
+  ctx.strokeStyle = "#46331f";
   ctx.beginPath(); ctx.moveTo(0, BOTTOM + 0.5); ctx.lineTo(VIEW_W, BOTTOM + 0.5); ctx.stroke();
 
   if (button(ctx, { x: 16, y: BOTTOM + 10, w: 210, h: 34, label: isTouchUI() ? "VOLTAR À COLÔNIA" : "VOLTAR À COLÔNIA (B)", id: "nestBack", accent: "#37e6c8" })) {

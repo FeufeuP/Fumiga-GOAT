@@ -112,7 +112,7 @@ const BIOME_LORE = {
       "DICA: CRISTAIS DO PÂNTANO GUARDAM MEMÓRIA ANTIGA DA COLÔNIA.",
     ],
     accent: "#37e6c8",
-    secondary: "#8fd3ff",
+    secondary: "#bfe8dc",
     tint: "rgba(18, 46, 44, 0.36)",
   },
   deserto: {
@@ -172,7 +172,7 @@ const BIOME_LORE = {
       "DICA: PROTEJA A RAINHA SILENCIOSA A TODO CUSTO NO CERCO FINAL.",
     ],
     accent: "#e8f4ff",
-    secondary: "#7fd6ff",
+    secondary: "#cfe8dd",
     tint: "rgba(22, 34, 58, 0.42)",
   },
   palida: {
@@ -678,7 +678,7 @@ export function drawLoadingScreen(ctx, time) {
   if (fillW > 0) {
     const barGrad = ctx.createLinearGradient(barX, barY, barX + barW, barY);
     barGrad.addColorStop(0, "#37e6c8");
-    barGrad.addColorStop(0.6, "#8f6fd6");
+    barGrad.addColorStop(0.6, "#e8a24a");
     barGrad.addColorStop(1, "#ffb347");
     ctx.fillStyle = barGrad;
     ctx.fillRect(barX, barY, fillW, barH);

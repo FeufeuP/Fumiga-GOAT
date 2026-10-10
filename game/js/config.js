@@ -11,7 +11,7 @@ export const PAL = {
   bg:        "#14101d",
   soilDark:  "#241b2e",
   soil:      "#332645",
-  soilLight: "#42325a",
+  soilLight: "#4c3828",
   moss:      "#3d5a45",
   amber:     "#ffb347",
   amberHot:  "#ffd479",
@@ -20,16 +20,16 @@ export const PAL = {
   redDark:   "#a32e46",
   teal:      "#37e6c8",
   tealDark:  "#1d9c8c",
-  blue:      "#6db7ff",
-  violet:    "#c77dff",
-  essence:   "#9a6bff",
+  blue:      "#7fd6a0",
+  violet:    "#e8a24a",
+  essence:   "#ffd479",
   food:      "#ffd479",
   green:     "#7fd6a0",
-  ink:       "#17121f",
+  ink:       "#1c1610",
   panel:     "#1d1730",
   panelHi:   "#2c2144",
-  border:    "#4a3a6e",
-  borderHi:  "#8f6fd6",
+  border:    "#46331f",
+  borderHi:  "#e8a24a",
   textDim:   "#9a8fc0",
   text:      "#efe9ff",
   white:     "#ffffff",
@@ -327,8 +327,8 @@ export const PROPHECIES = [
 // raridade: 0 = comum, 1 = rara, 2 = épica
 export const RARITY = [
   { name: "COMUM", color: "#7fd6a0", w: 60 },
-  { name: "RARA",  color: "#6db7ff", w: 30 },
-  { name: "ÉPICA", color: "#c77dff", w: 10 },
+  { name: "RARA",  color: "#c9a86a", w: 30 },
+  { name: "ÉPICA", color: "#c75b4a", w: 10 },
 ];
 
 export const MUTATIONS = [
@@ -381,7 +381,7 @@ export const MAX_MUTS = 12;
 export const META_BRANCHES = {
   G: { name: "GUERRA",  color: "#ff4d5a" },  // ⚔️ combate/defesa
   C: { name: "COLETA",  color: "#7fd6a0" },  // 🍃 coleta/exploração
-  H: { name: "CRIAÇÃO", color: "#6db7ff" },  // 🏥 construção/cura/criação
+  H: { name: "CRIAÇÃO", color: "#9aa84e" },  // 🏥 construção/cura/criação
   R: { name: "REAL",    color: "#ffd479" },  // 👑 espinha da rainha
 };
 
@@ -389,12 +389,12 @@ export const META_BRANCHES = {
 // O galho 7 é comprável após o Pico; seu FRUTO continua futuro até a Pálida.
 export const META_STAGES = [
   { stage: 1, map: "planicie", name: "PLANÍCIE", color: "#7fd6a0" },
-  { stage: 2, map: "floresta", name: "FLORESTA", color: "#6db7ff" },
+  { stage: 2, map: "floresta", name: "FLORESTA", color: "#8fae4e" },
   { stage: 3, map: "pantano", name: "PÂNTANO", color: "#37e6c8" },
   { stage: 4, map: "deserto", name: "DESERTO", color: "#ffb347" },
   { stage: 5, map: "outono", name: "OUTONO", color: "#ff9a5c" },
   { stage: 6, map: "gelo", name: "GELO", color: "#e8f4ff" },
-  { stage: 7, map: "topo", name: "NÉVOA-MÃE", color: "#d9b8ff" },
+  { stage: 7, map: "topo", name: "NÉVOA-MÃE", color: "#e8e0cc" },
 ];
 // Potência por nível: fonte única para os consumidores. Os IDs/limites de
 // compra não mudam; saves antigos conservam TODOS os níveis, sem cobrança retroativa.
@@ -579,7 +579,7 @@ export const FRUIT_TREES = [
     { id: "f_p_2", name: "Tambor Resistente", desc: "PLANÍCIE: -15% dano do THUMP do Tamborilador (mecânica única)", cost: [35, 50, 70], requires: [], fruit: "fruit_planicie", map: "planicie", br: "G", tier: 0, icon: "shield" },
     { id: "f_p_3", name: "Orvalho Coletado", desc: "PLANÍCIE: +10% comida coletada na Planície (bioma)", cost: [50, 75, 100], requires: [], fruit: "fruit_planicie", map: "planicie", br: "C", tier: 1, icon: "food" },
   ]},
-  { id: "fruit_floresta", map: "floresta", name: "SEDA DA CAÇADORA", color: "#6db7ff", nodes: [
+  { id: "fruit_floresta", map: "floresta", name: "SEDA DA CAÇADORA", color: "#8fae4e", nodes: [
     { id: "f_f_1", name: "Faro Aguçado", desc: "FLORESTA: +12% alcance de visão das batedoras", cost: [35, 50, 75], requires: [], fruit: "fruit_floresta", map: "floresta", br: "G", tier: 0, icon: "sk_slash" },
     { id: "f_f_2", name: "Seda Invisível", desc: "FLORESTA: Tecelã +20% velocidade (mecânica única)", cost: [50, 75, 105], requires: [], fruit: "fruit_floresta", map: "floresta", br: "H", tier: 0, icon: "spider" },
     { id: "f_f_3", name: "Musgo Cura", desc: "FLORESTA: Matabele cura +10% (Kurandeira)", cost: [70, 100, 140], requires: [], fruit: "fruit_floresta", map: "floresta", br: "H", tier: 1, icon: "heal" },
@@ -607,7 +607,7 @@ export const FRUIT_TREES = [
 ];
 
 // Sete frutos canônicos: o sétimo existe como prévia, não como mapa jogável.
-FRUIT_TREES.push({ id:"fruit_topo", map:"topo", name:"CORAÇÃO DA NÉVOA-MÃE", color:"#d9b8ff", pending:true, nodes:[] });
+FRUIT_TREES.push({ id:"fruit_topo", map:"topo", name:"CORAÇÃO DA NÉVOA-MÃE", color:"#e8e0cc", pending:true, nodes:[] });
 const FRUIT_BOSSES = ["hare","fox","grouse","matriarch","deer","boar","palida"];
 const FRUIT_BOSS_NAMES = ["TAMBORILADOR","CAÇADORA ASTUTA","SOMBRA ALADA","MATRIARCA RIVAL","GALHADA REAL","DEVASTADOR","PÁLIDA"];
 FRUIT_TREES.forEach((f,i) => {
@@ -706,7 +706,7 @@ export const MAPS = [
       speck: ["#4a6540", "#1f2d1a", "#3c5734", "#57794c", "#1a2614"],
       trail: "#1c2415",
       tuft: ["#5c9c4c", "#4e8a45", "#6aa855", "#3f7a3c"],
-      flowers: ["#ffd479", "#ff8fa8", "#c98df5", "#e8f4ff"],
+      flowers: ["#ffd479", "#ff8fa8", "#e8c9a0", "#e8f4ff"],
     },
     props: {
       trees: ["tree1", "tree2", "tree3", "tree_flower1"],
@@ -736,7 +736,7 @@ export const MAPS = [
       speck: ["#3c5c44", "#17251b", "#32513a", "#46664c", "#12200f"],
       trail: "#131f14",
       tuft: ["#3f7a4e", "#4e9a51", "#356143"],
-      flowers: ["#c26be0", "#7fd6ff", "#ffd479"],
+      flowers: ["#e08a5f", "#cfe8dd", "#ffd479"],
     },
     props: {
       trees: ["tree_moss1", "tree_moss2", "tree_fruit1", "tree_fruit2", "tree1"],
@@ -745,7 +745,7 @@ export const MAPS = [
       rocks: ["rock_a", "rock_b", "rock_d"],
       crys: ["crys_green1", "crys_white1"],
     },
-    ambient: { colors: ["#bfffa8", "#8f6fd6", "#37e6c8"], style: "spores" },
+    ambient: { colors: ["#bfffa8", "#e8a24a", "#37e6c8"], style: "spores" },
     tint: "#1c2a1f",
     waves: [
       { budget: 26, title: "SOMBRAS DO BOSQUE",  tip: "A floresta observa. Aqui a raposa caça colônias há cem gerações." },
@@ -760,13 +760,13 @@ export const MAPS = [
     sub: "Águas paradas, insetos gordos e fome velha.",
     boss: "grouse",
     ground: {
-      top: "#213031", mid: "#1c2a2b", bot: "#152021",
+      top: "#213031", mid: "#1c2a2b", bot: "#221c14",
       soils: ["#243636", "#203131", "#2a3d3a", "#1c2c2a", "#26403c", "#1a2a28"],
       moss: ["#2c4a3f", "#254038", "#2f544a"],
       speck: ["#37544c", "#12201d", "#2f4c44", "#3f5f52", "#0f1a17"],
       trail: "#10201d",
       tuft: ["#3f7a5e", "#4e9a6a", "#2f6b4e"],
-      flowers: ["#7fd6ff", "#c26be0"],
+      flowers: ["#cfe8dd", "#e08a5f"],
     },
     props: {
       trees: ["tree_broken1", "tree_broken2", "tree_moss1", "tree2"],
@@ -775,7 +775,7 @@ export const MAPS = [
       rocks: ["rock_c", "rock_d", "rock_b"],
       crys: ["crys_green1", "crys_blue1"],
     },
-    ambient: { colors: ["#37e6c8", "#8fd3ff", "#bfffa8"], style: "wisps" },
+    ambient: { colors: ["#37e6c8", "#bfe8dc", "#bfffa8"], style: "wisps" },
     tint: "#16211f",
     waves: [
       { budget: 42, title: "BOLHUM PODRE", tip: "O brejo é a boca da Névoa. Atravessem depressa." },
@@ -828,7 +828,7 @@ export const MAPS = [
       speck: ["#5c4630", "#221a10", "#4a3826", "#6b5235", "#1c1409"],
       trail: "#241a0e",
       tuft: ["#b06a2e", "#c07a33", "#8a5628"],
-      flowers: ["#ff9a5c", "#ffd479", "#c26be0"],
+      flowers: ["#ff9a5c", "#ffd479", "#e08a5f"],
     },
     props: {
       trees: ["tree_autumn1", "tree_autumn2", "tree_fruit1", "tree1"],
@@ -853,13 +853,13 @@ export const MAPS = [
     sub: "O topo do mundo, onde só a fome sobrevive.",
     boss: "boar",
     ground: {
-      top: "#3a4254", mid: "#333b4c", bot: "#2a3140",
-      soils: ["#3e475a", "#364052", "#424c60", "#303849", "#39425a", "#2c3444"],
-      moss: ["#4a5470", "#424c64", "#3a4458"],
-      speck: ["#525c74", "#20263a", "#485268", "#5c6680", "#1a2030"],
+      top: "#4a3c2e", mid: "#43382a", bot: "#382e22",
+      soils: ["#4c4032", "#463a2c", "#504436", "#403428", "#493c2e", "#3c3024"],
+      moss: ["#4a4034", "#504438", "#4a3c30"],
+      speck: ["#5c5244", "#2c261c", "#564a3c", "#5c6680", "#1a2030"],
       trail: "#232b3e",
-      tuft: ["#8a99b8", "#a8b4cc", "#6a7896"],
-      flowers: ["#e8f4ff", "#7fd6ff", "#c98df5"],
+      tuft: ["#8a99b8", "#c4cfc8", "#6a7896"],
+      flowers: ["#e8f4ff", "#cfe8dd", "#e8c9a0"],
     },
     props: {
       trees: ["tree_snow1", "tree_snow2", "tree_snowpine1"],
@@ -868,7 +868,7 @@ export const MAPS = [
       rocks: ["rock_e", "rock_b", "rock_c"],
       crys: ["crys_white1", "crys_blue1"],
     },
-    ambient: { colors: ["#e8f4ff", "#a8b4cc", "#7fd6ff"], style: "snow" },
+    ambient: { colors: ["#e8f4ff", "#c4cfc8", "#cfe8dd"], style: "snow" },
     tint: "#1e2430",
     waves: [
       { budget: 132, title: "GEADA MORDAZ", tip: "O frio é só o hálito dela. A Névoa subiu junto." },

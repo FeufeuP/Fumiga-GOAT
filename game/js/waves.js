@@ -76,7 +76,7 @@ export function skipPeace() {
   if (bonus > 0) {
     const run = G.run;
     run.essencePool += bonus;
-    floatText(world.anthill.x, world.anthill.y - 100, "+" + bonus + " ESSÊNCIA (INVOCAÇÃO)", { color: "#c77dff", life: 1.4 });
+    floatText(world.anthill.x, world.anthill.y - 100, "+" + bonus + " ESSÊNCIA (INVOCAÇÃO)", { color: "#ffd479", life: 1.4 });
   }
   return bonus;
 }
@@ -247,7 +247,7 @@ function endWave() {
       director.bossSpawned = false;
       director.inactivity = 0;
       run.banner = { title: "CICLO " + director.cycle + " VENCIDO!", sub: "A horda se reorganiza e volta mais forte...", t: 4 };
-      floatText(world.anthill.x, world.anthill.y - 100, "+" + bonus + " ESSÊNCIA DO CICLO", { color: "#c77dff", life: 2, scale: 1.4 });
+      floatText(world.anthill.x, world.anthill.y - 100, "+" + bonus + " ESSÊNCIA DO CICLO", { color: "#ffd479", life: 2, scale: 1.4 });
       SFX.win();
       return;
     }

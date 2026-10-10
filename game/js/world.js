@@ -596,7 +596,7 @@ function bakeMinimap() {
   for (const p of world.props) {
     if (/tree|cactus/.test(p.img)) { c.fillStyle = "rgba(90,167,92,0.8)"; c.fillRect(p.x * sx - 1, p.y * sy - 1, 2, 2); }
     else if (/rock/.test(p.img)) { c.fillStyle = "rgba(150,140,160,0.6)"; c.fillRect(p.x * sx - 1, p.y * sy - 1, 2, 2); }
-    else if (/crys_blue|crys_violet/.test(p.img)) { c.fillStyle = "#8f7bd6"; c.fillRect(p.x * sx - 1, p.y * sy - 1, 2, 2); }
+    else if (/crys_blue|crys_violet/.test(p.img)) { c.fillStyle = "#e8a24a"; c.fillRect(p.x * sx - 1, p.y * sy - 1, 2, 2); }
   }
   for (const p of world.piles) { c.fillStyle = "#ffb347"; c.fillRect(p.x * sx - 1, p.y * sy - 1, 2, 2); }
   world.mini = cv;
