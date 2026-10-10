@@ -37,6 +37,18 @@ repetições, datas, branches, checklists e notas históricas foram preservados.
 > Divergências permanecem visíveis, sem apagar conteúdo. O que efetivamente
 > funciona deve ser confirmado por testes e inspeção no preview.
 
+## Lote 3 APROVADO+INTEGRADO — 32/32 ícones F1 fechados · R4 GERADO (aguarda aprovação) (2026-10-10)
+
+**Pedido:** “Aprovado” (lote 3) — cadência vigente: integrar o lote aprovado + gerar a próxima rodada (≤10) e parar para aprovação.
+
+**Lote 3 INTEGRADO (aprovado):** 10 peças (egg v2 com contraste alto, wing_gem, sk_acid, sk_banner, sk_bomb, sk_frost, sk_fury, sk_heart, sk_rico, sk_slash) em `game/assets/sprites/icons/` via `prepare_f1_migracao.py art-source/f1-lote3/originais lote3` + `ASSET_V 20261010-f1-lote3` + `make_assets_list` + `sync-native`. **32/32 ícones F1 migrados** (brasa + lote1 + lote2 + lote3) — o contrato de ícones do F1 está fechado; consumidores intactos.
+
+**R4 GERADO — NÃO INTEGRADO (aguarda aprovação):** 7 peças em `art-source/f1-lote4/originais/` (prompt-mestre v3 integral + ficha §4, sem alternativas extras): `sk_time` (ampulheta), `sk_tornado` (redemoinho sálvia/oliva) + 5 atlas `lore_*` conforme os cutters de `lore_hud.js`: `lore_gaster` (3 estados 64×24 em tira 192×24), `lore_icons` (12 glifos 16×16), `lore_kit` (7 banners 40×24 + 7 barras 32×12 stride 40 + 4 mini-ícones 16×16 em 280×52), `lore_panels` (6 painéis 32×32), `lore_textbox` (7 tábuas 32×32). Preparados em `art-source/_revisao-r4/art-source/f1-lote4-preparado/` via `--out-root` (runtime de arte verificado intocado); **7/7 contratos de dimensão exatos**; folha de revisão apresentada (Regra 10). Só após aprovação: prepare sem `--out-root` (grava em `game/assets/ui/lore_*.png` + ícones), `ASSET_V` + listas + sync + testes + commit.
+
+**Verificado nesta rodada:** lote 3 integrado com `test:quick` **30/30** e suíte completa **37/37** (`ASSET_V 20261010-f1-lote3`); sanidade do lote4 7/7 (dimensões de contrato); folha com md5 próprio (anti-glitch de exibição). Preview :8000 ativo.
+
+**Fila restante dos parciais:** aprovação do R4 → integrar R4 (fecha os 5 atlas do HUD + tipografia/estados com ornamentos novos) → R5 = piloto F0b (Rainha, Cortadeira, larva, cristal, base Planície — 5 peças). Depois: `pile_food` + 7 `crys_*` (crys_blue1/blue2/violet1 como pastéis teal/água) + 11 castas (Rainha 1º; Dinoponera = alias `giant` sem sprite próprio).
+
 ## Lote 2 APROVADO+INTEGRADO · paleta semântica migrada · lote 3 GERADO (aguarda aprovação) (2026-10-10)
 
 **Pedido:** “Aprovado. Pode migrar também.” — (1) aprovação do lote 2 → integrar + gerar próxima rodada (cadência 10→aprovação→10 segue ativa); (2) migrar também os acentos semânticos mantidos (raridade/essência/categorias/biomas/VFX) para a paleta pastel terrosa.
