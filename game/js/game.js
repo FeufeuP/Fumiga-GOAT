@@ -559,6 +559,11 @@ export function update(dt) {
     if (pressed.Escape) handleLoadingInput("key", "Escape");
     else if (mouse.justDown) handleLoadingInput("pointer");
     else if (pressed.Space || pressed.Enter) handleLoadingInput("key", pressed.Enter ? "Enter" : "Space");
+    // A tela de carregamento consome o tick de entrada: sem isto, o mesmo
+    // clique/Espaço que confirma a carga também acionaria a tela por baixo no
+    // quadro do fade-out (TITLE → JOGAR abria MODE junto com a confirmação).
+    for (const k in pressed) pressed[k] = false;
+    if (isLoadingFadingOut()) mouse.justDown = false;
     updateLoadingScreen(dt);
     return;
   }
