@@ -37,6 +37,24 @@ repetições, datas, branches, checklists e notas históricas foram preservados.
 > Divergências permanecem visíveis, sem apagar conteúdo. O que efetivamente
 > funciona deve ser confirmado por testes e inspeção no preview.
 
+## CORREÇÃO DO CHROMA KEY (strip_matte) — reprocessamento total + re-gerações com contraste · lote 7 INTEGRADO (11/11 castas) (2026-10-10)
+
+**Pedido:** “Aprovado, porém o Chroma Key das imagens ficou horrível, algumas imagens tiveram partes apagadas” — lote 7 aprovado **com correção obrigatória** do matte antes/depois da integração.
+
+**Causa raiz (corrigida em `tools/prepare_f1_migracao.py`):** `strip_matte` usava `SOLID/EDGE = 96/168` de raio de cor sobre o creme `#f5edd8` — o flood atravessava QUALQUER cor clara (branco d≈45, areia d≈30, mel, prata, osso) e o un-matte zerava o alfa de tudo com d<96. Resultado: partes claras do assunto apagadas/ilhadas (furos) e zonas semi-transparentes (fantasmas). **Novo algoritmo:** `FLOOD=16` (só o creme puro do fundo é removido, conectado às bordas) + franja AA de 1px FORA do flood com alfa parcial; interior do assunto nunca é tocado, mesmo creme-creme ilhado. Limitação documentada: assunto com cor quase idêntica ao creme (d<16, ex.: branco-osso) é invisível para chroma key — esses casos pedem arte com sombra/contaste de separação.
+
+**Reprocessamento total:** os 7 lotes (31 ícones + 5 atlas + 8 props + 11 castas = 55 PNGs) foram re-feitos dos ORIGINAIS com o algoritmo novo — nada de arte antiga reaproveitada. Auditoria furos (ilhas ≥25px encostadas) na amostra: **13.268px → ~0** nas peças críticas (egg 628→0, scout 606→0, hourglass 3039→0, crys_blue1 3269→0, pile_food 784→0, lore_panels 1165→0…); "fantasmas" 51.7k→11.1k onde o que sobrou é a franja AA suave (desejada, ~1px de perímetro).
+
+**Re-gerações de CONTRASTE (5 peças; v1 preservados como `_v1-rejeitado` nas pastas de originais):** `crys_white1` (osso d≈6 — indistinguível do creme; v2 com sombra de contato por faceta), `clover` (478px de furos), `horseshoe` (121px), `sk_frost` (185px — gelo quase-creme), `gatherer` (181px — brilho do pote de mel). As fichas ganharam **CONTRASTE DE SEPARAÇÃO OBRIGATÓRIO**: nada do assunto pode ter a mesma cor do fundo creme. Micro-ilhas restantes (sub-visíveis no tamanho de uso; re-geráveis sob pedido): sk_rico 34px, lore_icons 26px, crys_green1 59px, crys_violet1 137px, spitter 68px, weaver 50px.
+
+**Lote 7 INTEGRADO (aprovado):** 9 castas em `game/assets/sprites/ants/` (soldier, trapjaw, spitter, bomber, tank, gatherer, scout, healer, weaver) com o pipeline corrigido + `SMOOTH_KEYS` completas (11 castas + 8 props) + `ASSET_V 20261010-chroma-key` + listas + sync. **11/11 castas fechadas — migração de arte dos parciais CONCLUÍDA** (F1 32/32 + 5 atlas + paleta · piloto F0b · props de mundo · 11 castas).
+
+**Glitch `read_file` (transparência):** a ferramenta serviu a folha do R7 duas vezes para o caminho da comparação; verificado em disco (md5 `a4beddd7…` × `cbaf6c5e…` + dimensões/amostra de pixels); exibição final via `present_file` + cópia `art-source/comparacao-chroma-key-final.jpg`. Comparação ANTES/DEPOIS em `art-source/correcao-chroma-key-comparacao.png` (8 pares sobre fundo escuro).
+
+**Verificado:** `test:quick` **30/30**; suíte completa **37/37** com castas+props+ícones corrigidos no jogo; `docs.mjs` ok; preview :8000 ativo. Backups Drive: pastas por lote mantêm os originais v1; a pasta `correcao-chroma-key` guarda os 5 v2 + a comparação.
+
+**Próximos:** fila dos parciais **encerrada**. Sobram os escopos F2–F9 por encomenda (cenário legado dos biomas, flores 9+9, árvore/maçãs/santuários, telas de carregamento, cenas) e os itens pequenos listados acima se você quiser re-gerá-los.
+
 ## Lote 6 APROVADO+INTEGRADO — props de mundo fechados (pile_food + 7 crys) · R7 com 9 castas GERADO (aguarda aprovação) (2026-10-10)
 
 **Pedido:** “Aprovado” (lote 6) — cadência: integrar o lote aprovado + gerar a próxima rodada (≤10) e parar para aprovação.

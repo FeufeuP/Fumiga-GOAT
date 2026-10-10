@@ -85,20 +85,30 @@ SPEC = {
 }
 
 CREAM = (245, 237, 216)  # folha creme de autoria (#f5edd8)
-SOLID, EDGE = 96.0, 168.0
+FLOOD, RIM = 16.0, 40.0
+# FLOOD/RIM substituem SOLID/EDGE (96/168). O raio antigo media BRANCO (d≈45),
+# areia, mel e prata como "matte": o flood apagava partes claras do assunto e o
+# un-matte zerava o alfa de tudo com d<96 (defeito reportado pelo usuário como
+# "chroma key horrível, partes apagadas"). FLOOD=16 tira SÓ o creme puro do fundo
+# (com ruído); sombreados areia/creme do assunto (d≥16) e brancos ficam intactos.
+# A franja AA de 1px FORA do flood recebe alfa parcial. Assunto osso-quase-creme
+# (d<16, ex.: branco-osso) continua ilegível para chroma key — esses casos pedem
+# arte com sombra/contaste de separação (re-gerar), não ajuste de raio.
 
 def strip_matte(im: Image.Image) -> Image.Image:
-    """Flood fill do creme conectado à borda -> alfa 0; borda com un-matte."""
+    """Remove APENAS o creme conectado à borda (d<FLOOD) e suaviza a franja AA
+    externa (1px). Interior do assunto é preservado mesmo quando é claro/creme."""
     im = im.convert('RGBA')
     w, h = im.size
     px = im.load()
     seen = bytearray(w * h)
     q = deque()
-    def is_matte(x, y):
+    def dist(x, y):
         r, g, b, a = px[x, y]
-        if a == 0: return True
-        d = ((r-CREAM[0])**2 + (g-CREAM[1])**2 + (b-CREAM[2])**2) ** 0.5
-        return d < EDGE
+        return ((r-CREAM[0])**2 + (g-CREAM[1])**2 + (b-CREAM[2])**2) ** 0.5
+    def is_matte(x, y):
+        if px[x, y][3] == 0: return True
+        return dist(x, y) < FLOOD
     for x in range(w):
         for y in (0, h-1):
             if not seen[y*w+x] and is_matte(x, y): seen[y*w+x] = 1; q.append((x, y))
@@ -110,15 +120,24 @@ def strip_matte(im: Image.Image) -> Image.Image:
         for nx, ny in ((x+1,y),(x-1,y),(x,y+1),(x,y-1)):
             if 0 <= nx < w and 0 <= ny < h and not seen[ny*w+nx] and is_matte(nx, ny):
                 seen[ny*w+nx] = 1; q.append((nx, ny))
+    # franja: 1px FORA do flood (encostado nele) — alfa parcial só aí; nunca dentro
+    rim = bytearray(w * h)
     for y in range(h):
         for x in range(w):
-            if seen[y*w+x]:
-                r, g, b, a = px[x, y]
+            if not seen[y*w+x]: continue
+            for nx, ny in ((x+1,y),(x-1,y),(x,y+1),(x,y-1)):
+                if 0 <= nx < w and 0 <= ny < h and not seen[ny*w+nx]:
+                    rim[ny*w+nx] = 1
+    for y in range(h):
+        for x in range(w):
+            i = y*w+x
+            r, g, b, a = px[x, y]
+            if seen[i]:
+                px[x, y] = (r, g, b, 0)
+            elif rim[i] and a > 0:
                 d = ((r-CREAM[0])**2 + (g-CREAM[1])**2 + (b-CREAM[2])**2) ** 0.5
-                if a == 0 or d < SOLID:
-                    px[x, y] = (r, g, b, 0)
-                else:
-                    k = min(1.0, (d - SOLID) / (EDGE - SOLID))
+                if d < RIM:
+                    k = max(0.0, min(1.0, (d - FLOOD) / (RIM - FLOOD)))
                     px[x, y] = (r, g, b, int(a * k))
     return im
 
