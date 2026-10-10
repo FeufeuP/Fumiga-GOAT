@@ -157,17 +157,30 @@ def fit_atlas(im: Image.Image, tw: int, th: int) -> Image.Image:
         im = im.crop((x0, 0, x0 + bw, h))
     return im.convert('RGBA').resize((tw, th), Image.Resampling.LANCZOS)
 
+def rel_or_abs(p: Path) -> str:
+    try:
+        return str(p.resolve().relative_to(ROOT))
+    except ValueError:
+        return str(p)
+
 def main():
-    src_dir = Path(sys.argv[1])
-    tag = sys.argv[2] if len(sys.argv) > 2 else src_dir.name
-    out_dir = ROOT / 'art-source' / f'f1-{tag}-preparado'
+    args = [a for a in sys.argv[1:] if not a.startswith('--')]
+    out_root = next((a.split('=', 1)[1] for a in sys.argv[1:] if a.startswith('--out-root=')), None)
+    if len(args) < 1:
+        print('uso: python3 tools/prepare_f1_migracao.py <pasta-originais> [sufixo-lote] [--out-root=DIR]')
+        return 2
+    src_dir = Path(args[0])
+    tag = args[1] if len(args) > 1 else src_dir.name
+    root = Path(out_root).resolve() if out_root else ROOT
+    out_dir = root / 'art-source' / f'f1-{tag}-preparado'
     out_dir.mkdir(parents=True, exist_ok=True)
-    recs, thumbs = [], []
+    recs, thumbs, missing = [], [], []
     for pid, (dest, dims, mode) in SPEC.items():
         src = src_dir / f'i_{pid}.png'
         if not src.exists():
             src = src_dir / f'{pid}.png'
         if not src.exists():
+            missing.append(pid)
             continue
         im = Image.open(src)
         if mode == 'icon':
@@ -176,11 +189,11 @@ def main():
             out = fit_atlas(im, *dims)
         else:
             out = fit_sprite(im, *dims)
-        runtime = ROOT / dest
+        runtime = root / dest
         runtime.parent.mkdir(parents=True, exist_ok=True)
         out.save(runtime, optimize=True)
         out.save(out_dir / f'{pid}.png', optimize=True)
-        recs.append(dict(id=pid, source=str(src.relative_to(ROOT)), dest=dest,
+        recs.append(dict(id=pid, source=rel_or_abs(src), dest=dest,
                          size=list(dims), mode=mode,
                          source_sha256=hashlib.sha256(src.read_bytes()).hexdigest(),
                          runtime_sha256=hashlib.sha256(runtime.read_bytes()).hexdigest(),
@@ -199,7 +212,10 @@ def main():
             sheet.paste(th, (x + (cell - th.width) // 2, y + 10), th)
             d.text((x + 12, y + cell + 4), pid, font=font, fill=(73, 53, 33))
         sheet.save(out_dir / 'folha-revisao.png', optimize=True)
-    print(f'{tag}: {len(recs)} peças preparadas em {out_dir.relative_to(ROOT)} (runtime atualizado).')
+    print(f'{tag}: {len(recs)} peças preparadas em {rel_or_abs(out_dir)} (runtime atualizado).')
+    if missing:
+        print(f'  AVISO: sem original para {len(missing)} ids: ' + ', '.join(missing))
+    return 0
 
 if __name__ == '__main__':
-    main()
+    sys.exit(main())

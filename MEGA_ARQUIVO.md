@@ -58,7 +58,7 @@ Pedido do usuário: “Execute tudo o que falta” (fechar F1 = 31 ícones + 5 a
 6. `npm run test:quick`, `npm test`, `inspect` e `inspect:hud`; abrir folhas de revisão (Regra 10).
 7. Ordem dos assuntos: lote 1 ícones (food, essence, shield, bolt, hourglass, snow, heal, egg, potion, crown) → lote 2 ícones (clover, fire_sword, fist, fungo, horseshoe, lock, scale, spider, spider_gold, sun) → lote 3 (10 glifos `sk_*`) → lote 4 (`wing_gem` + 5 atlas `lore_*`) → lote 5 (pilha + 7 cristais) → lote 6 (11 castas em ordem interna: queen, worker, soldier, trapjaw, spitter, bomber, tank, gatherer, scout, healer, weaver). Fichas seguem o modelo do MEGA §4; castas em top-down com cabeça para cima; cristais/pilha top-down; ícones e atlas como símbolos/tiras de UI.
 
-**Verificações desta rodada:** `test:quick` 30/30; suíte completa **37/37**; `docs.mjs` e `check_art_handoff` verdes; sem mudança visual (mecanismos neutros com listas vazias/fallback). Preview :8000 ativo.
+**Verificações desta rodada:** `test:quick` 30/30; suíte completa **37/37**; `docs.mjs` e `check_art_handoff` verdes; sem mudança visual (mecanismos neutros com listas vazias/fallback). Pipeline `prepare_f1_migracao.py` validado de ponta a ponta com 55 entradas sintéticas em `--out-root` isolado (dimensões de contrato exatas, proporções das castas preservadas, matte removido, manifesto + folha gerados; runtime real verificado intocado). Preview :8000 ativo.
 
 **Próximos:** executar o checklist acima em rodadas; depois o restante de F2 (Dinoponera com aprovação própria) e o aceite visual do usuário por lote, com rollback por lote documentado.
 
