@@ -1,5 +1,5 @@
 {
-  "version": "20261010-f0b-r5",
+  "version": "20261010-f1-lote6",
   "geradoPor": "tools/make_assets_list.mjs",
   "grupos": [
     {
@@ -75,7 +75,7 @@
         7089,
         2993,
         1576,
-        22309,
+        22471,
         11449,
         21721,
         2553,
@@ -121,7 +121,7 @@
         8826,
         899
       ],
-      "bytes": 1380413
+      "bytes": 1380575
     },
     {
       "id": "assets",
@@ -254,6 +254,7 @@
         "game/assets/sprites/props/nest_d1.png",
         "game/assets/sprites/props/nest_d2.png",
         "game/assets/sprites/props/nest.png",
+        "game/assets/sprites/props/pile_food.png",
         "game/assets/sprites/props/rock_a.png",
         "game/assets/sprites/props/rock_b.png",
         "game/assets/sprites/props/rock_c.png",
@@ -429,19 +430,20 @@
         563,
         497,
         606,
-        845,
-        652,
-        796,
-        887,
-        882,
-        884,
-        1068,
+        83109,
+        78760,
+        76192,
+        86407,
+        79839,
+        52508,
+        78078,
         747,
         536,
         13989,
         10878,
         11351,
         10759,
+        80550,
         1048,
         780,
         924,
@@ -502,7 +504,7 @@
         839032,
         656076
       ],
-      "bytes": 32533548
+      "bytes": 33142977
     }
   ]
 }

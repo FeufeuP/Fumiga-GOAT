@@ -117,6 +117,7 @@ const MANIFEST = {
   crys_white1: "sprites/props/crys_white1.png",
   crys_green1: "sprites/props/crys_green1.png",
   crys_red1: "sprites/props/crys_red1.png",
+  pile_food: "sprites/props/pile_food.png",
   tree_moss2: "sprites/props/tree_moss2.png",
   tree_broken2: "sprites/props/tree_broken2.png",
   bush_burned1: "sprites/props/bush_burned1.png",
@@ -192,7 +193,7 @@ const WROT = {};         // silhuetas brancas rotacionadas (hit flash)
 // ANTIGA nos mesmos nomes de arquivo (foi assim que o rework dos inimigos da
 // Fase 2 "não apareceu" para quem já tinha jogado antes dele).
 // ---------------------------------------------------------------------------
-export const ASSET_V = "20261010-f0b-r5";
+export const ASSET_V = "20261010-f1-lote6";
 
 /**
  * URL final de um asset do jogo: base certa para a página atual + anti-cache.
@@ -335,7 +336,7 @@ const OUTLINE_COL = "#08060f";
 // Chaves migradas para arte de papel (fonte suave em alta): a assação e o
 // contorno usam interpolação; sprites legados pixel-art preservam o corte
 // sem suavização. Preencher a lista junto da troca dos PNGs (lote de migração).
-export const SMOOTH_KEYS = new Set(["queen", "worker"]);
+export const SMOOTH_KEYS = new Set(["queen", "worker", "pile_food", "crys_blue1", "crys_blue2", "crys_violet1", "crys_yellow1", "crys_white1", "crys_green1", "crys_red1"]);
 export function markSmoothSprite(key) { SMOOTH_KEYS.add(key); }
 function smoothFor(img, key) { return SMOOTH_KEYS.has(key) || img.width > 256 || img.height > 256; }
 

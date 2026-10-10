@@ -37,6 +37,22 @@ repetições, datas, branches, checklists e notas históricas foram preservados.
 > Divergências permanecem visíveis, sem apagar conteúdo. O que efetivamente
 > funciona deve ser confirmado por testes e inspeção no preview.
 
+## Lote 6 APROVADO+INTEGRADO — props de mundo fechados (pile_food + 7 crys) · R7 com 9 castas GERADO (aguarda aprovação) (2026-10-10)
+
+**Pedido:** “Aprovado” (lote 6) — cadência: integrar o lote aprovado + gerar a próxima rodada (≤10) e parar para aprovação.
+
+**Lote 6 INTEGRADO (aprovado):** 8 props em `game/assets/sprites/props/` — `pile_food` (224×160) + 7 `crys_*` (256²) via `prepare_f1_migracao.py art-source/f1-lote6/originais lote6` + **MANIFEST `pile_food: "sprites/props/pile_food.png"` no mesmo commit** (contrato do loader cumprido; `bakePileSprite` passa a usar `IMG.pile_food`) + `SMOOTH_KEYS` estendido (pile_food + 7 crys) + `ASSET_V 20261010-f1-lote6` + listas + sync. **Identidade semântica confirmada no runtime:** blue1/blue2/violet1 teal/água, yellow1 âmbar, white1 branco-osso, green1 folha, red1 terracota; veios `#ffd479`.
+
+**Incidente `pwa` (transparência):** a contagem fixa de arquivos do pacote em `game/test/pwa.mjs` esperava 242; `pile_food.png` (asset novo) levou para 243. Asserção atualizada com o motivo documentado no comentário (padrão do projeto: a contagem sobe quando entra asset novo). `test:quick` voltou a **30/30** e a suíte completa **37/37**.
+
+**R7 GERADO — NÃO INTEGRADO (aguarda aprovação):** 9 castas em `art-source/f1-lote7/originais/` (prompt-mestre v3 integral + ficha §4 por casta do `config.js`, top-down cabeça-para-cima, seis patas no tórax, sem humanização): `soldier` (FORMIGA-BALA, ferrão), `trapjaw` (QUEIXO-DE-ARPÃO, mandíbulas de arpão abertas), `spitter` (FORMIGA-ACROBATA, gaster em coração erguido), `bomber` (FORMIGA-DE-FOGO, gaster de brasa em papel), `tank` (CEFALOTE, cabeça em disco + casco largo), `gatherer` (FORMIGA-POTE-DE-MEL, gaster-pote de mel), `scout` (FORMIGA-PRATA, esbelta pálida), `healer` (FORMIGA-MATABELE, bolsinha de ervas), `weaver` (FORMIGA-TECELÃ, verde-oliva com fio de seda). Preparados em `art-source/_revisao-r7/` via `--out-root` (runtime intocado); **9/9 contratos exatos** (soldier/trapjaw 204×264, spitter 186×240, bomber 216×276, tank 256², gatherer 156×204, scout/weaver 132×180, healer 150×204); folha apresentada (Regra 10). Silhuetas deliberadamente distintas entre si (lição da Cortadeira × Rainha).
+
+**Integração pós-aprovação do R7 (checklist):** prepare sem `--out-root` (9 → `game/assets/sprites/ants/`) + marcar as 9 chaves em `SMOOTH_KEYS` + `ASSET_V` + listas + sync + testes → **fecha 11/11 castas** (queen/worker já no jogo desde o lote 5). Dinoponera permanece alias `giant`→`soldier` sem sprite próprio.
+
+**Verificado nesta rodada:** `test:quick` **30/30** (pós-correção do `pwa`) e suíte completa **37/37** com os props novos no jogo; lote7 9/9 dimensões de contrato. Preview :8000 ativo.
+
+**Fila restante:** aprovação do R7 → integrar (11/11 castas + props + F1 = migração de arte dos parciais CONCLUÍDA) → sobra `pile_food`/crys/castas já cobertos; depois o escopo F2–F9 por encomenda (cenário legado dos biomas, flores 9+9, árvore/maçãs/santuários, cenas de carregamento, etc.).
+
 ## Lote 5 (piloto F0b) APROVADO+INTEGRADO — Rainha/Cortadeira no jogo · R6 (pile_food + 7 crys) GERADO (aguarda aprovação) (2026-10-10)
 
 **Pedido:** “Aprovado” (lote 5) — cadência: integrar o lote aprovado + gerar a próxima rodada (≤10) e parar para aprovação.
