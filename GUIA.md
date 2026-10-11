@@ -63,7 +63,7 @@
 
 **Se sim, ler:** [MEGA — continuidade artística](MEGA_ARQUIVO.md#continuidade-artistica), [prompt-mestre integral](MEGA_ARQUIVO.md#prompt-mestre-vigente), [fichas e exemplos](MEGA_ARQUIVO.md#arte-fichas-exemplos), [guia de estilo](docs/arte/ESTILO_OFICIAL.md) e [direção vigente](docs/arte/direcao-vigente.json).
 
-**Responder:** categoria da peça, técnica vigente, versão do prompt, referências disponíveis, quantidade autorizada, dimensão/estado, forma de apresentação e aceite. Para integração, consultar também o [plano de reestilização](DOCUMENTO_REESTILIZACAO_VISUAL.md), seções 5–6, o [inventário de imagens](docs/arte/inventario-imagens.csv) e o consumidor real em [assets.js](game/js/assets.js) / [render.js](game/js/render.js) ou no módulo específico. Não tratar conceito como sprite pronto nem manifesto como prova de que algo é desenhado.
+**Responder:** categoria da peça, técnica vigente, versão do prompt, referências disponíveis, quantidade autorizada, dimensão/estado, forma de apresentação e aceite. Para toda nova imagem, anotar a cor do fundo técnico de chroma da fonte (azul se a peça tiver verde; verde se tiver azul), e o destino do derivado recortado/composto; não confundir com fundo final do jogo. Para integração, consultar também o [plano de reestilização](DOCUMENTO_REESTILIZACAO_VISUAL.md), seções 5–6, o [inventário de imagens](docs/arte/inventario-imagens.csv) e o consumidor real em [assets.js](game/js/assets.js) / [render.js](game/js/render.js) ou no módulo específico. Não tratar conceito como sprite pronto nem manifesto como prova de que algo é desenhado.
 
 ### 08. A imagem é um cenário, terreno, prop, construção ou composição de camadas?
 

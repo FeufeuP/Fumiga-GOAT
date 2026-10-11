@@ -36,7 +36,7 @@ export function auditArtHandoff(read = diskRead) {
     assert.equal(piece.backup.sha256,piece.source_sha256,'fonte correta preservada');
   }
   const key = direction.prompt_mestre;
-  assert.equal(key, 'FUMIGA-PAPEL-v3-PASTEL-ORGANICO', 'mudança de prompt exige revisar este contrato de continuidade');
+  assert.equal(key, 'FUMIGA-PAPEL-v4-CHROMA', 'mudança de prompt exige revisar este contrato de continuidade');
   const start = `<!-- INICIO PROMPT ${key} -->`;
   const end = `<!-- FIM PROMPT ${key} -->`;
   const prompt = oneBlock(mega, start, end, 'prompt no MEGA');
@@ -50,6 +50,19 @@ export function auditArtHandoff(read = diskRead) {
     oneBlock(read('docs/arte/historico/ESTILO_OFICIAL-v2.md'), v2Start, v2End, 'v2 histórico guia'),
     'prompt v2 deve ser preservado após mudança de paleta');
   assert(prompt.includes('paleta pastel terrosa') && prompt.includes('vinhas'), 'paleta e HUD orgânico vigentes');
+  for (const phrase of ['TODA imagem gerada ou editada', 'verde puro #00FF00', 'azul puro #0000FF',
+    'traços verdes, escolha fundo AZUL', 'traços azuis, escolha fundo VERDE',
+    'remover o chroma', 'compor sobre o fundo final']) {
+    assert(prompt.includes(phrase), `regra de chroma ausente no prompt: ${phrase}`);
+  }
+  assert(!prompt.includes('fundo transparente real'), 'a fonte gerada não pode solicitar alfa como fundo');
+  const v3Start = '<!-- INICIO PROMPT FUMIGA-PAPEL-v3-PASTEL-ORGANICO -->';
+  const v3End = '<!-- FIM PROMPT FUMIGA-PAPEL-v3-PASTEL-ORGANICO -->';
+  assert.equal(oneBlock(mega, v3Start, v3End, 'v3 histórico MEGA'),
+    oneBlock(read('docs/arte/historico/ESTILO_OFICIAL-v3.md'), v3Start, v3End, 'v3 histórico guia'),
+    'prompt v3 anterior preservado integralmente');
+  assert.equal(direction.anterior, 'FUMIGA-PAPEL-v3-PASTEL-ORGANICO');
+  assert(direction.regra_fundo_gerado.includes('2026-10-10'), 'direção registra decisão do usuário');
 
   const oldKey = 'FUMIGA-PAPEL-v1';
   const oldStart = `<!-- INICIO PROMPT ${oldKey} -->`;
@@ -118,7 +131,10 @@ export function auditArtHandoff(read = diskRead) {
   assert(agents.includes('PARADA 1') && agents.includes('PARADA 2'), 'AGENTS alinhado à cadência v3');
   assert(!agents.includes('confirmação do usuário entre cada variação'), 'cadência antiga não pode continuar ativa');
   assert(agents.includes(key), 'AGENTS aponta o prompt vigente');
-  assert(read('REGRAS_DE_TRABALHO.md').includes(key), 'Regra 6 aponta o prompt vigente');
+  const rules = read('REGRAS_DE_TRABALHO.md');
+  assert(rules.includes(key), 'Regra 6 aponta o prompt vigente');
+  assert(rules.includes('chroma key em TODA imagem gerada/editada'), 'Regra 6 exige chroma em toda fonte');
+  assert(guide.includes('Fundo da FONTE: verde #00FF00 ou azul #0000FF'), 'ficha não pode pedir alfa diretamente');
   assert(read('DOCUMENTO_REESTILIZACAO_VISUAL.md').includes(key), 'plano aponta o prompt vigente');
 
   return { prompt: key, referencias: v2.imagens.length + scenes.imagens.length + packages.length };

@@ -7,7 +7,7 @@
 > **Todo pedido, independentemente do assunto:** ler [`REGRAS_DE_TRABALHO.md`](REGRAS_DE_TRABALHO.md) **por inteiro**.
 > Usar [`GUIA.md`](GUIA.md) como roteiro de perguntas para localizar arquivos/seções; ele não substitui as regras nem a leitura do MEGA.
 > **Novo chat / criação de imagens:** começar pelo [guia de continuidade artística](#continuidade-artistica).
-> Direção vigente: **06 — papel recortado detalhado**, prompt **`FUMIGA-PAPEL-v3-PASTEL-ORGANICO`**.
+> Direção vigente: **06 — papel recortado detalhado**, prompt **`FUMIGA-PAPEL-v4-CHROMA`**; toda nova fonte gerada usa fundo verde/azul de chroma.
 > As bases limpas anteriores não representam a densidade do cenário final; HUDs e brasa têm integração parcial, não o rework completo.
 
 > **Paleta vigente:** pastel terroso (terra/madeira castanha, laranja-âmbar, folhas/vinhas verdes). Roxo/azul-escuro rejeitados como base. Técnica de papel recortado preservada. F1 parcialmente integrado e ainda em revisão; F0 adiado.
@@ -36,6 +36,12 @@ repetições, datas, branches, checklists e notas históricas foram preservados.
 > comprovação do estado atual do código nem em limites da sessão atual.
 > Divergências permanecem visíveis, sem apagar conteúdo. O que efetivamente
 > funciona deve ser confirmado por testes e inspeção no preview.
+
+## Regra de chroma key para toda nova imagem — 2026-10-10
+
+Pedido explícito do usuário: toda imagem gerada deve ter fundo verde ou azul para facilitar o Chroma Key; se a peça tiver traços verdes, usar azul, e vice-versa para traços azuis. Vale para qualquer categoria (sprite, HUD, mapa-base, cenário, ilustração) e para edições/novas gerações, sem recolorir arquivos históricos. Fonte gerada: fundo técnico uniforme e opaco; derivado de produção: recortar e tratar contaminação de bordas, gerar alfa real ou recompor o fundo apropriado ao consumidor antes de integrar. Se ambos os tons aparecem na peça, escolher o de maior separação e revisar máscara manualmente. Mapas/ilustrações de tela cheia são gerados como placa com margem de chroma e recompostos depois; a base limpa continua sem decorativos.
+
+Contrato atualizado na Regra 6, prompt-mestre v4, ficha do guia, direção vigente, GUIA/AGENTS/plano e teste de continuidade. v3 integral arquivado no guia histórico e no MEGA, sem reatribuir versões aos PNGs anteriores. **Nenhuma imagem foi gerada, nenhum asset de produção/runtime ou save foi alterado neste pedido.** Verificações: docs e continuidade íntegros; `npm run test:quick` 30/30 na entrega da regra e `npm test` 37/37 (incluindo mobile e navegador) antes da publicação; inspeção TITLE PC/mobile no navegador sem JS/404/glifos, capturas abertas, jogo preservado; preview `npm run serve` ativo em 0.0.0.0:8000 (`/game/` e `/game/mobile/`). Nenhuma geração testou a extração de chroma ainda: aceites visuais e aplicação dependem das próximas imagens. Pesquisa de referência indie e perguntas de opções não foram necessárias para transcrever a regra técnica inequívoca definida pelo próprio usuário. Próximo: aplicar e conferir as bordas em cada nova arte antes de integração.
 
 ## Registro — TITLE: botões só texto (sem HUD) + navegação por teclado, estilo Dead Cells (2026-10-10)
 
@@ -236,7 +242,8 @@ Pedido explícito “Parta direto para F1”: supera a recomendação de termina
 | Item | Estado que o próximo chat deve respeitar |
 |---|---|
 | Técnica oficial | **06 — papel recortado artesanal, detalhado e harmonioso.** Não minimalista, não pixel art, não low-poly. Não pedir novamente qual dos dez estilos deve ser oficial. |
-| Prompt ativo | **`FUMIGA-PAPEL-v3-PASTEL-ORGANICO`**, integral neste MEGA no [bloco canônico](#prompt-mestre-vigente). Não reescrever silenciosamente; mudança de direção exige aprovação explícita e versão anterior preservada. |
+| Prompt ativo | **`FUMIGA-PAPEL-v4-CHROMA`**, integral neste MEGA no [bloco canônico](#prompt-mestre-vigente). Não reescrever silenciosamente; mudança de direção exige aprovação explícita e versão anterior preservada. |
+| Chroma nas novas gerações | Fonte de toda imagem: fundo sólido verde/azul (azul se a peça tem verde; verde se tem azul), inclusive HUD, terreno e ilustração; derivado recortado/composto antes do jogo. Sem efeito retroativo. |
 | Escopo visual | Todo o conjunto: terrenos, personagens, fauna, vegetação, flores, recursos, construções, árvore/maçãs/santuários, UI/ícones, menus, carregamentos e cutscenes. O tipo de detalhe se adapta à função e ao tamanho. |
 | Acabamento | Riqueza orgânica, material tátil e recortes trabalhados, sem grandes áreas com aparência de rascunho vazio; a ação continua legível. |
 | Rodada original de dez imagens (v1) | PNGs não recuperados; metadados e hashes históricos preservados. Não usar outra imagem sob esses hashes nem dizer que foram restaurados. |
@@ -318,7 +325,7 @@ Pivot/âncora, hitbox, área de respiro e margem de recorte:
 Grandes formas / recortes médios / detalhes finos:
 Onde concentrar detalhe e onde preservar leitura:
 Camadas a produzir nesta passada; elementos deliberadamente ausentes:
-Fundo/alfa e tratamento da sombra no chão:
+Cor de chroma da FONTE (verde ou azul, segundo a peça); alfa/composição do DERIVADO e tratamento da sombra no chão:
 Referências disponíveis: caminho real, ID do Drive, SHA-256 e função de cada uma:
 Destino e consumidor do jogo; orçamento de bytes/memória a medir:
 Critério de revisão, aprovação necessária e pasta de preservação:
@@ -489,9 +496,28 @@ A auditoria protege a consistência da memória; não garante automaticamente a 
 
 **Decisão:** manter 06 como técnica oficial, agora exigindo acabamento rico e não minimalista em todas as famílias visuais. O 08 é comparação histórica, não estilo alternativo pendente de escolha. Terrenos de estudo limpos não demonstram nem definem a densidade do cenário final. Texturas e recortes de várias escalas devem enriquecer o material; decoração, vegetação, fungos, raízes e construções permanecem peças/camadas separadas aprovadas (Regra 19). Preservar áreas de passagem/combate, contraste de ameaças, texto, anatomia, câmera e desempenho. Não resolver vazio com ruído/repetição uniforme nem alterar gameplay.
 
-**Prompt-mestre atualizado com autorização expressa:** `FUMIGA-PAPEL-v3-PASTEL-ORGANICO`. Texto anterior `FUMIGA-PAPEL-v1` preservado nos registros anteriores e no guia integral `docs/arte/historico/ESTILO_OFICIAL-v1.md`. Guia ativo `docs/arte/ESTILO_OFICIAL.md`; decisão atual em `docs/arte/direcao-vigente.json`. Esta versão de prompt é distinta da numeração da rodada v2 de imagens, que continua historicamente associada ao prompt v1.
+**Prompt-mestre atualizado com autorização expressa (revisão pastel de 2026-10-08):** `FUMIGA-PAPEL-v3-PASTEL-ORGANICO`. Texto anterior `FUMIGA-PAPEL-v1` preservado nos registros anteriores e no guia integral `docs/arte/historico/ESTILO_OFICIAL-v1.md`. Guia ativo `docs/arte/ESTILO_OFICIAL.md`; decisão atual em `docs/arte/direcao-vigente.json`. Esta versão de prompt é distinta da numeração da rodada v2 de imagens, que continua historicamente associada ao prompt v1.
 
 <a id="prompt-mestre-vigente"></a>
+**Revisão técnica de 2026-10-10:** v4 mantém a paleta pastel e exige fundo de chroma em toda nova fonte gerada. A menção ao v3 imediatamente acima registra a decisão histórica de 2026-10-08; não indica o prompt vigente. O v3 completo, inclusive sua instrução histórica de alfa/terreno, permanece abaixo para auditoria; não deve ser usado em gerações novas.
+<!-- INICIO PROMPT FUMIGA-PAPEL-v4-CHROMA -->
+Crie uma única peça visual original para FUMIGA — Colônia Eterna no estilo oficial 06 de papel recortado artesanal, agora com acabamento rico e altamente detalhado, conforme a decisão explícita do usuário. A direção não é minimalista nem deve transmitir vazio ou aspecto de protótipo. Construa formas com camadas rasas de papel colorido, bordas de tesoura ligeiramente irregulares, fibras sutis e superfícies predominantemente foscas. O volume vem da sobreposição e de sombras de contato curtas e suaves; não de pixels aparentes, plástico, argila, metal realista ou modelagem low-poly. Use silhuetas reconhecíveis em tamanho pequeno, com recortes internos trabalhados e detalhes próprios da peça, com separação clara de personagem, recurso, ameaça e fundo. Evite contornos pretos grossos de cartoon: a borda cortada e o contraste entre papéis definem as formas.
+
+Distribua o detalhamento em três níveis: grandes formas que organizam a leitura, recortes médios que definem o assunto e detalhes finos de material. Mostre sobreposições elaboradas, fibras, variações sutis de pigmento e espessura, bordas artesanais e pequenos relevos coerentes, sem transformar papel em pintura lisa, plástico ou fotorrealismo. Evite áreas extensas uniformes sem tratamento, mas não preencha tudo com ruído, confetes ou peças repetidas. Em peças botânicas autorizadas, trabalhar nervuras, pétalas, filamentos e recortes delicados; em insetos, segmentos, placas, articulações e acessórios compatíveis com a anatomia; em UI, molduras trabalhadas com áreas limpas para texto e ícones. Aplicar apenas os detalhes pertinentes ao assunto solicitado, sem adicionar objetos de outras categorias a um sprite isolado.
+
+Em uma composição final de cenário, buscar abundância orgânica e sensação de lugar vivo por agrupamentos variados, sobreposições e transições cuidadas entre zonas. Concentrar o detalhe mais denso nas bordas, pontos de interesse e áreas não transitáveis; manter caminhos, personagens, recursos, ameaças e telegráficos destacados. Áreas de combate podem ter material rico de baixo contraste, sem virar superfícies vazias nem competir com a ação. A riqueza deve resultar da montagem de terreno, decoração, construções e efeitos em camadas independentes aprovadas, nunca da fusão desses elementos numa base de terreno. Para bases limpas, detalhar exclusivamente o material, as transições de cor e o relevo suave, sem incluir vegetação individual, raízes, pedras ou construções. Base limpa não significa cenário final vazio. Não gerar camadas ou assuntos além dos autorizados na ficha.
+
+Mantenha a identidade biológica e mítica do FUMIGA com a nova paleta pastel terrosa: marrons suaves de terra e madeira, papel creme e areia, laranja suave que lembre âmbar, verdes de folhas e vinhas como sálvia, oliva clara e musgo suave. Abandone a combinação anterior de âmbar com roxo ou azul-escuro: não usar esses tons como base artística, sombra ou acento dominante (o azul técnico do chroma não faz parte da paleta da peça). Use sombras curtas castanhas e quentes; reserve marrom mais escuro a texto, separação e pequenos contatos necessários à leitura, sem grandes painéis escuros. Pastel não significa falta de contraste. A Névoa permanece branco-osso em camadas leves de papel, sem esconder ameaças. Quando a ficha autorizar HUD, dar vida às bordas com vinhas, folhas reconhecíveis e madeira traduzida em recortes de papel: agrupamentos orgânicos variados, veios e nervuras de escala média, não apenas fios decorativos minúsculos. Preservar áreas de texto e toque; separar ornamentos não extensíveis das faixas de nove fatias. Riqueza orgânica não autoriza animações novas automaticamente. Luz suave vindo do alto à esquerda. Preserve a anatomia animal: formigas com seis patas ligadas ao tórax, duas antenas e corpo segmentado; ferramentas e acessórios são proporcionais ao inseto. A Rainha Silenciosa tem gaster âmbar e diadema orgânico de fungo e seda, nunca coroa metálica humana. Proíba bipedia humana, rosto ou mãos humanos e roupas humanoides.
+
+Para personagens, objetos, terrenos, construções, santuários e flores, use vista ortográfica estritamente de cima, sem horizonte e sem câmera isométrica. Somente ilustrações de menus, carregamento, árvore de habilidades e maçãs podem usar outro enquadramento, explicitado na ficha da peça. Mantenha escala relativa, margem segura e âncora consistentes entre estados da mesma peça.
+
+Produza arte em alta resolução, com bordas legíveis e sem texto, logotipo, marca-d'água ou interface embutida. Sprite ou camada isolada: nenhuma cena ao redor da peça; usar o fundo técnico de chroma descrito abaixo, nunca xadrez ou transparência como fundo da imagem gerada. Mapa-base: terreno completo e limpo, sem flores, árvores, arbustos, pedras, buracos, rachaduras ou construções; esses elementos serão peças separadas. Ilustração: composição única conforme a ficha, sem grade ou colagem de alternativas. A ficha técnica define o formato, dimensões, estado e partes a entregar; não invente novos personagens, mecânicas ou mudanças de lore.
+
+Em TODA imagem gerada ou editada, qualquer que seja a categoria (inclusive terreno, cenário, ilustração, HUD e sprite), coloque a peça sobre um fundo técnico de chroma key uniforme, sólido e opaco: verde puro #00FF00 ou azul puro #0000FF. Se a peça tiver traços verdes, escolha fundo AZUL; se tiver traços azuis, escolha fundo VERDE. Se tiver as duas cores, escolha a que mais se distingue da silhueta e dos detalhes, verificando o recorte manualmente; não elimine cores essenciais da peça. Reserve a cor de chroma apenas para o fundo, sem gradientes, textura, cenário, xadrez, halos ou sombras projetadas sobre ele. Deixe margem de fundo visível em toda a volta da peça; em imagens que ocuparão a tela inteira, gere a composição como placa isolada com margem para permitir recorte e reconstrução da cena na preparação, sem alterar o conteúdo autorizado da arte. Esse fundo é SOMENTE da fonte gerada: preservar o original e remover o chroma com cuidado (inclusive spill nas bordas), revisar detalhes vazados e exportar o derivado com alfa real quando o consumidor exigir transparência, ou compor sobre o fundo final apropriado quando exigir imagem opaca. Nunca publicar verde/azul técnico no jogo.
+<!-- FIM PROMPT FUMIGA-PAPEL-v4-CHROMA -->
+
+### Prompt v3 histórico — antes da regra do chroma (2026-10-10)
+
 <!-- INICIO PROMPT FUMIGA-PAPEL-v3-PASTEL-ORGANICO -->
 Crie uma única peça visual original para FUMIGA — Colônia Eterna no estilo oficial 06 de papel recortado artesanal, agora com acabamento rico e altamente detalhado, conforme a decisão explícita do usuário. A direção não é minimalista nem deve transmitir vazio ou aspecto de protótipo. Construa formas com camadas rasas de papel colorido, bordas de tesoura ligeiramente irregulares, fibras sutis e superfícies predominantemente foscas. O volume vem da sobreposição e de sombras de contato curtas e suaves; não de pixels aparentes, plástico, argila, metal realista ou modelagem low-poly. Use silhuetas reconhecíveis em tamanho pequeno, com recortes internos trabalhados e detalhes próprios da peça, com separação clara de personagem, recurso, ameaça e fundo. Evite contornos pretos grossos de cartoon: a borda cortada e o contraste entre papéis definem as formas.
 
@@ -2982,11 +3008,12 @@ Ao final de cada tarefa, apresentar um **checklist de conferência** com este fo
 - Toda imagem criada para o jogo (sprites, ícones, cenários, UI, capas) deve ser gerada em
   **alta resolução** e depois adequada ao tamanho de uso — nunca arte borrada ou subdimensionada.
 - **Estilo obrigatório para novas artes: papel recortado detalhado, não minimalista**, conforme o prompt-mestre
-  `FUMIGA-PAPEL-v3-PASTEL-ORGANICO` em [`docs/arte/ESTILO_OFICIAL.md`](docs/arte/ESTILO_OFICIAL.md) e no MEGA.
+  `FUMIGA-PAPEL-v4-CHROMA` em [`docs/arte/ESTILO_OFICIAL.md`](docs/arte/ESTILO_OFICIAL.md) e no MEGA.
   Camadas rasas trabalhadas, fibras, recortes médios e finos, variações de material e sombras de contato;
   paleta pastel terrosa (marrom, laranja-âmbar e verde), HUD com madeira/folhas/vinhas
   e leitura clara em tamanho pequeno. Roxo/azul-escuro deixam de ser a base das novas artes. Arte antiga permanece até
   a migração aprovada por lote; escolher o estilo não aprova todos os detalhes do conceito.
+- **Nova regra explícita de 2026-10-10 — chroma key em TODA imagem gerada/editada:** usar fundo técnico sólido, uniforme e opaco verde `#00FF00` ou azul `#0000FF` na fonte, sem exceção para sprites, ícones, HUD, terrenos, mapas-base, cenários ou ilustrações. Se a peça tiver traços verdes, fundo azul; se tiver traços azuis, fundo verde. Se tiver ambos, usar a cor que mais separe os detalhes e conferir recorte manual. O fundo não pode ter gradiente/textura, sombra ou invasão das bordas da peça. Não confundir esse fundo temporário com paleta artística nem com o asset final: preservar a fonte, remover chroma/contaminação de borda e validar o derivado (alfa real ou composição opaca apropriada ao consumidor) antes de integrar. Imagens antigas não são alteradas retroativamente. Seguir a ficha e o prompt v4.
 - **Refinamento explícito de 2026-10-08:** tudo deve ser bem detalhado, sem transmitir vazio.
   Base limpa não é cenário final: compor riqueza com decoração/construções em camadas
   separadas (Regra 19), mantendo caminhos, texto e ameaças legíveis. Não trocar vazio
@@ -3184,7 +3211,7 @@ Ao final de cada tarefa, apresentar um **checklist de conferência** com este fo
 1. PESQUISAR  → inspirações em jogos indies na Web (Regra 2)
 2. PERGUNTAR  → opções de implementação (Regra 1)
 3. IMPLEMENTAR → seguindo as escolhas do usuário, otimização (Regra 5) e Regra 14 (tela de carregamento só na troca de mundo; o que sai do TITLE é pré-carregado)
-4. ARTE       → imagens em alta resolução, papel recortado detalhado e harmônico (Regra 6) + humanização moderada (Regra 8) + top-down no mundo do jogo (Regra 17) + mapas-base limpos (Regra 19), em rodadas de no máx. 10 imagens (Regra 16), sempre partindo do prompt-mestre de estilo (Regra 18)
+4. ARTE       → imagens em alta resolução, papel recortado detalhado e harmônico (Regra 6) + humanização moderada (Regra 8) + top-down no mundo do jogo (Regra 17) + mapas-base limpos (Regra 19), em rodadas de no máx. 10 imagens (Regra 16), com fonte em fundo verde/azul de chroma (Regra 6), sempre partindo do prompt-mestre de estilo (Regra 18)
 5. MOSTRAR    → exibir toda arte gerada para aprovação visual (Regra 10)
 6. ADAPTAR    → mobile: todo input novo vira gesto/botão de toque (Regra 9)
 7. VERIFICAR  → check-in com checklist do que foi pedido (Regra 3)
@@ -4839,7 +4866,7 @@ parte dos blocos originais.
 
 | Arquivo original | Bytes preservados | SHA-256 |
 |---|---:|---|
-| `REGRAS_DE_TRABALHO.md` | 25622 | `a6fc268fe3b56f68aa1b01af7394d6f4b2654389e0bf72570ea4aba2453fb97b` |
+| `REGRAS_DE_TRABALHO.md` | 26502 | `bc7c79c934e27a668c0944a90cb28728517195dec68d8bd20f76ec7d5f6a095f` |
 | `LORE.md` | 15056 | `42075fe4334601f1a74834388c0155342b2a8a6c21e51afa6020e34a5260f493` |
 | `DOCUMENTO_MEGA_ATUALIZACAO_LORE_TOTAL.md` | 30473 | `c642dd06d14e527bba6566458afa5293f697b0a3b981ef6301f6fafdfb9e856e` |
 | `DOCUMENTO_DECISOES_MEGA_ATUALIZACAO.md` | 8179 | `2b05240cd9fef9fb33d8a08768164f60202437c886c1c5b83f250ee9cbb58637` |
