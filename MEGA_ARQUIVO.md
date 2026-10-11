@@ -37,6 +37,16 @@ repetições, datas, branches, checklists e notas históricas foram preservados.
 > Divergências permanecem visíveis, sem apagar conteúdo. O que efetivamente
 > funciona deve ser confirmado por testes e inspeção no preview.
 
+## RODADA CHROMA VERDE/AZUL — B1 (10 peças re-geradas com fundo de croma) (2026-10-10)
+
+**Pedido:** “O Chroma Key ainda está horrível, caso consiga re-gerar as imagens com fundo verde ou azul para que o Chroma Key funcione melhor, faça.” — **re-gerar tudo com fundo de croma profissional** (verde/azul), mantendo a cadência de 10 por rodada com aprovação antes da integração.
+
+**Mudança de pipeline (`tools/prepare_f1_migracao.py`):** `strip_matte` agora **detecta o fundo pelas 4 quinas** — verde `#00b140` ou azul `#0f4fff` → flood por distância (`CHROMA_FLOOD=60`) + matiz/saturação da chave (pega sombra/vigneta da chave); **remoção global de ilhas** da cor de chave fechadas dentro da peça (vãos entre patas/recortes vazados), com regra dupla distância<`CHROMA_CORE=120` **E** matiz±38° **E** saturação>0.22 — sálvia/turquesa pastel do assunto a ~117 de distância **não** é tocada; **despill** de borda (4px) remove a franja verde/azul da AA. Fundo creme legado continua suportado (`FLOOD/RIM=16/40`) para peças ainda não re-geradas. Regra de cor por peça: **verde no assunto → chave azul; resto → chave verde**.
+
+**Rodada 1 (as 10 peças com qualquer defeito restante):** `sk_rico`, `clover`, `horseshoe`, `sk_frost` (ícones 128²), `crys_white1`, `crys_green1`, `crys_violet1` (props 256²), `spitter`, `weaver`, `gatherer` (castas). Originais em `art-source/chroma-b1/originais/` (1024², fundo verde/azul uniforme); derivados 128/256px validados em revisão (furos de apagamento **0**, sobras da cor de chave **0**, dano ao assunto medido pixel a pixel = 0 — os vãos vazados do floco e da tecelã são transparência real do desenho, antes ocupados por restos de creme). Apresentação com o tamanho real de uso em `art-source/chroma-b1-apresentacao.png`.
+
+**Status:** 🟡 **AGUARDANDO APROVAÇÃO** — nada integrado ao runtime ainda. Aprovado, integrar as 10 e seguir com as rodadas 2-6 (45 peças restantes: 31 ícones, 5 atlas de lore, pile_food, crys restantes, castas restantes) na mesma cadência de 10 por rodada.
+
 ## CORREÇÃO DO CHROMA KEY (strip_matte) — reprocessamento total + re-gerações com contraste · lote 7 INTEGRADO (11/11 castas) (2026-10-10)
 
 **Pedido:** “Aprovado, porém o Chroma Key das imagens ficou horrível, algumas imagens tiveram partes apagadas” — lote 7 aprovado **com correção obrigatória** do matte antes/depois da integração.

@@ -94,21 +94,63 @@ FLOOD, RIM = 16.0, 40.0
 # A franja AA de 1px FORA do flood recebe alfa parcial. Assunto osso-quase-creme
 # (d<16, ex.: branco-osso) continua ilegível para chroma key — esses casos pedem
 # arte com sombra/contaste de separação (re-gerar), não ajuste de raio.
+# --- chroma key de produção (fundos VERDE/AZUL nas originais) ---
+KEY_GREEN = (0, 177, 64)     # #00b140
+KEY_BLUE = (15, 79, 255)     # #0f4fff
+CHROMA_FLOOD = 60            # distância RGB ao tom de chave: flood remove
+CHROMA_RIM = 110             # franja AA: alfa parcial até esta distância
+CHROMA_CORE = 120            # remoção global de ilhas da cor de chave dentro da peça
+SPILL_HUE_DEG = 38           # raio de matiz para considerar tom da chave
+SPILL_SAT = 0.22             # saturação mínima p/ candidato a chave (sombra mantém matiz)
+
+def _hue_of(r, g, b):
+    import colorsys
+    return colorsys.rgb_to_hsv(r/255.0, g/255.0, b/255.0)  # h em [0,1], s, v
 
 def strip_matte(im: Image.Image) -> Image.Image:
-    """Remove APENAS o creme conectado à borda (d<FLOOD) e suaviza a franja AA
-    externa (1px). Interior do assunto é preservado mesmo quando é claro/creme."""
+    """Matte por detecção de fundo (auto):
+    • fundo VERDE/AZUL de croma → flood por matiz/saturação (sombra da chave
+      também cai) + despill SÓ na borda (verdes/azuis legítimos preservados);
+    • fundo creme legado → flood de creme d<FLOOD + franja AA 1px.
+    Interior do assunto nunca é removido em nenhum modo."""
     im = im.convert('RGBA')
     w, h = im.size
     px = im.load()
-    seen = bytearray(w * h)
-    q = deque()
-    def dist(x, y):
-        r, g, b, a = px[x, y]
-        return ((r-CREAM[0])**2 + (g-CREAM[1])**2 + (b-CREAM[2])**2) ** 0.5
+    # detecção de chave pelas 4 quinas
+    import statistics
+    corners = [px[1, 1], px[w-2, 1], px[1, h-2], px[w-2, h-2]]
+    kr = int(statistics.median(c[0] for c in corners))
+    kg = int(statistics.median(c[1] for c in corners))
+    kb = int(statistics.median(c[2] for c in corners))
+    kh, ks, kv = _hue_of(kr, kg, kb)
+    if kg > kr + 25 and kg > kb + 25:
+        key, key_h = KEY_GREEN, kh
+    elif kb > kr + 25 and kb > kg + 15:
+        key, key_h = KEY_BLUE, kh
+    else:
+        key, key_h = None, None  # creme legado
+
+    def hue_dist(h1, h2):
+        d = abs(h1 - h2)
+        return min(d, 1.0 - d) * 360.0
+
     def is_matte(x, y):
         if px[x, y][3] == 0: return True
-        return dist(x, y) < FLOOD
+        r, g, b, a = px[x, y]
+        if key is None:
+            return ((r-CREAM[0])**2 + (g-CREAM[1])**2 + (b-CREAM[2])**2) ** 0.5 < FLOOD
+        if ((r-key[0])**2 + (g-key[1])**2 + (b-key[2])**2) ** 0.5 < CHROMA_FLOOD:
+            return True
+        hh, ss, vv = _hue_of(r, g, b)
+        return ss > SPILL_SAT and vv > 0.12 and hue_dist(hh, key_h) < SPILL_HUE_DEG
+
+    def dist_key(x, y):
+        r, g, b, a = px[x, y]
+        ref = CREAM if key is None else key
+        return ((r-ref[0])**2 + (g-ref[1])**2 + (b-ref[2])**2) ** 0.5
+
+    seen = bytearray(w * h)
+    q = deque()
     for x in range(w):
         for y in (0, h-1):
             if not seen[y*w+x] and is_matte(x, y): seen[y*w+x] = 1; q.append((x, y))
@@ -120,7 +162,24 @@ def strip_matte(im: Image.Image) -> Image.Image:
         for nx, ny in ((x+1,y),(x-1,y),(x,y+1),(x,y-1)):
             if 0 <= nx < w and 0 <= ny < h and not seen[ny*w+nx] and is_matte(nx, ny):
                 seen[ny*w+nx] = 1; q.append((nx, ny))
-    # franja: 1px FORA do flood (encostado nele) — alfa parcial só aí; nunca dentro
+    if key is not None:
+        # chave real: remove TAMBÉM ilhas da cor do fundo fechadas dentro da peça
+        # (vãos entre patas/corpo). A ficha garante que nada do assunto usa a cor
+        # do croma, então a remoção global por distância de cor é segura.
+        for y in range(h):
+            for x in range(w):
+                i = y*w+x
+                if seen[i]: continue
+                r, g, b, a = px[x, y]
+                if a == 0: continue
+                d = ((r-key[0])**2 + (g-key[1])**2 + (b-key[2])**2) ** 0.5
+                if d >= CHROMA_CORE: continue
+                hh, ss, vv = _hue_of(r, g, b)
+                # fundo puro sempre removível; tons próximos exigem matiz da chave
+                # e saturação (evita comer sálvia/turquesa pastel do assunto)
+                if d < CHROMA_FLOOD or (hue_dist(hh, key_h) < SPILL_HUE_DEG and ss > SPILL_SAT):
+                    seen[i] = 1
+    # franja: 1px FORA do flood — alfa parcial só aí; nunca dentro
     rim = bytearray(w * h)
     for y in range(h):
         for x in range(w):
@@ -128,6 +187,7 @@ def strip_matte(im: Image.Image) -> Image.Image:
             for nx, ny in ((x+1,y),(x-1,y),(x,y+1),(x,y-1)):
                 if 0 <= nx < w and 0 <= ny < h and not seen[ny*w+nx]:
                     rim[ny*w+nx] = 1
+    f0, f1 = (FLOOD, RIM) if key is None else (25.0, float(CHROMA_RIM))
     for y in range(h):
         for x in range(w):
             i = y*w+x
@@ -135,10 +195,33 @@ def strip_matte(im: Image.Image) -> Image.Image:
             if seen[i]:
                 px[x, y] = (r, g, b, 0)
             elif rim[i] and a > 0:
-                d = ((r-CREAM[0])**2 + (g-CREAM[1])**2 + (b-CREAM[2])**2) ** 0.5
-                if d < RIM:
-                    k = max(0.0, min(1.0, (d - FLOOD) / (RIM - FLOOD)))
+                d = dist_key(x, y)
+                if d < f1:
+                    k = max(0.0, min(1.0, (d - f0) / (f1 - f0)))
                     px[x, y] = (r, g, b, int(a * k))
+    if key is not None:
+        # despill SÓ em até 2px da borda do flood (preserva verdes/azuis do assunto)
+        near = bytearray(w * h)
+        for y in range(h):
+            for x in range(w):
+                i = y*w+x
+                if seen[i] or (x >= w-4 or y >= h-4 or x < 4 or y < 4):
+                    near[i] = 1; continue
+                for dx in range(-4, 5):
+                    for dy in range(-2, 3):
+                        nx, ny = x+dx, y+dy
+                        if 0 <= nx < w and 0 <= ny < h and seen[ny*w+nx]:
+                            near[i] = 1; break
+        for y in range(h):
+            for x in range(w):
+                i = y*w+x
+                if not near[i]: continue
+                r, g, b, a = px[x, y]
+                if a == 0: continue
+                if key == KEY_GREEN and g > (r + b) // 2:
+                    px[x, y] = (r, (r + b) // 2, b, a)
+                elif key == KEY_BLUE and b > (r + g) // 2:
+                    px[x, y] = (r, g, (r + g) // 2, a)
     return im
 
 def fit_sprite(im: Image.Image, tw: int, th: int) -> Image.Image:
