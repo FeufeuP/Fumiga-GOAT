@@ -109,11 +109,12 @@ Ao final de cada tarefa, apresentar um **checklist de conferência** com este fo
 - Toda imagem criada para o jogo (sprites, ícones, cenários, UI, capas) deve ser gerada em
   **alta resolução** e depois adequada ao tamanho de uso — nunca arte borrada ou subdimensionada.
 - **Estilo obrigatório para novas artes: papel recortado detalhado, não minimalista**, conforme o prompt-mestre
-  `FUMIGA-PAPEL-v3-PASTEL-ORGANICO` em [`docs/arte/ESTILO_OFICIAL.md`](docs/arte/ESTILO_OFICIAL.md) e no MEGA.
+  `FUMIGA-PAPEL-v4-CHROMA` em [`docs/arte/ESTILO_OFICIAL.md`](docs/arte/ESTILO_OFICIAL.md) e no MEGA.
   Camadas rasas trabalhadas, fibras, recortes médios e finos, variações de material e sombras de contato;
   paleta pastel terrosa (marrom, laranja-âmbar e verde), HUD com madeira/folhas/vinhas
   e leitura clara em tamanho pequeno. Roxo/azul-escuro deixam de ser a base das novas artes. Arte antiga permanece até
   a migração aprovada por lote; escolher o estilo não aprova todos os detalhes do conceito.
+- **Nova regra explícita de 2026-10-10 — chroma key em TODA imagem gerada/editada:** usar fundo técnico sólido, uniforme e opaco verde `#00FF00` ou azul `#0000FF` na fonte, sem exceção para sprites, ícones, HUD, terrenos, mapas-base, cenários ou ilustrações. Se a peça tiver traços verdes, fundo azul; se tiver traços azuis, fundo verde. Se tiver ambos, usar a cor que mais separe os detalhes e conferir recorte manual. O fundo não pode ter gradiente/textura, sombra ou invasão das bordas da peça. Não confundir esse fundo temporário com paleta artística nem com o asset final: preservar a fonte, remover chroma/contaminação de borda e validar o derivado (alfa real ou composição opaca apropriada ao consumidor) antes de integrar. Imagens antigas não são alteradas retroativamente. Seguir a ficha e o prompt v4.
 - **Refinamento explícito de 2026-10-08:** tudo deve ser bem detalhado, sem transmitir vazio.
   Base limpa não é cenário final: compor riqueza com decoração/construções em camadas
   separadas (Regra 19), mantendo caminhos, texto e ameaças legíveis. Não trocar vazio
@@ -311,7 +312,7 @@ Ao final de cada tarefa, apresentar um **checklist de conferência** com este fo
 1. PESQUISAR  → inspirações em jogos indies na Web (Regra 2)
 2. PERGUNTAR  → opções de implementação (Regra 1)
 3. IMPLEMENTAR → seguindo as escolhas do usuário, otimização (Regra 5) e Regra 14 (tela de carregamento só na troca de mundo; o que sai do TITLE é pré-carregado)
-4. ARTE       → imagens em alta resolução, papel recortado detalhado e harmônico (Regra 6) + humanização moderada (Regra 8) + top-down no mundo do jogo (Regra 17) + mapas-base limpos (Regra 19), em rodadas de no máx. 10 imagens (Regra 16), sempre partindo do prompt-mestre de estilo (Regra 18)
+4. ARTE       → imagens em alta resolução, papel recortado detalhado e harmônico (Regra 6) + humanização moderada (Regra 8) + top-down no mundo do jogo (Regra 17) + mapas-base limpos (Regra 19), em rodadas de no máx. 10 imagens (Regra 16), com fonte em fundo verde/azul de chroma (Regra 6), sempre partindo do prompt-mestre de estilo (Regra 18)
 5. MOSTRAR    → exibir toda arte gerada para aprovação visual (Regra 10)
 6. ADAPTAR    → mobile: todo input novo vira gesto/botão de toque (Regra 9)
 7. VERIFICAR  → check-in com checklist do que foi pedido (Regra 3)
