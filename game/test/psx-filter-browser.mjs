@@ -1,13 +1,17 @@
 // ============================================================================
 // FILTRO PS1 em Chromium real (OPÇÕES → VÍDEO) — PC e mobile, rotas WebGL e CPU.
 //
-// Decisão do usuário (2026-10-08): dither Bayer 4x4 + 15 bits por pixel, em
-// TUDO (mundo, HUD e menus), ligado por padrão no MÉDIO, e SEM modelagem 3D —
-// é pós-processamento 2D. Este teste protege exatamente essas promessas:
+// Decisão do usuário (2026-10-14): o menu tem DUAS opções, LIGADO e DESLIGADO —
+// nada de LEVE/MÉDIO/FIEL —, e o LIGADO é a INTENSIDADE MÁXIMA (dither 0.13,
+// 12 degraus de cor, contraste 1.16, buffer cheio 960x540), o quadriculado dos
+// jogos de PS1. Dither Bayer 4x4 + cores achatadas em TUDO (mundo, HUD e menus),
+// ligado por padrão, e SEM modelagem 3D — é pós-processamento 2D.
+// Este teste protege exatamente essas promessas:
 //   • o filtro mora num canvas SEPARADO (#psx): os pixels do #game continuam
-//     960x540 em todos os níveis (nada de reduzir a fonte ou reassar sprites);
+//     960x540 sempre (nada de reduzir a fonte ou reassar sprites);
 //   • alinhamento pixel a pixel com o jogo, em tela cheia e com letterbox;
-//   • padrão de fábrica = MÉDIO, e a escolha sobrevive ao recarregar a página;
+//   • padrão de fábrica = LIGADO na intensidade máxima, e a escolha sobrevive ao
+//     recarregar a página (inclusive a migração dos saves antigos 1/2/3 → LIGADO);
 //   • o quadro muda de verdade (dither), nas rotas WebGL e por CPU;
 //   • cliques atravessam o filtro (pointer-events: none) e ele fica abaixo das
 //     scanlines (a listra de CRT é a tela; o quadriculado é o sinal do PS1).
@@ -95,7 +99,7 @@ try {
 
       const info = await page.evaluate(async () => (await M("psx_filter.js")).psxInfo());
       assert.equal(info.mode, rota, perfil + ": rota de execução do filtro");
-      assert.equal(info.level, 2, perfil + ": nível padrão é o MÉDIO");
+      assert.equal(info.level, 1, perfil + ": estado padrão é o LIGADO");
       assert.equal(info.ativo, true, perfil + ": filtro ligado por padrão");
       // O buffer PODE estar em meia resolução por desempenho: a rota cpu sempre
       // começa assim, e a rota webgl também quando o renderizador é por software
@@ -103,7 +107,11 @@ try {
       const meio = info.escala === 0.5;
       report.push(`${perfil}: renderizador "${info.renderer}" · escala ${info.escala}`);
       assert.deepEqual(info.buffer, meio ? [480, 270] : [960, 540],
-        perfil + ": buffer do MÉDIO" + (meio ? " (rebaixado para manter o FPS)" : ""));
+        perfil + ": buffer do LIGADO" + (meio ? " (rebaixado para manter o FPS)" : ""));
+      // A INTENSIDADE é o ponto do pedido: LIGADO = valores máximos, não uma
+      // versão suave. Se alguém afrouxar esses números, o teste cai aqui.
+      assert.deepEqual(info.params, { dither: 0.13, steps: 12, contrast: 1.16, scale: 1 },
+        perfil + ": LIGADO entrega a intensidade máxima (dither/degraus/contraste)");
 
       // ---------------------------------------------------------- geometria --
       const geom = () => page.evaluate(() => {
@@ -147,7 +155,7 @@ try {
       // quadro para o outro — e o mínimo absoluto de 0,5 cobre cena parada.
       assert.ok(comFiltro > Math.max(0.5, ruido), perfil + ": o filtro muda o quadro de verdade (dither) — " + comFiltro.toFixed(2) + " vs ruído " + ruido.toFixed(2));
 
-      // -------------------------------------------------------- os níveis ----
+      // ------------------------------------------------- os dois estados ----
       const nivel = (n) => page.evaluate(async (n) => {
         const { G } = await M("state.js");
         const { applyPsxFilter, psxInfo } = await M("psx_filter.js");
@@ -155,29 +163,35 @@ try {
         applyPsxFilter();
         return psxInfo();
       }, n);
-      const fiel = await nivel(3);
+      // Não existe mais LEVE/MÉDIO/FIEL: só LIGADO (1) e DESLIGADO (0). Valor
+      // fora da faixa (um save adulterado, por exemplo) cai no padrão de fábrica
+      // — nunca em um nível que não existe mais.
+      const fora = await nivel(3);
       await page.waitForTimeout(200);
-      assert.deepEqual(fiel.buffer, [480, 270], perfil + ": FIEL AO PS1 usa buffer 480x270");
-      assert.equal(fiel.ativo, true, perfil + ": FIEL AO PS1 fica visível");
+      assert.equal(fora.level, 1, perfil + ": valor fora da faixa cai no padrão de fábrica (LIGADO)");
+      assert.equal(fora.ativo, true, perfil + ": valor fora da faixa mantém o filtro visível");
+      const ligado = await nivel(1);
+      await page.waitForTimeout(200);
+      assert.equal(ligado.ativo, true, perfil + ": LIGADO fica visível");
+      assert.deepEqual(ligado.buffer, ligado.escala === 0.5 ? [480, 270] : [960, 540],
+        perfil + ": buffer do LIGADO" + (ligado.escala === 0.5 ? " (rebaixado)" : ""));
+      assert.deepEqual(ligado.params, { dither: 0.13, steps: 12, contrast: 1.16, scale: 1 },
+        perfil + ": LIGADO reaplica a intensidade máxima");
       r = await geom();
-      assert.deepEqual(r.canvas, [960, 540], perfil + ": o #game segue 960x540 no FIEL");
-      assert.deepEqual(r.psx, r.game, perfil + ": #psx cobre o jogo inteiro no FIEL");
-      await page.screenshot({ path: `${OUT}/${perfil}-fiel.png` });
-      const leve = await nivel(1);
-      await page.waitForTimeout(200);
-      assert.equal(leve.ativo, true, perfil + ": LEVE fica visível");
-      assert.deepEqual(leve.buffer, leve.escala === 0.5 ? [480, 270] : [960, 540],
-        perfil + ": buffer do LEVE" + (leve.escala === 0.5 ? " (rebaixado)" : ""));
-      await page.screenshot({ path: `${OUT}/${perfil}-leve.png` });
+      assert.deepEqual(r.canvas, [960, 540], perfil + ": o #game segue 960x540 com o filtro LIGADO");
+      assert.deepEqual(r.psx, r.game, perfil + ": #psx cobre o jogo inteiro no LIGADO");
+      await page.screenshot({ path: `${OUT}/${perfil}-ligado.png` });
       const off = await nivel(0);
       await page.waitForTimeout(200);
       assert.equal(off.ativo, false, perfil + ": DESLIGADO esconde o filtro");
+      assert.equal(off.params, null, perfil + ": DESLIGADO não reporta parâmetros de filtro");
+      await page.screenshot({ path: `${OUT}/${perfil}-desligado.png` });
 
       // ------------------------------------------------- persistência --------
       await page.evaluate(async () => {
         const { G, persistSave } = await M("state.js");
         const { applyPsxFilter } = await M("psx_filter.js");
-        G.save.settings.psx = 3;
+        G.save.settings.psx = 1;
         persistSave();
         applyPsxFilter();
       });
@@ -186,16 +200,37 @@ try {
       await importGameModules(page, { psx: "psx_filter.js" });
       await page.waitForTimeout(400);
       const depois = await page.evaluate(async () => (await M("psx_filter.js")).psxInfo());
-      assert.equal(depois.level, 3, perfil + ": a escolha sobrevive ao recarregar (FIEL AO PS1)");
-      assert.deepEqual(depois.buffer, [480, 270], perfil + ": nível restaurado já com o buffer certo");
+      assert.equal(depois.level, 1, perfil + ": a escolha sobrevive ao recarregar (LIGADO)");
+      assert.deepEqual(depois.buffer, depois.escala === 0.5 ? [480, 270] : [960, 540],
+        perfil + ": estado restaurado já com o buffer certo");
       await page.screenshot({ path: `${OUT}/${perfil}-restaurado.png` });
+
+      // migração: save das versões antigas (LEVE=1 / MÉDIO=2 / FIEL AO PS1=3)
+      // tem de virar LIGADO — ninguém perde o filtro por causa da mudança.
+      for (const velho of [1, 2, 3]) {
+        await page.evaluate(async (velho) => {
+          const { G, persistSave } = await M("state.js");
+          G.save.settings.psx = velho;       // grava o valor antigo como se fosse um save de ontem
+          persistSave();
+        }, velho);
+        await page.reload({ waitUntil: "load" });
+        await page.waitForFunction(() => window.FUMIGA && window.FUMIGA.pronto, null, { timeout: 120000 });
+        await importGameModules(page, { psx: "psx_filter.js", state: "state.js" });
+        await page.waitForTimeout(300);
+        const migrado = await page.evaluate(async () => {
+          const { G } = await M("state.js");
+          return { info: (await M("psx_filter.js")).psxInfo(), salvo: G.save.settings.psx };
+        });
+        assert.equal(migrado.salvo, 1, perfil + ": save antigo com " + velho + " vira LIGADO (1)");
+        assert.equal(migrado.info.level, 1, perfil + ": save antigo com " + velho + " abre com o filtro ligado");
+      }
 
       assert.deepEqual(erros, [], perfil + ": sem erros de JS/HTTP no console");
       await ctx.close();
     }
   }
   console.log(report.join("\n"));
-  console.log("FILTRO PS1 OK — canvas separado, alinhamento, padrão MÉDIO, três níveis, persistência e rotas webgl/cpu (PC e mobile)");
+  console.log("FILTRO PS1 OK — canvas separado, alinhamento, LIGADO/DESLIGADO, LIGADO na intensidade máxima, migração de saves, persistência e rotas webgl/cpu (PC e mobile)");
 } finally {
   await browser.close();
   if (server) await server.close();
