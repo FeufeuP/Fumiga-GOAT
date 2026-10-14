@@ -5397,3 +5397,57 @@ Backup lote 1 de funções confirmado: Drive `1HLxMZjhiyBVSkloAK8LmP4PUzdHVziu5`
 Backup sete funções confirmado por get_file: `1WkK4kBdYgXbBwKGb1JodPw6kXub12yIn`, 29.141.296 bytes, SHA256 `f38229a249e3fc2a3bc74f53222a714c8a310592b26b374d418e158c3167ff8c`. Inclui originais dos dois lotes, referência e galerias.
 
 Inspeção desta correção após CSS: TITLE/RUN PC/mobile4/4 sem JS/404/glifos, PC52,1FPS/mobile53,6FPS headless; preview8000HTTP200.
+
+## Registro — Filtro PS1: só LIGADO/DESLIGADO, LIGADO na intensidade máxima (2026-10-14, branch arena/9e2143c2-fumiga-goat)
+
+**Status: implementado, verificado em navegador e no preview.** Fonte única do assunto: [`FILTRO_PS1.md`](FILTRO_PS1.md) (§0 traz o estado atual).
+
+**Pedido do usuário:** *"arrume o filtro de PS1, quero que tenha apenas as opções de ligado e desligado, que quando ligado fique na intensidade máxima, ou seja, idêntico ao filtro em jogos de PS1"*.
+
+### O que mudou
+
+| Antes (2026-10-08) | Agora (2026-10-14) |
+|---|---|
+| Menu com QUATRO opções: DESLIGADO / LEVE / MÉDIO / FIEL AO PS1 (linha `optChoice`) | Menu com DUAS: **LIGADO / DESLIGADO** (linha `optToggle`, igual aos outros toggles) |
+| Padrão MÉDIO (índice 2) | Padrão **LIGADO** (índice 1) |
+| FIEL AO PS1 = dither 0.13 / 12 degraus / contraste 1.16 **em 480×270** | **LIGADO (padrão)** = os MESMOS valores de intensidade **em 960×540** |
+| Save guardava 0–3 | Save guarda 0/1; leitura migra 1/2/3 → 1 (LIGADO) |
+
+- `game/js/psx_filter.js`: `PSX_OPTS` passa a ter dois estados (`DESLIGADO`, `LIGADO`) e `PSX_DEFAULT = 1`; `psxInfo()` agora também publica `params` (dither/degraus/contraste) para o teste provar que o LIGADO é a intensidade máxima.
+- `game/js/game.js`: item FILTRO PS1 vira `optToggle`; a função `optChoice` (criada só para o filtro) foi **removida** como código morto (Regra 5); `__debug.psxLevel` valida 0/1.
+- `game/js/state.js`: padrão `psx: 1` e migração explícita dos saves antigos.
+- `game/test/psx-filter-browser.mjs`: reescrito para os dois estados — confere padrão LIGADO, `params` de intensidade máxima, valor fora da faixa caindo no padrão, migração de 1/2/3 → LIGADO e persistência.
+- `ASSET_V` → `20261014-filtro-ps1-ligado`; `app/assets.json` regenerado (242 arquivos / 31,5 MB) e shells nativos sincronizados (Regra 12/18 do fluxo nativo).
+- `AGENTS.md`: linhas do módulo e do teste atualizadas.
+
+### Decisões fechadas com o usuário (Regra 1, perguntas com opções)
+
+| Tema | Escolha |
+|---|---|
+| Opções do menu | Só LIGADO e DESLIGADO |
+| Intensidade do LIGADO | **Máxima** — valores do antigo FIEL AO PS1 (dither 0.13 / 12 degraus / contraste 1.16) |
+| Resolução interna | **960×540** (sem pixelão permanente); só o rebaixamento de desempenho reduz para 480×270 |
+| Padrão de fábrica | LIGADO |
+| Saves antigos | Viram LIGADO |
+
+**Pesquisa da Regra 2:** o hardware do PS1 trabalhava com 15 bits (5 por canal = 32 níveis) + dither Bayer e resolução interna baixa — fontes em `FILTRO_PS1.md` §4 (shader de pós-processo PS1, pacote hardware-faithful de 15-bit RGB555 + Bayer, conversão de cor fiel + dither, dither de PSX em Unity). O LIGADO de 12 degraus é, de propósito, **mais agressivo que o hardware** — foi a escolha do usuário ("intensidade máxima"); para o hardware puro bastaria `steps` 31.
+
+### Validação
+
+| Verificação | Resultado |
+|---|---|
+| `node game/test/psx-filter-browser.mjs` | **OK** (PC/mobile × webgl/cpu): padrão LIGADO, intensidade máxima conferida por parâmetro, migração de saves 1/2/3 → LIGADO, persistência e `#game` intacto em 960×540 |
+| Diferença média do quadro com o filtro | ~13 (antes ~10 no MÉDIO) — mais forte que o padrão anterior |
+| `npm run test:quick` | 30/30 |
+| `npm test` | **37/37** — a primeira rodada teve uma falha instável do `regressions-browser` no teste da tela de carregamento (race de transição, sem relação com o filtro) e passou na repetição |
+| `npm run inspect` (PC + mobile, todas as telas, 6 mapas) | ✓ nenhum erro de JS, 404 ou glifo faltando; 60 FPS e pior quadro de 16,8 ms nas 12 expedições |
+| Clique real no menu | "FILTRO PS1: LIGADO" + DESLIGAR → clique → "FILTRO PS1: DESLIGADO" + LIGAR; `auditarLayout()` de OPÇÕES sem nenhum problema |
+| `make_assets_list.mjs --check` + `sync-native-assets.mjs` | em dia — 242 arquivos / 31,5 MB; 247 arquivos no runtime nativo |
+
+### Limitações
+
+- Continua **mais forte que o PS1 real** por escolha do usuário (12 degraus em vez de 32 níveis por canal).
+- Não houve teste em GPU dedicada nem em Android físico (sandbox só tem rasterizador por software); o rebaixamento automático de desempenho segue valendo.
+- Vinheta, granulado e bordas sujas do look Crow Country continuam fora do filtro (limite honesto registrado em 2026-10-08).
+- Capturas comparativas em `/home/user/capturas-ps1/` (fora do Git).
+- `npm run inspect:layout` (118 estados) acusou 4 avisos `vazando` **apenas no TITLE** ("JOGAR"/"ÁRVORE DA EVOLUÇÃO" passando da borda do botão, inclusive com FONTE GRANDE). Conferido no commit base `f148271` em worktree separado: os MESMOS 4 avisos já existiam — **pré-existentes, sem relação com o filtro**, que não é tocado em nenhum desses estados. Fica como pendência de layout para uma próxima rodada.

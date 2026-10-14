@@ -51,7 +51,7 @@ npm run test:quick          # ~10 s: confirma que a base está verde
 | `npm run inspect:ui` | cliques/toques reais: páginas de Memórias/Profecias, replay, ninho, pausa e invocar | ~15 s |
 | `npm run inspect:hud` | HUD orgânico nos 6 biomas, tecla H, acessibilidade | ~40 s |
 | `npm run inspect:layout` | **auditoria de layout**: todas as telas PC + mobile, com e sem FONTE GRANDE — texto fora da tela, colidindo, vazando da caixa, botões sobrepostos, toque cobrindo o canvas | ~4 min |
-| `node game/test/psx-filter-browser.mjs` | **filtro PS1** (OPÇÕES → VÍDEO): canvas separado, `#game` intocado, alinhamento, padrão MÉDIO, três níveis, persistência e as rotas webgl/cpu em PC + mobile | ~40 s |
+| `node game/test/psx-filter-browser.mjs` | **filtro PS1** (OPÇÕES → VÍDEO): canvas separado, `#game` intocado, alinhamento, LIGADO/DESLIGADO, LIGADO na intensidade máxima (dither 0.13 / 12 degraus / contraste 1.16), migração dos saves antigos, persistência e as rotas webgl/cpu em PC + mobile | ~40 s |
 | `npm run inspect:pwa` | **app instalável**: pacote único completo (233 arquivos), **reinício do worker com a rede desligada**, update que falha de propósito (a cópia anterior tem que sobreviver), timeout e boot offline em PC + mobile; passo 6: atualização real (versão velha → nova) exige **uma** recarga automática do jogo, nunca com expedição em andamento | ~25 s |
 | `npm run inspect:preload` | **pré-carregamento do TITLE** (Regra 14): boot leve, tudo pronto parado no TITLE, árvore → 7 santuários → replay → profecias sem tela de carregamento, clique cedo com CPU 4× mais lenta, sem rede, pixels idênticos | ~45 s |
 | `node game/test/native-packages.mjs` | Android GeckoView embutido + loopback/CSP + Electron/NSIS x64: sem rede externa no runtime e cobertura integral dos assets | ~1 s |
@@ -102,7 +102,7 @@ faltando e o último erro. No console: `FUMIGA.ajuda()`, `FUMIGA.go('RUN', {mapa
 | `combat.js` · `particles.js` · `lore_vfx.js` | projéteis/orbes · partículas com pooling · VFX por casta (orçamento `vfxAllow`) |
 | `lore_hud.js` | HUD orgânico por bioma, barra-gaster da rainha, visão de feromônio (H) |
 | `cutscenes.js` | cutscenes em camadas (Noite Branca etc.), biblioteca MEMÓRIAS (o replay toca dentro dela) |
-| `psx_filter.js` | **FILTRO PS1** (OPÇÕES → VÍDEO): pós-processamento 2D do quadro — dither Bayer 4x4 + 15 bits num canvas separado (`#psx`), em shader WebGL com reserva por CPU; nunca toca nos pixels do `#game` |
+| `psx_filter.js` | **FILTRO PS1** (OPÇÕES → VÍDEO): pós-processamento 2D do quadro — dither Bayer 4x4 + cores de 15 bits num canvas separado (`#psx`), em shader WebGL com reserva por CPU; dois estados (LIGADO na intensidade máxima / DESLIGADO) e nunca toca nos pixels do `#game` |
 | `preload.js` | **pré-carregamento do TITLE** (Regra 14): árvore, maçãs, flores, 7 santuários e Noite Branca preparados em fatias de poucos ms por quadro (geradores), sem tela de carregamento |
 | `tutorial.js` · `ui.js` · `font.js` | tutorial em cartões · primitivos de UI em canvas · tipografia Kiwi Soda (TTF), métricas e cores por tela |
 | `camera.js` · `input.js` · `fog.js` · `audio.js` · `utils.js` | câmera/zoom/shake · teclado+mouse em coords 960×540 · névoa de guerra · áudio procedural WebAudio · RNG/matemática |

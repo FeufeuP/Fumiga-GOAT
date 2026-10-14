@@ -237,8 +237,9 @@ function reloadForNewVersion() {
 async function bootAll() {
   watchNewVersion();
   loadSave();
-  // FILTRO PS1: descobre o #psx e aplica o nível salvo (a chamada é segura em
-  // teste headless — sem canvas de verdade o filtro fica desligado)
+  // FILTRO PS1: descobre o #psx e aplica o estado salvo — LIGADO (intensidade
+  // máxima) ou DESLIGADO (a chamada é segura em teste headless: sem canvas de
+  // verdade o filtro fica desligado)
   initPsxFilter(canvas);
   // Sessão do playtest ANTES das cargas: se algo falhar no boot, o diário já
   // registrou o aparelho e a rede de erros captura o motivo (ver playtest.js).

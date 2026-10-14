@@ -46,10 +46,10 @@ export const G = {
       particles: true,
       screenshake: true,
       scanline: true,
-      // FILTRO PS1 (OPÇÕES → VÍDEO): 0 desligado · 1 leve · 2 médio · 3 fiel ao
-      // PS1. Ligado por padrão no MÉDIO — dither Bayer 4x4 + 15 bits. Ver o
-      // cabeçalho de js/psx_filter.js (é um filtro 2D, sem modelagem 3D).
-      psx: 2,
+      // FILTRO PS1 (OPÇÕES → VÍDEO): 0 desligado · 1 ligado na intensidade
+      // máxima (dither Bayer 4x4 + cores achatadas de 15 bits). Ligado por
+      // padrão — ver o cabeçalho de js/psx_filter.js (filtro 2D, sem modelagem 3D).
+      psx: 1,
       musicVol: 1,
       sfxVol: 1,
       gameSpeed: 1,      // 0.5, 1, 1.5, 2
@@ -112,10 +112,12 @@ export function loadSave() {
       for (const key of ["particles", "screenshake", "scanline"]) {
         if (typeof data.settings[key] === "boolean") G.save.settings[key] = data.settings[key];
       }
-      // FILTRO PS1: só os quatro níveis conhecidos entram (save estranho mantém
-      // o padrão de fábrica em vez de apagar a tela do jogador)
+      // FILTRO PS1: hoje só existem DOIS estados (0 desligado · 1 ligado na
+      // intensidade máxima). Save das versões antigas — LEVE=1, MÉDIO=2 ou
+      // FIEL AO PS1=3 — vira LIGADO, para ninguém perder o filtro sem querer;
+      // qualquer outro valor mantém o padrão de fábrica em vez de apagar a tela.
       if (Number.isInteger(data.settings.psx) && data.settings.psx >= 0 && data.settings.psx <= 3) {
-        G.save.settings.psx = data.settings.psx;
+        G.save.settings.psx = data.settings.psx > 0 ? 1 : 0;
       }
       for (const key of ["musicVol", "sfxVol", "gameSpeed"]) {
         const value = data.settings[key];

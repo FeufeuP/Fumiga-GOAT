@@ -7,11 +7,17 @@
 // fazia na saída de vídeo, e que dá o quadriculado de Resident Evil e Silent Hill:
 //
 //   • DITHER ORDENADO 4x4 (matriz Bayer) — o xadrez que disfarça o degrau de cor;
-//   • 15 BITS por pixel (5 bits por canal = 32 níveis) — o modo de cor da maioria
-//     dos jogos de PS1: o framebuffer era convertido de 24 para 15 bits na saída,
-//     e é daí que vem o quadriculado visível nas sombras e nos gradientes;
-//   • RESOLUÇÃO INTERNA reduzida (só no nível FIEL AO PS1) — pixels gordos, como
-//     os 320x240 esticados pela TV de tubo.
+//   • CORES ACHATADAS — o framebuffer do console era convertido de 24 para 15 bits
+//     na saída (5 bits por canal), e é daí que vem o quadriculado visível nas
+//     sombras e nos gradientes;
+//   • CONTRASTE levemente reforçado, para o xadrez aparecer sem lavar a imagem.
+//
+// DECISÃO DO USUÁRIO (2026-10-14): o menu tem DUAS opções, LIGADO e DESLIGADO.
+// Nada de LEVE/MÉDIO/FIEL: **LIGADO é a intensidade máxima** — os valores do
+// antigo nível FIEL AO PS1 (dither 0.13, 12 degraus de cor, contraste 1.16,
+// buffer cheio 960x540), ou seja, o quadriculado no talo, como nos jogos de PS1.
+// A resolução interna só cai para meia resolução no rebaixamento automático de
+// desempenho (aparelho sem GPU / quadro acima de 22 ms), nunca por escolha.
 //
 // Como entra no jogo: NADA é redesenhado, reassado ou tingido — o canvas do jogo
 // (#game) continua recebendo os MESMOS pixels de sempre (todos os testes de pixel
@@ -30,21 +36,22 @@ import { G } from "./state.js";
 import { VIEW_W, VIEW_H } from "./config.js";
 
 /**
- * Níveis do menu — o ÍNDICE é o valor salvo em settings.psx (0 a 3).
+ * Estados do menu — o ÍNDICE é o valor salvo em settings.psx (0 ou 1).
  * `dither` é a amplitude do padrão (em unidades 0..1 de cor), `steps` são os
- * degraus de quantização (31 = 32 níveis = 15 bits por pixel), `contrast` é o
- * ganho de contraste (1 = igual ao jogo) e `scale` é a resolução interna (0.5 = 480x270 esticado).
+ * degraus de quantização, `contrast` é o ganho de contraste (1 = igual ao jogo)
+ * e `scale` é a resolução interna (1 = buffer cheio, 960x540).
+ *
+ * Pedido do usuário (2026-10-14): "apenas as opções de ligado e desligado, que
+ * quando ligado fique na intensidade máxima, ou seja, idêntico ao filtro em
+ * jogos de PS1". Por isso só existem dois estados, e o LIGADO usa o topo da
+ * escala antiga (dither 0.13 / 12 degraus / contraste 1.16) em buffer cheio.
  */
 export const PSX_OPTS = [
-  { label: "DESLIGADO",   color: "#5a4f78", dither: 0,        steps: 255, contrast: 1,    scale: 1 },
-  // Calibrado para o look de Crow Country: dither 4x4 bem visível, cores
-  // achatadas (≈ 4 bits por canal) e sombras acinzentadas/dessaturadas.
-  { label: "LEVE",        color: "#7fd6a0", dither: 0.06,     steps: 24,  contrast: 1.06, scale: 1 },
-  { label: "MÉDIO",       color: "#6db7ff", dither: 0.10,     steps: 15,  contrast: 1.12, scale: 1 },
-  { label: "FIEL AO PS1", color: "#c77dff", dither: 0.13,     steps: 12,  contrast: 1.16, scale: 0.5 },
+  { label: "DESLIGADO", color: "#5a4f78", dither: 0,    steps: 255, contrast: 1,    scale: 1 },
+  { label: "LIGADO",    color: "#c77dff", dither: 0.13, steps: 12,  contrast: 1.16, scale: 1 },
 ];
-/** Nível padrão de fábrica (pedido do usuário: filtro LIGADO por padrão). */
-export const PSX_DEFAULT = 2;
+/** Nível padrão de fábrica (filtro LIGADO na intensidade máxima). */
+export const PSX_DEFAULT = 1;
 
 // Estado do módulo -----------------------------------------------------------
 let el = null;               // canvas #psx (por cima do #game)
@@ -62,8 +69,8 @@ let renderer = "";           // nome do renderizador WebGL (diagnóstico)
 // em rasterizador POR SOFTWARE (SwiftShader/llvmpipe: emuladores, máquinas sem
 // GPU) o mesmo passe custa ~9 ms e derrubaria o jogo para ~39 FPS. Nesses casos
 // — e em qualquer aparelho que fique abaixo de ~45 FPS com o filtro ligado — o
-// buffer cai para meia resolução, que é o que o FIEL AO PS1 já usa. O jogo nunca
-// é tocado: só o tamanho do buffer do filtro. (Regra 5.)
+// buffer cai para meia resolução (480x270, pixels gordos). O jogo nunca é
+// tocado: só o tamanho do buffer do filtro. (Regra 5.)
 const SOFTWARE = /swiftshader|llvmpipe|softpipe|software|basic render|mesa offscreen|angle \(software/i;
 const LIMITE_QUADRO_MS = 22;   // ≈45 FPS de mediana
 const JANELA_QUADROS = 90;
@@ -77,7 +84,8 @@ void main() {
 }`;
 
 // Dither Bayer 4x4 + quantização de cor. `gl_FragCoord` é o pixel do BUFFER de
-// saída, então no nível FIEL (480x270) o xadrez nasce no tamanho do pixel gordo.
+// saída: com o buffer cheio (960x540) o xadrez é fino; se o desempenho rebaixar
+// o buffer para 480x270, o mesmo xadrez nasce no tamanho do pixel gordo.
 const FS = `
 precision mediump float;
 varying vec2 vUV;
@@ -183,10 +191,11 @@ function buildLuts(opt, idx) {
   luts[idx] = tables;
 }
 
-/** Tamanho do buffer do nível (com o rebaixamento automático do modo cpu). */
+/** Tamanho do buffer (o LIGADO é 960x540; só o rebaixamento por desempenho reduz). */
 function bufferFor(opt) {
-  // O rebaixamento por desempenho NÃO se acumula com a meia resolução do FIEL
-  // AO PS1: o buffer nunca desce abaixo de 480x270 (240x135 ficaria ilegível).
+  // O LIGADO nasce em buffer cheio: o rebaixamento por desempenho é o ÚNICO
+  // caminho para meia resolução, e o buffer nunca desce abaixo de 480x270
+  // (240x135 ficaria ilegível).
   const s = Math.max(0.5, opt.scale * escalaExtra);
   return { w: Math.max(64, Math.round(VIEW_W * s)), h: Math.max(36, Math.round(VIEW_H * s)) };
 }
@@ -339,11 +348,15 @@ export function notaQuadroPsx(dtS) {
   if (ord[ord.length >> 1] > LIMITE_QUADRO_MS) rebaixar();
 }
 
-/** Diagnóstico (modo debug e testes): rota, nível, buffer e escala. */
+/** Diagnóstico (modo debug e testes): rota, estado, buffer, escala e parâmetros. */
 export function psxInfo() {
+  const opt = level > 0 ? PSX_OPTS[level] : null;
   return {
     mode, level, ativo: !!el && !el.hidden,
     buffer: [el ? el.width : 0, el ? el.height : 0],
     escala: escalaExtra, renderer,
+    // Parâmetros em vigor (dither/degraus/contraste): prova que o LIGADO entrega
+    // a intensidade MÁXIMA, e não uma versão suave do filtro.
+    params: opt ? { dither: opt.dither, steps: opt.steps, contrast: opt.contrast, scale: opt.scale } : null,
   };
 }
