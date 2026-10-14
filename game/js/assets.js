@@ -4,7 +4,6 @@
 
 const MANIFEST = {
   paper_panel: "ui/paper/panel.png",
-  paper_button: "ui/paper/button.png",
   paper_health: "ui/paper/health.png",
   paper_banner: "ui/paper/banner.png",
   paper_minimap: "ui/paper/minimap.png",
@@ -214,7 +213,7 @@ const WROT = {};         // silhuetas brancas rotacionadas (hit flash)
 // ANTIGA nos mesmos nomes de arquivo (foi assim que o rework dos inimigos da
 // Fase 2 "não apareceu" para quem já tinha jogado antes dele).
 // ---------------------------------------------------------------------------
-export const ASSET_V = "20261014-botao-madeira";
+export const ASSET_V = "20261014-sem-botao-papel";
 
 /**
  * URL final de um asset do jogo: base certa para a página atual + anti-cache.

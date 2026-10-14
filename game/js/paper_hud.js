@@ -4,11 +4,10 @@ import { registerPaperSurface } from './font.js';
 
 // Protected islands (corners + centre knots) and repeatable corridors, audited
 // separately on each painting. Only the quiet paper interior is stretched;
-// Legacy edge corridors repeat at the same scale. The new button/pause use
-// quiet three-slice corridors and individually scaled ornament corners.
+// Legacy edge corridors repeat at the same scale. The pause painting uses
+// a quiet three-slice corridor and individually scaled ornament corners.
 export const PAPER_SLICES = Object.freeze({
   panel:   { x: [.38,.45,.57,.65], y: [.32,.39,.57,.69] },
-  button:  { x: [.25,.40,.60,.75], y: [.20,.35,.60,.80] },
   health:  { x: [.18,.38,.58,.79], y: [.35,.42,.58,.65] },
   banner:  { x: [.39,.47,.60,.79], y: [.32,.42,.56,.65] },
   minimap: { x: [.27,.40,.54,.62], y: [.38,.44,.57,.66] },
@@ -18,7 +17,7 @@ export const PAPER_SLICES = Object.freeze({
 });
 // Frame inset is independent of the hitbox: ornate source images used to
 // consume 30% of every control. Keep the original cuts, at a bounded scale.
-const EDGE_SCALE = {panel:.065, button:.10, health:.12, banner:.14, minimap:.10, card:.085, pause:.07, tooltip:.065};
+const EDGE_SCALE = {panel:.065, health:.12, banner:.14, minimap:.10, card:.085, pause:.07, tooltip:.065};
 // Placas de madeira dos botões (2026-10-14): a variação segue o tamanho
 // REAL desenhado em 960x540 — inventário completo em
 // tools/prepare_wood_buttons.py. Estados são artes separadas (sem tingir).
@@ -31,7 +30,7 @@ export function woodButtonSize(w,h) {
   return 'grande';                                          // 180-240: pausa, fim
 }
 export function paperSource(kind,w,h) {
-  if(kind==='tooltip'||kind==='pause'||kind==='button') return kind; // explicit functional art
+  if(kind==='tooltip'||kind==='pause') return kind; // explicit functional art
   if(kind==='panel'||kind==='card') {
     return h>w*1.12 ? 'card' : h>w*.68 ? 'pause' : 'panel';
   }
@@ -94,8 +93,8 @@ function tileFor(img, kind, w, h, state) {
       if(dw>0&&dh>0)c.drawImage(img,sx[col],sy[r],sx[col+1]-sx[col],sy[r+1]-sy[r],dx[col],dy[r],dw,dh);
     }
     // estado já é arte própria: nunca tingir por cima (guarda abaixo)
-  } else if(kind==='button'||kind==='pause') {
-    const cuts=kind==='button'?{x:[.25,.75],y:[.2,.8],cap:.15}:{x:[.32,.76],y:[.3,.75],cap:.055};
+  } else if(kind==='pause') {
+    const cuts={x:[.32,.76],y:[.3,.75],cap:.055};
     const scale=Math.min(w/img.width,h/img.height,cuts.cap);
     const sx=[0,...cuts.x.map(v=>Math.round(v*img.width)),img.width];
     const sy=[0,...cuts.y.map(v=>Math.round(v*img.height)),img.height];
@@ -154,7 +153,9 @@ function tileFor(img, kind, w, h, state) {
   return tile;
 }
 export function drawPaper(ctx, kind, x, y, w, h, opt = {}) {
-  // Botões: placa de madeira por tamanho/estado; papel antigo é o reserva.
+  // Botões: placa de madeira por tamanho/estado. O sprite antigo de papel
+  // foi excluído do projeto (2026-10-14) — sem reserva: se a placa não
+  // carregar, retorna false e o chamador desenha o botão vetorial (ui.js).
   if (kind === 'button' || kind === 'wood_icon') {
     w=Math.max(1,Math.round(w));h=Math.max(1,Math.round(h));
     const size = kind === 'wood_icon' ? 'mini' : woodButtonSize(w,h);
@@ -167,7 +168,7 @@ export function drawPaper(ctx, kind, x, y, w, h, opt = {}) {
       registerPaperSurface(ctx,x,y,w,h);
       return true;
     }
-    if (kind === 'wood_icon') return false;
+    return false;
   }
   // Functional paintings from the publication lot; no replacement shapes.
   const source = paperSource(kind,w,h);

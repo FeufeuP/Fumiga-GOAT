@@ -5,7 +5,7 @@ import {createHash} from 'node:crypto';
 
 const root=new URL('../../',import.meta.url);
 const m=JSON.parse(fs.readFileSync(new URL('docs/arte/hud-publicacao.json',root)));
-assert.equal(m.lot.length,4);
+assert.equal(m.lot.length,3);
 for(const r of m.lot) {
  const data=fs.readFileSync(new URL(r.runtime,root));
  assert.equal(createHash('sha256').update(data).digest('hex'),r.runtime_sha256,r.id);
@@ -16,18 +16,18 @@ for(const r of m.lot) {
  assert.equal(r.mode,'RGBA',r.id);
  assert.match(r.matte,/^removed /,`${r.id}: matte note`);
  assert.equal(r.backup.verified,true);assert.equal(r.backup.sha256,r.source_sha256);
- const key=r.id==='brasa'?'i_ember':'paper_'+({botao:'button',pausa:'pause'}[r.id]||r.id);
+ const key=r.id==='brasa'?'i_ember':'paper_'+({pausa:'pause'}[r.id]||r.id);
  const assets=fs.readFileSync(new URL('game/js/assets.js',root),'utf8');
  const match=assets.match(new RegExp('\\b'+key+':\\s*"([^"]+)"'));
  assert(match,`${key}: manifest entry missing`);
  assert.equal('game/assets/'+match[1],r.runtime,`${key}: real consumer`);
 }
-console.log('HUD PUBLICATION OK — four exact RGBA assets sem fundo, manifest wiring, remote hashes recorded');
+console.log('HUD PUBLICATION OK — three exact RGBA assets sem fundo, manifest wiring, remote hashes recorded');
 
 // Matte removal report: every HUD painting must still exist with the exact
 // bytes recorded and really hold a transparent sheet around the drawing.
 const noBg=JSON.parse(fs.readFileSync(new URL('docs/arte/hud-sem-fundo.json',root)));
-assert.equal(noBg.pieces.length,9);
+assert.equal(noBg.pieces.length,8);
 for(const piece of noBg.pieces) {
  const data=fs.readFileSync(new URL(piece.path,root));
  assert.equal(createHash('sha256').update(data).digest('hex'),piece.sha256,piece.path);
@@ -36,7 +36,12 @@ for(const piece of noBg.pieces) {
  assert(piece.cleared_px>0&&piece.feathered_px>0,`${piece.path}: no feathered border`);
 }
 // The renderer must not paint an opaque sheet back under the art.
+// O sprite antigo de papel do botão foi excluído (2026-10-14): proibido voltar.
+assert(!fs.existsSync(new URL('game/assets/ui/paper/button.png',root)),'old paper button sprite is back on disk');
+const assetsJs=fs.readFileSync(new URL('game/js/assets.js',root),'utf8');
+assert(!/paper_button|ui\/paper\/button\.png/.test(assetsJs),'old paper button sprite is back in the manifest');
 const paper=fs.readFileSync(new URL('game/js/paper_hud.js',root),'utf8');
+assert(!/paper_button|paper\/button\.png/.test(paper),'old paper button sprite is back in the renderer');
 assert(!/fillStyle='#f5edd8'/.test(paper),'paper tile still fills an opaque matte');
 assert(/source-atop/.test(paper),'state treatment must be clipped to the painted art');
-console.log('HUD SEM FUNDO OK — nove peças RGBA, recorte registrado, tile sem matte');
+console.log('HUD SEM FUNDO OK — oito peças RGBA, recorte registrado, tile sem matte');

@@ -1,6 +1,6 @@
 {
   "date": "2026-10-09",
-  "scope": "matte removal only: flood filled cream background, art and enclosed paper interiors untouched",
+  "scope": "matte removal only: flood filled cream background, art and enclosed paper interiors untouched; button.png retirado em 2026-10-14: sprite de papel excluido do projeto, botoes sao as placas de madeira de docs/arte/botoes-madeira.json",
   "solid_threshold": 96.0,
   "clear_threshold": 58.0,
   "pieces": [
@@ -20,24 +20,6 @@
       "transparent_ratio": 0.2484,
       "bytes": 804840,
       "sha256": "fbc7112dc28c7b31f164f26296f07666b90803087de63b9e6eb1900d29c5cf69",
-      "mode": "RGBA"
-    },
-    {
-      "path": "game/assets/ui/paper/button.png",
-      "size": [
-        960,
-        238
-      ],
-      "matte": [
-        244,
-        237,
-        219
-      ],
-      "cleared_px": 89902,
-      "feathered_px": 10523,
-      "transparent_ratio": 0.3935,
-      "bytes": 400230,
-      "sha256": "6ed4e12138614d6d2ede594dc19230f064d4d2cfef8c3535c4f8f4e13ba03e0c",
       "mode": "RGBA"
     },
     {

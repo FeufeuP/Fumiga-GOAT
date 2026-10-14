@@ -127,10 +127,10 @@ body {
   pointer-events: auto;
   min-width: 52px; height: 52px;
   padding: 0 12px;
-  /* Sem fundo: só o desenho do botão em papel, recortado. O miolo claro da
-     pintura continua opaco, então o rótulo segue legível sobre o mundo. */
+  /* Sem fundo: só a placa de madeira mini, recortada. O miolo da tábua
+     continua opaco, então o rótulo segue legível sobre o mundo. */
   border: 0;
-  background: url("../assets/ui/paper/button.png") center / 100% 100% no-repeat;
+  background: url("../assets/ui/paper/wood/button_mini_normal.png") center / 100% 100% no-repeat;
   color: #493521;
   font-family: "Kiwi Soda", sans-serif;
   font-weight: bold; font-size: 13px; letter-spacing: .04em;

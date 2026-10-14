@@ -1,5 +1,5 @@
 {
-  "version": "20261014-botao-madeira",
+  "version": "20261014-sem-botao-papel",
   "geradoPor": "tools/make_assets_list.mjs",
   "grupos": [
     {
@@ -75,7 +75,7 @@
         7089,
         2993,
         1576,
-        22943,
+        22906,
         11449,
         21721,
         2553,
@@ -98,7 +98,7 @@
         46646,
         1342,
         43782,
-        10553,
+        10525,
         15085,
         14081,
         4494,
@@ -108,7 +108,7 @@
         6938,
         7119,
         8157,
-        20410,
+        20405,
         56951,
         4378,
         11211,
@@ -116,12 +116,12 @@
         911,
         2657,
         945,
-        8055,
+        8060,
         19399,
         8826,
         899
       ],
-      "bytes": 1380387
+      "bytes": 1380322
     },
     {
       "id": "assets",
@@ -297,7 +297,6 @@
         "game/assets/ui/maca_pantano.png",
         "game/assets/ui/maca_planicie.png",
         "game/assets/ui/paper/banner.png",
-        "game/assets/ui/paper/button.png",
         "game/assets/ui/paper/card.png",
         "game/assets/ui/paper/health.png",
         "game/assets/ui/paper/minimap.png",
@@ -505,7 +504,6 @@
         580045,
         628252,
         304982,
-        400230,
         1788042,
         203269,
         1058743,
@@ -542,7 +540,7 @@
         839032,
         656076
       ],
-      "bytes": 32841672
+      "bytes": 32441442
     }
   ]
 }

@@ -9,7 +9,6 @@ import hashlib, json
 ROOT=Path(__file__).resolve().parents[1]
 BASE=ROOT/'art-source/f1-publicacao'
 LOT={'brasa':('game/assets/sprites/icons/ember.png',128),
-     'botao':('game/assets/ui/paper/button.png',960),
      'tooltip':('game/assets/ui/paper/tooltip.png',960),
      'pausa':('game/assets/ui/paper/pause.png',928)}
 prior_path=ROOT/'docs/arte/hud-publicacao.json'
@@ -28,7 +27,7 @@ manifest={**prior,'date':'2026-10-09','lot':records,'scope':'one recreated flame
 (ROOT/'docs/arte/hud-publicacao.json').write_text(json.dumps(manifest,ensure_ascii=False,indent=2)+'\n')
 font=ImageFont.truetype('/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf',24)
 cv=Image.new('RGB',(1500,1050),'#f5edd8');d=ImageDraw.Draw(cv)
-for name,box in [('brasa',(30,45,400,560)),('botao',(440,45,1460,330)),('tooltip',(440,400,1460,950)),('pausa',(30,600,400,1010))]:
+for name,box in [('brasa',(30,45,400,560)),('tooltip',(440,400,1460,950)),('pausa',(30,600,400,1010))]:
  im=Image.open(BASE/'originais'/f'{name}.png');x,y,r,b=box;im.thumbnail((r-x,b-y),Image.Resampling.LANCZOS);cv.paste(im,(x,y));d.text((x,y-30),name.upper(),font=font,fill='#493521')
 cv.save(BASE/'lote.png',optimize=True)
 print(json.dumps(manifest,ensure_ascii=False,indent=2))

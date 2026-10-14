@@ -10,7 +10,6 @@ import hashlib, json
 ROOT = Path(__file__).resolve().parents[1]
 SOURCES = {
     'panel': 'art-source/f1-hud-vivo/images/painel-original.png',
-    'button': 'art-source/f1-funcoes/originais/botao.png',
     'health': 'art-source/f1-funcoes/originais/barra-vida.png',
     'banner': 'art-source/f1-funcoes/originais/banner-onda.png',
     'minimap': 'art-source/f1-funcoes-lote2/originais/minimapa.png',
@@ -21,7 +20,7 @@ SOURCES = {
 OUT = ROOT / 'game/assets/ui/paper'
 # This script describes the older lot. Never silently overwrite the new art.
 if (ROOT/'docs/arte/hud-publicacao.json').exists():
-    raise SystemExit('Historical lot: use tools/prepare_hud_publication.py for new button/tooltip/pause. Recover older sources from their Drive archives separately; do not overwrite publication assets.')
+    raise SystemExit('Historical lot: use tools/prepare_hud_publication.py for new tooltip/pause. Recover older sources from their Drive archives separately; do not overwrite publication assets.')
 OUT.mkdir(parents=True, exist_ok=True)
 records=[]
 for name, source in SOURCES.items():
