@@ -10,7 +10,14 @@ try {
  const page=await browser.newPage();await page.goto(server.url+'/game/?debug&tela=TITLE');
  await importGameModules(page,{paper:'paper_hud.js',font:'font.js',assets:'assets.js'});
  await page.waitForFunction(()=>['panel','button','card','pause','tooltip'].every(k=>!!MOD.assets.IMG['paper_'+k]));
- const result=await page.evaluate(()=>{
+  const result=await page.evaluate(()=>{
+  // Placas de madeira: variação por tamanho real + estados como artes próprias.
+  const sz=MOD.paper.woodButtonSize;
+  if(sz(300,46)!=='largo'||sz(220,44)!=='grande'||sz(120,28)!=='pequeno'||sz(44,44)!=='mini'||sz(236,44)!=='grande')throw Error('wood size map');
+  const wc=document.createElement('canvas');wc.width=220;wc.height=44;const wx=wc.getContext('2d');
+  MOD.paper.drawPaper(wx,'button',0,0,220,44,{});const woodNormal=wc.toDataURL();
+  MOD.paper.drawPaper(wx,'button',0,0,220,44,{hot:true});if(wc.toDataURL()===woodNormal)throw Error('wood hover alias');
+  MOD.paper.drawPaper(wx,'button',0,0,220,44,{disabled:true});if(wc.toDataURL()===woodNormal)throw Error('wood disabled alias');
   const c=document.createElement('canvas');c.width=960;c.height=540;const ctx=c.getContext('2d');
   ctx.fillStyle='#253524';ctx.fillRect(0,0,960,540);
   const hashes=[];const opts=[{}, {hot:true},{pressed:true},{selected:true},{disabled:true}];

@@ -19,6 +19,17 @@ export const PAPER_SLICES = Object.freeze({
 // Frame inset is independent of the hitbox: ornate source images used to
 // consume 30% of every control. Keep the original cuts, at a bounded scale.
 const EDGE_SCALE = {panel:.065, button:.10, health:.12, banner:.14, minimap:.10, card:.085, pause:.07, tooltip:.065};
+// Placas de madeira dos botões (2026-10-14): a variação segue o tamanho
+// REAL desenhado em 960x540 — inventário completo em
+// tools/prepare_wood_buttons.py. Estados são artes separadas (sem tingir).
+export const WOOD_STATE = Object.freeze({normal:'normal',hover:'hover',pressed:'pressionado',selected:'selecionado',disabled:'desabilitado'});
+export function woodButtonSize(w,h) {
+  if (w <= 76 && w / Math.max(1,h) <= 1.9) return 'mini';   // 44x44, iconButton
+  if (h <= 30) return 'pequeno';                            // LIGAR, +/-, M1-M6
+  if (w >= 250 || w / Math.max(1,h) >= 5.8) return 'largo'; // TITLE, AVANÇAR
+  if (w < 175) return 'pequeno';                            // abas, VOLTAR curto
+  return 'grande';                                          // 180-240: pausa, fim
+}
 export function paperSource(kind,w,h) {
   if(kind==='tooltip'||kind==='pause'||kind==='button') return kind; // explicit functional art
   if(kind==='panel'||kind==='card') {
@@ -69,7 +80,21 @@ function tileFor(img, kind, w, h, state) {
   // The enclosed paper interior of each frame is still opaque in the source,
   // so text keeps a readable surface.
   c.imageSmoothingEnabled=true;
-  if(kind==='button'||kind==='pause') {
+  if(kind.startsWith('wood_')) {
+    // 3x3 fatias: cantos (pregos/folhas/nó) preservados, centro de madeira
+    // quieto estica — o texto do jogo vai por cima, sem ornamento no meio.
+    const cuts={x:[.22,.78],y:[.22,.78],cap:.30};
+    const scale=Math.min(w/img.width,h/img.height,cuts.cap);
+    const sx=[0,...cuts.x.map(v=>Math.round(v*img.width)),img.width];
+    const sy=[0,...cuts.y.map(v=>Math.round(v*img.height)),img.height];
+    const dx=[0,Math.round(sx[1]*scale),w-Math.round((img.width-sx[2])*scale),w];
+    const dy=[0,Math.round(sy[1]*scale),h-Math.round((img.height-sy[2])*scale),h];
+    for(let r=0;r<3;r++)for(let col=0;col<3;col++) {
+      const dw=dx[col+1]-dx[col],dh=dy[r+1]-dy[r];
+      if(dw>0&&dh>0)c.drawImage(img,sx[col],sy[r],sx[col+1]-sx[col],sy[r+1]-sy[r],dx[col],dy[r],dw,dh);
+    }
+    // estado já é arte própria: nunca tingir por cima (guarda abaixo)
+  } else if(kind==='button'||kind==='pause') {
     const cuts=kind==='button'?{x:[.25,.75],y:[.2,.8],cap:.15}:{x:[.32,.76],y:[.3,.75],cap:.055};
     const scale=Math.min(w/img.width,h/img.height,cuts.cap);
     const sx=[0,...cuts.x.map(v=>Math.round(v*img.width)),img.width];
@@ -99,7 +124,7 @@ function tileFor(img, kind, w, h, state) {
   // reduces background opacity or puts a generic stroke around the rectangle.
   // It is clipped to the painted pixels ('source-atop') so no state repaints a
   // rectangle over the transparent sheet that was just removed.
-  if(state !== 'normal') {
+  if(state !== 'normal' && !kind.startsWith('wood_')) {
     c.globalCompositeOperation='source-atop';
     const inset = Math.max(2, Math.min(6,h*.12));
     const g=c.createLinearGradient(0,0,0,h);
@@ -129,6 +154,21 @@ function tileFor(img, kind, w, h, state) {
   return tile;
 }
 export function drawPaper(ctx, kind, x, y, w, h, opt = {}) {
+  // Botões: placa de madeira por tamanho/estado; papel antigo é o reserva.
+  if (kind === 'button' || kind === 'wood_icon') {
+    w=Math.max(1,Math.round(w));h=Math.max(1,Math.round(h));
+    const size = kind === 'wood_icon' ? 'mini' : woodButtonSize(w,h);
+    const state = WOOD_STATE[paperState(opt)] || 'normal';
+    const wimg = IMG[`wood_button_${size}_${state}`] || IMG[`wood_button_${size}_normal`];
+    if (wimg && typeof document !== 'undefined') {
+      const tile=tileFor(wimg,`wood_${size}_${state}`,w,h,paperState(opt));
+      ctx.save();ctx.globalAlpha=1;ctx.globalCompositeOperation='source-over';
+      ctx.drawImage(tile,Math.round(x),Math.round(y));ctx.restore();
+      registerPaperSurface(ctx,x,y,w,h);
+      return true;
+    }
+    if (kind === 'wood_icon') return false;
+  }
   // Functional paintings from the publication lot; no replacement shapes.
   const source = paperSource(kind,w,h);
   const img = IMG['paper_' + source];

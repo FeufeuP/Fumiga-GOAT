@@ -340,7 +340,7 @@ export function iconButton(ctx, opt) {
   let border = dis ? "#2c2440" : mix(PAL.border, opt.frame || PAL.amber, Math.max(hv, sel));
 
   panel(ctx, x, y + lift, w, h, {
-    kind: "botao", layoutId: "ic:" + (opt.id || ""),
+    kind: "botao", paperKind: "wood_icon", layoutId: "ic:" + (opt.id || ""),
     disabled: dis, hot: hot && !dis, pressed: hot && mouse.down && !dis, selected: opt.selected,
     fill: mix(PAL.panel, PAL.panelHi, hv),
     border,

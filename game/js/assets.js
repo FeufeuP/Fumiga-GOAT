@@ -11,6 +11,28 @@ const MANIFEST = {
   paper_tooltip: "ui/paper/tooltip.png",
   paper_card: "ui/paper/card.png",
   paper_pause: "ui/paper/pause.png",
+  // Placas de madeira dos botões (2026-10-14): 4 variações x 5 estados,
+  // artes de estado separadas — ver tools/prepare_wood_buttons.py.
+  wood_button_largo_normal: "ui/paper/wood/button_largo_normal.png",
+  wood_button_largo_hover: "ui/paper/wood/button_largo_hover.png",
+  wood_button_largo_pressionado: "ui/paper/wood/button_largo_pressionado.png",
+  wood_button_largo_selecionado: "ui/paper/wood/button_largo_selecionado.png",
+  wood_button_largo_desabilitado: "ui/paper/wood/button_largo_desabilitado.png",
+  wood_button_grande_normal: "ui/paper/wood/button_grande_normal.png",
+  wood_button_grande_hover: "ui/paper/wood/button_grande_hover.png",
+  wood_button_grande_pressionado: "ui/paper/wood/button_grande_pressionado.png",
+  wood_button_grande_selecionado: "ui/paper/wood/button_grande_selecionado.png",
+  wood_button_grande_desabilitado: "ui/paper/wood/button_grande_desabilitado.png",
+  wood_button_pequeno_normal: "ui/paper/wood/button_pequeno_normal.png",
+  wood_button_pequeno_hover: "ui/paper/wood/button_pequeno_hover.png",
+  wood_button_pequeno_pressionado: "ui/paper/wood/button_pequeno_pressionado.png",
+  wood_button_pequeno_selecionado: "ui/paper/wood/button_pequeno_selecionado.png",
+  wood_button_pequeno_desabilitado: "ui/paper/wood/button_pequeno_desabilitado.png",
+  wood_button_mini_normal: "ui/paper/wood/button_mini_normal.png",
+  wood_button_mini_hover: "ui/paper/wood/button_mini_hover.png",
+  wood_button_mini_pressionado: "ui/paper/wood/button_mini_pressionado.png",
+  wood_button_mini_selecionado: "ui/paper/wood/button_mini_selecionado.png",
+  wood_button_mini_desabilitado: "ui/paper/wood/button_mini_desabilitado.png",
 
   // Árvore ancestral aprovada: recorte RGBA, a saturação é restaurada em cache.
   tree_ancestral: "ui/tree_ancestral.png",
@@ -192,7 +214,7 @@ const WROT = {};         // silhuetas brancas rotacionadas (hit flash)
 // ANTIGA nos mesmos nomes de arquivo (foi assim que o rework dos inimigos da
 // Fase 2 "não apareceu" para quem já tinha jogado antes dele).
 // ---------------------------------------------------------------------------
-export const ASSET_V = "20261014-title-sem-rodape";
+export const ASSET_V = "20261014-botao-madeira";
 
 /**
  * URL final de um asset do jogo: base certa para a página atual + anti-cache.
