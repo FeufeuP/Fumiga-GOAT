@@ -1307,15 +1307,14 @@ function renderTitle() {
     by += b.h + (mobile ? 22 : 10);
   }
 
+  // Rodapé de versão (linha com "v2.4" e "PLANICIE VIVA") retirado da TITLE a pedido
+  // (2026-10-14). A barra permanece só quando o aviso de acessibilidade está
+  // ativo: ele é estado do save, não texto informativo, e precisa de fundo.
   // FASE 6 FINAL: área toque maior rodapé 28px -> 44px + touch feedback vibrate + 104px
-  const footerH = mobile ? 44 : 32;
-  const footerY = VIEW_H - footerH - 10;
-  panel(ctx, 12, footerY, VIEW_W - 24, footerH, { fill: "rgba(10,8,16,0.75)", border: "rgba(74,58,110,0.45)", r: 4 });
-  drawText(ctx, "v2.4 • PLANÍCIE VIVA • CICLO DIA/NOITE • PARALLAX • 5X ESCALA • SNOW", 20, footerY + (mobile ? 14 : 8),
-    { color: "#6b5a8a", scale: mobile ? 0.85 : 1, maxWidth: VIEW_W - 60 });
-  // (linha de stats removida da tela de TÍTULO a pedido — só versão + acessibilidade)
-  
   if (G.save.accessibility && (G.save.accessibility.invincible || G.save.accessibility.slowMo || G.save.accessibility.infiniteDash)) {
+    const footerH = mobile ? 44 : 32;
+    const footerY = VIEW_H - footerH - 10;
+    panel(ctx, 12, footerY, VIEW_W - 24, footerH, { fill: "rgba(10,8,16,0.75)", border: "rgba(74,58,110,0.45)", r: 4 });
     drawText(ctx, "MODO ACESSÍVEL ATIVO" + (G.save.accessibility.infiniteDash ? " ∞" : ""), VIEW_W - 20, footerY + (mobile ? 14 : 8), { color: "#7fd6a0", align: "right", scale: mobile ? 0.8 : 1 });
   }
 }
