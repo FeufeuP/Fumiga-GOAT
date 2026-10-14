@@ -1,0 +1,205 @@
+{
+  "decision": "2026-10-14: placa de madeira (tábua+pregos+vinha), mini simplificada, estados como artes separadas; prompt FUMIGA-PAPEL-v4-CHROMA, fundo azul",
+  "images": [
+    {
+      "id": "largo_normal",
+      "source": "art-source/botoes-madeira/button_largo_fonte.png",
+      "size": [
+        640,
+        104
+      ],
+      "bytes": 105430,
+      "sha256": "32b938b7eb58c0574827e3438770a61ce0aa7a7321e223a1ab22b8fcaf40175e"
+    },
+    {
+      "id": "largo_hover",
+      "source": "art-source/botoes-madeira/button_largo_fonte.png",
+      "size": [
+        640,
+        104
+      ],
+      "bytes": 112305,
+      "sha256": "3a81b5fc946f31b4f287ff4edfbd15d4a83ca678747a5049110e29b0d05591d8"
+    },
+    {
+      "id": "largo_pressionado",
+      "source": "art-source/botoes-madeira/button_largo_fonte.png",
+      "size": [
+        640,
+        104
+      ],
+      "bytes": 100996,
+      "sha256": "ca9cba06bcec844368fbfc866b3e4202f37967692581ac057a5ec262a9878350"
+    },
+    {
+      "id": "largo_selecionado",
+      "source": "art-source/botoes-madeira/button_largo_fonte.png",
+      "size": [
+        640,
+        104
+      ],
+      "bytes": 106291,
+      "sha256": "077b20af6796b3e25eb1dc177c35c6dd1d419ff393ff14b468b46ae680fa62e5"
+    },
+    {
+      "id": "largo_desabilitado",
+      "source": "art-source/botoes-madeira/button_largo_fonte.png",
+      "size": [
+        640,
+        104
+      ],
+      "bytes": 92703,
+      "sha256": "1633d07489485bcf97894b4fe226913152a980ebf45d961d06de467d029775e3"
+    },
+    {
+      "id": "grande_normal",
+      "source": "art-source/botoes-madeira/button_grande_fonte.png",
+      "size": [
+        480,
+        110
+      ],
+      "bytes": 66628,
+      "sha256": "fc18e581d72b0611eac7e8a5a441f0ec629ee64150fd36125ed59222f1f64226"
+    },
+    {
+      "id": "grande_hover",
+      "source": "art-source/botoes-madeira/button_grande_fonte.png",
+      "size": [
+        480,
+        110
+      ],
+      "bytes": 69704,
+      "sha256": "25f0630d5a33f860a6c853e5be32654f73777ecba689f6b5fe68ba961d904efe"
+    },
+    {
+      "id": "grande_pressionado",
+      "source": "art-source/botoes-madeira/button_grande_fonte.png",
+      "size": [
+        480,
+        110
+      ],
+      "bytes": 64650,
+      "sha256": "d83cd164695a647a5c98954d7703571f43bec6520fcb39646bfb613e60ee29cd"
+    },
+    {
+      "id": "grande_selecionado",
+      "source": "art-source/botoes-madeira/button_grande_fonte.png",
+      "size": [
+        480,
+        110
+      ],
+      "bytes": 65456,
+      "sha256": "0bdbb71eb626279b1d55c49aed1a5ce5f113b055dde185ed2f9266fb56366dd1"
+    },
+    {
+      "id": "grande_desabilitado",
+      "source": "art-source/botoes-madeira/button_grande_fonte.png",
+      "size": [
+        480,
+        110
+      ],
+      "bytes": 62087,
+      "sha256": "4db85e1d3fd66baf942be3152f97d3461189f3304f929e61031574c18c31584e"
+    },
+    {
+      "id": "pequeno_normal",
+      "source": "art-source/botoes-madeira/button_pequeno_fonte.png",
+      "size": [
+        340,
+        84
+      ],
+      "bytes": 35270,
+      "sha256": "674712a0eccda2dc705d90ec96fdb0e7ba2fcbb272ce896a50bca2aba5caebcc"
+    },
+    {
+      "id": "pequeno_hover",
+      "source": "art-source/botoes-madeira/button_pequeno_fonte.png",
+      "size": [
+        340,
+        84
+      ],
+      "bytes": 37499,
+      "sha256": "72dd30b4d82f7e9d20da2b6f21682a8532421cb891a5544155b4e0fefef22049"
+    },
+    {
+      "id": "pequeno_pressionado",
+      "source": "art-source/botoes-madeira/button_pequeno_fonte.png",
+      "size": [
+        340,
+        84
+      ],
+      "bytes": 32992,
+      "sha256": "2ed499f72434db726a76ba496eac761245fe1c2c15919983acc883124450cbbd"
+    },
+    {
+      "id": "pequeno_selecionado",
+      "source": "art-source/botoes-madeira/button_pequeno_fonte.png",
+      "size": [
+        340,
+        84
+      ],
+      "bytes": 35242,
+      "sha256": "f17417f21fe95a4fdb1f97df71e0bcd40660fe3aaea3c8efc0a717cf8663709e"
+    },
+    {
+      "id": "pequeno_desabilitado",
+      "source": "art-source/botoes-madeira/button_pequeno_fonte.png",
+      "size": [
+        340,
+        84
+      ],
+      "bytes": 29837,
+      "sha256": "6467bbc9df69cf4b625a69827e358003a16cab3357da72db5c03e2def032e573"
+    },
+    {
+      "id": "mini_normal",
+      "source": "art-source/botoes-madeira/button_mini_fonte.png",
+      "size": [
+        144,
+        144
+      ],
+      "bytes": 32859,
+      "sha256": "2d50026785b81ad6fd984ba438d864c93ee0552afc0e3e0fbcce9635216d8093"
+    },
+    {
+      "id": "mini_hover",
+      "source": "art-source/botoes-madeira/button_mini_fonte.png",
+      "size": [
+        144,
+        144
+      ],
+      "bytes": 34827,
+      "sha256": "07e95e0d9380cd6bc69d6398aa5883b1b531fb69a85e813f036246e0e0e723dd"
+    },
+    {
+      "id": "mini_pressionado",
+      "source": "art-source/botoes-madeira/button_mini_fonte.png",
+      "size": [
+        144,
+        144
+      ],
+      "bytes": 31145,
+      "sha256": "b54849539cc1b4ede5cfaf0f1b97f003cf591687e2ea038a7c523d51d2996dfe"
+    },
+    {
+      "id": "mini_selecionado",
+      "source": "art-source/botoes-madeira/button_mini_fonte.png",
+      "size": [
+        144,
+        144
+      ],
+      "bytes": 31824,
+      "sha256": "b7431b93ebaad8714c3e929164c744b4b8bc93040a3140338e4c3458d01437a5"
+    },
+    {
+      "id": "mini_desabilitado",
+      "source": "art-source/botoes-madeira/button_mini_fonte.png",
+      "size": [
+        144,
+        144
+      ],
+      "bytes": 28989,
+      "sha256": "924fe741524a60950178e14e10ef6c431a4a1b44e97f33a20e87ff6b28e6495b"
+    }
+  ]
+}

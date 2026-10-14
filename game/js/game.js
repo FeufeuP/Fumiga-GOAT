@@ -1279,7 +1279,8 @@ function renderTitle() {
   for (let i = 0; i < btns.length; i++) {
     const b = btns[i];
     const sel = keyboardUI && i === titleSel;
-    const clicked = button(ctx, { x: bx, y: by, w: bw, h: b.h, label: b.label, font: b.font || "small", scale: b.id === "options" ? 0.9 : 1, id: b.id, accent: b.accent, style: "text", selected: sel });
+    // TITLE também é placa de madeira (pedido 2026-10-14): sem style:"text".
+    const clicked = button(ctx, { x: bx, y: by, w: bw, h: b.h, label: b.label, font: b.font || "small", scale: b.id === "options" ? 0.9 : 1, id: b.id, accent: b.accent, selected: sel });
     if (sel && titleConfirm && !clicked) SFX.uiClick();
     if (clicked || (sel && titleConfirm)) {
       if (b.id === "start") {

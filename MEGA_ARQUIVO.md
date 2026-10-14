@@ -5463,3 +5463,17 @@ Inspeção desta correção após CSS: TITLE/RUN PC/mobile4/4 sem JS/404/glifos,
 - Vinheta, granulado e bordas sujas do look Crow Country continuam fora do filtro (limite honesto registrado em 2026-10-08).
 - Capturas comparativas em `/home/user/capturas-ps1/` (fora do Git).
 - `npm run inspect:layout` (118 estados) acusou 4 avisos `vazando` **apenas no TITLE** ("JOGAR"/"ÁRVORE DA EVOLUÇÃO" passando da borda do botão, inclusive com FONTE GRANDE). Conferido no commit base `f148271` em worktree separado: os MESMOS 4 avisos já existiam — **pré-existentes, sem relação com o filtro**, que não é tocado em nenhum desses estados. Fica como pendência de layout para uma próxima rodada.
+
+## Registro — Botão de placa de madeira: 4 variações x 5 estados (2026-10-14, branch arena/5ee27ece-fumiga-goat)
+
+**Pedido:** sprite do botão como placa de madeira no estilo do jogo, com detalhes como os outros HUDs, em variações grande/pequena/larga conforme todos os locais de uso.
+
+**Decisões (Regra 1):** cobre `button()` + TITLE (sai o `style:"text"`) + `iconButton` da loja/hotbar; desenho = tábua única com pregos e vinha/folhas nos cantos (centro limpo p/ texto); tamanhos mini usam variante simplificada (sem vinha fina); estados como **artes separadas** (normal/hover/pressionado/selecionado com selo ✓/desabilitado), sem tingimento por código sobre a placa.
+
+**Inventário de locais (960x540):** mini 44x44 e iconButton 92x64; pequeno 88-190x28-44 e alturas <=30 (abas de Opções, LIGAR/DESLIGAR, +/-, M1-M6 do Modo Teste, botões da Árvore); grande 180-240x32-52 (pausa, fim de expedição, Memórias/Profecias, loading, ninho); largo 250-320x36-52 (TITLE, AVANÇAR A EXPEDIÇÃO, VOLTAR longos). Classificação automática em `woodButtonSize()` (`game/js/paper_hud.js`); desenho em 3 fatias (cantos com prego/folha preservados, centro estica).
+
+**Arte (Regra 6/18):** 4 fontes geradas com `FUMIGA-PAPEL-v4-CHROMA` sobre azul #0000FF (peça tem verde) em `art-source/botoes-madeira/*_fonte.png` (fora do Git, `.gitignore`); a grande foi escolhida pelo usuário entre 2 opções, as demais geradas na mesma rodada (limite de 3 seleções por resposta). `tools/prepare_wood_buttons.py` remove o chroma com despill, recorta, reduz (largo 640x104, grande 480x110, pequeno 340x84, mini 144x144) e deriva os 5 estados -> `game/assets/ui/paper/wood/button_{var}_{estado}.png` (20 PNGs, ~1,18 MB; manifesto `docs/arte/botoes-madeira.json`).
+
+**Código:** `assets.js` ganha as 20 chaves `wood_button_*` e `ASSET_V=20261014-botao-madeira`; `paper_hud.js` roteia `button`/`wood_icon` para a placa (papel antigo vira reserva se faltar arte); `ui.js` `iconButton` usa `paperKind:"wood_icon"`; `game.js` TITLE sem `style:"text"`. `app/assets.json` regenerado (262 arquivos) e `game/test/pwa.mjs` atualizado (242+20). Inspiração (Regra 2): kits de UI de tábuas tipo Stardew Valley (placas extensíveis longo/curto/quadrado com pregos) adaptados ao papel recortado terroso.
+
+**Validação:** `paper-hud-browser` OK (mapa de tamanhos + estados distintos por pixel); inspeção PC TITLE/OPÇÕES/RUN 6 mapas/ÁRVORE sem erros JS/404, 60 FPS; conferência visual das capturas (TITLE, OPÇÕES, Árvore, INVOCAR e loja em madeira, texto legível). Pendência: backup das fontes no Drive (Regra 13) não executado nesta sessão — originais preservados em `art-source/botoes-madeira/`; sincronizar shells nativos (`prepare:native`) ao publicar.
