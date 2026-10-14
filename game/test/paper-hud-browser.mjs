@@ -9,8 +9,9 @@ const server=await startServer(),browser=await launchBrowser();
 try {
  const page=await browser.newPage();await page.goto(server.url+'/game/?debug&tela=TITLE');
  await importGameModules(page,{paper:'paper_hud.js',font:'font.js',assets:'assets.js'});
- await page.waitForFunction(()=>['panel','button','card','pause','tooltip'].every(k=>!!MOD.assets.IMG['paper_'+k]));
+ await page.waitForFunction(()=>['panel','card','pause','tooltip'].every(k=>!!MOD.assets.IMG['paper_'+k]));
   const result=await page.evaluate(()=>{
+  if(MOD.assets.IMG.paper_button)throw Error('old paper button sprite still loaded');
   // Placas de madeira: variação por tamanho real + estados como artes próprias.
   const sz=MOD.paper.woodButtonSize;
   if(sz(300,46)!=='largo'||sz(220,44)!=='grande'||sz(120,28)!=='pequeno'||sz(44,44)!=='mini'||sz(236,44)!=='grande')throw Error('wood size map');

@@ -26,7 +26,6 @@ ROOT = Path(__file__).resolve().parents[1]
 # Pieces that carry a cream matte. The ember icon is art on a sheet too.
 TARGETS = [
     'game/assets/ui/paper/panel.png',
-    'game/assets/ui/paper/button.png',
     'game/assets/ui/paper/card.png',
     'game/assets/ui/paper/banner.png',
     'game/assets/ui/paper/health.png',

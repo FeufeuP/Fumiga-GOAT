@@ -255,8 +255,8 @@ export function button(ctx, opt) {
     drawText(ctx, opt.label, tx, ty,
       { font: opt.font || "small", scale, color: col, align: "left", shadow: true, maxWidth: VIEW_W - tx - 24 });
   } else {
-  const paperButton=drawPaper(ctx,'button',bx,by,w,h,{disabled:dis,hot:hot,pressed:down,selected:opt.selected});
-  if(!paperButton) {
+  const woodButton=drawPaper(ctx,'button',bx,by,w,h,{disabled:dis,hot:hot,pressed:down,selected:opt.selected});
+  if(!woodButton) {
     panel(ctx,bx,by,w,h,{paper:false,kind:'botao',fill:PAL.panel,border:PAL.border});
   }
 
@@ -268,11 +268,11 @@ export function button(ctx, opt) {
   }
 
   // rótulo: clareia e cresce um toque no hover (o texto acompanha o botão)
-  const col = paperButton ? (dis ? "#675b48" : "#493521") : dis ? "#5a4f78" : (opt.color || PAL.text);
+  const col = woodButton ? (dis ? "#675b48" : "#493521") : dis ? "#5a4f78" : (opt.color || PAL.text);
   const scale = (opt.scale || 1) * (1 + 0.05 * hv - 0.02 * pr);
   drawText(ctx, opt.label, bx + w / 2 + (opt.icon ? 12 : 0) - (opt.selected ? 8 : 0),
     by + h / 2 - (opt.font === "big" ? 15 : 8) - 2,
-    { font: opt.font || "small", scale, color: col, align: "center", shadow: true, paper: paperButton, maxWidth: Math.max(8,w - (paperButton ? Math.min(w*.5,h*2.02) : 48) - (opt.icon ? 24 : 0) - (opt.selected ? 18 : 0)) });
+    { font: opt.font || "small", scale, color: col, align: "center", shadow: true, paper: woodButton, maxWidth: Math.max(8,w - (woodButton ? Math.min(w*.5,h*2.02) : 48) - (opt.icon ? 24 : 0) - (opt.selected ? 18 : 0)) });
   }
 
   // o retângulo publicado é o da HITBOX: é ele que decide se o toque é da UI
