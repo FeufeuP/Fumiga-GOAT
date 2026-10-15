@@ -3,7 +3,7 @@
 // Painéis refinados, botões com profundidade, caixas de texto in-game
 // ============================================================================
 import { PAL, VIEW_W, VIEW_H } from "./config.js";
-import { drawText, textWidth, FONT, layoutBox, clearPaperSurfaces, fontScale, wrapText } from "./font.js";
+import { drawText, textWidth, textHeight, FONT, layoutBox, clearPaperSurfaces, fontScale, wrapText } from "./font.js";
 import { mouse, touchMode } from "./input.js";
 import { SFX } from "./audio.js";
 import { G } from "./state.js";
@@ -239,7 +239,7 @@ export function button(ctx, opt) {
     const q = Math.round(hv * 16) / 16;
     const scale = (opt.scale || 1) * (1 + 0.08 * q - 0.02 * pr);
     const col = dis ? "#5a4f78" : mix("#cdc3e0", "#ffffff", q);
-    const ty = by + h / 2 - (opt.font === "big" ? 15 : 8) - 2;
+    const ty = by + (h - textHeight(opt.label, { font: opt.font || "small", scale })) / 2;
     const tx = bx + 20 + 6 * q;
     if (!dis && q > 0.02) {
       const s = opt.font === "big" ? 6 : 5;
@@ -272,7 +272,7 @@ export function button(ctx, opt) {
   const scale = (opt.scale || 1) * (1 + 0.05 * hv - 0.02 * pr);
   drawText(ctx, opt.label, bx + w / 2 + (opt.icon ? 12 : 0) - (opt.selected ? 8 : 0),
     by + h / 2 - (opt.font === "big" ? 15 : 8) - 2,
-    { font: opt.font || "small", scale, color: col, align: "center", shadow: true, paper: woodButton, maxWidth: Math.max(8,w - (woodButton ? Math.min(w*.5,h*2.02) : 48) - (opt.icon ? 24 : 0) - (opt.selected ? 18 : 0)) });
+    { font: opt.font || "small", scale, color: col, align: "center", shadow: true, paper: woodButton, maxWidth: Math.max(8,w - (woodButton ? Math.min(w*.36,h*1.5) : 48) - (opt.icon ? 24 : 0) - (opt.selected ? 18 : 0)) });
   }
 
   // o retângulo publicado é o da HITBOX: é ele que decide se o toque é da UI

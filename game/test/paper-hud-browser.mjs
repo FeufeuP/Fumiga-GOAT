@@ -9,12 +9,26 @@ const server=await startServer(),browser=await launchBrowser();
 try {
  const page=await browser.newPage();await page.goto(server.url+'/game/?debug&tela=TITLE');
  await importGameModules(page,{paper:'paper_hud.js',font:'font.js',assets:'assets.js'});
- await page.waitForFunction(()=>['panel','card','pause','tooltip'].every(k=>!!MOD.assets.IMG['paper_'+k]));
+ await page.waitForFunction(()=>['panel','card','pause','tooltip'].every(k=>!!MOD.assets.IMG['paper_'+k]) &&
+  ['largo','grande','pequeno','mini'].every(size=>['normal','hover','pressionado','selecionado','desabilitado'].every(state=>!!MOD.assets.IMG[`wood_button_${size}_${state}`])));
   const result=await page.evaluate(()=>{
   if(MOD.assets.IMG.paper_button)throw Error('old paper button sprite still loaded');
   // Placas de madeira: variação por tamanho real + estados como artes próprias.
   const sz=MOD.paper.woodButtonSize;
   if(sz(300,46)!=='largo'||sz(220,44)!=='grande'||sz(120,28)!=='pequeno'||sz(44,44)!=='mini'||sz(236,44)!=='grande')throw Error('wood size map');
+  // Duas pontas, sem cantos quadrados: testa o sprite já recomposto pelo motor.
+  for(const [w,h] of [[300,46],[220,44],[120,28],[44,44]]) {
+    for(const opt of [{},{hot:true},{pressed:true},{selected:true},{disabled:true}]) {
+      const c=document.createElement('canvas');c.width=w;c.height=h;
+      const cx=c.getContext('2d');MOD.paper.drawPaper(cx,'button',0,0,w,h,opt);
+      const alpha=(x,y)=>cx.getImageData(Math.floor(x),Math.floor(y),1,1).data[3];
+      for(const x of [w*.03,w*.97]) {
+        if(alpha(x,h*.12)>16 || alpha(x,h*.88)>16)throw Error('wood square corner '+w+'x'+h);
+        if(alpha(x,h*.5)<128)throw Error('missing wood tip '+w+'x'+h);
+      }
+      if(alpha(w*.5,h*.5)!==255)throw Error('wood text surface not opaque');
+    }
+  }
   const wc=document.createElement('canvas');wc.width=220;wc.height=44;const wx=wc.getContext('2d');
   MOD.paper.drawPaper(wx,'button',0,0,220,44,{});const woodNormal=wc.toDataURL();
   MOD.paper.drawPaper(wx,'button',0,0,220,44,{hot:true});if(wc.toDataURL()===woodNormal)throw Error('wood hover alias');

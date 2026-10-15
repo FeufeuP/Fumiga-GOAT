@@ -1248,7 +1248,8 @@ function renderTitle() {
     tY + (tFS > 1 ? (mobile ? 172 : 178) : 174),
     { color: "#8f7bb5", maxWidth: VIEW_W - 120, scale: tFS > 1 ? 0.9 : 1 });
 
-  const bx = 56, bw = mobile ? 320 : 300;
+  // A hitbox acompanha toda a escrita, inclusive o item longo com FONTE GRANDE.
+  const bx = 56, bw = tFS > 1 ? 460 : 350;
   // Mobile: o DESENHO é o do PC (46/42/40/38). O que muda é só o espaçamento,
   // que precisa de folga >= 2*HIT_PAD para as hitboxes vizinhas não se tocarem.
   const btnH = 46;
@@ -1279,8 +1280,8 @@ function renderTitle() {
   for (let i = 0; i < btns.length; i++) {
     const b = btns[i];
     const sel = keyboardUI && i === titleSel;
-    // TITLE também é placa de madeira (pedido 2026-10-14): sem style:"text".
-    const clicked = button(ctx, { x: bx, y: by, w: bw, h: b.h, label: b.label, font: b.font || "small", scale: b.id === "options" ? 0.9 : 1, id: b.id, accent: b.accent, selected: sel });
+    // TITLE volta a ser só escrita (2026-10-14); placas ficam nas outras telas.
+    const clicked = button(ctx, { x: bx, y: by, w: bw, h: b.h, label: b.label, font: b.font || "small", scale: b.id === "options" ? 0.9 : 1, id: b.id, accent: b.accent, selected: sel, style: "text" });
     if (sel && titleConfirm && !clicked) SFX.uiClick();
     if (clicked || (sel && titleConfirm)) {
       if (b.id === "start") {

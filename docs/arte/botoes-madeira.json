@@ -1,205 +1,206 @@
 {
-  "decision": "2026-10-14: placa de madeira (tábua+pregos+vinha), mini simplificada, estados como artes separadas; prompt FUMIGA-PAPEL-v4-CHROMA, fundo azul",
+  "decision": "2026-10-14: madeira refinada com ponta nas DUAS extremidades; fonte escolhida pelo usuário, centro extensível e mini compacta; TITLE só texto. Estados como artes separadas; prompt FUMIGA-PAPEL-v4-CHROMA, fundo azul",
+  "source_sha256": "76911801fe0286e4a29f0199a3fb5b63d9181ef3c0170da0950bf48562d9833c",
   "images": [
     {
       "id": "largo_normal",
-      "source": "art-source/botoes-madeira/button_largo_fonte.png",
+      "source": "art-source/botoes-madeira-refinada/button_fonte.png",
       "size": [
         640,
         104
       ],
-      "bytes": 105430,
-      "sha256": "32b938b7eb58c0574827e3438770a61ce0aa7a7321e223a1ab22b8fcaf40175e"
+      "bytes": 120134,
+      "sha256": "2e55b8b9351fdcebc29cb54a7f53af915abc0b0c2b86dfc4dc4f432f13230e56"
     },
     {
       "id": "largo_hover",
-      "source": "art-source/botoes-madeira/button_largo_fonte.png",
+      "source": "art-source/botoes-madeira-refinada/button_fonte.png",
       "size": [
         640,
         104
       ],
-      "bytes": 112305,
-      "sha256": "3a81b5fc946f31b4f287ff4edfbd15d4a83ca678747a5049110e29b0d05591d8"
+      "bytes": 126491,
+      "sha256": "7a12b2d929737267dfc4c7bf7407a39ef88b2e58ca9982171a3b663b9bd90dce"
     },
     {
       "id": "largo_pressionado",
-      "source": "art-source/botoes-madeira/button_largo_fonte.png",
+      "source": "art-source/botoes-madeira-refinada/button_fonte.png",
       "size": [
         640,
         104
       ],
-      "bytes": 100996,
-      "sha256": "ca9cba06bcec844368fbfc866b3e4202f37967692581ac057a5ec262a9878350"
+      "bytes": 114955,
+      "sha256": "1cde5b42c07d3aeb77ff3dcdda6d85a6d3184b6823b7b5fa8a7608405015f347"
     },
     {
       "id": "largo_selecionado",
-      "source": "art-source/botoes-madeira/button_largo_fonte.png",
+      "source": "art-source/botoes-madeira-refinada/button_fonte.png",
       "size": [
         640,
         104
       ],
-      "bytes": 106291,
-      "sha256": "077b20af6796b3e25eb1dc177c35c6dd1d419ff393ff14b468b46ae680fa62e5"
+      "bytes": 122743,
+      "sha256": "ea1c5723cb02280a0f5e59715f24bfde1e78e6173f29011cdd139066c0f6d56f"
     },
     {
       "id": "largo_desabilitado",
-      "source": "art-source/botoes-madeira/button_largo_fonte.png",
+      "source": "art-source/botoes-madeira-refinada/button_fonte.png",
       "size": [
         640,
         104
       ],
-      "bytes": 92703,
-      "sha256": "1633d07489485bcf97894b4fe226913152a980ebf45d961d06de467d029775e3"
+      "bytes": 110029,
+      "sha256": "b9c8479c65edc620d0f9eccd7816d4f75d22f8ac9e1139d9ffbb3282abf6fd31"
     },
     {
       "id": "grande_normal",
-      "source": "art-source/botoes-madeira/button_grande_fonte.png",
+      "source": "art-source/botoes-madeira-refinada/button_fonte.png",
       "size": [
         480,
         110
       ],
-      "bytes": 66628,
-      "sha256": "fc18e581d72b0611eac7e8a5a441f0ec629ee64150fd36125ed59222f1f64226"
+      "bytes": 99388,
+      "sha256": "aba4b8693766bfe61e59f3b9c0c6591566bad11fb87dc806384b08584795f7a3"
     },
     {
       "id": "grande_hover",
-      "source": "art-source/botoes-madeira/button_grande_fonte.png",
+      "source": "art-source/botoes-madeira-refinada/button_fonte.png",
       "size": [
         480,
         110
       ],
-      "bytes": 69704,
-      "sha256": "25f0630d5a33f860a6c853e5be32654f73777ecba689f6b5fe68ba961d904efe"
+      "bytes": 104151,
+      "sha256": "e54863919d6c0ca169bfe86d9684955ac724982079300a330586c4527d6d5398"
     },
     {
       "id": "grande_pressionado",
-      "source": "art-source/botoes-madeira/button_grande_fonte.png",
+      "source": "art-source/botoes-madeira-refinada/button_fonte.png",
       "size": [
         480,
         110
       ],
-      "bytes": 64650,
-      "sha256": "d83cd164695a647a5c98954d7703571f43bec6520fcb39646bfb613e60ee29cd"
+      "bytes": 94995,
+      "sha256": "82935f28353a207d93ff8b588011ec64721e1717bea60286cf4b432a7cd91490"
     },
     {
       "id": "grande_selecionado",
-      "source": "art-source/botoes-madeira/button_grande_fonte.png",
+      "source": "art-source/botoes-madeira-refinada/button_fonte.png",
       "size": [
         480,
         110
       ],
-      "bytes": 65456,
-      "sha256": "0bdbb71eb626279b1d55c49aed1a5ce5f113b055dde185ed2f9266fb56366dd1"
+      "bytes": 100328,
+      "sha256": "11adc6ccffc4529fb3a52d428c48bb1c18fcd65bc47e87b9eaeba87abc15e6c2"
     },
     {
       "id": "grande_desabilitado",
-      "source": "art-source/botoes-madeira/button_grande_fonte.png",
+      "source": "art-source/botoes-madeira-refinada/button_fonte.png",
       "size": [
         480,
         110
       ],
-      "bytes": 62087,
-      "sha256": "4db85e1d3fd66baf942be3152f97d3461189f3304f929e61031574c18c31584e"
+      "bytes": 92152,
+      "sha256": "712f29047c272307d02d3d877ed42e44ea3f24f58b5831fc7878d8d3e3a8aa93"
     },
     {
       "id": "pequeno_normal",
-      "source": "art-source/botoes-madeira/button_pequeno_fonte.png",
+      "source": "art-source/botoes-madeira-refinada/button_fonte.png",
       "size": [
         340,
         84
       ],
-      "bytes": 35270,
-      "sha256": "674712a0eccda2dc705d90ec96fdb0e7ba2fcbb272ce896a50bca2aba5caebcc"
+      "bytes": 55120,
+      "sha256": "ae803928d9d543e56e416b2d6084a03c657449f5f33fd06764a50fccb403df07"
     },
     {
       "id": "pequeno_hover",
-      "source": "art-source/botoes-madeira/button_pequeno_fonte.png",
+      "source": "art-source/botoes-madeira-refinada/button_fonte.png",
       "size": [
         340,
         84
       ],
-      "bytes": 37499,
-      "sha256": "72dd30b4d82f7e9d20da2b6f21682a8532421cb891a5544155b4e0fefef22049"
+      "bytes": 57621,
+      "sha256": "277354b458e7941633af330dd00b1f6877fc06eb2bbc578f27386562deab4efe"
     },
     {
       "id": "pequeno_pressionado",
-      "source": "art-source/botoes-madeira/button_pequeno_fonte.png",
+      "source": "art-source/botoes-madeira-refinada/button_fonte.png",
       "size": [
         340,
         84
       ],
-      "bytes": 32992,
-      "sha256": "2ed499f72434db726a76ba496eac761245fe1c2c15919983acc883124450cbbd"
+      "bytes": 52784,
+      "sha256": "ebf176cb70f01a4a9fd2f83788e8e98624ed1df9de596fe6d711b7a1bbe67acd"
     },
     {
       "id": "pequeno_selecionado",
-      "source": "art-source/botoes-madeira/button_pequeno_fonte.png",
+      "source": "art-source/botoes-madeira-refinada/button_fonte.png",
       "size": [
         340,
         84
       ],
-      "bytes": 35242,
-      "sha256": "f17417f21fe95a4fdb1f97df71e0bcd40660fe3aaea3c8efc0a717cf8663709e"
+      "bytes": 55688,
+      "sha256": "5785b513f8bfded09b2c548b9f6f3b0980d696b4feb969c95e73af0405491dd9"
     },
     {
       "id": "pequeno_desabilitado",
-      "source": "art-source/botoes-madeira/button_pequeno_fonte.png",
+      "source": "art-source/botoes-madeira-refinada/button_fonte.png",
       "size": [
         340,
         84
       ],
-      "bytes": 29837,
-      "sha256": "6467bbc9df69cf4b625a69827e358003a16cab3357da72db5c03e2def032e573"
+      "bytes": 51437,
+      "sha256": "a41608a66ea0cd45673c39e20a2256c272597eb54ff309715cbea1238917ec0d"
     },
     {
       "id": "mini_normal",
-      "source": "art-source/botoes-madeira/button_mini_fonte.png",
+      "source": "art-source/botoes-madeira-refinada/button_fonte.png",
       "size": [
         144,
         144
       ],
-      "bytes": 32859,
-      "sha256": "2d50026785b81ad6fd984ba438d864c93ee0552afc0e3e0fbcce9635216d8093"
+      "bytes": 42988,
+      "sha256": "958bc7235a617d283b459a191a334f38dfe85ea3ca47eef3cfb2f766d940d2e7"
     },
     {
       "id": "mini_hover",
-      "source": "art-source/botoes-madeira/button_mini_fonte.png",
+      "source": "art-source/botoes-madeira-refinada/button_fonte.png",
       "size": [
         144,
         144
       ],
-      "bytes": 34827,
-      "sha256": "07e95e0d9380cd6bc69d6398aa5883b1b531fb69a85e813f036246e0e0e723dd"
+      "bytes": 44383,
+      "sha256": "42444ee8fadf09cc170a15778795b431662faa05a047fe4aa58462b2e475460a"
     },
     {
       "id": "mini_pressionado",
-      "source": "art-source/botoes-madeira/button_mini_fonte.png",
+      "source": "art-source/botoes-madeira-refinada/button_fonte.png",
       "size": [
         144,
         144
       ],
-      "bytes": 31145,
-      "sha256": "b54849539cc1b4ede5cfaf0f1b97f003cf591687e2ea038a7c523d51d2996dfe"
+      "bytes": 41621,
+      "sha256": "aa36f1565fd7c8822c70f06fc0cf75563f5a44ec41f6ff76d598014139732f5d"
     },
     {
       "id": "mini_selecionado",
-      "source": "art-source/botoes-madeira/button_mini_fonte.png",
+      "source": "art-source/botoes-madeira-refinada/button_fonte.png",
       "size": [
         144,
         144
       ],
-      "bytes": 31824,
-      "sha256": "b7431b93ebaad8714c3e929164c744b4b8bc93040a3140338e4c3458d01437a5"
+      "bytes": 39627,
+      "sha256": "636594f73689b9c95d372c152ca669f5c1fd30947f32b8ecd0b2ec5c73b6eea8"
     },
     {
       "id": "mini_desabilitado",
-      "source": "art-source/botoes-madeira/button_mini_fonte.png",
+      "source": "art-source/botoes-madeira-refinada/button_fonte.png",
       "size": [
         144,
         144
       ],
-      "bytes": 28989,
-      "sha256": "924fe741524a60950178e14e10ef6c431a4a1b44e97f33a20e87ff6b28e6495b"
+      "bytes": 41713,
+      "sha256": "8ba52f9eacf9eee2207edf4211058dcce2e1a88332ba0fbf081df79eac61d3cb"
     }
   ]
 }
