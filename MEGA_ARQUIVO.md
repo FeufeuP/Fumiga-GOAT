@@ -5489,3 +5489,45 @@ Inspeção desta correção após CSS: TITLE/RUN PC/mobile4/4 sem JS/404/glifos,
 **Pacote:** `ASSET_V=20261014-sem-botao-papel`; `app/assets.json` regenerado (262→**261 arquivos**) e shells nativos sincronizados (266 arquivos de runtime em cada destino, já sem o PNG).
 
 **Validação:** `npm run test:quick` 30/30 · `npm test` 33/33 (4 de navegador pulados sem Chromium; rodados à parte após `tools/setup-dev.sh`: `paper-hud-browser` — cinco estados de madeira distintos, fundo recortado e guarda do sprite antigo —, `hud-publication`, `hud-publication-browser` e `regressions-browser` PC+mobile, todos OK) · `npm run inspect:ui` OK (navegação PC/mobile, pausa pelo HUD touch incluída).
+
+## Registro — TITLE só texto e madeira refinada com duas pontas (2026-10-14, branch arena/03b6fb57-fumiga-goat)
+
+**Pedido:** retirar os fundos dos botões da tela inicial, voltando à escrita como antes; trocar o sprite dos demais botões. Usuário escolheu **madeira mais refinada** e corrigiu a silhueta para **uma ponta dos dois lados**. Escolheu a opção 1 da última comparação visual; as duas comparações anteriores foram recusadas, sem fonte selecionada disponível. Este registro supera a decisão de aplicar madeira no TITLE e o desenho de placa retangular do registro de 2026-10-14; a exclusão do antigo `paper/button.png` permanece.
+
+**Contexto/GUIA:** regras lidas; índice/registros de TITLE e madeira, guia de estilo e consumidores consultados. Rotas: arte/UI/assets/mobile/testes/backup. Sem alteração de lore, gameplay, saves, filtros ou controles novos; publicar no GitHub não foi solicitado. Referência pesquisada: organização de molduras extensíveis do Stardew Valley ([tutorial de UI](https://stardewmodding.wiki.gg/wiki/Tutorial:_Making_a_UI_Recolor)); identidade de papel recortado terroso do FUMIGA preservada. TITLE reutiliza o modo texto estilo Dead Cells já instalado/aprovado em 2026-10-10.
+
+### Implementação
+
+- `game/js/game.js`: quatro opções do TITLE com `style:"text"`, sem placas, preservando losango de seleção, hover, teclado e toque. Hitbox invisível passa a cobrir a escrita longa (350px normal / 460px com FONTE GRANDE).
+- `game/js/ui.js`: centra verticalmente os itens de texto usando `textHeight` real para não vazar com FONTE GRANDE; placas ganham mais largura útil para a escrita, sem mudar as áreas de toque das outras telas.
+- Fonte escolhida: `art-source/botoes-madeira-refinada/button_fonte.png`, gerada com **FUMIGA-PAPEL-v4-CHROMA integral + ficha**, fundo azul, duas pontas integradas na silhueta, centro amplo, madeira fina e folhas discretas. Chroma removido/despill e RGBA real antes da integração.
+- `tools/prepare_wood_buttons.py`: uma fonte aprovada recomposta em quatro tamanhos (largo/grande/pequeno/mini), com cinco PNGs de estado por tamanho; mini compacta as extremidades para caber nos controles pequenos. Selo de seleção preservado, reposicionado para dentro e tornado opaco.
+- `game/js/paper_hud.js`: três faixas horizontais em vez de nove fatias — as diagonais e os vértices não são cortados pelo alongamento vertical. Artes de estado próprias, cache existente e sem tingimento por quadro; substituídos os 20 PNGs existentes (1.568.348 bytes), nenhum arquivo novo de runtime.
+- `game/mobile/mobile.css`: mesma placa mini nos controles touch, estado pressionado usando seu PNG próprio. PC/mobile compartilham o restante da alteração.
+- `ASSET_V=20261014-botao-duas-pontas`; `app/assets.json` regenerado (261 arquivos, 32,6 MB), shells nativos sincronizados (266 arquivos por destino). Nenhum instalador foi compilado/publicado.
+
+### Verificação
+
+- Base: `npm run test:quick` **30/30**. Final após todos os ajustes: `npm test` **37/37**, 80,3s.
+- `paper-hud-browser`: espera explicitamente todos os sprites de madeira antes de comparar estados (elimina corrida do teste anterior); guarda nova verifica ambas as pontas, transparência dos cantos e centro opaco em todos os tamanhos/estados. Corrigida a transparência do selo encontrado pelo novo teste.
+- `title-parallax`: guarda de regressão para `style:"text"` no render real do TITLE.
+- `inspect:ui`: quatro destinos do TITLE por cliques/toques reais, PC/mobile, fonte normal/grande; wrap ↑ + Enter no PC; demais páginas, replay, ninho, pausa e invocar OK.
+- Inspeção visual TITLE/MODE/OPTIONS/RUN-MAPA1 PC/mobile: **8/8**, sem JS/404/glifos; RUN PC 59,5 FPS, mobile 60 FPS no sandbox. Capturas abertas e conferidas: TITLE, OPÇÕES, RUN mobile e TITLE normal/grande após centralização.
+- Auditoria geral de layout: 118 estados, 114 limpos e quatro avisos no TITLE (texto fora da antiga hitbox). Corrigidos largura/centralização, depois repetidos **os quatro estados de TITLE PC/mobile normal/grande: 4/4 limpos**. Não foi repetida a auditoria geral inteira após essa correção limitada ao TITLE.
+- Uma rodada intermediária de `regressions-browser` falhou intermitentemente em cancelamento de loading (`MODE` em vez de `TITLE`); passou isolada e na repetição completa final, sem mudança na lógica de loading.
+- `make_assets_list.mjs --check`, `git diff --check` e documentos incorporados OK. `check_art_handoff.mjs` continua com falha **pré-existente na base**: espera 4 peças em `hud-publicacao.json`, que passou a 3 após a exclusão do botão antigo na entrega anterior. Não reintroduzir o sprite removido para satisfazer esse teste; atualização dessa guarda fica pendente.
+- Preview vivo em `0.0.0.0:8000`, `/game/` HTTP 200, mobile `/game/mobile/`.
+
+### Preservação / limites
+
+Fonte, 20 derivados, receita, manifesto e capturas preservados localmente em `art-source/botoes-madeira-refinada/` (originais/capturas fora do Git). Backup ZIP **upload concluído e get_file conferido**, na pasta [Fumiga-GOAT - Imagens do jogo](https://drive.google.com/drive/folders/1IMj_-7VQf_asmRmMoMSzKxIQ37M6DXlW): [FUMIGA-botoes-duas-pontas-20261014.zip](https://drive.google.com/file/d/1f6Sxss9NXZOC5QfgP9QIWSA_gsV5LiQy/view), **4.727.738 bytes**, SHA256 `ab97d9fdcb063f4896bbc02fc36b44b0b5220054416844da0f87e6e0c84426c4`; parent/tamanho/hash iguais ao local. Snapshot do backup anterior a este registro documental final. Alternativas não escolhidas não estavam acessíveis como arquivos no workspace; backup cobre a fonte escolhida e todos os derivados realmente integrados, não afirma preservar imagens indisponíveis.
+
+Verificação em navegador headless, não em telefone/GPU físicos. Sem commit/push/PR nesta solicitação. Próximo passo opcional: validar visualmente no dispositivo do usuário e atualizar a guarda documental antiga de publicação em tarefa própria.
+
+## Publicação solicitada — TITLE texto e botão de duas pontas (2026-10-15)
+
+Pedido explícito: “Salve no Github”. Autorizado o fluxo completo **commit + push + CREATE PR + MERGE PR**, sem apagar a branch `arena/03b6fb57-fumiga-goat`. Incluídas todas as alterações da entrega acima (32 arquivos: código compartilhado PC/mobile, 20 sprites, receita/manifesto, pacote offline, testes e memória). Nenhuma arte nova, release ou mudança adicional de gameplay neste pedido. Backup já verificado no Drive no registro anterior; fontes pesadas/ZIP/capturas continuam fora do Git.
+
+Conferência pré-publicação: `origin/main` ainda no commit-base `90ec22c`; `git diff --check` limpo e `npm run test:quick` **30/30** nesta solicitação. Suíte completa **37/37** e inspeção PC/mobile verificadas na entrega de implementação; CI remoto será aguardado antes do merge. Falha documental preexistente de `check_art_handoff.mjs` mantida explícita no registro anterior, sem reintroduzir o botão removido. Resultado definitivo da publicação e checks é registrado no PR do GitHub vinculado abaixo; não confundir o pedido de publicação com um merge já confirmado.
+
+**Vínculo autoritativo desta publicação:** [PR #74 — TITLE só texto e botões de madeira com duas pontas](https://github.com/FeufeuP/Fumiga-GOAT/pull/74), implementação `d4b2d4f`. O estado de merge, SHA de integração e checks do commit final devem ser consultados nesse PR; o fluxo desta solicitação aguarda os checks e executa o merge no mesmo atendimento, preservando a branch. Este vínculo substitui a ausência de PR no registro de implementação anterior, sem apagar o histórico.

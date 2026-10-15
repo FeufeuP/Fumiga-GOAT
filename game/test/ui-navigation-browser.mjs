@@ -15,7 +15,7 @@ try {
     await page.waitForFunction(() => window.FUMIGA?.pronto);
     // waitForFunction precisa de predicado SÍNCRONO lendo MOD (lib/browser.mjs);
     // window.M(arquivo) fica para os imports avulsos abaixo.
-    await importGameModules(page, { ui: 'ui.js', cs: 'cutscenes.js', render: 'render.js' });
+    await importGameModules(page, { ui: 'ui.js', cs: 'cutscenes.js', render: 'render.js', state: 'state.js' });
     await page.evaluate(() => { window.FUMIGA_DUMP_TEXTS = true; });
     async function tap(x, y) {
       const r = await page.locator('#game').boundingBox();
@@ -31,6 +31,27 @@ try {
       assert.ok(b, 'botão acessível: ' + id);
       await tap(b.x + b.w/2, b.y + b.h/2);
     }
+    // TITLE só texto ainda é acionável: todas as opções, PC/mobile e fonte grande.
+    for (const big of [false,true]) {
+      await page.evaluate(big=>{MOD.state.G.save.accessibility.bigFont=big;},big);
+      for (const [id,screen] of [['start','MODE'],['tree','TREE'],['options','OPTIONS'],['help','HELP']]) {
+        await page.evaluate(()=>FUMIGA.go('TITLE'));
+        await page.waitForFunction(()=>MOD.state.G.screen==='TITLE' && !MOD.render.hasTransition());
+        await button(id);
+        await page.waitForFunction(screen=>MOD.state.G.screen===screen && !MOD.render.hasTransition(),screen);
+      }
+    }
+    if(!mobile) {
+      await page.evaluate(()=>FUMIGA.go('TITLE'));
+      await page.waitForFunction(()=>MOD.state.G.screen==='TITLE' && !MOD.render.hasTransition());
+      const b=await page.waitForFunction(()=>MOD.ui.uiButtons().find(b=>b.id==='start')).then(h=>h.jsonValue());
+      const r=await page.locator('#game').boundingBox();
+      await page.mouse.move(r.x+(b.x+b.w/2)*r.width/960,r.y+(b.y+b.h/2)*r.height/540);
+      await page.waitForTimeout(80);await page.mouse.move(0,0);
+      await page.keyboard.press('ArrowUp');await page.keyboard.press('Enter');
+      await page.waitForFunction(()=>MOD.state.G.screen==='HELP' && !MOD.render.hasTransition());
+    }
+    console.log((mobile?'mobile':'PC')+': TITLE texto, quatro destinos, fonte normal/grande e teclado PC OK');
     for (const big of [false, true]) {
       await page.evaluate(async big => { (await M('state.js')).G.save.accessibility.bigFont = big; }, big);
       for (const [screen, id, pages] of [['MEMORY', 'memory', 2], ['PROPHECY', 'prophecy', 4]]) {

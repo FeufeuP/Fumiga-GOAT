@@ -131,3 +131,8 @@ near(arcs[2].x, 680, 'essência não herda parallax no MODE');
 near(shadows[0].x, 100, 'formiga não herda parallax no MODE');
 
 console.log('TITLE PARALLAX OK — 3x X/Y e idle, quatro camadas 1:1, cobertura, FX alinhados e mobile compartilhado.');
+
+// As placas não podem voltar ao TITLE; o modo texto mantém a interação.
+const gameSource = fs.readFileSync(new URL('../js/game.js', import.meta.url), 'utf8');
+const titleRender = gameSource.slice(gameSource.indexOf('function renderTitle()'), gameSource.indexOf('function renderMode'));
+assert.match(titleRender, /button\(ctx, \{[^\n]+style: "text"/, 'TITLE usa apenas escrita');

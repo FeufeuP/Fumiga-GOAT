@@ -140,6 +140,7 @@ body {
   filter: drop-shadow(0 2px 0 rgba(18,14,32,.55));
 }
 #touch-hud button:active {
+  background-image: url("../assets/ui/paper/wood/button_mini_pressionado.png");
   filter: drop-shadow(0 1px 0 rgba(18,14,32,.55)) brightness(.86) saturate(1.1);
   transform: translateY(1px);
 }

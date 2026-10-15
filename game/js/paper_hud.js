@@ -25,7 +25,7 @@ export const WOOD_STATE = Object.freeze({normal:'normal',hover:'hover',pressed:'
 export function woodButtonSize(w,h) {
   if (w <= 76 && w / Math.max(1,h) <= 1.9) return 'mini';   // 44x44, iconButton
   if (h <= 30) return 'pequeno';                            // LIGAR, +/-, M1-M6
-  if (w >= 250 || w / Math.max(1,h) >= 5.8) return 'largo'; // TITLE, AVANÇAR
+  if (w >= 250 || w / Math.max(1,h) >= 5.8) return 'largo'; // AVANÇAR, VOLTAR
   if (w < 175) return 'pequeno';                            // abas, VOLTAR curto
   return 'grande';                                          // 180-240: pausa, fim
 }
@@ -80,17 +80,16 @@ function tileFor(img, kind, w, h, state) {
   // so text keeps a readable surface.
   c.imageSmoothingEnabled=true;
   if(kind.startsWith('wood_')) {
-    // 3x3 fatias: cantos (pregos/folhas/nó) preservados, centro de madeira
-    // quieto estica — o texto do jogo vai por cima, sem ornamento no meio.
-    const cuts={x:[.22,.78],y:[.22,.78],cap:.30};
-    const scale=Math.min(w/img.width,h/img.height,cuts.cap);
-    const sx=[0,...cuts.x.map(v=>Math.round(v*img.width)),img.width];
-    const sy=[0,...cuts.y.map(v=>Math.round(v*img.height)),img.height];
-    const dx=[0,Math.round(sx[1]*scale),w-Math.round((img.width-sx[2])*scale),w];
-    const dy=[0,Math.round(sy[1]*scale),h-Math.round((img.height-sy[2])*scale),h];
-    for(let r=0;r<3;r++)for(let col=0;col<3;col++) {
-      const dw=dx[col+1]-dx[col],dh=dy[r+1]-dy[r];
-      if(dw>0&&dh>0)c.drawImage(img,sx[col],sy[r],sx[col+1]-sx[col],sy[r+1]-sy[r],dx[col],dy[r],dw,dh);
+    // Três faixas HORIZONTAIS: as duas pontas são desenhadas inteiras.
+    // Nove fatias cortariam as diagonais ao esticar o meio verticalmente.
+    const capFraction = kind.startsWith('wood_mini_') ? .30 : .18;
+    const cap = Math.round(img.width * capFraction);
+    const destCap = Math.min(Math.floor(w * .30), Math.round(cap * h / img.height));
+    const sx = [0, cap, img.width - cap, img.width];
+    const dx = [0, destCap, w - destCap, w];
+    for (let col=0;col<3;col++) {
+      const dw=dx[col+1]-dx[col];
+      if(dw>0)c.drawImage(img,sx[col],0,sx[col+1]-sx[col],img.height,dx[col],0,dw,h);
     }
     // estado já é arte própria: nunca tingir por cima (guarda abaixo)
   } else if(kind==='pause') {
