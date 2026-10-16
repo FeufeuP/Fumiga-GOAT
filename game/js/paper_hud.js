@@ -2,10 +2,15 @@
 import { IMG } from './assets.js';
 import { registerPaperSurface } from './font.js';
 
-// Protected islands (corners + centre knots) and repeatable corridors, audited
-// separately on each painting. Only the quiet paper interior is stretched;
-// Legacy edge corridors repeat at the same scale. The pause painting uses
-// a quiet three-slice corridor and individually scaled ornament corners.
+// Protected islands (corners + centre knots) and stretchable corridors, audited
+// separately on each painting. Kept for tools/tests that reference the cuts.
+//
+// RENDERIZAÇÃO SEM DISTORÇÃO (2026-10-16, decisão do usuário): cada HUD é
+// desenhado nas proporções ORIGINAIS do sprite — escala uniforme, encaixado e
+// centralizado dentro do retângulo pedido. Molduras nunca esticam e ornamentos
+// nunca encolhem: o sprite aparece exatamente como foi pintado. O que sobra do
+// retângulo pedido vira margem transparente; os chamadores devem passar
+// retângulos na proporção da pintura (ou usar paperFit/paperQuiet).
 export const PAPER_SLICES = Object.freeze({
   panel:   { x: [.38,.45,.57,.65], y: [.32,.39,.57,.69] },
   health:  { x: [.18,.38,.58,.79], y: [.35,.42,.58,.65] },
@@ -15,12 +20,24 @@ export const PAPER_SLICES = Object.freeze({
   pause:   { x: [.32,.43,.55,.68], y: [.31,.38,.59,.70] },
   tooltip: { x: [.35,.44,.57,.70], y: [.36,.44,.59,.69] },
 });
-// Frame inset is independent of the hitbox: ornate source images used to
-// consume 30% of every control. Keep the original cuts, at a bounded scale.
-const EDGE_SCALE = {panel:.065, health:.12, banner:.14, minimap:.10, card:.085, pause:.07, tooltip:.065};
+// Área PERMITIDA pelo sprite (medida pixel a pixel em cada pintura): o maior
+// retângulo de papel liso, livre de moldura e ornamentos, em frações da fonte.
+// Todo texto de um HUD fica CENTRALIZADO dentro desta área (Regra do usuário,
+// 2026-10-16) — ver `paperQuiet()` para o retângulo em coordenadas de destino.
+export const PAPER_QUIET = Object.freeze({
+  panel:   Object.freeze([.254, .281, .838, .680]),
+  health:  Object.freeze([.183, .444, .838, .593]),
+  banner:  Object.freeze([.220, .300, .780, .720]),
+  minimap: Object.freeze([.233, .279, .704, .753]),
+  card:    Object.freeze([.425, .171, .811, .744]),
+  pause:   Object.freeze([.250, .219, .776, .757]),
+  tooltip: Object.freeze([.246, .278, .812, .699]),
+});
 // Placas de madeira dos botões (2026-10-14): a variação segue o tamanho
 // REAL desenhado em 960x540 — inventário completo em
 // tools/prepare_wood_buttons.py. Estados são artes separadas (sem tingir).
+// As duas pontas são desenhadas inteiras (proporção preservada); apenas a
+// faixa calma do meio acompanha a largura — regra BORDA do slicebox.
 export const WOOD_STATE = Object.freeze({normal:'normal',hover:'hover',pressed:'pressionado',selected:'selecionado',disabled:'desabilitado'});
 export function woodButtonSize(w,h) {
   if (w <= 76 && w / Math.max(1,h) <= 1.9) return 'mini';   // 44x44, iconButton
@@ -43,29 +60,47 @@ export function paperReady() { return !!IMG.paper_panel; }
 export function paperState(opt = {}) {
   return opt.disabled ? 'disabled' : opt.pressed ? 'pressed' : opt.selected ? 'selected' : opt.hot ? 'hover' : 'normal';
 }
-function axisCuts(cuts, source, target, scale) {
-  const src=[0,...cuts.map(v=>Math.round(v*source)),source];
-  const extra=Math.max(0,target-source*scale);
-  const dst=src.map((v,i)=>Math.round(v*scale+(i>=2?extra/2:0)+(i>=4?extra/2:0)));
-  dst[dst.length-1]=target;
-  return [src,dst];
+/**
+ * Encaixe SEM distorção (contain + centralizado): a fonte sw×sh entra
+ * uniformemente dentro de w×h. {fw,fh} é o tamanho desenhado (proporção da
+ * fonte intacta), {ox,oy} o deslocamento para o centro do retângulo pedido.
+ */
+export function paperFit(sw, sh, w, h) {
+  const s = Math.min(w / sw, h / sh);
+  const fw = Math.max(1, Math.round(sw * s)), fh = Math.max(1, Math.round(sh * s));
+  return { fw, fh, ox: Math.round((w - fw) / 2), oy: Math.round((h - fh) / 2), scale: s };
 }
+/**
+ * Área permitida pelo sprite em coordenadas de destino: o retângulo de papel
+ * liso de `kind`, mapeado sobre o desenho realmente ocupado (paperFit).
+ * O texto do HUD fica CENTRALIZADO dentro deste retângulo.
+ */
+export function paperQuiet(kind, x, y, w, h, sw, sh) {
+  const src = paperSource(kind, w, h);
+  const q = PAPER_QUIET[src] || PAPER_QUIET.panel;
+  const img = (typeof document !== 'undefined') ? IMG['paper_' + src] : null;
+  const iw = sw || (img && img.width) || 960, ih = sh || (img && img.height) || 512;
+  const { fw, fh, ox, oy } = paperFit(iw, ih, w, h);
+  return {
+    x: x + ox + q[0] * fw, y: y + oy + q[1] * fh,
+    w: (q[2] - q[0]) * fw, h: (q[3] - q[1]) * fh,
+    fit: { fw, fh, ox, oy }, source: src,
+  };
+}
+// Geometria de fatiamento sobre o retângulo ENCAIXADO (proporção da fonte):
+// com alvo na proporção da fonte as células são escala uniforme pura — nada
+// estica nem encolhe. Mantida para testes/ferramentas que leem os cortes.
 export function paperGeometry(kind, sw, sh, w, h) {
   const m=PAPER_SLICES[kind]||PAPER_SLICES.panel;
-  const scale=Math.min(w/sw,h/sh,EDGE_SCALE[kind]||.065);
-  const [sx,dx]=axisCuts(m.x,sw,w,scale),[sy,dy]=axisCuts(m.y,sh,h,scale);
-  return {sx,sy,dx,dy,scale};
-}
-// Repeat only along the long dimension of an edge. Final segment is cropped,
-// not compressed; every wood knot/leaf retains its original aspect ratio.
-function edge(c,img,sx,sy,sw,sh,dx,dy,dw,dh,vertical) {
-  const step=vertical ? Math.max(1,Math.round(sh*dw/sw)) : Math.max(1,Math.round(sw*dh/sh));
-  const length=vertical?dh:dw;
-  for(let at=0;at<length;at+=step) {
-    const n=Math.min(step,length-at), f=n/step;
-    c.drawImage(img,sx,sy,vertical?sw:sw*f,vertical?sh*f:sh,
-      dx+(vertical?0:at),dy+(vertical?at:0),vertical?dw:n,vertical?n:dh);
-  }
+  const {fw,fh,ox,oy,scale}=paperFit(sw,sh,w,h);
+  const cut=(cuts,source,target)=> {
+    const src=[0,...cuts.map(v=>Math.round(v*source)),source];
+    const dst=src.map(v=>Math.round(v*scale));
+    dst[dst.length-1]=target;
+    return [src,dst];
+  };
+  const [sx,dx]=cut(m.x,sw,fw),[sy,dy]=cut(m.y,sh,fh);
+  return {sx,sy,dx,dy,scale,fw,fh,ox,oy};
 }
 function tileFor(img, kind, w, h, state) {
   const key = `${kind}:${w}:${h}:${state}`;
@@ -80,8 +115,8 @@ function tileFor(img, kind, w, h, state) {
   // so text keeps a readable surface.
   c.imageSmoothingEnabled=true;
   if(kind.startsWith('wood_')) {
-    // Três faixas HORIZONTAIS: as duas pontas são desenhadas inteiras.
-    // Nove fatias cortariam as diagonais ao esticar o meio verticalmente.
+    // Três faixas HORIZONTAIS: as duas pontas são desenhadas inteiras, na
+    // proporção preservada. Só a faixa calma do meio acompanha a largura.
     const capFraction = kind.startsWith('wood_mini_') ? .30 : .18;
     const cap = Math.round(img.width * capFraction);
     const destCap = Math.min(Math.floor(w * .30), Math.round(cap * h / img.height));
@@ -92,40 +127,22 @@ function tileFor(img, kind, w, h, state) {
       if(dw>0)c.drawImage(img,sx[col],0,sx[col+1]-sx[col],img.height,dx[col],0,dw,h);
     }
     // estado já é arte própria: nunca tingir por cima (guarda abaixo)
-  } else if(kind==='pause') {
-    const cuts={x:[.32,.76],y:[.3,.75],cap:.055};
-    const scale=Math.min(w/img.width,h/img.height,cuts.cap);
-    const sx=[0,...cuts.x.map(v=>Math.round(v*img.width)),img.width];
-    const sy=[0,...cuts.y.map(v=>Math.round(v*img.height)),img.height];
-    const dx=[0,Math.round(sx[1]*scale),w-Math.round((img.width-sx[2])*scale),w];
-    const dy=[0,Math.round(sy[1]*scale),h-Math.round((img.height-sy[2])*scale),h];
-    for(let r=0;r<3;r++)for(let col=0;col<3;col++) {
-      const dw=dx[col+1]-dx[col],dh=dy[r+1]-dy[r];
-      if(dw>0&&dh>0)c.drawImage(img,sx[col],sy[r],sx[col+1]-sx[col],sy[r+1]-sy[r],dx[col],dy[r],dw,dh);
-    }
   } else {
-    const {sx,sy,dx,dy}=paperGeometry(kind,img.width,img.height,w,h);
-    // Fill all 25 cells. No contain-on-matte branch: frames now actually enclose
-    // tall content. Corners/knots retain uniform scale; texture stays opaque.
-    for(let row=0;row<5;row++) for(let col=0;col<5;col++) {
-      const dw=dx[col+1]-dx[col],dh=dy[row+1]-dy[row];
-      const sw=sx[col+1]-sx[col],sh=sy[row+1]-sy[row];
-      if(dw<=0||dh<=0) continue;
-      if((row===0||row===4)&&(col===1||col===3))
-        edge(c,img,sx[col],sy[row],sw,sh,dx[col],dy[row],dw,dh,false);
-      else if((col===0||col===4)&&(row===1||row===3))
-        edge(c,img,sx[col],sy[row],sw,sh,dx[col],dy[row],dw,dh,true);
-      else c.drawImage(img,sx[col],sy[row],sw,sh,dx[col],dy[row],dw,dh);
-    }
+    // Pintura inteira, escala uniforme (contain + centralizado): o sprite sai
+    // nas proporções originais — moldura e ornamentos nunca são deformados.
+    const fit=paperFit(img.width,img.height,w,h);
+    c.drawImage(img,0,0,img.width,img.height,fit.ox,fit.oy,fit.fw,fit.fh);
   }
   // State treatment changes depth and adds a readable selection mark, never
   // reduces background opacity or puts a generic stroke around the rectangle.
   // It is clipped to the painted pixels ('source-atop') so no state repaints a
   // rectangle over the transparent sheet that was just removed.
   if(state !== 'normal' && !kind.startsWith('wood_')) {
+    const fit=paperFit(img.width,img.height,w,h);
     c.globalCompositeOperation='source-atop';
-    const inset = Math.max(2, Math.min(6,h*.12));
-    const g=c.createLinearGradient(0,0,0,h);
+    const inset = Math.max(2, Math.min(6,fit.fh*.12));
+    const x0=fit.ox+inset,y0=fit.oy+inset,ww=fit.fw-inset*2,hh=fit.fh-inset*2;
+    const g=c.createLinearGradient(0,y0,0,y0+hh);
     if(state==='pressed') {
       g.addColorStop(0,'rgba(73,53,33,.62)'); g.addColorStop(.5,'rgba(73,53,33,.25)'); g.addColorStop(1,'rgba(73,53,33,.16)');
     } else if(state==='disabled') {
@@ -135,10 +152,10 @@ function tileFor(img, kind, w, h, state) {
     } else {
       g.addColorStop(0,'rgba(255,249,225,.65)'); g.addColorStop(.55,'rgba(255,249,225,0)'); g.addColorStop(1,'rgba(83,62,34,.24)');
     }
-    c.fillStyle=g; c.fillRect(inset,inset,w-inset*2,h-inset*2);
+    c.fillStyle=g; c.fillRect(x0,y0,ww,hh);
     if(state==='selected') {
       c.globalCompositeOperation='source-over'; // the mark must stay readable
-      const s=Math.max(4,Math.min(9,h*.19)), x=w-inset-s*2.5,y=h*.5;
+      const s=Math.max(4,Math.min(9,fit.fh*.19)), x=fit.ox+fit.fw-inset-s*2.5,y=fit.oy+fit.fh*.5;
       c.strokeStyle='#456032';c.lineWidth=Math.max(2,s*.3);c.lineCap='round';
       c.beginPath();c.moveTo(x,y);c.lineTo(x+s*.55,y+s*.5);c.lineTo(x+s*1.5,y-s*.6);c.stroke();
     }
@@ -175,16 +192,21 @@ export function drawPaper(ctx, kind, x, y, w, h, opt = {}) {
   if(!img || typeof document==='undefined') return false;
   w=Math.max(1,Math.round(w));h=Math.max(1,Math.round(h));
   const tile=tileFor(img,source,w,h,paperState(opt));
+  const fit=paperFit(img.width,img.height,w,h);
   ctx.save();ctx.globalAlpha=1;ctx.globalCompositeOperation='source-over';
   ctx.drawImage(tile,Math.round(x),Math.round(y));ctx.restore();
-  registerPaperSurface(ctx,x,y,w,h);
+  // Superfície de papel = o desenho REAL (não as margens transparentes).
+  registerPaperSurface(ctx,x+fit.ox,y+fit.oy,fit.fw,fit.fh);
   return true;
 }
 export function drawPaperBar(ctx,x,y,w,h,frac,opt={}) {
   if(!drawPaper(ctx,'health',x,y,w,h)) return false;
   frac=Math.max(0,Math.min(1,Number.isFinite(frac)?frac:0));
+  // O preenchimento segue a faixa PERMITIDA pela pintura (papel liso da barra),
+  // no desenho realmente ocupado — nada é desenhado fora do sprite.
+  const q=paperQuiet('health',x,y,w,h);
+  const ix=q.x, iy=q.y+q.h*.15, iw=q.w, ih=Math.max(2,q.h*.7);
   ctx.save();ctx.globalAlpha=1;
-  const ix=x+w*.13,iy=y+h*.36,iw=w*.74,ih=Math.max(2,h*.30);
   ctx.fillStyle='#d0b995';ctx.fillRect(ix,iy,iw,ih);
   const g=ctx.createLinearGradient(0,iy,0,iy+ih);
   g.addColorStop(0,opt.low?'#cd6952':'#dcaa56');g.addColorStop(1,opt.low?'#9e332b':'#a36223');

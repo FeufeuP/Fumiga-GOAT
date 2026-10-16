@@ -12,6 +12,7 @@ try {
  await page.waitForFunction(()=>['panel','card','pause','tooltip'].every(k=>!!MOD.assets.IMG['paper_'+k]) &&
   ['largo','grande','pequeno','mini'].every(size=>['normal','hover','pressionado','selecionado','desabilitado'].every(state=>!!MOD.assets.IMG[`wood_button_${size}_${state}`])));
   const result=await page.evaluate(()=>{
+  const shapeRef={};
   if(MOD.assets.IMG.paper_button)throw Error('old paper button sprite still loaded');
   // Placas de madeira: variação por tamanho real + estados como artes próprias.
   const sz=MOD.paper.woodButtonSize;
@@ -63,7 +64,13 @@ try {
   if(MOD.paper.paperSource('panel',120,300)!=='card')throw Error('portrait source');
   const tall=document.createElement('canvas');tall.width=120;tall.height=300;
   const tc=tall.getContext('2d');MOD.paper.drawPaper(tc,'panel',0,0,120,300);
-  for(const y of [10,150,290]) {
+  // Contrato 2026-10-16 (sem distorção): o arte entra uniformemente e CENTRADO
+  // (contain) — a moldura completa fica nas bordas do desenho, que preserva a
+  // proporção original da pintura (848×1264 → 120×179 centrado em y≈60).
+  const fit=MOD.paper.paperFit(848,1264,120,300);
+  if(fit.fw!==120||Math.abs(fit.fh/fit.fw-1264/848)>0.02)throw Error('tall art distorted');
+  if(Math.abs(fit.oy-(300-fit.fh)/2)>1)throw Error('tall art not centred');
+  for(const y of [fit.oy+Math.round(fit.fh*.25),fit.oy+Math.round(fit.fh/2),fit.oy+Math.round(fit.fh*.75)]) {
     const data=tc.getImageData(0,y,30,1).data;
     let painted=0;for(let i=0;i<data.length;i+=4) {
       if(data[i+3]>8&&data[i]<200)painted++;
@@ -71,10 +78,31 @@ try {
     if(!painted)throw Error('missing tall frame at '+y);
   }
   // Interior paper stays opaque so text remains readable over the world.
-  const mid=tc.getImageData(60,150,1,1).data;
+  const mid=tc.getImageData(60,fit.oy+Math.round(fit.fh/2),1,1).data;
   if(mid[3]!==255)throw Error('frame interior lost its paper');
   const geo=MOD.paper.paperGeometry('card',848,1264,120,300);
-  if(geo.dx.at(-1)!==120||geo.dy.at(-1)!==300)throw Error('incomplete frame');
+  if(geo.dx.at(-1)!==geo.fw||geo.dy.at(-1)!==geo.fh)throw Error('incomplete frame');
+  if(Math.abs(geo.fw/geo.fh-848/1264)>0.02)throw Error('geometry distorted the sprite');
+  // Nenhum sprite é deformado em nenhum alvo: a CAIXA PINTADA mantém a mesma
+  // proporção em alvos de formatos diferentes (medição por alfa).
+  for(const [kind,w,h] of [['panel',320,122],['panel',420,160],['panel',960,512],['banner',300,60],['banner',120,90],['card',220,300],['card',120,180],['tooltip',280,138],['tooltip',400,120],['pause',330,230],['pause',120,160],['health',540,12],['health',200,28]]) {
+    const t=document.createElement('canvas');t.width=w;t.height=h;
+    const cx=t.getContext('2d');MOD.paper.drawPaper(cx,kind,0,0,w,h);
+    const d=cx.getImageData(0,0,w,h).data;
+    let x0=w,y0=h,x1=0,y1=0;
+    for(let yy=0;yy<h;yy++)for(let xx=0;xx<w;xx++){
+      if(d[(yy*w+xx)*4+3]>8){if(xx<x0)x0=xx;if(xx>x1)x1=xx;if(yy<y0)y0=yy;if(yy>y1)y1=yy;}
+    }
+    const drawn=(x1-x0+1)/(y1-y0+1);
+    const ref=shapeRef[kind];
+    const tol=Math.max(0.04,2.5/Math.max(1,y1-y0+1)); // ±1px de arredondamento
+    if(ref==null)shapeRef[kind]=drawn;
+    else if(Math.abs(drawn/ref-1)>tol)throw Error('distorted sprite '+kind+' '+w+'x'+h+' ('+drawn.toFixed(2)+' vs '+ref.toFixed(2)+')');
+  }
+  // Área permitida: o texto se centraliza no papel liso medido da pintura.
+  const qq=MOD.paper.paperQuiet('panel',10,8,320,171);
+  if(qq.w<=0||qq.h<=0)throw Error('quiet area missing');
+  if(qq.x<10||qq.y<8||qq.x+qq.w>331||qq.y+qq.h>180)throw Error('quiet area outside the box');
   const inside=MOD.font.paperAt(ctx,100,40),outside=MOD.font.paperAt(ctx,900,500);
   MOD.font.layoutRec.layer='world';const world=MOD.font.paperAt(ctx,100,40);MOD.font.layoutRec.layer='ui';
   MOD.font.clearPaperSurfaces();const next=MOD.font.paperAt(ctx,100,40);

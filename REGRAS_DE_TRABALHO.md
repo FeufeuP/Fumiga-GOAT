@@ -303,6 +303,72 @@ Ao final de cada tarefa, apresentar um **checklist de conferência** com este fo
 
 ---
 
+## Regra 20 — Sempre gerar o diagrama da mudança 📊
+
+> **Toda entrega (feature, correção, UI, arte, áudio, balanceamento, documentação) inclui um diagrama em imagem do que foi feito, aberto ao usuário para avaliação e feedback.** (decisão do usuário, 2026-10-16)
+
+- **Mudança visual** (UI, HUD, arte, layout, efeitos): o diagrama mostra **ANTES → DEPOIS** lado a
+  lado, renderizado a partir dos **assets e algoritmos reais** do jogo — o ANTES reproduz o
+  comportamento anterior; o DEPOIS, o resultado vigente. Nunca ilustração genérica.
+- **Mudança não visual** (regras, testes, docs, áudio, balanceamento): o diagrama resume o escopo
+  em painéis rotulados — o que mudou, onde fica e qual o efeito.
+- **Formato:** PNG legível, tipografia KiwiSoda do projeto, rótulos curtos em português, título
+  com data e arquivos envolvidos. Salvar em pasta coerente com o assunto (ex.: `slice-box/`,
+  `docs/arte/`) e versionar junto com o código (não entra no backup de imagens da Regra 13).
+- **Avaliação:** abrir o diagrama para o usuário no fim da entrega (como a arte da Regra 10).
+  O feedback do usuário dirige o ajuste na mesma rodada ou na seguinte; mudanças visuais não são
+  declaradas prontas sem essa avaliação.
+
+---
+
+## Regra 21 — O texto se adapta ao HUD, nunca o contrário 📝
+
+> **Nunca deformar ou redimensionar um HUD para acomodar texto: todo sprite pintado (painéis, placas, tooltips, cartões, barras, botões) é desenhado no seu FORMATO ORIGINAL — inteiro, em escala uniforme, na proporção da pintura — e TODOS os textos se adaptam aos seus respectivos HUDs, ficando CENTRALIZADOS na área permitida (papel liso) do sprite, quebrando linhas, reduzindo o corpo e, por último, abreviando com reticências.** (decisão do usuário, 2026-10-16)
+
+- **Sprite nunca deforma:** nada de fatiar/esticar/comprimir a pintura — ela entra inteira
+  (contain + centralizada) na proporção original; o que sobra do retângulo fica transparente
+  e os chamadores usam caixas na proporção da pintura. Ornamentos e molduras ficam no
+  tamanho exato em que foram pintados.
+- **Texto centralizado na área permitida:** cada pintura tem sua área de papel liso medida
+  pixel a pixel (`PAPER_QUIET` / `paperQuiet()` em `game/js/paper_hud.js`); o conteúdo de
+  cada HUD é centralizado nela — nunca sobre a moldura, vinhas ou nós.
+- A geometria da caixa (posição, largura, altura, proporção) é definida pelo layout/arte —
+  nunca por `textWidth`, contagem de linhas ou `fontScale`.
+- Ordem de encaixe do texto na área permitida: **quebrar → encolher o corpo → abreviar com
+  "..."** (helper `fitTextBlock` do `game/js/font.js`); o texto nunca vaza da área nem cobre
+  o ornamento.
+- FONTE GRANDE (acessibilidade) continua crescendo a tinta, mas **dentro** da área permitida
+  — o texto se dobra mais; a caixa e o sprite não mudam.
+- Antes de aumentar qualquer caixa "para o texto caber", inverta o problema: adapte o
+  texto à área permitida do HUD.
+
+## Regra 22 — HUDs no formato original do sprite, nunca deformados 🖼️
+
+> **Nenhum HUD pintado pode ser deformado: todo sprite de HUD é desenhado INTEIRO, em escala uniforme, na proporção exata da sua pintura. Fatiar, esticar, comprimir ou usar "corredores elásticos" que alterem a proporção é proibido — e todo HUD novo nasce com a sua área permitida medida e registrada.** (decisão do usuário, 2026-10-16, após ver a correção: “Ficou perfeito, torne isto uma nova regra, para que os próximos HUDs não fiquem deformados”)
+
+- **Render:** cada pintura usa `paperFit` (contain + centralizada) em `game/js/paper_hud.js` — o
+  retângulo pedido NUNCA redimensiona o desenho; o que sobra fica transparente. As telas que
+  consomem devem usar caixas na proporção da pintura (tabela vigente registrada no MEGA).
+- **HUD novo (peça pintada) — passos obrigatórios antes de integrar:**
+  1. entra em `game/assets/ui/paper/` no tamanho de produção, registrado no MANIFEST e em
+     `docs/arte/hud-publicacao.json`;
+  2. mede-se e registra-se a **área permitida** (maior retângulo de papel liso, livre de
+     moldura/ornamento) em `PAPER_QUIET` de `game/js/paper_hud.js`;
+  3. a tela consumidora posiciona/centraliza o texto com `paperQuiet()` (Regra 21);
+  4. a peça entra na guarda automática do `game/test/paper-hud-browser.mjs`.
+- **Proibido:** esmagar ornamentos com escala reduzida ("EDGE_SCALE"), fatiar + esticar
+  ("9-slice elástico"), repetir corredores para mudar o formato, ou redimensionar o sprite
+  para o texto caber.
+- **Estados (hover/pressionado/selecionado/desabilitado):** somente artes pintadas próprias;
+  tratamento por gradiente, quando houver, fica preso aos pixels pintados (`source-atop`) —
+  nunca se repinta um retângulo sobre o sprite.
+- **Guarda automática:** o teste de navegador mede a caixa pintada por alfa em alvos de
+  formatos diferentes e reprova qualquer deformação; peça nova fora da checagem = regra
+  descumprida.
+- **Diagrama (Regra 20):** a mudança de HUD mostra o sprite no formato original, lado a lado.
+
+---
+
 ## 🔄 Resumo do fluxo obrigatório a cada pedido
 
 ```text
@@ -311,9 +377,10 @@ Ao final de cada tarefa, apresentar um **checklist de conferência** com este fo
 0c. GUIA       → responder GUIA.md e ler todas as fontes das rotas aplicáveis; não substituir as leituras obrigatórias
 1. PESQUISAR  → inspirações em jogos indies na Web (Regra 2)
 2. PERGUNTAR  → opções de implementação (Regra 1)
-3. IMPLEMENTAR → seguindo as escolhas do usuário, otimização (Regra 5) e Regra 14 (tela de carregamento só na troca de mundo; o que sai do TITLE é pré-carregado)
+3. IMPLEMENTAR → seguindo as escolhas do usuário, otimização (Regra 5) e Regra 14 (tela de carregamento só na troca de mundo; o que sai do TITLE é pré-carregado), com sprites no formato original e todo texto centralizado na área permitida do seu HUD (Regras 21 e 22 — texto quebra/encolhe/abrevia na área permitida; sprite nunca deforma/fatía/estica)
 4. ARTE       → imagens em alta resolução, papel recortado detalhado e harmônico (Regra 6) + humanização moderada (Regra 8) + top-down no mundo do jogo (Regra 17) + mapas-base limpos (Regra 19), em rodadas de no máx. 10 imagens (Regra 16), com fonte em fundo verde/azul de chroma (Regra 6), sempre partindo do prompt-mestre de estilo (Regra 18)
 5. MOSTRAR    → exibir toda arte gerada para aprovação visual (Regra 10)
+5b. DIAGRAMA  → gerar e abrir o diagrama da mudança (ANTES→DEPOIS, ou escopo em painéis) para o usuário avaliar e dar feedback (Regra 20)
 6. ADAPTAR    → mobile: todo input novo vira gesto/botão de toque (Regra 9)
 7. VERIFICAR  → check-in com checklist do que foi pedido (Regra 3)
 8. JOGAR      → inspeção em jogo buscando bugs e imperfeições (Regra 4)
