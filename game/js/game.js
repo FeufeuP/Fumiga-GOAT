@@ -1,4 +1,4 @@
-import { drawPaper } from "./paper_hud.js";
+import { drawPaper, paperQuiet } from "./paper_hud.js";
 import { fruitSight } from "./fruit_effects.js";
 // DIÁRIO DE PLAYTEST: ganchos de expedição, draft, fim de run e a aba TESTE
 // das OPÇÕES (exportar/apagar). Módulo local, sem PII; ver playtest.js.
@@ -1933,77 +1933,82 @@ function drawHUD() {
   }
 
   // --------------------------------------- painel orgânico da colônia (quitina/cera por bioma) ----
-  const pw = 320;
-  const ph = run.modeDef ? 140 + (fontScale() > 1 ? 14 : 0) : 122;
-  // fundo com textura biome
-  drawBiomeTexture(ctx, 10, 8, pw, ph, biomeId, G.time);
+  // HUD nas proporções ORIGINAIS do sprite (2026-10-16): 360×192 = 960×512 em
+  // escala uniforme — moldura e vinhas nunca deformam. Todo texto CENTRALIZADO
+  // na área permitida (papel liso) da pintura; nada é desenhado sobre ornamentos.
+  const pw = 360;
+  const ph = 192;
   panel(ctx, 10, 8, pw, ph, { border: bh.border, accentLine: bh.accent, fill: "rgba(0,0,0,0)" });
-  // brilho topo quitina
-  ctx.fillStyle = bh.border;
-  ctx.globalAlpha = 0.22;
-  ctx.fillRect(10, 8, pw, 3);
-  ctx.globalAlpha = 1;
+  const qCol = paperQuiet("panel", 10, 8, pw, ph);
+  const qCx = qCol.x + qCol.w / 2;
 
   // botão "+"/"-" orgânico — no toque a ÁREA sensível cresce (o desenho não)
-  const moreR = touchPad(304, 12, 18, 16);
+  const moreR = touchPad(10 + pw - 30, 12, 22, 18);
   const moreHot = pointInRect(mouse.x, mouse.y, moreR.x, moreR.y, moreR.w, moreR.h);
   ctx.fillStyle = moreHot ? "#d8c69f" : "#eadbb9";
-  ctx.fillRect(304, 12, 18, 16);
+  ctx.fillRect(10 + pw - 30, 12, 22, 18);
   ctx.strokeStyle = bh.border; ctx.lineWidth = 1;
-  ctx.strokeRect(304.5, 12.5, 17, 15);
-  drawText(ctx, hudExpanded ? "-" : "+", 313, 13, { color: moreHot ? "#efe9ff" : bh.accent, align: "center", maxWidth: 12 });
+  ctx.strokeRect(10 + pw - 29.5, 12.5, 21, 17);
+  drawText(ctx, hudExpanded ? "-" : "+", 10 + pw - 19, 14, { color: moreHot ? "#efe9ff" : bh.accent, align: "center", maxWidth: 12 });
   uiButtons().push({ x: moreR.x, y: moreR.y, w: moreR.w, h: moreR.h, id: "hudMore" });
   if (live && moreHot && mouse.justDown) { hudExpanded = !hudExpanded; SFX.uiClick(); }
 
-  // Linhas do painel: cada uma na SUA faixa (o modo em fonte pequena e o nome
-  // do bioma em escala 1 se tocavam quando o texto crescia com FONTE GRANDE).
+  // Linhas do painel: CENTRALIZADAS na área permitida da pintura (Regra do
+  // usuário 2026-10-16) e com escala que cabe no papel liso — o texto se
+  // adapta ao HUD, nunca o contrário.
   const hudFS = fontScale();
-  const rowH = 18 * hudFS;
-  let yy = 23;
-  // O contador de irmãs (à direita) e o nome do bioma (à esquerda) dividem a
-  // MESMA faixa: a largura do bioma sai do que o contador não usa. Sem isso,
-  // com FONTE GRANDE o "VASO DA PLANÍCIE" encostava no "IRMÃS 5/16".
+  const rowStep = Math.min(15.5, qCol.h / 5.3);
+  const rowScale = Math.min(0.76, rowStep / 17);
+  let yy = qCol.y + 1;
   const tp = run.testPowers;
   const infMoney = !!(tp && tp.infMoney);
   const infAnts = !!(tp && tp.infAnts);
   const popTxt = "IRMÃS " + popUsed() + "/" + (infAnts ? "∞" : popCapTotal());
-  const popW = Math.min(118, textWidth(popTxt, { scale: 1 }));
-  const biomeW = Math.min(168, Math.max(96, 258 - popW - 10));
   if (run.modeDef) {
-    drawText(ctx, run.modeDef.name + (era ? " • ERA " + era : ""), 36, yy, { color: run.modeDef.color, font: "small", maxWidth: 258 });
-    yy += rowH;
-    // bioma à esquerda, irmãs à direita: cada um com a sua largura reservada
-    drawText(ctx, bh.loreName, 36, yy, { color: bh.border, scale: 1, maxWidth: biomeW });
-    yy += 22 * hudFS;
+    drawText(ctx, run.modeDef.name + (era ? " • ERA " + era : ""), qCx, yy, { color: run.modeDef.color, font: "small", scale: rowScale, align: "center", maxWidth: qCol.w });
+    yy += rowStep;
+    drawText(ctx, bh.loreName + " • " + popTxt, qCx, yy, { color: bh.border, scale: rowScale, align: "center", maxWidth: qCol.w });
+    yy += rowStep;
   } else {
-    drawText(ctx, bh.loreName, 36, yy, { color: bh.border, scale: 1, maxWidth: biomeW });
-    yy += rowH;
+    drawText(ctx, bh.loreName + " • " + popTxt, qCx, yy, { color: bh.border, scale: rowScale, align: "center", maxWidth: qCol.w });
+    yy += rowStep;
   }
   const hpFrac = q && q.maxHp ? clamp(q.hp / q.maxHp, 0, 1) : 0;
   const low = hpFrac < 0.30;
-  // Label lore: SILENCIOSA (Rainha Silenciosa)
-  drawText(ctx, low ? "FERIDA!" : "SILENCIOSA", 36, yy, { color: low ? "#ff4d5a" : "#ffd479", font: "small", scale: 1, maxWidth: 88 });
-  // gaster bar orgânico com coroa fungo/seda
-  drawGasterBar(ctx, 130, yy + 1, 88, 12, hpFrac, biomeId, low, G.time);
-  if (q && q.maxHp) drawText(ctx, Math.ceil(q.hp) + "/" + q.maxHp, 298, yy, { color: low ? "#ff8a94" : PAL.textDim, align: "right", scale: 1, maxWidth: 74 });
-  yy += 18;
-  // XP como ANÉIS DA ÁRVORE
-  drawText(ctx, "ANEL " + run.level, 36, yy, { color: "#ffd479", scale: 1, maxWidth: 53 });
-  const xpFrac = run.xpNext > 0 ? clamp(run.xp / run.xpNext, 0, 1) : 0;
-  drawTreeRings(ctx, 100, yy+6, xpFrac, biomeId);
-  // comida por bioma (a essência desce conforme a fonte, senão as duas faixas
-  // ficavam a 2px uma da outra com FONTE GRANDE)
-  const essRow = Math.ceil(19 * hudFS);
-  drawFoodIcon(ctx, biomeId, 120, yy-1);
-  drawText(ctx, bh.foodLabel + " " + (infMoney ? "∞" : fmt(run.food)), 140, yy, { color: bh.foodColor, scale: 1, maxWidth: 162 });
-  // essência cristal geométrico
-  drawEssenceCrystal(ctx, 42, yy + essRow + 4, 14, bh.essenceColor, G.time);
-  drawText(ctx, bh.essenceLabel + " " + (infMoney ? "∞" : fmt(run.essencePool)), 54, yy + essRow, { color: bh.essenceColor, scale: 1, maxWidth: 248 });
+  // linha da rainha: rótulo + gaster + vida, grupo centralizado
   {
-    // na linha do nome do bioma (nunca em cima do nome do modo)
-    const used = popUsed(), cap = popCapTotal();
-    const popY = run.modeDef ? 23 + rowH : 23;
-    drawText(ctx, popTxt, 298, popY, { color: (!infAnts && used >= cap) ? "#ff4d5a" : PAL.text, align: "right", scale: 1, maxWidth: popW });
+    const lbl = low ? "FERIDA!" : "SILENCIOSA";
+    const barW = Math.min(84, qCol.w * 0.42), barH = 11;
+    const hpTxt = q && q.maxHp ? Math.ceil(q.hp) + "/" + q.maxHp : "";
+    const lw = textWidth(lbl, { scale: rowScale }), hw = textWidth(hpTxt, { scale: rowScale });
+    const gap = 8, total = lw + gap + barW + gap + hw;
+    const x0 = qCx - total / 2;
+    drawText(ctx, lbl, x0, yy + 1, { color: low ? "#ff4d5a" : "#ffd479", font: "small", scale: rowScale, maxWidth: lw + 2 });
+    drawGasterBar(ctx, x0 + lw + gap, yy, barW, barH, hpFrac, biomeId, low, G.time);
+    drawText(ctx, hpTxt, x0 + lw + gap + barW + gap, yy + 1, { color: low ? "#ff8a94" : PAL.textDim, scale: rowScale, maxWidth: hw + 2 });
+  }
+  yy += rowStep;
+  // ANEL + árvore + comida, grupo centralizado
+  {
+    const anel = "ANEL " + run.level;
+    const foodStr = bh.foodLabel + " " + (infMoney ? "∞" : fmt(run.food));
+    const aw = textWidth(anel, { scale: rowScale }), fw = textWidth(foodStr, { scale: rowScale });
+    const total = aw + 8 + 22 + 8 + 14 + 6 + fw;
+    const x0 = qCx - total / 2;
+    drawText(ctx, anel, x0, yy + 1, { color: "#ffd479", scale: rowScale, maxWidth: aw + 2 });
+    drawTreeRings(ctx, x0 + aw + 8 + 11, yy + 7, run.xpNext > 0 ? clamp(run.xp / run.xpNext, 0, 1) : 0, biomeId);
+    drawFoodIcon(ctx, biomeId, x0 + aw + 8 + 22 + 8, yy - 1);
+    drawText(ctx, foodStr, x0 + aw + 8 + 22 + 8 + 14 + 6, yy + 1, { color: bh.foodColor, scale: rowScale, maxWidth: fw + 2 });
+  }
+  yy += rowStep;
+  // essência cristal geométrico, grupo centralizado
+  {
+    const essStr = bh.essenceLabel + " " + (infMoney ? "∞" : fmt(run.essencePool));
+    const ew = textWidth(essStr, { scale: rowScale });
+    const total = 14 + 6 + ew;
+    const x0 = qCx - total / 2;
+    drawEssenceCrystal(ctx, x0, yy + 1, 12, bh.essenceColor, G.time);
+    drawText(ctx, essStr, x0 + 20, yy + 1, { color: bh.essenceColor, scale: rowScale, maxWidth: ew + 2 });
   }
 
   // ---- fileira de mutações como SEIVA Dourada (Vampire Survivors) ----
@@ -2014,8 +2019,9 @@ function drawHUD() {
     let ix = 12;
     for (const mm of mutLog.slice(0, 10)) {
       const icon = IMG["i_" + mm.icon];
-      // fundo quitina
-      drawBiomeTexture(ctx, ix, mutY, 20, 20, biomeId, G.time*0.5);
+      // chip em placa mini (fonte 144×144 quadrada): sprite na proporção
+      // original, sem deformar pintura nenhuma em 20×20.
+      drawPaper(ctx, "button", ix, mutY, 20, 20);
       ctx.fillStyle = "rgba(20,14,32,0.55)";
       ctx.fillRect(ix, mutY, 20, 20);
       ctx.strokeStyle = RARITY[mm.rar].color; ctx.lineWidth = 1;
@@ -2035,99 +2041,104 @@ function drawHUD() {
 
   // ---- detalhes da colônia expandidos com lore bioma ----
   if (hudExpanded) {
-    const eFS = fontScale();
-    // Com FONTE GRANDE cada linha de texto cresce 30%: o painel também cresce
-    // e o passo entre as linhas sai da tinta real (antes as duas primeiras
-    // linhas encostavam nas barras de necessidade).
-    const eph = 124 + (eFS > 1 ? 20 : (isTouchUI() ? 10 : 0));
+    // HUD nas proporções originais (2026-10-16): 360×192 uniformes; conteúdo
+    // centralizado na área permitida da pintura, com escala que cabe no papel.
+    const eph = 192;
     const ey = mutY + (mutLog.length > 0 ? 26 : 6);
-    drawBiomeTexture(ctx, 10, ey, pw, eph, biomeId, G.time*0.3);
     panel(ctx, 10, ey, pw, eph, { border: bh.border, fill: "rgba(0,0,0,0)" });
+    const qE = paperQuiet("panel", 10, ey, pw, eph);
+    const eCx = qE.x + qE.w / 2;
     const n = colony.needs, hc = colony.headcount;
-    const eStep = Math.ceil(16 * eFS);
-    drawText(ctx, "COLÔNIA PENSA EM FEROMÔNIO", 36, ey + 16, { color: bh.border, scale: 0.85, maxWidth: 270 });
-    drawText(ctx, "ABATES " + run.kills + " • " + bh.waveLabel, 36, ey + 16 + eStep,
-      { color: PAL.textDim, scale: 0.8, maxWidth: 270 });
-    const cy = ey + 16 + 2 * eStep;
-    let bx = 36;
-    const needBar = (label, v, col) => {
-      // Largura e passo saem do TEXTO medido: o passo fixo de 74px fazia o
-      // "CURA" encostar no "GUERRA" com FONTE GRANDE (0px de folga).
-      const lw = Math.max(56, textWidth(label, { scale: 0.8 }));
-      drawText(ctx, label, bx, cy, { color: col, scale: 0.8, maxWidth: lw });
-      // Reservas de seiva: separadas dos rótulos mesmo com fonte grande.
-      ctx.fillStyle = "#c9b28b"; ctx.fillRect(bx, cy + 18, lw, 4);
-      ctx.fillStyle = col; ctx.fillRect(bx, cy + 18, lw * clamp(v, 0, 1), 4);
-      bx += lw + 18;
-    };
-    needBar("FOME", n.food, "#b77728");
-    needBar("GUERRA", n.defense, "#b34b38");
-    needBar("CURA", n.medical, "#647d43");
-    drawText(ctx, "COLETA " + hc.gather + " • EXPLORAÇÃO " + hc.explore, 36, cy + 28, { color: bh.border, scale: 0.8, maxWidth: 270 });
+    const eStep = Math.min(15.5, qE.h / 5.3);
+    const eScale = Math.min(0.78, eStep / 17);
+    let ty = qE.y + 2;
+    drawText(ctx, "COLÔNIA PENSA EM FEROMÔNIO", eCx, ty, { color: bh.border, scale: eScale, align: "center", maxWidth: qE.w });
+    ty += eStep;
+    drawText(ctx, "ABATES " + run.kills + " • " + bh.waveLabel, eCx, ty, { color: PAL.textDim, scale: eScale, align: "center", maxWidth: qE.w });
+    ty += eStep;
+    // reservas de seiva: três grupos rotulados, o conjunto centralizado
+    {
+      const barW = Math.min(52, qE.w * 0.22), gap = 12;
+      const labels = [["FOME", n.food, "#b77728"], ["GUERRA", n.defense, "#b34b38"], ["CURA", n.medical, "#647d43"]];
+      const total = labels.length * barW + (labels.length - 1) * gap;
+      let bx = eCx - total / 2;
+      for (const [label, v, col] of labels) {
+        drawText(ctx, label, bx + barW / 2, ty, { color: col, scale: eScale * 0.9, align: "center", maxWidth: barW });
+        ctx.fillStyle = "#c9b28b"; ctx.fillRect(bx, ty + eStep * 0.72, barW, 4);
+        ctx.fillStyle = col; ctx.fillRect(bx, ty + eStep * 0.72, barW * clamp(v, 0, 1), 4);
+        bx += barW + gap;
+      }
+    }
+    ty += eStep * 1.55;
+    drawText(ctx, "COLETA " + hc.gather + " • EXPLORAÇÃO " + hc.explore, eCx, ty, { color: bh.border, scale: eScale, align: "center", maxWidth: qE.w });
+    ty += eStep;
     if (isTouchUI()) {
-      if (button(ctx, { x:20, y:cy+(eFS > 1 ? 52 : 46), w:280, h:22, compact:true, label:keys.KeyH ? "OLFATO: LIGADO" : "OLFATO: DESLIGADO", id:"touchScent", scale:0.7, accent:bh.accent })) keys.KeyH = !keys.KeyH;
+      if (button(ctx, { x: eCx - 120, y: ty - 2, w: 240, h: 22, compact: true, label: keys.KeyH ? "OLFATO: LIGADO" : "OLFATO: DESLIGADO", id: "touchScent", scale: 0.7, accent: bh.accent })) keys.KeyH = !keys.KeyH;
     } else {
-      drawText(ctx, "[H] SEGURE PARA VER FEROMÔNIOS", 36, cy + 28 + Math.ceil(18 * 0.8 * fontScale()), { color: PAL.textDim, scale: 0.75, maxWidth: 270 });
+      drawText(ctx, "[H] SEGURE PARA VER FEROMÔNIOS", eCx, ty, { color: PAL.textDim, scale: eScale * 0.9, align: "center", maxWidth: qE.w });
     }
     leftStackBottom = ey + eph + 6;
   }
 
   // ------------------------------------ status da invasão como TRILHA FEROMÔNIO (topo-centro) ----
-  const cw = 300, cx0 = 338;
-  drawPaper(ctx,"banner",cx0,8,cw,62);
+  // Tábua 380×76 = proporção EXATA da pintura banner.png (960×192); textos
+  // centralizados na área permitida (prancha lisa) — ornamentos nunca cobertos.
+  const cw = 380, cx0 = 386;
+  drawPaper(ctx,"banner",cx0,8,cw,76);
+  const qBan = paperQuiet("banner", cx0, 8, cw, 76);
+  const bCx = qBan.x + qBan.w / 2 + 14;
+  const bMax = qBan.w - 30;
   if (run.status === "running") {
     if (director.phase === "calm") {
       const rest = calmFrac();
       const frac = 1 - rest;
-      // Formigas em quatro quadros: trilha abaixo do texto, nunca sobre ele.
-      const trailY = 58;
+      // Formigas em quatro quadros: trilha sobre a faixa de madeira inferior,
+      // nunca sobre o texto (que fica centralizado na área permitida).
+      const trailY = 8 + 76 - 10;
       for (let i = 0; i < 7; i++) {
         const prog = trailProgress(G.time, i);
-        const tx = cx0 + 64 + prog * (cw - 90);
+        const tx = cx0 + 70 + prog * (cw - 140);
         const alpha = 0.3 + prog * 0.7;
         ctx.globalAlpha = alpha;
         drawTrailAnt(ctx, tx, trailY-6, G.time+i*0.1);
       }
       ctx.globalAlpha = 1;
-      // anel contagem
-      const rcx = cx0 + 27, rcy = 38, rr = 15;
-      ctx.lineWidth = 4;
+      // anel contagem na ponta esquerda da área permitida
+      const rcx = qBan.x + 13, rcy = qBan.y + qBan.h / 2, rr = 11;
+      ctx.lineWidth = 3;
       ctx.strokeStyle = "rgba(36,28,56,0.9)";
       ctx.beginPath(); ctx.arc(rcx, rcy, rr, 0, Math.PI*2); ctx.stroke();
       if (frac > 0.004) {
         ctx.strokeStyle = rest < 0.25 ? "#ff4d5a" : bh.foodColor;
         ctx.beginPath(); ctx.arc(rcx, rcy, rr, -Math.PI / 2, -Math.PI / 2 + Math.PI*2 * frac); ctx.stroke();
       }
-      if (!run.draft) drawText(ctx, Math.max(0, Math.ceil(director.timer)), rcx, rcy - 8, { color: rest < 0.25 ? "#ff8a94" : PAL.text, align: "center" });
-      drawText(ctx, run.testMode ? "MODO TESTE • " + bh.waveLabel : (run.endless ? "SOBREVIVÊNCIA • " + bh.waveLabel : bh.waveLabel), cx0 + 52, 14, { font: "small", color: bh.border, scale: 1, maxWidth: cw-64 });
+      if (!run.draft) drawText(ctx, Math.max(0, Math.ceil(director.timer)), rcx, rcy - 6, { color: rest < 0.25 ? "#ff8a94" : PAL.text, align: "center", scale: 0.7 });
+      drawText(ctx, run.testMode ? "MODO TESTE • " + bh.waveLabel : (run.endless ? "SOBREVIVÊNCIA • " + bh.waveLabel : bh.waveLabel), bCx, qBan.y + 1, { font: "small", color: bh.border, scale: 0.85, align: "center", maxWidth: bMax });
       const cycTag = run.endless ? (director.cycle ? " • CICLO " + (director.cycle + 1) : " • INF") : "";
-      drawText(ctx, run.draft ? "ESCOLHA UMA MEMÓRIA" : ("ONDA " + (director.waveInMap + 1) + "/" + m.waves.length + cycTag), cx0 + 52, 34, { color: PAL.textDim, scale: 1, maxWidth: cw-64 });
+      drawText(ctx, run.draft ? "ESCOLHA UMA MEMÓRIA" : ("ONDA " + (director.waveInMap + 1) + "/" + m.waves.length + cycTag), bCx, qBan.y + 16, { color: PAL.textDim, scale: 0.8, align: "center", maxWidth: bMax });
     } else if (director.phase === "mapClear") {
-      drawText(ctx, "MAPA LIMPO! " + bh.loreName, VIEW_W / 2, 18, { font: "small", color: bh.accent, align: "center" });
-      drawText(ctx, m.name, VIEW_W / 2, 40, { color: PAL.textDim, align: "center" });
+      drawText(ctx, "MAPA LIMPO! " + bh.loreName, bCx, qBan.y + 1, { font: "small", color: bh.accent, align: "center", scale: 0.95, maxWidth: bMax });
+      drawText(ctx, m.name, bCx, qBan.y + 17, { color: PAL.textDim, align: "center", scale: 0.8, maxWidth: bMax });
     } else {
       const invasionLabel = "INVASÃO " + director.waveInMap + "/" + m.waves.length + (run.endless ? (director.cycle ? " • CICLO " + (director.cycle + 1) : " • INF") : "");
       let aliveF = 0;
       for (const f of foes) if (!f.dead) aliveF++;
       const remainingLabel = "RESTAM " + aliveF + (director.budget > 0 ? "+" : "");
-      const remainingWidth = textWidth(remainingLabel, { scale: 0.85 });
-      const invasionMaxWidth = Math.max(100, cw - 32 - remainingWidth - 16);
-      drawText(ctx, invasionLabel, cx0 + 16, 12, { font: "big", color: "#ff4d5a", scale: 0.9, maxWidth: invasionMaxWidth });
-      drawText(ctx, remainingLabel, cx0 + cw - 16, 22, { color: "#ff8a94", align: "right", scale: 0.85 });
-      // barra como trilha feromônio perigosa
+      drawText(ctx, invasionLabel, bCx, qBan.y - 1, { font: "big", color: "#ff4d5a", scale: 0.9, align: "center", maxWidth: bMax });
+      // barra como trilha feromônio perigosa, dentro da área permitida
       ctx.fillStyle = "rgba(20,10,16,0.9)";
-      ctx.fillRect(cx0+16, 38, cw-32, 10);
-      const grad = ctx.createLinearGradient(cx0+16, 38, cx0+cw-16, 38);
+      ctx.fillRect(qBan.x, qBan.y + 20, qBan.w, 8);
+      const grad = ctx.createLinearGradient(qBan.x, qBan.y + 20, qBan.x + qBan.w, qBan.y + 20);
       grad.addColorStop(0, "#ff4d5a");
       grad.addColorStop(1, "#a32e46");
       ctx.fillStyle = grad;
-      ctx.fillRect(cx0+16, 38, (cw-32)*waveProgress(), 10);
+      ctx.fillRect(qBan.x, qBan.y + 20, qBan.w * waveProgress(), 8);
       const wDef2 = waveDef();
-      drawText(ctx, wDef2 && wDef2.title ? wDef2.title : m.name, cx0 + 16, 50, { color: PAL.textDim, scale: 0.8 });
+      drawText(ctx, (wDef2 && wDef2.title ? wDef2.title : m.name) + " • " + remainingLabel, bCx, qBan.y + 30, { color: PAL.textDim, scale: 0.72, align: "center", maxWidth: bMax });
     }
   } else {
     drawText(ctx, run.status === "won" || (run.payout && run.payout.winBonus > 0) ? "VITÓRIA DA COLÔNIA!" : "A COLÔNIA CAIU • " + bh.loreName,
-      VIEW_W / 2, 20, { font: "small", color: bh.accent, align: "center" });
+      bCx, qBan.y + 6, { font: "small", color: bh.accent, align: "center", scale: 0.85, maxWidth: bMax });
   }
 
   const bossUp = !!(boss && !boss.dead && run.status === "running" && (boss.revealT > 0 || fogVisible(boss.x, boss.y)));
@@ -2143,8 +2154,7 @@ function drawHUD() {
   // ----------------------------------------- barra de formigas orgânica (rodapé) ----
   shopTooltip = null;
   const footY = VIEW_H - (isMobileLayout() ? 84 : 64);
-  // textura bioma no rodapé
-  drawBiomeTexture(ctx, 10, footY, 92, 64, biomeId, G.time*0.15);
+  // a placa de madeira do botão É o rodapé — sem pintura atrás dobrando a moldura
   const shopSprite = rotFrame("worker", Math.PI / 2);
   const rShop = iconButton(ctx, { x: 10, y: footY, w: 92, h: 64, id: "shopToggle", frame: shopOpen ? bh.accent : bh.border, selected: shopOpen, maxPadX: 12 });
   ctx.drawImage(shopSprite, 56 - shopSprite.width * 0.17, footY + 3, shopSprite.width * 0.34, shopSprite.height * 0.34);
@@ -2166,8 +2176,7 @@ function drawHUD() {
       const x = gx;
       const cost = infMoney ? 0 : unitCost(sp.type);
       const canBuy = (infMoney || run.food >= cost) && (infAnts || (popUsed() < popCapTotal() && unitLimitLeft(sp.type)));
-      // fundo orgânico por card
-      drawBiomeTexture(ctx, x, footY, SHOP_W, 64, biomeId, G.time*0.1 + i);
+      // a placa de madeira do card é o card — pintura atrás dobrava a moldura
       const r = iconButton(ctx, { x, y: footY, w: SHOP_W, h: 64, id: "shop" + sp.type, disabled: !canBuy, frame: sp.accent, maxPadX: 2 });
       ctx.fillStyle = SHOP_GROUPS[sp.group] || "#4a3a6e";
       ctx.globalAlpha = 0.9;
@@ -2195,22 +2204,27 @@ function drawHUD() {
 
   if (shopTooltip) {
     const uDef = UNITS[shopTooltip.type];
-    const tipLines = wrapText(uDef.tip, 248, {});
-    const th = 58 + tipLines.length * 16;
-    const tb = footY - 12 - th;
-    drawBiomeTexture(ctx, 10, tb, 268, th, biomeId, G.time);
-    panel(ctx, 10, tb, 268, th, { border: bh.border, fill: "rgba(0,0,0,0)" });
-    drawText(ctx, "▶ " + (uDef.fn || ""), 20, tb + 6,
-      { font: "big", scale: 0.8, color: SHOP_GROUPS[shopTooltip.group] || bh.accent });
-    drawText(ctx, uDef.name, 20, tb + 32, { color: bh.accent, scale: 0.9 });
-    tipLines.forEach((L, li) => drawText(ctx, L, 20, tb + 52 + li * 16, { color: PAL.text, scale: 0.85 }));
+    // HUD nas proporções originais (2026-10-16): 280×149 = pintura panel
+    // uniforme; textos centralizados na área permitida da pintura.
+    const TW = 280, TH = 149, tb = footY - 12 - TH;
+    panel(ctx, 10, tb, TW, TH, { border: bh.border, fill: "rgba(0,0,0,0)" });
+    const qTip = paperQuiet("panel", 10, tb, TW, TH);
+    const tCx = qTip.x + qTip.w / 2;
+    const tStep = Math.min(15, qTip.h / 4.1);
+    let ty = qTip.y + 1;
+    drawText(ctx, "▶ " + (uDef.fn || ""), tCx, ty,
+      { font: "big", scale: 0.68, color: SHOP_GROUPS[shopTooltip.group] || bh.accent, align: "center", maxWidth: qTip.w });
+    ty += tStep;
+    drawText(ctx, uDef.name, tCx, ty, { color: bh.accent, scale: 0.85, align: "center", maxWidth: qTip.w });
+    ty += tStep;
+    const tip = fitTextBlock(uDef.tip, qTip.w, qTip.y + qTip.h - ty, { scale: 0.75, minScale: 0.5, lineStep: 14 });
+    tip.lines.forEach((L, li) => drawText(ctx, L, tCx, ty + li * tip.step, { color: PAL.text, scale: tip.scale, align: "center", maxWidth: qTip.w }));
   }
 
   // Uma única entrada do ninho no canvas, compartilhada por PC e toque.
   // A duplicata DOM foi removida da camada mobile.
   {
     const nw = 142, nx2 = VIEW_W - 10 - nw;
-    drawBiomeTexture(ctx, nx2, footY, nw, 64, biomeId, G.time*0.12);
     const rNest = iconButton(ctx, { x: nx2, y: footY, w: nw, h: 64, id: "nestBtn", frame: bh.accent });
     const nestImg = IMG.nest || IMG.i_essence;
     if (nestImg) ctx.drawImage(nestImg, nx2 + nw / 2 - 14, footY + 2, 28, 28);
@@ -2329,20 +2343,17 @@ function drawHUD() {
 
   let bossBottom = 0;
   if (bossUp) {
-    // Barra do chefe SEMPRE abaixo da faixa superior (painel da colônia
-    // 10..330 e minimapa 770..950 em cima): em cima dela, 556px de barra
-    // atravessavam o painel esquerdo e o rótulo do bioma.
-    const bw = 540, bx0 = VIEW_W / 2 - bw / 2, by = Math.max(hudTopSlot(), leftStackBottom, 152);
-    drawBiomeTexture(ctx, bx0 - 8, by, bw + 16, 44, biomeId, G.time*0.25);
-    panel(ctx, bx0 - 8, by, bw + 16, 44, { border: "#ff4d5a", fill: "rgba(0,0,0,0)" });
-    drawText(ctx, boss.def.name + " • FILHO DA NÉVOA", VIEW_W / 2, by + 6, { font: "small", color: "#ff4d5a", align: "center" });
-    // gaster do boss pálido
-    drawGasterBar(ctx, bx0, by + 24, bw, 12, boss.hp / boss.maxHp, biomeId, boss.hp/boss.maxHp < 0.5, G.time);
-    // fase 2 indicador
-    if (boss.hp / boss.maxHp < 0.5) {
-      drawText(ctx, "FASE 2: NÉVOA DESPERTA", VIEW_W/2, by + 38, { color: "#ffd479", align: "center", scale: 0.7 });
-    }
-    bossBottom = by + 50;
+    // HUD do chefe nas proporções ORIGINAIS (2026-10-16): placa banner 400×80
+    // (5:1 da pintura banner.png), nome e gaster centralizados na área permitida.
+    const bw = 400, bx0 = VIEW_W / 2 - bw / 2, by = Math.max(hudTopSlot(), leftStackBottom, 152);
+    drawPaper(ctx, "banner", bx0, by, bw, 80);
+    const qBoss = paperQuiet("banner", bx0, by, bw, 80);
+    const bossCx = qBoss.x + qBoss.w / 2;
+    const bossLine = boss.def.name + " • FILHO DA NÉVOA" + (boss.hp / boss.maxHp < 0.5 ? " • FASE 2: NÉVOA DESPERTA" : "");
+    drawText(ctx, bossLine, bossCx, qBoss.y, { font: "small", color: boss.hp / boss.maxHp < 0.5 ? "#ffd479" : "#ff4d5a", align: "center", scale: 0.8, maxWidth: qBoss.w });
+    // gaster do boss pálido, na proporção original da pintura health (7,1:1)
+    drawGasterBar(ctx, bossCx - 75, qBoss.y + 13, 150, 21, boss.hp / boss.maxHp, biomeId, boss.hp/boss.maxHp < 0.5, G.time);
+    bossBottom = by + 86;
   }
   hudFloorY = Math.max(leftStackBottom, bossBottom);
 
@@ -2406,7 +2417,7 @@ function drawMinimap() {
   const mw = MINI.w, mh = MINI.h;
   const mx = VIEW_W - mw - 10, my = 10;
   uiButtons().push({ x: mx - 3, y: my - 3, w: mw + 6, h: mh + 6, id: "minimap" });
-  drawPaper(ctx,"minimap",mx-10,my-10,mw+20,mh+20);
+  drawPaper(ctx,"minimap",mx-14,my-10,mw+28,mh+20);
   if (world.mini) {
     ctx.save(); ctx.globalAlpha = 1; ctx.drawImage(world.mini, mx, my); ctx.restore();
   }
@@ -2461,15 +2472,20 @@ function drawBanner(b) {
   let y = tut ? tut.y + tut.h + 60 : 120;
   y = Math.max(y, hudFloorY + 6);
 
-  const bw = 600;
+  const bw = 560, bh = 112, bx = VIEW_W / 2 - bw / 2;
+  // a tábua fica abaixo do minimapa (termina em 175), acima da faixa de dicas
+  const byy = Math.max(180, Math.min(Math.max(y - 14, 180), VIEW_H - 126 - bh));
   // Fase 2: banner como tábua-seta de madeira do bioma (fallback: dialogBox)
-  if (!drawWoodBanner(ctx, VIEW_W/2 - bw/2, y - 14, bw, 84, hudBiome())) {
-    dialogBox(ctx, VIEW_W/2 - bw/2, y - 14, bw, 84, { border: "#ffd479", accent: "#ffd479" });
+  if (!drawWoodBanner(ctx, bx, byy, bw, bh, hudBiome())) {
+    dialogBox(ctx, bx, byy, bw, bh, { border: "#ffd479", accent: "#ffd479" });
   }
-  drawText(ctx, b.title, VIEW_W / 2, y, { font: "big", scale: 2, color: "#ffd479", align: "center", maxWidth: bw-100 });
+  // Texto centralizado na área permitida da tábua (2026-10-16).
+  const qEv = paperQuiet("banner", bx, byy, bw, bh);
+  const evCx = qEv.x + qEv.w / 2;
+  drawText(ctx, b.title, evCx, qEv.y, { font: "big", scale: 1.35, color: "#ffd479", align: "center", maxWidth: qEv.w });
   if (b.sub) {
-    const lines = wrapText(b.sub, 560, {});
-    lines.forEach((L, li) => drawText(ctx, L, VIEW_W / 2, y + 48 + li * 18, { color: PAL.text, align: "center" }));
+    const sub = fitTextBlock(b.sub, qEv.w, qEv.y + qEv.h - (qEv.y + 26), { scale: 0.85, minScale: 0.5, lineStep: 15 });
+    sub.lines.forEach((L, li) => drawText(ctx, L, evCx, qEv.y + 26 + li * sub.step, { color: PAL.text, align: "center", scale: sub.scale, maxWidth: qEv.w }));
   }
   ctx.globalAlpha = 1;
 }
@@ -2490,9 +2506,11 @@ function drawDraft(draft) {
   // a 100px de altura) — antes as duas linhas ficavam na mesma faixa
   drawText(ctx, "A colônia evolui. Escolha 1 de 3 — vale só nesta expedição.", VIEW_W / 2, 104, { color: PAL.textDim, align: "center", maxWidth: 700 });
 
-  const cw = 220, ch = 300, gap = 26;
+  // Cartões nas proporções ORIGINAIS do sprite card.png (848×1264 = 0,671):
+  // 260×387 em escala uniforme; conteúdo centralizado na área permitida.
+  const cw = 260, ch = 387, gap = 24;
   const x0 = VIEW_W / 2 - (cw * 3 + gap * 2) / 2;
-  const y = 144;
+  const y = 136;
   for (let i = 0; i < draft.options.length; i++) {
     const mm = draft.options[i];
     const x = x0 + i * (cw + gap);
@@ -2505,35 +2523,46 @@ function drawDraft(draft) {
 
     panel(ctx, x, y - lift, cw, ch, { paperKind:"card", hot, pressed:hot && mouse.down });
 
+    // área permitida da pintura: o texto se centraliza no papel liso (à
+    // direita das vinhas) — nada é desenhado sobre os ornamentos.
+    const qD = paperQuiet("card", x, y - lift, cw, ch);
+    const dCx = qD.x + qD.w / 2;
+    let dy = qD.y + 2;
+
     const icon = IMG["i_" + mm.icon];
     if (icon) {
+      const isz = Math.min(56, qD.w * 0.62);
       ctx.fillStyle = "#ddc6a1";
-      ctx.fillRect(x + cw / 2 - 36, y + 26 - lift, 72, 72);
+      ctx.fillRect(dCx - isz / 2, dy, isz, isz);
       ctx.strokeStyle = rare.color; ctx.lineWidth = 2;
-      ctx.strokeRect(x + cw / 2 - 36, y + 26 - lift, 72, 72);
+      ctx.strokeRect(dCx - isz / 2, dy, isz, isz);
       if (hot) {
         ctx.save();
         ctx.globalCompositeOperation = "lighter";
         ctx.globalAlpha = 0.2;
         ctx.fillStyle = rare.color;
-        ctx.fillRect(x + cw / 2 - 36, y + 26 - lift, 72, 72);
+        ctx.fillRect(dCx - isz / 2, dy, isz, isz);
         ctx.restore();
       }
-      ctx.drawImage(icon, x + cw / 2 - 30, y + 32 - lift, 60, 60);
+      ctx.drawImage(icon, dCx - isz / 2 + 4, dy + 4, isz - 8, isz - 8);
+      dy += isz + 6;
     }
-    drawText(ctx, rare.name, x + cw / 2, y + 112 - lift, { color: rare.color, align: "center", maxWidth: cw - 16 });
-    // passo pelo tamanho real da tinta: com FONTE GRANDE o nome (big) cobria a raridade
-    drawText(ctx, mm.name, x + cw / 2, y + 112 - lift + Math.ceil(20 * fontScale()),
-      { font: "big", scale: 1, color: "#efe9ff", align: "center", maxWidth: cw - 58 });
-    const lines = wrapText(mm.desc, cw - 64, {});
-    const descY = y + 166 + (fontScale() > 1 ? 5 : 0) - lift;
-    lines.slice(0, 4).forEach((L, li) => drawText(ctx, L, x + cw / 2, descY + li * 19 * fontScale(), { color: PAL.text, align: "center", maxWidth: cw - 58 }));
+    drawText(ctx, rare.name, dCx, dy, { color: rare.color, align: "center", scale: 0.7, maxWidth: qD.w });
+    dy += Math.ceil(15 * fontScale());
+    // nome e descrição adaptados ao cartão: quebram/encolhem na área permitida
+    const nm = fitTextBlock(mm.name, qD.w, Math.ceil(22 * fontScale()) * 2, { font: "big", scale: 0.62, minScale: 0.45, lineStep: 22 });
+    nm.lines.forEach((L, li) => drawText(ctx, L, dCx, dy + li * nm.step, { font: "big", scale: nm.scale, color: "#efe9ff", align: "center", maxWidth: qD.w }));
+    dy += nm.lines.length * nm.step + 4;
+    const desc = fitTextBlock(mm.desc, qD.w, qD.y + qD.h - 26 - dy, { scale: 0.6, minScale: 0.45, lineStep: 20 });
+    desc.lines.forEach((L, li) => drawText(ctx, L, dCx, dy + li * desc.step, { color: PAL.text, align: "center", scale: desc.scale, maxWidth: qD.w }));
+    // tecla quente no pé da área permitida
+    const kw = Math.min(32, qD.w * 0.36), kh = 16;
     ctx.fillStyle = hot ? "#8d9c58" : "#d6bf95";
-    ctx.fillRect(x + cw/2 - 18, y + ch - 28 - lift, 36, 20);
+    ctx.fillRect(dCx - kw / 2, qD.y + qD.h - kh - 2, kw, kh);
     ctx.strokeStyle = rare.color; ctx.lineWidth = 1; ctx.globalAlpha = 0.6;
-    ctx.strokeRect(x + cw/2 - 18 + 0.5, y + ch - 28 - lift + 0.5, 35, 19);
+    ctx.strokeRect(dCx - kw / 2 + 0.5, qD.y + qD.h - kh - 1.5, kw - 1, kh - 1);
     ctx.globalAlpha = 1;
-    drawText(ctx, String(i + 1), x + cw / 2, y + ch - 26 - lift, { color: hot ? "#000" : "#efe9ff", align: "center" });
+    drawText(ctx, String(i + 1), dCx, qD.y + qD.h - kh, { color: hot ? "#000" : "#efe9ff", align: "center", maxWidth: kw });
 
     if (hot && mouse.justDown && !paused) { pickDraft(i); return; }
   }
@@ -2602,7 +2631,7 @@ function drawPause() {
   // layout 2 colunas: esquerda botões, direita mapa+stats. No mobile as mesmas
   // larguras do PC deixam ~118px livres à direita — é ali que vive o HUD de
   // toque (botão ⏸/▶), sem cobrir texto nenhum.
-  const leftW = mobile ? 360 : 360, rightW = mobile ? 340 : 340;
+  const leftW = mobile ? 355 : 355, rightW = mobile ? 355 : 355;
   const totalW = leftW + rightW + 24;
   const startX = VIEW_W/2 - totalW/2;
   const py = mobile ? 20 : 48;
@@ -2833,19 +2862,24 @@ function renderProphecyScreen() {
   const pages = Math.ceil(PROPHECIES.length / 4);
   prophecyPage = clamp(prophecyPage, 0, pages - 1);
   PROPHECIES.slice(prophecyPage * 4, prophecyPage * 4 + 4).forEach((p, i) => {
-    const x = 20 + (i % 2) * 466, y = 108 + Math.floor(i / 2) * 170;
-    const w = 454, h = 158, ok = !!(G.save.prophecies || {})[p.id];
+    // Cartões nas proporções ORIGINAIS do sprite panel (360×192 uniformes);
+    // nome e descrição centralizados na área permitida da pintura (2026-10-16).
+    const x = 20 + (i % 2) * 380, y = 108 + Math.floor(i / 2) * 198;
+    const w = 360, h = 192, ok = !!(G.save.prophecies || {})[p.id];
     panel(ctx, x, y, w, h, { border: ok ? "#7fd6a0" : "#3a3054" });
-    drawKitIcon(ctx, ok ? 0 : 1, x + 12, y + 12, 13);
-    const names = wrapText(p.name, w - 56, { scale: 0.95 });
-    const step = Math.ceil(18 * FS);
-    names.forEach((line, j) => drawText(ctx, line, x + 34, y + 10 + j * step, { scale: 0.95, color: ok ? "#7fd6a0" : "#6ee7ff" }));
-    const descY = y + 16 + names.length * step;
-    wrapText(p.desc, w - 28, { scale: 0.9 }).forEach((line, j) =>
-      drawText(ctx, line, x + 14, descY + j * step, { scale: 0.9, color: PAL.text }));
-    drawText(ctx, "+" + p.reward + " ESSÊNCIA", x + 14, y + h - 27, { color: "#c77dff", scale: 0.85 });
+    const qP = paperQuiet("panel", x, y, w, h);
+    const pCx = qP.x + qP.w / 2;
+    drawKitIcon(ctx, ok ? 0 : 1, pCx - 6, qP.y, 13);
+    const step = Math.min(11, qP.h / 7);
+    const nm = fitTextBlock(p.name, qP.w, step * 2, { scale: 0.72, minScale: 0.5, lineStep: 12 });
+    let py2 = qP.y + 15;
+    nm.lines.forEach((line, j) => drawText(ctx, line, pCx, py2 + j * nm.step, { scale: nm.scale, color: ok ? "#7fd6a0" : "#6ee7ff", align: "center", maxWidth: qP.w }));
+    py2 += nm.lines.length * nm.step + 2;
+    const ds = fitTextBlock(p.desc, qP.w, qP.y + qP.h - 14 - py2, { scale: 0.64, minScale: 0.45, lineStep: 11 });
+    ds.lines.forEach((line, j) => drawText(ctx, line, pCx, py2 + j * ds.step, { scale: ds.scale, color: PAL.text, align: "center", maxWidth: qP.w }));
+    drawText(ctx, "+" + p.reward + " ESSÊNCIA", pCx, qP.y + qP.h - 12, { color: "#c77dff", scale: 0.62, align: "center", maxWidth: qP.w });
   });
-  prophecyPage = drawPageControls("prophecy", prophecyPage, pages, 454);
+  prophecyPage = drawPageControls("prophecy", prophecyPage, pages, 360);
 
   const foot = (isTouchUI() ? "TOQUE EM VOLTAR" : "ESC: VOLTAR") + " • " + done + "/" + PROPHECIES.length + " CUMPRIDAS • A ESSÊNCIA LEMBRA";
   drawText(ctx, foot, VIEW_W / 2, VIEW_H - 26, { color: PAL.textDim, align: "center", maxWidth: VIEW_W - 60 });
@@ -3032,21 +3066,27 @@ function renderMemoryScreen() {
   memoryRects = [];
   ids.slice(memoryPage * 4, memoryPage * 4 + 4).forEach((id, i) => {
     const def = defs[id], seen = G.save.cutscenes && G.save.cutscenes[id];
-    const x = 48 + (i % 2) * 438, y = 124 + Math.floor(i / 2) * 158;
-    const w = 426, h = 150, step = Math.ceil(16 * FS);
+    // Cartões nas proporções ORIGINAIS do sprite panel (360×192 uniformes);
+    // título e subtítulo centralizados na área permitida (2026-10-16).
+    const x = 20 + (i % 2) * 380, y = 124 + Math.floor(i / 2) * 198;
+    const w = 360, h = 192, step = Math.ceil(16 * FS);
     const hot = memoryHover === i;
     panel(ctx, x, y, w, h, { border: hot ? "#ffd479" : "#4a3a6e" });
-    drawKitIcon(ctx, seen ? 0 : 1, x + 12, y + 10, 13);
-    const titles = wrapText(def.title, w - 52, { scale: 0.9 });
-    titles.forEach((line, j) => drawText(ctx, line, x + 32, y + 8 + j * step, { scale: 0.9, color: seen ? "#ffd479" : PAL.textDim }));
-    const descY = y + 16 + titles.length * step;
-    wrapText(def.subtitle, w - 28, { scale: 0.85 }).forEach((line, j) =>
-      drawText(ctx, line, x + 14, descY + j * step, { scale: 0.85, color: PAL.textDim }));
-    drawText(ctx, def.panels.length + " PAINÉIS • " + (seen ? "REVER" : "NÃO DESCOBERTA"), x + 14, y + h - 26,
-      { scale: 0.8, color: seen ? "#ffd479" : PAL.textDim });
+    const qM = paperQuiet("panel", x, y, w, h);
+    const mCx = qM.x + qM.w / 2;
+    drawKitIcon(ctx, seen ? 0 : 1, mCx - 6, qM.y, 13);
+    const mStep = Math.min(11, qM.h / 7);
+    const tl = fitTextBlock(def.title, qM.w, mStep * 2, { scale: 0.72, minScale: 0.5, lineStep: 12 });
+    let my2 = qM.y + 15;
+    tl.lines.forEach((line, j) => drawText(ctx, line, mCx, my2 + j * tl.step, { scale: tl.scale, color: seen ? "#ffd479" : PAL.textDim, align: "center", maxWidth: qM.w }));
+    my2 += tl.lines.length * tl.step + 2;
+    const ds = fitTextBlock(def.subtitle, qM.w, qM.y + qM.h - 14 - my2, { scale: 0.64, minScale: 0.45, lineStep: 11 });
+    ds.lines.forEach((line, j) => drawText(ctx, line, mCx, my2 + j * ds.step, { scale: ds.scale, color: PAL.textDim, align: "center", maxWidth: qM.w }));
+    drawText(ctx, def.panels.length + " PAINÉIS • " + (seen ? "REVER" : "NÃO DESCOBERTA"), mCx, qM.y + qM.h - 12,
+      { scale: 0.62, color: seen ? "#ffd479" : PAL.textDim, align: "center", maxWidth: qM.w });
     memoryRects.push({ x, y, w, h, id });
   });
-  memoryPage = drawPageControls("memory", memoryPage, pages, 446);
+  memoryPage = drawPageControls("memory", memoryPage, pages, 360);
 
   if (button(ctx, { x: VIEW_W/2-120, y: 446, w: 240, h: 44, label:"VOLTAR ÁRVORE", id:"memBack", accent:"#8f6fd6" })) {
     backFromMemories();

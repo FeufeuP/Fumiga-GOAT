@@ -3,13 +3,13 @@
 // Painéis refinados, botões com profundidade, caixas de texto in-game
 // ============================================================================
 import { PAL, VIEW_W, VIEW_H } from "./config.js";
-import { drawText, textWidth, textHeight, FONT, layoutBox, clearPaperSurfaces, fontScale, wrapText } from "./font.js";
+import { drawText, textWidth, textHeight, FONT, layoutBox, clearPaperSurfaces, fontScale, fitTextBlock } from "./font.js";
 import { mouse, touchMode } from "./input.js";
 import { SFX } from "./audio.js";
 import { G } from "./state.js";
 import { drawLoreTextbox, hudBiome, drawWoodBarFrame } from "./lore_hud.js";
 
-import { drawPaper, drawPaperBar } from "./paper_hud.js";
+import { drawPaper, drawPaperBar, paperQuiet } from "./paper_hud.js";
 
 let buttons = [];
 // Animação de interface: hover/pressão de cada botão são NÚMEROS que correm
@@ -105,20 +105,26 @@ export function panel(ctx, x, y, w, h, opt = {}) {
   const r = opt.r !== undefined ? opt.r : 6;
   const fill = opt.fill || PAL.panel;
   const border = opt.border || PAL.border;
+  // fill totalmente transparente = o fundo já foi pintado atrás (painéis do
+  // HUD sobre a pintura de papel): só a moldura entra, sem corpo/sombra —
+  // o gradiente de fill transparente virava um retângulo preto por cima.
+  const borderOnly = opt.fill === "rgba(0,0,0,0)";
 
-  // sombra projetada suave
-  ctx.fillStyle = "rgba(0,0,0,0.45)";
-  chamfer(ctx, x + 3, y + 4, w, h, r);
-  ctx.fill();
+  if (!borderOnly) {
+    // sombra projetada suave
+    ctx.fillStyle = "rgba(0,0,0,0.45)";
+    chamfer(ctx, x + 3, y + 4, w, h, r);
+    ctx.fill();
 
-  // corpo principal com gradiente sutil
-  const grad = ctx.createLinearGradient(x, y, x, y + h);
-  grad.addColorStop(0, fill);
-  grad.addColorStop(0.15, lighten(fill, 0.08));
-  grad.addColorStop(1, darken(fill, 0.12));
-  ctx.fillStyle = grad;
-  chamfer(ctx, x, y, w, h, r);
-  ctx.fill();
+    // corpo principal com gradiente sutil
+    const grad = ctx.createLinearGradient(x, y, x, y + h);
+    grad.addColorStop(0, fill);
+    grad.addColorStop(0.15, lighten(fill, 0.08));
+    grad.addColorStop(1, darken(fill, 0.12));
+    ctx.fillStyle = grad;
+    chamfer(ctx, x, y, w, h, r);
+    ctx.fill();
+  }
 
   // borda externa com brilho
   ctx.strokeStyle = border;
@@ -453,29 +459,37 @@ export function dialogBox(ctx, x, y, w, h, opt = {}) {
 
 /** Tooltip flutuante */
 export function tooltip(ctx, x, y, lines, opt = {}) {
-  // The image border needs real content insets; wrap against those insets,
-  // including large-font metrics, instead of laying text over left foliage.
-  const w=Math.min(VIEW_W-20,Math.max(96,opt.w||240));
-  const padX=27,padY=16,lineH=Math.ceil(20*fontScale());
-  const maxW=w-padX*2;
-  const body=lines.flatMap(line=>wrapText(line,maxW));
-  const title=opt.title?wrapText(opt.title,maxW):[];
-  const h=padY*2+(body.length+title.length)*lineH+(title.length?8:0);
-  let tx=Math.max(10,Math.min(x,VIEW_W-w-10));
-  let ty=y+h>VIEW_H-10?y-h-10:y;
-  ty=Math.max(10,Math.min(ty,VIEW_H-h-10));
-  dialogBox(ctx,tx,ty,w,h,{paperKind:'tooltip'});
-  let cy=ty+padY;
-  for(const line of title) {
-    drawText(ctx,line,tx+padX,cy,{color:'#6b471e',maxWidth:maxW});cy+=lineH;
+  // Regra do usuário (2026-10-16): o texto se adapta ao HUD, nunca o contrário.
+  // Geometria FIXA — largura autoral e altura travada na proporção NATIVA da
+  // pintura tooltip.png (960×475) — a moldura nunca deforma nem cresce por
+  // causa do texto; o conteúdo quebra/encolhe/abrevia para caber por dentro,
+  // CENTRALIZADO na área permitida (papel liso) da pintura.
+  const w = Math.min(VIEW_W - 20, Math.max(96, opt.w || 280));
+  const h = opt.h || Math.round(w * 475 / 960);
+  const padX = 27, padY = 16, innerW = w - padX * 2;
+  let tx = Math.max(10, Math.min(x, VIEW_W - w - 10));
+  let ty = y + h > VIEW_H - 10 ? y - h - 10 : y;
+  ty = Math.max(10, Math.min(ty, VIEW_H - h - 10));
+  dialogBox(ctx, tx, ty, w, h, { paperKind: 'tooltip' });
+  const qT = paperQuiet('tooltip', tx, ty, w, h);
+  const tCx = qT.x + qT.w / 2;
+  let cy = qT.y;
+  const titleBudget = opt.title ? Math.min(Math.round(qT.h * 0.36), Math.ceil(22 * fontScale()) * 2) : 0;
+  if (opt.title) {
+    const t = fitTextBlock(opt.title, qT.w, titleBudget, { scale: 1, minScale: 0.55, lineStep: 22 });
+    for (const line of t.lines) {
+      drawText(ctx, line, tCx, cy, { color: '#6b471e', scale: t.scale, align: 'center', maxWidth: qT.w });
+      cy += t.step;
+    }
+    ctx.fillStyle = '#bea779'; ctx.fillRect(qT.x, qT.y + titleBudget + 1, qT.w, 1);
+    cy = qT.y + titleBudget + 8;
   }
-  if(title.length) {
-    ctx.fillStyle='#bea779';ctx.fillRect(tx+padX,cy+1,maxW,1);cy+=8;
+  const b = fitTextBlock(lines, qT.w, Math.max(8, qT.y + qT.h - cy), { scale: 1, minScale: 0.5, lineStep: 20 });
+  for (const line of b.lines) {
+    drawText(ctx, line, tCx, cy, { color: opt.color || PAL.text, scale: b.scale, align: 'center', maxWidth: qT.w });
+    cy += b.step;
   }
-  for(const line of body) {
-    drawText(ctx,line,tx+padX,cy,{color:opt.color||PAL.text,maxWidth:maxW});cy+=lineH;
-  }
-  return {x:tx,y:ty,w,h};
+  return { x: tx, y: ty, w, h };
 }
 
 /** Texto com ícone à esquerda */

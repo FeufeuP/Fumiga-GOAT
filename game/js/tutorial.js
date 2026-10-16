@@ -3,7 +3,8 @@
 // ============================================================================
 import { G, persistSave } from "./state.js";
 import { PAL } from "./config.js";
-import { drawText, wrapText, fontScale } from "./font.js";
+import { drawText, fitTextBlock, fontScale } from "./font.js";
+import { paperQuiet } from "./paper_hud.js";
 import { clamp, TAU } from "./utils.js";
 import { panel, pointInRect } from "./ui.js";
 import { uiButtons } from "./ui.js";
@@ -128,7 +129,11 @@ export function updateTutorial(dt, run) {
   }
 }
 
-const CARD_W = 420;
+const CARD_W = 370;
+// Geometria FIXA (2026-10-16, regra do usuário): o texto se adapta ao cartão.
+// 370×197 = proporção ORIGINAL da pintura panel (960×512 = 1,875): o sprite
+// nunca deforma; cabe entre o painel da colônia (até 370) e o minimapa (756).
+const CARD_H = 197;
 const CARD_Y = 72;
 // Com FONTE GRANDE (acessibilidade) a tinta do título e das linhas cresce 30%:
 // as alturas saem de medidas reais, senão o título invade a 1ª linha e as
@@ -143,9 +148,7 @@ function cardSteps() {
   };
 }
 function cardMetrics(st) {
-  const { titleAdv, descStep, bottom } = cardSteps();
-  const lines = wrapText(stepDesc(st), CARD_W - 40, {}).length;
-  return { w: CARD_W, h: 12 + titleAdv + 8 + lines * descStep + bottom };
+  return { w: CARD_W, h: CARD_H };
 }
 
 export function tutorialCardRect(VIEW_W) {
@@ -153,9 +156,9 @@ export function tutorialCardRect(VIEW_W) {
   const st = TUT.steps[TUT.idx];
   if (!st) return null;
   const m = cardMetrics(st);
-  // Centralizado, o cartão caía sobre o painel da colônia (10..330): com 336px
-  // ele começa depois do painel e ainda termina antes do minimapa (770).
-  const x = Math.max((VIEW_W - m.w) / 2, 336);
+  // Centralizado, o cartão caía sobre o painel da colônia (10..370): com este
+  // recuo ele começa depois do painel e termina antes do minimapa (756..950).
+  const x = Math.max((VIEW_W - m.w) / 2, 380);
   return { x, y: CARD_Y, w: m.w, h: m.h };
 }
 
@@ -163,7 +166,6 @@ export function drawTutorial(ctx, VIEW_W) {
   const st = TUT.steps[TUT.idx];
   if (!TUT.active || !st) return;
   const { x, w, h, y: yRest } = tutorialCardRect(VIEW_W);
-  const descLines = wrapText(stepDesc(st), w - 40, {});
   const yIn = clamp((TUT.t) / 0.5, 0, 1);
   const yStart = -h - 12;
   const y = yStart + (yRest - yStart) * (1 - Math.pow(1 - yIn, 3));
@@ -200,15 +202,23 @@ export function drawTutorial(ctx, VIEW_W) {
   }
 
   const CS = cardSteps();
-  const descY0 = y + 12 + CS.titleAdv + 8;
-  drawText(ctx, st.title, x + 20, y + 12, { font: "big", scale: 1, color: TUT._done ? "#7fd6a0" : "#ffd479", maxWidth: w - 40 });
-  descLines.forEach((L, li) => drawText(ctx, L, x + 20, descY0 + li * CS.descStep, { color: PAL.text, maxWidth: w - 40 }));
-  drawText(ctx, "PASSO " + (TUT.idx + 1) + "/" + TUT.steps.length, x + 20, y + h - Math.ceil(16 * CS.FS) - 2,
-    { color: PAL.textDim, maxWidth: w - 140 });
+  // Textos centralizados na ÁREA PERMITIDA da pintura (papel liso, medido):
+  // nada é desenhado sobre moldura/ornamentos (2026-10-16).
+  const qT = paperQuiet("panel", x, y, w, h);
+  const tCx = qT.x + qT.w / 2;
+  const titleBlock = fitTextBlock(st.title, qT.w, Math.min(38, qT.h * 0.4), { font: "big", scale: 1, minScale: 0.5, lineStep: 18 });
+  const descY0 = qT.y + titleBlock.lines.length * titleBlock.step + 4;
+  const descBlock = fitTextBlock(stepDesc(st), qT.w, qT.y + qT.h - 18 - descY0, { scale: 0.85, minScale: 0.45, lineStep: 15 });
+  titleBlock.lines.forEach((L, li) => drawText(ctx, L, tCx, qT.y + li * titleBlock.step,
+    { font: "big", scale: titleBlock.scale, color: TUT._done ? "#7fd6a0" : "#ffd479", align: "center", maxWidth: qT.w }));
+  descBlock.lines.forEach((L, li) => drawText(ctx, L, tCx, descY0 + li * descBlock.step,
+    { color: PAL.text, scale: descBlock.scale, align: "center", maxWidth: qT.w }));
+  drawText(ctx, "PASSO " + (TUT.idx + 1) + "/" + TUT.steps.length, qT.x, qT.y + qT.h - 13,
+    { color: PAL.textDim, scale: 0.7, align: "left", maxWidth: qT.w - Math.ceil(110 * fontScale()) });
 
-  // botão pular refinado
+  // botão pular refinado — dentro da área permitida do sprite
   const bw = Math.ceil(96 * CS.FS), bh = Math.max(22, Math.ceil(18 * CS.FS));
-  const bx = x + w - bw - 12, by = y + h - bh - 10;
+  const bx = qT.x + qT.w - bw - 2, by = qT.y + qT.h - bh - 2;
   const hot = pointInRect(mouse.x, mouse.y, bx, by, bw, bh);
   ctx.fillStyle = hot ? "#3a3054" : "#2c2444";
   ctx.fillRect(bx, by, bw, bh);

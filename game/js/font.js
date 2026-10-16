@@ -353,21 +353,36 @@ function lineCanvas(text, fname, scale, color) {
 }
 
 /**
- * Faz um texto caber em uma caixa maxW x maxH: quebra em quantas linhas forem
- * necessárias e, se ainda sobrar, reduz um pouco o corpo (auto-redução suave).
- * O texto NUNCA é cortado nem reescrito — é o que as telas densas (profecias,
- * memórias, tutorial) usam para não invadir o vizinho com FONTE GRANDE ligada.
- * Devolve { lines, scale, step } — desenhe as linhas com `step` de passo.
+ * Faz um texto (string ou lista de parágrafos) caber em uma caixa maxW x maxH:
+ * quebra em quantas linhas forem necessárias, reduz um pouco o corpo se ainda
+ * não couber e, em último recurso, CORTA o excedente com reticências.
+ * Regra do usuário (2026-10-16): o texto se adapta ao HUD — a caixa nunca muda
+ * de geometria para acomodar texto. É o que as telas densas (profecias,
+ * memórias, tutorial, tooltips) usam para o texto nunca invadir o vizinho,
+ * nem com FONTE GRANDE ligada. Devolve { lines, scale, step } — desenhe as
+ * linhas com `step` de passo; o resultado SEMPRE cabe em maxH.
  */
 export function fitTextBlock(text, maxW, maxH, { font = "small", scale = 1, minScale = 0.62, lineStep = 15 } = {}) {
   const FS = fontScale();
+  const paras = Array.isArray(text) ? text.map(String) : [String(text)];
+  const wrapAt = (s) => paras.flatMap((p) => wrapText(p, maxW, { font, scale: s }));
   for (let s = scale; s >= minScale - 1e-6; s -= 0.05) {
-    const lines = wrapText(text, maxW, { font, scale: s });
+    const lines = wrapAt(s);
     const step = Math.ceil(lineStep * s * FS);
     if (lines.length * step <= maxH) return { lines, scale: s, step };
   }
+  // Último recurso: o texto se adapta — cabe no que a caixa oferece.
   const s = minScale;
-  return { lines: wrapText(text, maxW, { font, scale: s }), scale: s, step: Math.ceil(lineStep * s * FS) };
+  const step = Math.max(1, Math.ceil(lineStep * s * FS));
+  const maxLines = Math.max(1, Math.floor(maxH / step));
+  const all = wrapAt(s);
+  const lines = all.slice(0, maxLines);
+  if (lines.length && all.length > maxLines) {
+    let last = lines[lines.length - 1];
+    while (last.length && lineWidth(last + "...", { font, scale: s }) > maxW) last = last.slice(0, -1);
+    lines[lines.length - 1] = last + "...";
+  }
+  return { lines, scale: s, step };
 }
 
 /** Quebra texto em linhas cabendo em maxW. */

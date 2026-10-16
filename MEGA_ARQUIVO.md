@@ -37,6 +37,56 @@ repetições, datas, branches, checklists e notas históricas foram preservados.
 > Divergências permanecem visíveis, sem apagar conteúdo. O que efetivamente
 > funciona deve ser confirmado por testes e inspeção no preview.
 
+## Registro — Regra 20 (diagrama da mudança) + slice-box sem duplicações (2026-10-16)
+
+**Pedido do usuário:** corrigir os quadros dos HUDs que estavam "duplicados e bugados" ("o HUD deve ser completo, sem duplicações") e criar diagrama do que foi feito; em seguida, criar regra permanente de **sempre gerar um diagrama da mudança** para avaliação e feedback.
+
+**Correção do slice-box (2 bugs):** (1) `game/js/paper_hud.js` — os corredores do 9-slice **repetiam** o pedaço de moldura 5 a 31× por borda (folhas/nós multiplicados = "quadros duplicados"; centro esmagado em 7–8px); agora **esticam em 1 direção** (regra BORDA do `slice-box/slicebox.jpeg`), com cantos e nós centrais em escala uniforme — nenhum ornamento se repete. (2) `game/js/game.js` — 7 pontos desenhavam a pintura **2×** na mesma caixa (`drawBiomeTexture` + `panel`/`iconButton` empilhados): painel da colônia, painel expandido, tooltip da loja, barra do chefe, toggle da loja, cards da loja e botão do formigueiro — agora uma moldura por caixa. Complemento: `game/js/ui.js` trata `fill` transparente como "só moldura" (o fallback vetorial pintava retângulo preto). Pendência documental de repetição em `docs/arte/HUD_PUBLICACAO.md` atualizada.
+
+**Regra 20 criada** em `REGRAS_DE_TRABALHO.md` (diagrama da mudança em toda entrega; fluxo 5b) e refletida em `AGENTS.md`; bloco espelhado e SHA-256 do rodapé re-sincronizados (teste `docs.mjs`).
+
+**Verificações:** comparação visual ANTES/DEPOIS renderizada com os algoritmos reais; `npm test` **37/37** (inclui `paper-hud-browser`, `uitest`, `layout`, `pwa`); `docs.mjs` íntegro; `app/assets.json` regenerado (`tools/make_assets_list.mjs`). `check_art_handoff.mjs` segue com a falha **pré-existente** do lote de botões (documentada em registro anterior). Verificação em navegador headless, não em dispositivo físico.
+
+**Diagramas da entrega (versionados no Git):** `slice-box/diagrama-exemplo-hud.png` (galeria dos slice-box aplicados) e `slice-box/diagrama-mudanca-slice-box.png` (ANTES → DEPOIS desta correção). Sem commit/push/PR nesta solicitação.
+
+## Registro — Regra 21: o texto se adapta ao HUD (2026-10-16)
+
+**Pedido do usuário:** "adapte o texto ao HUD, em vez de adaptar o HUD ao texto. Não deforme ou modifique os HUDs, adapte todos os textos aos seus respectivos HUDs."
+
+**Política implementada:** toda caixa pintada (painéis, placas, tooltips, cartões, barras) tem **geometria fixa** — definida pelo layout/arte, nunca por `textWidth`, contagem de linhas ou `fontScale`. Todo texto se adapta à área reservada do seu HUD na ordem **quebrar → encolher o corpo → abreviar com "..."** (`fitTextBlock` de `game/js/font.js`, agora com garantia de encaixe — aceita lista de parágrafos e trunca com reticências no último recurso). FONTE GRANDE continua crescendo a tinta, porém dentro da caixa.
+
+**Onde a caixa media o texto (corrigido):** tooltip da loja (altura `58+16×linhas` → fixa **268×118**) em `game.js`; `ui.js tooltip()` (altura por linhas → fixa, proporção **nativa 960×475** da pintura `tooltip.png`); tábua de onda `drawBanner` (subtítulo escapava da tábua 600×84 → contido); cartão do tutorial (`tutorial.js`, altura por passo → **420×148**); tooltip da câmara do ninho (`nest.js`, altura por linhas → **340×132**); cartões de mutação/draft, profecias (**454×158**) e memórias (**426×150**) com nome/descrição quebrando e encolhendo dentro da área reservada; barra do chefe (**556×44**): "FASE 2: NÉVOA DESPERTA" nascia fora da caixa em y+38 — agora divide a linha do título, que encolhe para caber.
+
+**Regra 21 criada** em `REGRAS_DE_TRABALHO.md` (fluxo 3 atualizado) e refletida em `AGENTS.md`; bloco espelhado e SHA-256 do rodapé re-sincronizados (teste `docs.mjs`).
+
+**Verificações:** `npm test` **37/37** (inclui `layout` — auditoria texto × caixas — `uitest` e `paper-hud-browser`); `npm run test:quick` 30/30; `docs.mjs` íntegro; `app/assets.json` regenerado. Verificação em navegador headless, não em dispositivo físico.
+
+**Diagrama da mudança (Regra 20):** `slice-box/diagrama-mudanca-texto-ao-hud.png` — ANTES → DEPOIS renderizado com as pinturas reais (tooltip da loja, tábua de onda, cartão do tutorial, barra do chefe) + política de encaixe. Sem commit/push/PR nesta solicitação.
+
+## Registro — Regra 22: HUDs nunca deformados + publicação no GitHub (2026-10-16)
+
+**Pedido do usuário:** após aprovar a correção ("Ficou perfeito"), tornar o resultado uma **nova regra** para que os próximos HUDs não fiquem deformados e, em seguida, **salvar no GitHub**.
+
+**Regra 22 criada** em `REGRAS_DE_TRABALHO.md`: *HUDs no formato original do sprite, nunca deformados* — render sempre com `paperFit` (contain + centralizado, proporção exata da pintura); proibido fatiar/esticar/comprimir/corredores elásticos; todo HUD novo exige (1) registro de produção + manifesto, (2) **área permitida medida** em `PAPER_QUIET`, (3) texto via `paperQuiet()` (Regra 21) e (4) entrada na guarda automática do `game/test/paper-hud-browser.mjs` (medição por alfa em alvos de formatos diferentes). Refletida em `AGENTS.md` e no passo 3 do fluxo (Regras 21 e 22). Bloco espelhado e SHA-256 do rodapé re-sincronizados (teste `docs.mjs`).
+
+**Publicação:** commit + push na branch `arena/e6d3fbd6-fumiga-goat`, CREATE PR + MERGE PR (Regra 11) contra `main`, incluindo a correção anterior (sprites no formato original + texto centralizado) e os diagramas `slice-box/diagrama-mudanca-hud-original.png`, `slice-box/diagrama-exemplo-hud.png`, `slice-box/diagrama-mudanca-slice-box.png`, `slice-box/diagrama-mudanca-texto-ao-hud.png` e o gerador `tools/make_hud_diagrams.py`. Verificações antes da publicação: `npm run test:quick` **30/30**, `npm test -- -j 2` **37/37**, `docs.mjs` íntegro, `git diff --check` limpo; falhas intermitentes pré-existentes de `-j 4` documentadas no registro anterior.
+
+## Registro — Sprites dos HUDs no formato original + texto centralizado (2026-10-16)
+
+**Pedido do usuário:** "arrume os sprites dos HUDs, eles não estão no formato original, ainda estão modificados, deixe todos em seus estados originais do sprite e ajuste o texto dentro do sprite, o texto deve ficar centralizado dentro da área permitida pelo sprite." Esclarecido por opção do usuário: o problema é **distorção no render** (não o recorte de matte nem os estados de botão).
+
+**Correção do motor (`game/js/paper_hud.js`):** cada pintura agora é desenhada **INTEIRA, em escala uniforme (contain + centralizada)** — a proporção original do sprite é preservada; nada de fatiar/esticar. Antes, as fatias eram travadas em `EDGE_SCALE` (6,5%–14%) e os corredores esticavam até preencher o retângulo pedido: os ornamentos apareciam encolhidos e as bordas deformadas (visível no painel fino, na tábua esticada e no cartão). Novos helpers: `paperFit` (encaixe uniforme) e **`paperQuiet(kind,x,y,w,h)`** — a **área permitida** de cada pintura (maior retângulo de papel liso livre de moldura/vinhas, medido pixel a pixel) entregue em coordenadas de destino para o texto se **centralizar** dentro dela. `PAPER_QUIET` registra as sete medições (`panel`, `health`, `banner`, `minimap`, `card`, `pause`, `tooltip`).
+
+**HUDs atualizados para caixas na proporção da pintura + texto centralizado** (`game/js/game.js`, `tutorial.js`, `nest.js`, `ui.js`): painel da colônia e expandido **360×192** (960×512); tábua de onda (invasão) **380×76** e barra do chefe **400×80** (960×192, gaster 150×21); banner de evento **560×112**; tooltip da loja **280×149**; cartões do draft **260×387** (848×1264); profecias e memórias **360×192**; cartão do tutorial **370×197**; tooltip da câmara do ninho **340×181**; minimapa **208×155** (960×717); pausa 2 painéis **355×440** (928×1152); `tooltip()` geral **280×138** (960×475). Ícones de mutação deixaram de esticar o painel em 20×20 e passaram a usar a placa mini quadrada (144×144). Textos de todas essas caixas: quebra → encolhe → abrevia (`fitTextBlock`) **dentro da área permitida**, sempre centralizados; FONTE GRANDE cresce dentro da caixa.
+
+**Regra 21 ampliada** em `REGRAS_DE_TRABALHO.md` (sprite nunca deforma; texto centralizado na área permitida) e refletida em `AGENTS.md`; bloco espelhado e SHA-256 do rodapé re-sincronizados (teste `docs.mjs`).
+
+**Novo teste de contrato** (`game/test/paper-hud-browser.mjs`): nenhuma pintura é deformada — a **caixa pintada medida por alfa mantém a mesma proporção em alvos de formatos diferentes** (13 combinações), além do encaixe uniforme/centralizado do cartão, da área permitida dentro da caixa e dos invariantes antigos (5 estados distintos, fundo transparente, interior opaco, tinta local).
+
+**Verificações:** `npm run test:quick` **30/30**; `npm test -- -j 2` **37/37 verde (118,7 s)**; inspeção PC real com capturas abertas (RUN mapas 1 e 2: HUDs com sprites inteiros, 59,5–60 FPS, sem JS/404/glifos). Em `-j 4` completo, falhas intermitentes **pré-existentes e documentadas** (`regressions` em `running !== lost`, linha 802; `regressions-browser` em `MODE` vs `TITLE`, linha 5580) — reproduzidas também na base `f499d60` (worktree limpo: `endless` falhou) e sem tocar a lógica de loading/fim; `app/assets.json` regenerado. Verificação em navegador headless, não em dispositivo físico.
+
+**Diagrama da mudança (Regra 20):** `slice-box/diagrama-mudanca-hud-original.png`, gerado por `tools/make_hud_diagrams.py` (porte fiel do motor: ANTES fatiado/deformado × DEPOIS inteiro/original, com o texto centralizado na área permitida). Sem commit/push/PR nesta solicitação.
+
 ## Regra de chroma key para toda nova imagem — 2026-10-10
 
 Pedido explícito do usuário: toda imagem gerada deve ter fundo verde ou azul para facilitar o Chroma Key; se a peça tiver traços verdes, usar azul, e vice-versa para traços azuis. Vale para qualquer categoria (sprite, HUD, mapa-base, cenário, ilustração) e para edições/novas gerações, sem recolorir arquivos históricos. Fonte gerada: fundo técnico uniforme e opaco; derivado de produção: recortar e tratar contaminação de bordas, gerar alfa real ou recompor o fundo apropriado ao consumidor antes de integrar. Se ambos os tons aparecem na peça, escolher o de maior separação e revisar máscara manualmente. Mapas/ilustrações de tela cheia são gerados como placa com margem de chroma e recompostos depois; a base limpa continua sem decorativos.
@@ -3214,6 +3264,72 @@ Ao final de cada tarefa, apresentar um **checklist de conferência** com este fo
 
 ---
 
+## Regra 20 — Sempre gerar o diagrama da mudança 📊
+
+> **Toda entrega (feature, correção, UI, arte, áudio, balanceamento, documentação) inclui um diagrama em imagem do que foi feito, aberto ao usuário para avaliação e feedback.** (decisão do usuário, 2026-10-16)
+
+- **Mudança visual** (UI, HUD, arte, layout, efeitos): o diagrama mostra **ANTES → DEPOIS** lado a
+  lado, renderizado a partir dos **assets e algoritmos reais** do jogo — o ANTES reproduz o
+  comportamento anterior; o DEPOIS, o resultado vigente. Nunca ilustração genérica.
+- **Mudança não visual** (regras, testes, docs, áudio, balanceamento): o diagrama resume o escopo
+  em painéis rotulados — o que mudou, onde fica e qual o efeito.
+- **Formato:** PNG legível, tipografia KiwiSoda do projeto, rótulos curtos em português, título
+  com data e arquivos envolvidos. Salvar em pasta coerente com o assunto (ex.: `slice-box/`,
+  `docs/arte/`) e versionar junto com o código (não entra no backup de imagens da Regra 13).
+- **Avaliação:** abrir o diagrama para o usuário no fim da entrega (como a arte da Regra 10).
+  O feedback do usuário dirige o ajuste na mesma rodada ou na seguinte; mudanças visuais não são
+  declaradas prontas sem essa avaliação.
+
+---
+
+## Regra 21 — O texto se adapta ao HUD, nunca o contrário 📝
+
+> **Nunca deformar ou redimensionar um HUD para acomodar texto: todo sprite pintado (painéis, placas, tooltips, cartões, barras, botões) é desenhado no seu FORMATO ORIGINAL — inteiro, em escala uniforme, na proporção da pintura — e TODOS os textos se adaptam aos seus respectivos HUDs, ficando CENTRALIZADOS na área permitida (papel liso) do sprite, quebrando linhas, reduzindo o corpo e, por último, abreviando com reticências.** (decisão do usuário, 2026-10-16)
+
+- **Sprite nunca deforma:** nada de fatiar/esticar/comprimir a pintura — ela entra inteira
+  (contain + centralizada) na proporção original; o que sobra do retângulo fica transparente
+  e os chamadores usam caixas na proporção da pintura. Ornamentos e molduras ficam no
+  tamanho exato em que foram pintados.
+- **Texto centralizado na área permitida:** cada pintura tem sua área de papel liso medida
+  pixel a pixel (`PAPER_QUIET` / `paperQuiet()` em `game/js/paper_hud.js`); o conteúdo de
+  cada HUD é centralizado nela — nunca sobre a moldura, vinhas ou nós.
+- A geometria da caixa (posição, largura, altura, proporção) é definida pelo layout/arte —
+  nunca por `textWidth`, contagem de linhas ou `fontScale`.
+- Ordem de encaixe do texto na área permitida: **quebrar → encolher o corpo → abreviar com
+  "..."** (helper `fitTextBlock` do `game/js/font.js`); o texto nunca vaza da área nem cobre
+  o ornamento.
+- FONTE GRANDE (acessibilidade) continua crescendo a tinta, mas **dentro** da área permitida
+  — o texto se dobra mais; a caixa e o sprite não mudam.
+- Antes de aumentar qualquer caixa "para o texto caber", inverta o problema: adapte o
+  texto à área permitida do HUD.
+
+## Regra 22 — HUDs no formato original do sprite, nunca deformados 🖼️
+
+> **Nenhum HUD pintado pode ser deformado: todo sprite de HUD é desenhado INTEIRO, em escala uniforme, na proporção exata da sua pintura. Fatiar, esticar, comprimir ou usar "corredores elásticos" que alterem a proporção é proibido — e todo HUD novo nasce com a sua área permitida medida e registrada.** (decisão do usuário, 2026-10-16, após ver a correção: “Ficou perfeito, torne isto uma nova regra, para que os próximos HUDs não fiquem deformados”)
+
+- **Render:** cada pintura usa `paperFit` (contain + centralizada) em `game/js/paper_hud.js` — o
+  retângulo pedido NUNCA redimensiona o desenho; o que sobra fica transparente. As telas que
+  consomem devem usar caixas na proporção da pintura (tabela vigente registrada no MEGA).
+- **HUD novo (peça pintada) — passos obrigatórios antes de integrar:**
+  1. entra em `game/assets/ui/paper/` no tamanho de produção, registrado no MANIFEST e em
+     `docs/arte/hud-publicacao.json`;
+  2. mede-se e registra-se a **área permitida** (maior retângulo de papel liso, livre de
+     moldura/ornamento) em `PAPER_QUIET` de `game/js/paper_hud.js`;
+  3. a tela consumidora posiciona/centraliza o texto com `paperQuiet()` (Regra 21);
+  4. a peça entra na guarda automática do `game/test/paper-hud-browser.mjs`.
+- **Proibido:** esmagar ornamentos com escala reduzida ("EDGE_SCALE"), fatiar + esticar
+  ("9-slice elástico"), repetir corredores para mudar o formato, ou redimensionar o sprite
+  para o texto caber.
+- **Estados (hover/pressionado/selecionado/desabilitado):** somente artes pintadas próprias;
+  tratamento por gradiente, quando houver, fica preso aos pixels pintados (`source-atop`) —
+  nunca se repinta um retângulo sobre o sprite.
+- **Guarda automática:** o teste de navegador mede a caixa pintada por alfa em alvos de
+  formatos diferentes e reprova qualquer deformação; peça nova fora da checagem = regra
+  descumprida.
+- **Diagrama (Regra 20):** a mudança de HUD mostra o sprite no formato original, lado a lado.
+
+---
+
 ## 🔄 Resumo do fluxo obrigatório a cada pedido
 
 ```text
@@ -3222,9 +3338,10 @@ Ao final de cada tarefa, apresentar um **checklist de conferência** com este fo
 0c. GUIA       → responder GUIA.md e ler todas as fontes das rotas aplicáveis; não substituir as leituras obrigatórias
 1. PESQUISAR  → inspirações em jogos indies na Web (Regra 2)
 2. PERGUNTAR  → opções de implementação (Regra 1)
-3. IMPLEMENTAR → seguindo as escolhas do usuário, otimização (Regra 5) e Regra 14 (tela de carregamento só na troca de mundo; o que sai do TITLE é pré-carregado)
+3. IMPLEMENTAR → seguindo as escolhas do usuário, otimização (Regra 5) e Regra 14 (tela de carregamento só na troca de mundo; o que sai do TITLE é pré-carregado), com sprites no formato original e todo texto centralizado na área permitida do seu HUD (Regras 21 e 22 — texto quebra/encolhe/abrevia na área permitida; sprite nunca deforma/fatía/estica)
 4. ARTE       → imagens em alta resolução, papel recortado detalhado e harmônico (Regra 6) + humanização moderada (Regra 8) + top-down no mundo do jogo (Regra 17) + mapas-base limpos (Regra 19), em rodadas de no máx. 10 imagens (Regra 16), com fonte em fundo verde/azul de chroma (Regra 6), sempre partindo do prompt-mestre de estilo (Regra 18)
 5. MOSTRAR    → exibir toda arte gerada para aprovação visual (Regra 10)
+5b. DIAGRAMA  → gerar e abrir o diagrama da mudança (ANTES→DEPOIS, ou escopo em painéis) para o usuário avaliar e dar feedback (Regra 20)
 6. ADAPTAR    → mobile: todo input novo vira gesto/botão de toque (Regra 9)
 7. VERIFICAR  → check-in com checklist do que foi pedido (Regra 3)
 8. JOGAR      → inspeção em jogo buscando bugs e imperfeições (Regra 4)
@@ -4878,7 +4995,7 @@ parte dos blocos originais.
 
 | Arquivo original | Bytes preservados | SHA-256 |
 |---|---:|---|
-| `REGRAS_DE_TRABALHO.md` | 26502 | `bc7c79c934e27a668c0944a90cb28728517195dec68d8bd20f76ec7d5f6a095f` |
+| `REGRAS_DE_TRABALHO.md` | 31966 | `85655a14ceb57807df14d6f55cc7febeff205d3ea7b021b1dcf5b334b1fdadb0` |
 | `LORE.md` | 15056 | `42075fe4334601f1a74834388c0155342b2a8a6c21e51afa6020e34a5260f493` |
 | `DOCUMENTO_MEGA_ATUALIZACAO_LORE_TOTAL.md` | 30473 | `c642dd06d14e527bba6566458afa5293f697b0a3b981ef6301f6fafdfb9e856e` |
 | `DOCUMENTO_DECISOES_MEGA_ATUALIZACAO.md` | 8179 | `2b05240cd9fef9fb33d8a08768164f60202437c886c1c5b83f250ee9cbb58637` |

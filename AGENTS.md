@@ -12,7 +12,7 @@
 
 Leia isto **antes** de mexer no código. É o resumo operacional; as regras obrigatórias
 continuam em [`REGRAS_DE_TRABALHO.md`](REGRAS_DE_TRABALHO.md) (fluxo: ler regras integrais → ler o MEGA → responder GUIA → pesquisar →
-perguntar → implementar → mostrar arte → mobile → check-in → jogar → preview → salvar).
+perguntar → implementar → mostrar arte → diagrama da mudança → mobile → check-in → jogar → preview → salvar).
 Lore e planejamento: [`LORE.md`](LORE.md) e [`MEGA_ARQUIVO.md`](MEGA_ARQUIVO.md).
 **Nesta continuidade, o usuário solicitou leitura integral do MEGA.** Comece pelo
 [guia para novos chats](MEGA_ARQUIVO.md#continuidade-artistica), leia o prompt canônico
@@ -29,6 +29,19 @@ adicionar opções extras nesta continuidade até revisão explícita do usuári
 **Regra 12:** a cada implementação ou atualização, atualizar também `MEGA_ARQUIVO.md`
 na mesma entrega: mudanças, decisões, testes/resultados, limitações e próximos passos.
 Preservar o histórico; sincronizar blocos e hashes dos originais editados.
+
+**Regra 20:** toda entrega inclui um **diagrama em imagem do que foi feito** (ANTES → DEPOIS
+para mudanças visuais, renderizado com assets/algoritmos reais; painéis de escopo para o resto),
+aberto ao usuário no fim da entrega para **avaliar e dar feedback**.
+
+**Regra 21:** o **texto se adapta ao HUD**, nunca o contrário — sprite **nunca deforma**
+(desenhado inteiro, escala uniforme, proporção original da pintura) e todo texto fica
+**centralizado na área permitida** (papel liso medido — `paperQuiet()`), quebrando/encolhendo/
+abreviando (`fitTextBlock`); nada é desenhado sobre moldura/ornamento, nem com FONTE GRANDE.
+
+**Regra 22:** **HUDs no formato original do sprite, nunca deformados** — proibido fatiar,
+esticar, comprimir ou usar corredores elásticos; HUD novo exige área permitida medida
+(`PAPER_QUIET`) + `paperQuiet()` no texto + entrada na guarda do `paper-hud-browser.mjs`.
 
 **Verificação da memória artística:** `node tools/check_art_handoff.mjs` (prompt,
 âncoras, referências e consistência das decisões); complementar com `node game/test/docs.mjs`.
