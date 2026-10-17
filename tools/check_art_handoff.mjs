@@ -29,7 +29,7 @@ export function auditArtHandoff(read = diskRead) {
   assert.equal(direction.refinamento_implementado_no_jogo, true, 'HUD parcial integrado por pedido explícito');
   assert(direction.escopo_implementacao.startsWith('parcial:'), 'não declarar todo rework integrado');
   const publication=JSON.parse(read('docs/arte/hud-publicacao.json'));
-  assert.equal(publication.lot.length,4, 'brasa e três novas molduras');
+  assert.equal(publication.lot.length,3, 'brasa e duas novas molduras (botão de papel removido em 2026-10-14)');
   for(const piece of publication.lot) {
     assert(piece.integration.includes('explicit user request'), 'autorização da integração');
     assert.equal(piece.backup.verified,true,'backup verificado de cada original');

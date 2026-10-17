@@ -9,7 +9,7 @@ import { SFX } from "./audio.js";
 import { G } from "./state.js";
 import { drawLoreTextbox, hudBiome, drawWoodBarFrame } from "./lore_hud.js";
 
-import { drawPaper, drawPaperBar, paperQuiet } from "./paper_hud.js";
+import { drawPaper, drawPaperBar, paperQuiet, deferPaperFrame, flushPaperFrames, beginPaperHud, endPaperHud } from "./paper_hud.js";
 
 let buttons = [];
 // Animação de interface: hover/pressão de cada botão são NÚMEROS que correm
@@ -19,6 +19,7 @@ const anim = new Map();
 let lastT = 0, frameDt = 1 / 60;
 
 export function uiBegin() {
+  flushPaperFrames();
   clearPaperSurfaces();
   buttons = [];
   frameDt = Math.max(0.001, Math.min(0.05, G.time - lastT || 1 / 60));
@@ -101,7 +102,16 @@ function hitRect(x, y, w, h) {
 /** Painel com borda dupla, cantos chanfrados e estética Dead Cells refinada */
 export function panel(ctx, x, y, w, h, opt = {}) {
   layoutBox(ctx, opt.kind || "painel", x, y, w, h, opt.layoutId);
-  if(opt.paper !== false && drawPaper(ctx, opt.paperKind || (opt.kind === 'botao' ? 'button' : 'panel'), x,y,w,h,opt)) return;
+  if (opt.paper !== false) {
+    const pKind = opt.paperKind || (opt.kind === 'botao' ? 'button' : 'panel');
+    if (pKind === 'button' || pKind === 'wood_icon') {
+      if (drawPaper(ctx, pKind, x, y, w, h, opt)) return;
+    } else if (opt.deferFrame === false) {
+      if (drawPaper(ctx, pKind, x, y, w, h, opt)) return;
+    } else {
+      if (deferPaperFrame(ctx, pKind, x, y, w, h, opt)) return;
+    }
+  }
   const r = opt.r !== undefined ? opt.r : 6;
   const fill = opt.fill || PAL.panel;
   const border = opt.border || PAL.border;
@@ -425,7 +435,12 @@ export function bar(ctx, x, y, w, h, frac, opt = {}) {
 /** Caixa de diálogo / tooltip refinada */
 export function dialogBox(ctx, x, y, w, h, opt = {}) {
   layoutBox(ctx, "caixa", x, y, w, h, opt.layoutId);
-  if(drawPaper(ctx,opt.paperKind || "panel",x,y,w,h,opt)) return;
+  const pKind = opt.paperKind || "panel";
+  if (opt.deferFrame === false) {
+    if (drawPaper(ctx, pKind, x, y, w, h, opt)) return;
+  } else {
+    if (deferPaperFrame(ctx, pKind, x, y, w, h, opt)) return;
+  }
   const border = opt.border || PAL.borderHi;
   // sombra
   ctx.fillStyle = "rgba(0,0,0,0.6)";
@@ -470,8 +485,13 @@ export function tooltip(ctx, x, y, lines, opt = {}) {
   let tx = Math.max(10, Math.min(x, VIEW_W - w - 10));
   let ty = y + h > VIEW_H - 10 ? y - h - 10 : y;
   ty = Math.max(10, Math.min(ty, VIEW_H - h - 10));
-  dialogBox(ctx, tx, ty, w, h, { paperKind: 'tooltip' });
-  const qT = paperQuiet('tooltip', tx, ty, w, h);
+  const pKind = opt.paperKind || 'tooltip';
+  layoutBox(ctx, "caixa", tx, ty, w, h, opt.layoutId);
+  const clipped = beginPaperHud(ctx, pKind, tx, ty, w, h);
+  if (!clipped) {
+    dialogBox(ctx, tx, ty, w, h, { paperKind: pKind, deferFrame: false });
+  }
+  const qT = paperQuiet(pKind, tx, ty, w, h);
   const tCx = qT.x + qT.w / 2;
   let cy = qT.y;
   const titleBudget = opt.title ? Math.min(Math.round(qT.h * 0.36), Math.ceil(22 * fontScale()) * 2) : 0;
@@ -489,6 +509,7 @@ export function tooltip(ctx, x, y, lines, opt = {}) {
     drawText(ctx, line, tCx, cy, { color: opt.color || PAL.text, scale: b.scale, align: 'center', maxWidth: qT.w });
     cy += b.step;
   }
+  if (clipped) endPaperHud(ctx);
   return { x: tx, y: ty, w, h };
 }
 

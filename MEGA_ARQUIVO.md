@@ -37,6 +37,71 @@ repetições, datas, branches, checklists e notas históricas foram preservados.
 > Divergências permanecem visíveis, sem apagar conteúdo. O que efetivamente
 > funciona deve ser confirmado por testes e inspeção no preview.
 
+## Registro — Camadas `Fundo > Texto > Moldura` + Roteamento e Plano dos 8 Novos HUDs Distintos por Local (2026-10-16)
+
+**Pedido do usuário:** "Quero que os HUDs agora sejam organizados em camadas na seguinte ordem, do mais ao fundo ao mais a frente: Fundo>Texto>Moldura. Para que assim Os textos não fiquem em cima da moldura. Junto com isso adicione mais HUD distintos para locais específicos na tela de jogo, não quero que você use alguns HUDs para vários lugares. Crie um HUD para cada local mantendo o estilo entre todos eles, para que assim não exista mais problemas de enquadramento." Em seguida: "Documente tudo isto para uma próxima implementação. Depois Salve no Github".
+
+**Decisões confirmadas (Regra 1):** (1) `strict_bg_text_frame_clipped` (organizar 100% dos HUDs em 3 camadas estritas: `1º Fundo (*_bg.png) > 2º Texto/Conteúdo (clipado na janela interna do papel) > 3º Moldura (*_frame.png) por cima`); (2) `eight_new_huds_all_screens` (mapear 8 novos HUDs distintos por local específico em vez de reutilizar `panel` e `banner`: `expanded`, `tutorial`, `boss`, `event`, `transition`, `nest_tip`, `tree_detail`, `header`).
+
+**O que foi implementado e verificado no motor (`game/js/paper_hud.js`, `game/js/ui.js`, `game/js/game.js`, `game/js/tutorial.js`, `game/js/nest.js`, `game/js/meta.js`):**
+1. **Camadas `1º Fundo > 2º Texto (clipado) > 3º Moldura`:**
+   - Criados `beginPaperHud(ctx, kind, x, y, w, h, opt)` e `endPaperHud(ctx)` em `paper_hud.js`: `beginPaperHud` desenha `drawPaperBg` (Camada 1), abre `ctx.clip()` em `paperAperture(kind, x, y, w, h)` para os textos/barras/sub-botões (Camada 2), e `endPaperHud` fecha o clip e desenha `drawPaperFrame` (Camada 3) **por cima de todos os textos**.
+   - Criados `deferPaperFrame` e `flushPaperFrames(ctx)` integrados a `ui.js` (`panel()`, `dialogBox()`, `uiBegin()`) e ao fim de quadro de `game.js`/`meta.js` para garantir que todos os painéis de menu e modais também desenhem a moldura por último.
+2. **Roteamento dos 15 Locais Específicos (7 com arte própria + 8 novos slots prontos para geração de arte):**
+   - `panel` (`270×144`, Colônia `RUN`), `expanded` (`270×144`, Feromônio Expandido `RUN`), `tutorial` (`285×152`, Cartão de Tutorial `RUN`), `banner` (`320×64`, Onda `RUN`), `boss` (`340×68`, Chefão `RUN`), `event` (`400×80`, Aviso de Bioma `RUN`), `minimap` (`168×125`, Minimapa `RUN`), `tooltip` (`240×119`, Loja `RUN` e `ui.tooltip`), `health` (`drawGasterBar`), `card` (`260×387`, Draft), `transition` (`560×386`, Transição de Mapa `960×662`), `pause` (`355×440`, Pausa), `nest_tip` (`256×136`, Câmara do Formigueiro `NEST`), `tree_detail` (`284×386`, Detalhe de Nó `TREE`/`SANCTUARY` `680×924`) e `header` (`936×82` / `426×88`, Faixas Panorâmicas `960×120`).
+   - Enquanto as 8 novas artes dedicadas aguardam a próxima sessão de geração (`offer_options`), `PAPER_FALLBACK` fornece fallback transparente sem distorção.
+3. **Documentação completa para a próxima implementação:** salva em [`docs/arte/PLANO_HUDS_DISTINTOS_E_CAMADAS.md`](docs/arte/PLANO_HUDS_DISTINTOS_E_CAMADAS.md) com tabelas, dimensões nativas exatas, `PAPER_APERTURE`, `PAPER_QUIET` e os 8 prompts `FUMIGA-PAPEL-v4-CHROMA` prontos para execução em 3 rodadas de `offer_options`.
+
+## Registro — HUDs de Vigas Finas + Folhas Grandes + Compactação de Tela & HUD Contextual (2026-10-16)
+
+**Pedido do usuário:** "outro problema visível é o tamanho da tela que os HUDs estão ocupando, veja as telas do Jogo e análise o que pode ser feito. Sugestão: criar novos HUDs com bordas mais finas ou outro tipo de adaptação, para que o HUD não polua/cubra a tela." Com complemento explícito durante a escolha das artes: **"As folhas, vinhas, musgo, e detalhes deste tipo podem se manter grandes, não deixe as molduras simples"**.
+
+**Decisões confirmadas (Regra 1):** (1) `slim_art_plus_contextual_hud` (Combo Completo: criar novas molduras em 2 peças mantendo folhas/vinhas/musgo grandes e detalhados nas bordas externas mas afinando as vigas internas de madeira + reduzir o tamanho das caixas de HUD na tela em ~30% a 50% + HUD contextual/dinâmico com opacidade suave quando unidades passam sob o HUD); (2) `run_and_meta_nest` (aplicar na Expedição `RUN` + Árvore/Santuários `TREE` + Formigueiro `NEST`).
+
+**Novas Molduras com Vigas Finas e Folhas Grandes (`art-source/f1-slim/originais/`, `game/assets/ui/paper/*_frame.png`, `docs/arte/hud-duas-pecas.json`):**
+- Geradas e aprovadas pelo usuário via `offer_options` (sobre fundo `#0000FF`, preservando folhas, vinhas, musgo e gavinhas grandes das artes anteriores enquanto afina a madeira interna):
+  - `panel` (`960×512`): `PAPER_QUIET` ampliado de `[.254, .281, .838, .680]` (`23,3%` de área útil, altura `39,9%`) para **`[.215, .200, .865, .800]` (`39,0%` de área útil, altura `60,0%` = +53% de altura útil!)**;
+  - `banner` (`960×192`): `PAPER_QUIET = [.310, .295, .840, .765]`;
+  - `minimap` (`960×717`): `PAPER_APERTURE = [.105, .130, .891, .880]`, `PAPER_QUIET = [.180, .240, .800, .770]`;
+  - `tooltip` (`960×475`): `PAPER_QUIET = [.215, .240, .830, .765]`;
+  - `card` (`848×1264`): `PAPER_QUIET = [.305, .165, .855, .820]` (largura útil de `38,6%` para `55,0%`, altura útil de `57,3%` para `65,5%`);
+  - `health` (`960×135`): `PAPER_APERTURE = [.117, .267, .899, .726]`, `PAPER_QUIET = [.145, .320, .865, .680]`.
+- Backup no Google Drive (Regra 13): salvo na subpasta `Fumiga-GOAT - Imagens do jogo / 2026-10-16-hud-slim-2pecas` (`https://drive.google.com/drive/folders/1WCcYGzDAzs4SJRTWp1pUnUPnjcL1GpRH`).
+
+**Redução de Área na Tela `960×540` + HUD Contextual (`game/js/game.js`, `game/js/tutorial.js`, `game/js/meta.js`, `game/js/nest.js`):**
+- **Painel da Colônia:** `360×192` (`69.120 px²`) $\rightarrow$ **`270×144` (`38.880 px²`, -44% de área)** mantendo `qCol` de `176×86px`;
+- **Painel Expandido da Colônia:** `360×192` $\rightarrow$ **`270×144` (-44% de área)**, terminando `100px` mais alto na esquerda;
+- **Banner de Onda / Invasão:** `380×76` $\rightarrow$ **`320×64` (-29% de área)**;
+- **Minimapa:** `208×155` $\rightarrow$ **`168×125` (-35% de área)**;
+- **Cartão de Tutorial (`tutorial.js`):** `370×197` $\rightarrow$ **`285×152` (-41% de área)**;
+- **Banner do Chefe:** `400×80` $\rightarrow$ **`340×68` (-28% de área)**;
+- **Banner de Evento (`drawBanner`):** `560×112` $\rightarrow$ **`400×80` (-49% de área)**;
+- **Tooltip da Loja:** `280×139` $\rightarrow$ **`240×119` (-27% de área)**;
+- **Tooltip de Câmara no Formigueiro (`nest.js`):** `340×181` $\rightarrow$ **`256×136` (-43% de área)**;
+- **Árvore e Santuários (`meta.js`):** painel lateral `DETAIL` reduzido de `340px` para **`284px`** de largura (+56px de visão da Árvore Ancestral) e cabeçalho do Santuário reduzido de `96px` para **`82px`** de altura;
+- **Opacidade Contextual Dinâmica (`hudContextAlpha` em `game.js`):** quando formigas ou inimigos passam sob um painel de HUD na expedição e o cursor do mouse não está sobre aquele painel, a opacidade suaviza para `0.82–0.86`, evitando cobrir unidades em movimento.
+
+## Registro — HUDs do Grupo A em 2 Peças (Moldura + Fundo) + Plano dos Grupos B e C (2026-10-16)
+
+**Pedido do usuário:** "arrume os HUDs do grupo A, eles estão com erros, e salve os dados da correção do grupo B e as tabelas do grupo C para fazer depois." Nas perguntas de confirmação (Regra 1), o usuário decidiu: (1) mudar os HUDs do Grupo A mantendo o estilo atual (Estilo 06 — `FUMIGA-PAPEL-v4-CHROMA`), **dividindo cada HUD em 2 peças (`moldura` vazada + `fundo` de papel)** e gerando novas opções de arte + retrabalhando o layout interno; (2) manter **100% dos textos, barras e sub-botões dentro de `paperQuiet()`** usando placas de madeira (`button` / `wood_icon`) e `fitTextBlock` mesmo em `FONTE GRANDE`; (3) salvar os dados de correção do Grupo B e as tabelas do Grupo C em `docs/arte/PLANO_CORRECAO_HUDS_GRUPOS_B_C.md` e registrá-los em `PENDENCIAS.md` e `MEGA_ARQUIVO.md`.
+
+**Arquitetura de HUDs em 2 Peças (`game/js/paper_hud.js`, `game/js/assets.js`, `tools/prepare_two_piece_hud.py`, `docs/arte/hud-duas-pecas.json`):**
+- Geradas novas artes com `FUMIGA-PAPEL-v4-CHROMA` sobre fundo técnico azul puro `#0000FF` (escolhidas pelo usuário via `offer_options`) e processadas em 7 famílias (`panel`, `health`, `banner`, `minimap`, `tooltip`, `card`, `pause`), totalizando **14 PNGs RGBA** em `game/assets/ui/paper/`:
+  - `<kind>_frame.png`: somente a **moldura esculpida de madeira e vinhas/folhas**, com tanto a margem externa quanto a abertura central (`aperture`) 100% transparentes (`center_alpha = 0`).
+  - `<kind>_bg.png`: somente o **fundo de papel artesanal creme-areia em camadas**, recortado pela máscara interna da moldura (`center_alpha = 255`, exterior transparente).
+- Novos helpers em `paper_hud.js`: `PAPER_NATIVE_SIZE` (corrige o fallback de `paperQuiet` quando `IMG` não está carregada ou em `MockImage` 64×64), `PAPER_APERTURE` / `paperAperture()`, `drawPaperBg()` (camada de fundo) e `drawPaperFrame()` (moldura vazada sobreposta).
+
+**Correções de Layout Interno no Grupo A (`game/js/game.js`, `game/js/lore_hud.js`, `game/js/tutorial.js`):**
+1. **Minimapa (`drawMinimap`):** renderiza em 3 camadas reais — (1) `drawPaperBg("minimap")`, (2) mapa e entidades clipados por `ctx.clip()` exatamente em `paperAperture("minimap")`, (3) `drawPaperFrame("minimap")` desenhada **por cima** do mapa (nunca cobrindo a madeira nem o ramo de folhas), com o nome do bioma dentro de `paperQuiet("minimap")`.
+2. **Barra de Vida (`drawPaperBar` / `drawGasterBar`):** desenha `health_bg.png`, pinta o preenchimento na abertura interna e sobrepõe `health_frame.png` por cima; altura limitada à faixa da linha para nunca invadir textos vizinhos.
+3. **Painel da Colônia (`360×192`):** botão `hudMore` (`+`/`-`) movido da coordenada externa `(340, 12)` para dentro de `qCol` como placa de madeira `wood_icon`; 4 ou 5 linhas (`modeDef`) escaladas e contidas em `qCol` mesmo com `FONTE GRANDE`.
+4. **Painel Expandido (`360×192`):** botão mobile `touchScent` (`OLFATO`) reduzido de `240px` para `qE.w - 4` (`206×20px`) dentro de `qE`, e espaçamento vertical ajustado para caber 100% em `qE.h`.
+5. **Banner de Onda / Invasão (`380×76`):** título, barra de progresso e subtítulo (na fase `"wave"`) e trilha de formigas `drawTrailAnt` (na fase `"calm"`) reposicionados 100% dentro dos `32px` de `qBan.h`.
+6. **Tooltip da Loja (`280×139`), Banner do Chefe (`400×80`) e Banner de Evento (`560×112`):** cabeçalhos, nomes, barras e subtítulos ajustados via `fitTextBlock` dentro de `paperQuiet` sem colisão em `FONTE GRANDE`.
+7. **Cartão de Tutorial (`tutorial.js`, `370×197`) e Cartas de Draft (`260×387`):** removidos retângulos vetoriais/roxos e elementos fora de `paperQuiet`; botão `PULAR (T)` e teclas `1..3` / moldura de ícone usam placas de madeira dentro de `qT` / `qD`.
+
+**Documentação dos Grupos B e C:** criada em [`docs/arte/PLANO_CORRECAO_HUDS_GRUPOS_B_C.md`](docs/arte/PLANO_CORRECAO_HUDS_GRUPOS_B_C.md) e referenciada em `PENDENCIAS.md`. Diagrama da entrega (Regra 20): `slice-box/diagrama-hud-duas-pecas.png`.
+
 ## Registro — Regra 20 (diagrama da mudança) + slice-box sem duplicações (2026-10-16)
 
 **Pedido do usuário:** corrigir os quadros dos HUDs que estavam "duplicados e bugados" ("o HUD deve ser completo, sem duplicações") e criar diagrama do que foi feito; em seguida, criar regra permanente de **sempre gerar um diagrama da mudança** para avaliação e feedback.

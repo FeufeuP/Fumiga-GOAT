@@ -25,13 +25,60 @@ export const PAPER_SLICES = Object.freeze({
 // Todo texto de um HUD fica CENTRALIZADO dentro desta área (Regra do usuário,
 // 2026-10-16) — ver `paperQuiet()` para o retângulo em coordenadas de destino.
 export const PAPER_QUIET = Object.freeze({
-  panel:   Object.freeze([.254, .281, .838, .680]),
-  health:  Object.freeze([.183, .444, .838, .593]),
-  banner:  Object.freeze([.220, .300, .780, .720]),
-  minimap: Object.freeze([.233, .279, .704, .753]),
-  card:    Object.freeze([.425, .171, .811, .744]),
-  pause:   Object.freeze([.250, .219, .776, .757]),
-  tooltip: Object.freeze([.246, .278, .812, .699]),
+  panel:       Object.freeze([.215, .200, .865, .800]),
+  expanded:    Object.freeze([.200, .200, .855, .800]),
+  tutorial:    Object.freeze([.195, .200, .860, .800]),
+  nest_tip:    Object.freeze([.205, .200, .855, .800]),
+  health:      Object.freeze([.145, .320, .865, .680]),
+  banner:      Object.freeze([.310, .295, .840, .765]),
+  boss:        Object.freeze([.200, .260, .835, .760]),
+  event:       Object.freeze([.200, .250, .835, .765]),
+  header:      Object.freeze([.140, .220, .865, .780]),
+  minimap:     Object.freeze([.180, .240, .800, .770]),
+  transition:  Object.freeze([.185, .185, .835, .815]),
+  card:        Object.freeze([.305, .165, .855, .820]),
+  tree_detail: Object.freeze([.185, .160, .845, .835]),
+  pause:       Object.freeze([.250, .219, .776, .757]),
+  tooltip:     Object.freeze([.215, .240, .830, .765]),
+});
+// Dimensões canônicas de cada família (usadas quando IMG ainda não carregou ou
+// em testes headless com MockImage 64x64).
+export const PAPER_NATIVE_SIZE = Object.freeze({
+  panel:       Object.freeze([960, 512]),
+  expanded:    Object.freeze([960, 512]),
+  tutorial:    Object.freeze([960, 512]),
+  nest_tip:    Object.freeze([960, 512]),
+  health:      Object.freeze([960, 135]),
+  banner:      Object.freeze([960, 192]),
+  boss:        Object.freeze([960, 192]),
+  event:       Object.freeze([960, 192]),
+  header:      Object.freeze([960, 120]),
+  minimap:     Object.freeze([960, 717]),
+  transition:  Object.freeze([960, 662]),
+  card:        Object.freeze([848, 1264]),
+  tree_detail: Object.freeze([680, 924]),
+  pause:       Object.freeze([928, 1152]),
+  tooltip:     Object.freeze([960, 475]),
+});
+// Janela interna vazada (aperture) medida nas molduras *_frame.png (2026-10-16):
+// região onde o fundo de papel (*_bg.png) e conteúdos clipados (minimapa, barras, textos)
+// ficam visíveis por baixo da moldura vazada (*_frame.png).
+export const PAPER_APERTURE = Object.freeze({
+  panel:       Object.freeze([.030, .148, .925, .848]),
+  expanded:    Object.freeze([.035, .148, .920, .848]),
+  tutorial:    Object.freeze([.035, .148, .920, .848]),
+  nest_tip:    Object.freeze([.035, .148, .920, .848]),
+  health:      Object.freeze([.117, .267, .899, .726]),
+  banner:      Object.freeze([.029, .141, .860, .802]),
+  boss:        Object.freeze([.040, .145, .900, .820]),
+  event:       Object.freeze([.040, .145, .900, .820]),
+  header:      Object.freeze([.035, .150, .930, .840]),
+  minimap:     Object.freeze([.105, .130, .891, .880]),
+  transition:  Object.freeze([.055, .130, .915, .865]),
+  card:        Object.freeze([.043, .101, .879, .904]),
+  tree_detail: Object.freeze([.055, .105, .895, .900]),
+  pause:       Object.freeze([.174, .167, .829, .808]),
+  tooltip:     Object.freeze([.033, .204, .912, .821]),
 });
 // Placas de madeira dos botões (2026-10-14): a variação segue o tamanho
 // REAL desenhado em 960x540 — inventário completo em
@@ -46,12 +93,30 @@ export function woodButtonSize(w,h) {
   if (w < 175) return 'pequeno';                            // abas, VOLTAR curto
   return 'grande';                                          // 180-240: pausa, fim
 }
+export const PAPER_FALLBACK = Object.freeze({
+  expanded:    'panel',
+  tutorial:    'panel',
+  nest_tip:    'panel',
+  boss:        'banner',
+  event:       'banner',
+  header:      'banner',
+  transition:  'minimap',
+  tree_detail: 'card',
+});
 export function paperSource(kind,w,h) {
-  if(kind==='tooltip'||kind==='pause') return kind; // explicit functional art
+  if(kind==='tooltip'||kind==='pause'||PAPER_FALLBACK[kind]) return kind; // explicit functional art
   if(kind==='panel'||kind==='card') {
     return h>w*1.12 ? 'card' : h>w*.68 ? 'pause' : 'panel';
   }
   return kind;
+}
+function resolvePaperImages(source) {
+  const fb = PAPER_FALLBACK[source];
+  const frameImg = IMG['paper_' + source + '_frame'] || IMG['paper_' + source]
+    || (fb && (IMG['paper_' + fb + '_frame'] || IMG['paper_' + fb])) || null;
+  const bgImg = IMG['paper_' + source + '_bg']
+    || (fb && IMG['paper_' + fb + '_bg']) || null;
+  return { frameImg, bgImg };
 }
 const cache = new Map();
 const MAX_PIXELS = 8 * 1024 * 1024;
@@ -78,12 +143,33 @@ export function paperFit(sw, sh, w, h) {
 export function paperQuiet(kind, x, y, w, h, sw, sh) {
   const src = paperSource(kind, w, h);
   const q = PAPER_QUIET[src] || PAPER_QUIET.panel;
-  const img = (typeof document !== 'undefined') ? IMG['paper_' + src] : null;
-  const iw = sw || (img && img.width) || 960, ih = sh || (img && img.height) || 512;
+  const nat = PAPER_NATIVE_SIZE[src] || PAPER_NATIVE_SIZE.panel;
+  const img = (typeof document !== 'undefined') ? (IMG['paper_' + src + '_frame'] || IMG['paper_' + src]) : null;
+  const iw = sw || (img && img.width > 64 ? img.width : nat[0]);
+  const ih = sh || (img && img.height > 64 ? img.height : nat[1]);
   const { fw, fh, ox, oy } = paperFit(iw, ih, w, h);
   return {
     x: x + ox + q[0] * fw, y: y + oy + q[1] * fh,
     w: (q[2] - q[0]) * fw, h: (q[3] - q[1]) * fh,
+    fit: { fw, fh, ox, oy }, source: src,
+  };
+}
+/**
+ * Janela central vazada da moldura (`*_frame.png`) em coordenadas de destino.
+ * Permite desenhar o fundo (`drawPaperBg`), aplicar clip à janela interna
+ * (ex.: minimapa, preenchimento de barra) e sobrepor a moldura (`drawPaperFrame`).
+ */
+export function paperAperture(kind, x, y, w, h, sw, sh) {
+  const src = paperSource(kind, w, h);
+  const a = PAPER_APERTURE[src] || PAPER_APERTURE.panel;
+  const nat = PAPER_NATIVE_SIZE[src] || PAPER_NATIVE_SIZE.panel;
+  const img = (typeof document !== 'undefined') ? (IMG['paper_' + src + '_frame'] || IMG['paper_' + src]) : null;
+  const iw = sw || (img && img.width > 64 ? img.width : nat[0]);
+  const ih = sh || (img && img.height > 64 ? img.height : nat[1]);
+  const { fw, fh, ox, oy } = paperFit(iw, ih, w, h);
+  return {
+    x: x + ox + a[0] * fw, y: y + oy + a[1] * fh,
+    w: (a[2] - a[0]) * fw, h: (a[3] - a[1]) * fh,
     fit: { fw, fh, ox, oy }, source: src,
   };
 }
@@ -102,17 +188,18 @@ export function paperGeometry(kind, sw, sh, w, h) {
   const [sx,dx]=cut(m.x,sw,fw),[sy,dy]=cut(m.y,sh,fh);
   return {sx,sy,dx,dy,scale,fw,fh,ox,oy};
 }
-function tileFor(img, kind, w, h, state) {
-  const key = `${kind}:${w}:${h}:${state}`;
+function tileFor(img, kind, w, h, state, bgImg = null, layer = 'both') {
+  const key = `${kind}:${layer}:${w}:${h}:${state}`;
   const old = cache.get(key);
-  if (old && old.image === img) return old.canvas;
+  if (old && old.image === img && old.bgImage === bgImg) return old.canvas;
   if (old) { pixels -= old.canvas.width*old.canvas.height; cache.delete(key); }
   const tile = document.createElement('canvas'); tile.width=w; tile.height=h;
   const c=tile.getContext('2d');
   // The paintings no longer carry a cream matte: the sheet around the drawing
   // is transparent, so the tile starts empty and only the art is composited.
-  // The enclosed paper interior of each frame is still opaque in the source,
-  // so text keeps a readable surface.
+  // Each HUD is composed of 2 pieces (2026-10-16):
+  //   1) bgImg (*_bg.png): hand-cut cream paper backing inside the frame
+  //   2) img (*_frame.png): hollow wood & vine frame rendered on top
   c.imageSmoothingEnabled=true;
   if(kind.startsWith('wood_')) {
     // Três faixas HORIZONTAIS: as duas pontas são desenhadas inteiras, na
@@ -131,7 +218,12 @@ function tileFor(img, kind, w, h, state) {
     // Pintura inteira, escala uniforme (contain + centralizado): o sprite sai
     // nas proporções originais — moldura e ornamentos nunca são deformados.
     const fit=paperFit(img.width,img.height,w,h);
-    c.drawImage(img,0,0,img.width,img.height,fit.ox,fit.oy,fit.fw,fit.fh);
+    if (layer !== 'frame' && bgImg) {
+      c.drawImage(bgImg,0,0,bgImg.width,bgImg.height,fit.ox,fit.oy,fit.fw,fit.fh);
+    }
+    if (layer !== 'bg') {
+      c.drawImage(img,0,0,img.width,img.height,fit.ox,fit.oy,fit.fw,fit.fh);
+    }
   }
   // State treatment changes depth and adds a readable selection mark, never
   // reduces background opacity or puts a generic stroke around the rectangle.
@@ -165,7 +257,7 @@ function tileFor(img, kind, w, h, state) {
     const first=cache.keys().next().value, entry=cache.get(first);
     pixels-=entry.canvas.width*entry.canvas.height;cache.delete(first);
   }
-  if(w*h<=MAX_PIXELS) { cache.set(key,{canvas:tile,image:img});pixels+=w*h; }
+  if(w*h<=MAX_PIXELS) { cache.set(key,{canvas:tile,image:img,bgImage:bgImg});pixels+=w*h; }
   return tile;
 }
 export function drawPaper(ctx, kind, x, y, w, h, opt = {}) {
@@ -186,30 +278,114 @@ export function drawPaper(ctx, kind, x, y, w, h, opt = {}) {
     }
     return false;
   }
-  // Functional paintings from the publication lot; no replacement shapes.
+  // Sistema de 2 peças (2026-10-16): 1º Fundo (*_bg) -> 2º Texto/Conteúdo -> 3º Moldura (*_frame).
   const source = paperSource(kind,w,h);
-  const img = IMG['paper_' + source];
-  if(!img || typeof document==='undefined') return false;
+  const { frameImg, bgImg } = resolvePaperImages(source);
+  if(!frameImg || typeof document==='undefined') return false;
+  const layer = opt.layer || (bgImg ? 'both' : 'single');
   w=Math.max(1,Math.round(w));h=Math.max(1,Math.round(h));
-  const tile=tileFor(img,source,w,h,paperState(opt));
-  const fit=paperFit(img.width,img.height,w,h);
-  ctx.save();ctx.globalAlpha=1;ctx.globalCompositeOperation='source-over';
+  const nat = PAPER_NATIVE_SIZE[source] || PAPER_NATIVE_SIZE.panel;
+  const iw = frameImg.width > 64 ? frameImg.width : nat[0];
+  const ih = frameImg.height > 64 ? frameImg.height : nat[1];
+  const tile=tileFor(frameImg,source,w,h,paperState(opt),bgImg,layer);
+  const fit=paperFit(iw,ih,w,h);
+  ctx.save();ctx.globalCompositeOperation='source-over';
   ctx.drawImage(tile,Math.round(x),Math.round(y));ctx.restore();
-  // Superfície de papel = o desenho REAL (não as margens transparentes).
-  registerPaperSurface(ctx,x+fit.ox,y+fit.oy,fit.fw,fit.fh);
+  if (layer !== 'frame') {
+    // Superfície de papel = o desenho REAL (não as margens transparentes).
+    registerPaperSurface(ctx,x+fit.ox,y+fit.oy,fit.fw,fit.fh);
+  }
+  return true;
+}
+/** Desenha somente a Camada 1 (Fundo de papel `*_bg.png`) do HUD. */
+export function drawPaperBg(ctx, kind, x, y, w, h, opt = {}) {
+  return drawPaper(ctx, kind, x, y, w, h, { ...opt, layer: 'bg' });
+}
+/** Desenha somente a Camada 3 (Moldura vazada `*_frame.png`) por cima do conteúdo/texto. */
+export function drawPaperFrame(ctx, kind, x, y, w, h, opt = {}) {
+  return drawPaper(ctx, kind, x, y, w, h, { ...opt, layer: 'frame' });
+}
+
+// Pilha explícita e fila diferida para garantir a ordem estrita de camadas:
+//   1º Fundo (*_bg.png) -> 2º Texto / Conteúdo (clipado no papel) -> 3º Moldura (*_frame.png)
+const hudStack = [];
+const pendingFrames = [];
+
+/** Descarrega quaisquer molduras pendentes (`*_frame.png`) por cima dos textos recém-desenhados. */
+export function flushPaperFrames(ctx) {
+  while (pendingFrames.length) {
+    const item = pendingFrames.shift();
+    const targetCtx = ctx || item.ctx;
+    if (!targetCtx) continue;
+    targetCtx.save();
+    if (typeof item.alpha === 'number') targetCtx.globalAlpha = item.alpha;
+    drawPaperFrame(targetCtx, item.kind, item.x, item.y, item.w, item.h, item.opt);
+    targetCtx.restore();
+  }
+}
+
+/**
+ * Abre um HUD em 2 peças desenhando o 1º Fundo (`*_bg.png`) imediatamente e
+ * agendando a 3ª Moldura (`*_frame.png`) para ser desenhada DEPOIS dos textos.
+ */
+export function deferPaperFrame(ctx, kind, x, y, w, h, opt = {}) {
+  flushPaperFrames(ctx);
+  if (!drawPaperBg(ctx, kind, x, y, w, h, opt)) return false;
+  pendingFrames.push({
+    ctx, kind, x, y, w, h, opt,
+    alpha: typeof ctx?.globalAlpha === 'number' ? ctx.globalAlpha : 1,
+  });
+  return true;
+}
+
+/**
+ * Inicia um bloco de HUD em 3 camadas estritas:
+ *   1º Desenha o Fundo (`*_bg.png`)
+ *   2º Abre clip na janela interna (`paperAperture`) para o Texto/Conteúdo
+ *   3º `endPaperHud(ctx)` fecha o clip e desenha a Moldura (`*_frame.png`) por cima de tudo
+ */
+export function beginPaperHud(ctx, kind, x, y, w, h, opt = {}) {
+  flushPaperFrames(ctx);
+  if (!drawPaperBg(ctx, kind, x, y, w, h, opt)) return false;
+  const ap = paperAperture(kind, x, y, w, h);
+  ctx.save();
+  if (opt.clip !== false && typeof ctx.beginPath === 'function' && typeof ctx.clip === 'function') {
+    ctx.beginPath();
+    ctx.rect(Math.floor(ap.x), Math.floor(ap.y), Math.ceil(ap.w), Math.ceil(ap.h));
+    ctx.clip();
+  }
+  hudStack.push({ ctx, kind, x, y, w, h, opt });
+  return true;
+}
+
+/** Fecha o clip de Texto/Conteúdo (Camada 2) e desenha a Moldura (`*_frame.png`, Camada 3) por cima. */
+export function endPaperHud(ctx) {
+  const item = hudStack.pop();
+  if (!item) return false;
+  const targetCtx = ctx || item.ctx;
+  targetCtx.restore();
+  drawPaperFrame(targetCtx, item.kind, item.x, item.y, item.w, item.h, item.opt);
   return true;
 }
 export function drawPaperBar(ctx,x,y,w,h,frac,opt={}) {
-  if(!drawPaper(ctx,'health',x,y,w,h)) return false;
+  // Arquitetura em 2 peças: 1) fundo de papel -> 2) preenchimento -> 3) moldura vazada por cima
+  const hasTwoPiece = !!(IMG.paper_health_frame && IMG.paper_health_bg);
+  if (hasTwoPiece) {
+    if (!drawPaperBg(ctx, 'health', x, y, w, h, opt)) return false;
+  } else {
+    if (!drawPaper(ctx, 'health', x, y, w, h, opt)) return false;
+  }
   frac=Math.max(0,Math.min(1,Number.isFinite(frac)?frac:0));
-  // O preenchimento segue a faixa PERMITIDA pela pintura (papel liso da barra),
-  // no desenho realmente ocupado — nada é desenhado fora do sprite.
-  const q=paperQuiet('health',x,y,w,h);
-  const ix=q.x, iy=q.y+q.h*.15, iw=q.w, ih=Math.max(2,q.h*.7);
+  const q = hasTwoPiece ? paperAperture('health',x,y,w,h) : paperQuiet('health',x,y,w,h);
+  const ix=q.x, iy=q.y, iw=q.w, ih=Math.max(2,q.h);
   ctx.save();ctx.globalAlpha=1;
   ctx.fillStyle='#d0b995';ctx.fillRect(ix,iy,iw,ih);
   const g=ctx.createLinearGradient(0,iy,0,iy+ih);
   g.addColorStop(0,opt.low?'#cd6952':'#dcaa56');g.addColorStop(1,opt.low?'#9e332b':'#a36223');
   ctx.fillStyle=g;ctx.fillRect(ix,iy,Math.round(iw*frac),ih);
-  ctx.restore();return true;
+  ctx.restore();
+  if (hasTwoPiece) {
+    drawPaperFrame(ctx, 'health', x, y, w, h, opt);
+  }
+  return true;
 }

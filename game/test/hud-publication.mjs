@@ -45,3 +45,22 @@ assert(!/paper_button|paper\/button\.png/.test(paper),'old paper button sprite i
 assert(!/fillStyle='#f5edd8'/.test(paper),'paper tile still fills an opaque matte');
 assert(/source-atop/.test(paper),'state treatment must be clipped to the painted art');
 console.log('HUD SEM FUNDO OK — oito peças RGBA, recorte registrado, tile sem matte');
+
+// HUD em 2 peças (2026-10-16): 7 famílias (14 PNGs RGBA: *_frame.png + *_bg.png)
+const twoPiece=JSON.parse(fs.readFileSync(new URL('docs/arte/hud-duas-pecas.json',root)));
+assert.equal(twoPiece.families.length,7);
+for(const fam of twoPiece.families) {
+ for(const part of ['frame','bg']) {
+  const info=fam[part];
+  const data=fs.readFileSync(new URL(info.path,root));
+  assert.equal(createHash('sha256').update(data).digest('hex'),info.sha256,info.path);
+  assert.equal(data.readUInt32BE(16),fam.size[0]);assert.equal(data.readUInt32BE(20),fam.size[1]);
+  assert.equal(data[25],6,`${info.path}: RGBA`);
+  const key=`paper_${fam.kind}_${part}`;
+  assert(new RegExp('\\b'+key+':\\s*"ui/paper/'+fam.kind+'_'+part+'\\.png"').test(assetsJs),`${key}: manifest entry missing`);
+ }
+ assert.equal(fam.frame.center_alpha,0,`${fam.kind}_frame center must be hollow`);
+ assert.equal(fam.bg.center_alpha,255,`${fam.kind}_bg center must be opaque paper`);
+}
+assert(/drawPaperBg/.test(paper)&&/drawPaperFrame/.test(paper),'two-piece renderer helpers missing');
+console.log('HUD DUAS PEÇAS OK — 7 famílias (14 PNGs RGBA: moldura vazada + fundo de papel) verificadas');
