@@ -3,8 +3,8 @@
 // ============================================================================
 import { G, persistSave } from "./state.js";
 import { PAL } from "./config.js";
-import { drawText, fitTextBlock, fontScale } from "./font.js";
-import { paperQuiet } from "./paper_hud.js";
+import { drawText, fitTextBlock, fontScale, layoutBox } from "./font.js";
+import { drawPaper, paperQuiet, beginPaperHud, endPaperHud } from "./paper_hud.js";
 import { clamp, TAU } from "./utils.js";
 import { panel, pointInRect } from "./ui.js";
 import { uiButtons } from "./ui.js";
@@ -129,12 +129,11 @@ export function updateTutorial(dt, run) {
   }
 }
 
-const CARD_W = 370;
-// Geometria FIXA (2026-10-16, regra do usuário): o texto se adapta ao cartão.
-// 370×197 = proporção ORIGINAL da pintura panel (960×512 = 1,875): o sprite
-// nunca deforma; cabe entre o painel da colônia (até 370) e o minimapa (756).
-const CARD_H = 197;
-const CARD_Y = 72;
+const CARD_W = 285;
+// Geometria FIXA compacta (2026-10-16, HUDs bordas finas): 285×152 = proporção
+// ORIGINAL da pintura panel (960×512 = 1,875) com redução de ~41% de área na tela.
+const CARD_H = 152;
+const CARD_Y = 68;
 // Com FONTE GRANDE (acessibilidade) a tinta do título e das linhas cresce 30%:
 // as alturas saem de medidas reais, senão o título invade a 1ª linha e as
 // linhas se encostam dentro do cartão.
@@ -156,9 +155,8 @@ export function tutorialCardRect(VIEW_W) {
   const st = TUT.steps[TUT.idx];
   if (!st) return null;
   const m = cardMetrics(st);
-  // Centralizado, o cartão caía sobre o painel da colônia (10..370): com este
-  // recuo ele começa depois do painel e termina antes do minimapa (756..950).
-  const x = Math.max((VIEW_W - m.w) / 2, 380);
+  // Centralizado entre o painel compacto da colônia (8..278) e o minimapa (786..954).
+  const x = Math.max(Math.round((VIEW_W - m.w) / 2), 286);
   return { x, y: CARD_Y, w: m.w, h: m.h };
 }
 
@@ -172,71 +170,46 @@ export function drawTutorial(ctx, VIEW_W) {
 
   ctx.globalAlpha = clamp(TUT.t / 0.25, 0, 1);
 
-  // sombra
-  ctx.fillStyle = "rgba(0,0,0,0.5)";
-  ctx.fillRect(x + 3, y + 4, w, h);
-
-  // painel refinado
-  panel(ctx, x, y, w, h, {
-    fill: TUT._done ? "#1e2a1e" : "#1a1628",
-    border: TUT._done ? "#7fd6a0" : "#37e6c8",
-    accentLine: TUT._done ? "#7fd6a0" : "#37e6c8",
-    glow: TUT._done ? "#7fd6a0" : "#37e6c8",
-    r: 6,
-  });
-
-  // barra lateral animada
-  const pulse = 0.5 + Math.sin(G.time * 3) * 0.3;
-  ctx.fillStyle = TUT._done ? "#7fd6a0" : "#37e6c8";
-  ctx.globalAlpha = 0.6 + pulse * 0.4;
-  ctx.fillRect(x, y + 2, 4, h - 4);
-  ctx.globalAlpha = clamp(TUT.t / 0.25, 0, 1);
-
-  // ícone de check se concluído
-  if (TUT._done) {
-    ctx.fillStyle = "#7fd6a0";
-    ctx.beginPath();
-    ctx.arc(x + w - 18, y + 16, 10, 0, TAU);
-    ctx.fill();
-    drawText(ctx, "✓", x + w - 18, y + 10, { color: "#000", align: "center", font: "big" });
+  // HUD exclusivo "tutorial" em 3 camadas: 1º Fundo -> 2º Texto (clipado) -> 3º Moldura
+  layoutBox(ctx, "painel", x, y, w, h);
+  const clipped = beginPaperHud(ctx, "tutorial", x, y, w, h);
+  if (!clipped) {
+    panel(ctx, x, y, w, h, {
+      paperKind: "tutorial",
+      deferFrame: false,
+      fill: "rgba(0,0,0,0)",
+      border: TUT._done ? "#647d43" : "#6b471e",
+      r: 6,
+    });
   }
 
-  const CS = cardSteps();
-  // Textos centralizados na ÁREA PERMITIDA da pintura (papel liso, medido):
-  // nada é desenhado sobre moldura/ornamentos (2026-10-16).
-  const qT = paperQuiet("panel", x, y, w, h);
+  // 100% dos textos e do botão PULAR ficam dentro da ÁREA PERMITIDA (qT),
+  // usando placa de madeira para o botão (decisão do usuário 2026-10-16).
+  const qT = paperQuiet("tutorial", x, y, w, h);
   const tCx = qT.x + qT.w / 2;
-  const titleBlock = fitTextBlock(st.title, qT.w, Math.min(38, qT.h * 0.4), { font: "big", scale: 1, minScale: 0.5, lineStep: 18 });
-  const descY0 = qT.y + titleBlock.lines.length * titleBlock.step + 4;
-  const descBlock = fitTextBlock(stepDesc(st), qT.w, qT.y + qT.h - 18 - descY0, { scale: 0.85, minScale: 0.45, lineStep: 15 });
+  const footH = 19;
+  const titleTxt = (TUT._done ? "✓ " : "") + st.title;
+  const titleBlock = fitTextBlock(titleTxt, qT.w, 20, { font: "small", scale: 0.78, minScale: 0.48, lineStep: 14, maxLines: 1 });
+  const descY0 = Math.round(qT.y + 16 * fontScale());
+  const descBlock = fitTextBlock(stepDesc(st), qT.w, Math.max(16, qT.y + qT.h - footH - 2 - descY0), { scale: 0.68, minScale: 0.44, lineStep: 14 });
   titleBlock.lines.forEach((L, li) => drawText(ctx, L, tCx, qT.y + li * titleBlock.step,
-    { font: "big", scale: titleBlock.scale, color: TUT._done ? "#7fd6a0" : "#ffd479", align: "center", maxWidth: qT.w }));
+    { font: "small", scale: titleBlock.scale, color: TUT._done ? "#456032" : "#6b471e", align: "center", maxWidth: qT.w }));
   descBlock.lines.forEach((L, li) => drawText(ctx, L, tCx, descY0 + li * descBlock.step,
     { color: PAL.text, scale: descBlock.scale, align: "center", maxWidth: qT.w }));
-  drawText(ctx, "PASSO " + (TUT.idx + 1) + "/" + TUT.steps.length, qT.x, qT.y + qT.h - 13,
-    { color: PAL.textDim, scale: 0.7, align: "left", maxWidth: qT.w - Math.ceil(110 * fontScale()) });
 
-  // botão pular refinado — dentro da área permitida do sprite
-  const bw = Math.ceil(96 * CS.FS), bh = Math.max(22, Math.ceil(18 * CS.FS));
-  const bx = qT.x + qT.w - bw - 2, by = qT.y + qT.h - bh - 2;
+  const bw = 88, bh = 18;
+  const bx = Math.round(qT.x + qT.w - bw), by = Math.round(qT.y + qT.h - bh);
+  drawText(ctx, "PASSO " + (TUT.idx + 1) + "/" + TUT.steps.length, qT.x, by + 3,
+    { color: PAL.textDim, scale: Math.min(0.65, 11 / (16 * fontScale())), align: "left", maxWidth: qT.w - bw - 6 });
+
   const hot = pointInRect(mouse.x, mouse.y, bx, by, bw, bh);
-  ctx.fillStyle = hot ? "#3a3054" : "#2c2444";
-  ctx.fillRect(bx, by, bw, bh);
-  ctx.strokeStyle = hot ? "#8f7bd6" : "#4a3a6e";
-  ctx.lineWidth = 1;
-  ctx.strokeRect(bx + 0.5, by + 0.5, bw - 1, bh - 1);
-  const padY = Math.max(6, Math.round((bh - 14 * CS.FS) / 2) + 1);
-  drawText(ctx, "PULAR (T)", bx + bw / 2, by + padY, { color: hot ? "#efe9ff" : PAL.textDim, align: "center", maxWidth: bw - 8 });
+  drawPaper(ctx, "button", bx, by, bw, bh, { hot, pressed: hot && mouse.down });
+  drawText(ctx, "PULAR (T)", bx + bw / 2, by + 3, { color: "#f6ecd4", align: "center", scale: Math.min(0.62, 10 / (16 * fontScale())), maxWidth: bw - 14 });
+  if (clipped) endPaperHud(ctx);
   uiButtons().push({ x: bx, y: by, w: bw, h: bh, id: "tutSkip" });
   if (hot && mouse.justDown) {
     SFX.uiClick();
     stopTutorial(true);
-  }
-
-  if (TUT._done) {
-    ctx.fillStyle = "rgba(127,214,160,0.15)";
-    ctx.fillRect(x, y + h, w, 18);
-    drawText(ctx, "CONCLUÍDO!", x + w / 2, y + h + 4, { color: "#7fd6a0", align: "center" });
   }
   ctx.globalAlpha = 1;
 }

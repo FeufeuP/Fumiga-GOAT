@@ -3,9 +3,11 @@
 > **Antes de qualquer pedido:** ler [as regras por inteiro](REGRAS_DE_TRABALHO.md) e responder
 > o [GUIA de encaminhamento](GUIA.md). As rotas e resumos não dispensam a leitura integral.
 
-> **Estado artístico vigente — 2026-10-08:** estilo 06 papel recortado **detalhado** confirmado;
-> composição detalhada/piloto F0b e migração por lotes ainda pendentes. Começar pelo
-> [guia de continuidade no MEGA](MEGA_ARQUIVO.md#continuidade-artistica).
+> **Estado artístico vigente — 2026-10-16:** estilo 06 papel recortado **detalhado** confirmado (`FUMIGA-PAPEL-v4-CHROMA`);
+> **Grupo A dos HUDs** reestruturado em **2 peças (`*_frame.png` moldura vazada + `*_bg.png` fundo de papel)** com **ordem estrita de camadas `1º Fundo > 2º Texto (clipado no papel) > 3º Moldura`** (`beginPaperHud` / `endPaperHud` / `deferPaperFrame` / `flushPaperFrames`), vigas internas finas + folhas/vinhas/musgo grandes externos e 100% dos textos, barras e sub-botões dentro de `paperQuiet`.
+> O roteamento dos **8 novos HUDs distintos por local** (`expanded`, `tutorial`, `boss`, `event`, `transition`, `nest_tip`, `tree_detail`, `header`) já está ativo no código e seus prompts/especificações para a próxima etapa de geração estão documentados em [`docs/arte/PLANO_HUDS_DISTINTOS_E_CAMADAS.md`](docs/arte/PLANO_HUDS_DISTINTOS_E_CAMADAS.md).
+> Os dados técnicos de correção do **Grupo B** e as tabelas completas de migração do **Grupo C** estão documentados em [`docs/arte/PLANO_CORRECAO_HUDS_GRUPOS_B_C.md`](docs/arte/PLANO_CORRECAO_HUDS_GRUPOS_B_C.md) para execução nas próximas etapas.
+> Começar pelo [guia de continuidade no MEGA](MEGA_ARQUIVO.md#continuidade-artistica).
 > O status “nenhum trabalho em aberto” abaixo é histórico da integração de 2026-10-05,
 > não conclusão da migração visual. Branches e caminhos abaixo também são históricos.
 
@@ -126,6 +128,14 @@ automática de versão nova (seção 3.2) foi reaplicada sobre a arquitetura nov
    dos painéis 1 e 2 podem ser recriados a partir do commit `645dc68` (auxílio:
    `tools/fix_noite_branca.py` lê `art-source/`, o espelho ou o histórico do Git). O original da
    **nova** `4_foreground` do painel 2 foi salvo nesta sessão no workspace e no espelho.
-2. **Recarga automática de versão nova** — decisão do usuário (opção B, 2026-10-05): recarrega **uma
-   vez** por versão, e só no carregamento/PRETITLE/TÍTULO; com expedição em andamento, fica pendente
-   até voltar ao título (nunca no meio do jogo). É o comportamento desenhado, não uma pendência.
+## 4. Plano Técnico Salvo — Correção dos HUDs dos Grupos B e C (2026-10-16)
+
+Por decisão explícita do usuário em 2026-10-16, o **Grupo A** foi corrigido nesta sessão (divisão em **2 peças: moldura vazada `*_frame.png` + fundo de papel `*_bg.png`** mantendo o Estilo 06 `FUMIGA-PAPEL-v4-CHROMA` com vigas de madeira finas e folhas/vinhas/musgo grandes nas bordas, redução de 29% a 49% na área de tela dos HUDs em `RUN`/`TREE`/`NEST`, opacidade contextual dinâmica `hudContextAlpha`, e contenção de 100% dos textos, barras e sub-botões dentro de `paperQuiet()`), enquanto as especificações completas dos **Grupos B e C** ficaram registradas para execução posterior em:
+
+- **[`docs/arte/PLANO_CORRECAO_HUDS_GRUPOS_B_C.md`](docs/arte/PLANO_CORRECAO_HUDS_GRUPOS_B_C.md)**:
+  - **Parte 1 — Grupo B (Itens B1 a B19):** tabela técnica com coordenadas atuais (`x, y, w×h`), razão de aspecto, fonte escolhida por `paperSource`, cobertura real em `paperFit` e geometria alvo exata para eliminar encolhimento de sprites (`TRANSICAO` `drawMapTransition`, faixas finas em `TITLE`/`MODE`/`OPTIONS`/`PROPHECY`/`TREE`/`SANCTUARY`, colunas da `TREE` `drawNodeTip`, modais `PAUSE`/`OPTIONS`/`HELP`/`MEMORY`/`END` e barras de câmara em `nest.js`).
+  - **Parte 2 — Grupo C (Tabelas C1, C2 e C3):**
+    - **Tabela C1:** 10 grupos de painéis/caixas ainda em renderização procedural escura (`MODE` cards, barras superior/inferior e pílulas do `NINHO`, janela PiP `"OLHO LÁ FORA"`, legenda de feromônios, `LOADING`, `CUTSCENES`, `PRETITLE`/`BOOT`).
+    - **Tabela C2:** inventário completo dos 32 ícones (`game/assets/sprites/icons/`) organizados em lotes de até 10 imagens por rodada (Regra 16).
+    - **Tabela C3:** mapeamento de substituição dos 5 atlases pixel-art legados (`game/assets/ui/lore_*.png`).
+

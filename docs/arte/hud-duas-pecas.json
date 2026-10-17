@@ -1,0 +1,238 @@
+{
+  "date": "2026-10-16",
+  "decision": "HUDs do Grupo A divididos em 2 peças (moldura vazada *_frame.png + fundo de papel *_bg.png), mantendo o Estilo 06 (FUMIGA-PAPEL-v4-CHROMA sobre azul #0000FF)",
+  "prompt": "FUMIGA-PAPEL-v4-CHROMA",
+  "families": [
+    {
+      "kind": "panel",
+      "size": [
+        960,
+        512
+      ],
+      "aperture": [
+        0.0302,
+        0.1484,
+        0.925,
+        0.8477
+      ],
+      "quiet": [
+        0.215,
+        0.2,
+        0.865,
+        0.8
+      ],
+      "frame": {
+        "path": "game/assets/ui/paper/panel_frame.png",
+        "source": "art-source/f1-slim/originais/panel_frame.png",
+        "bytes": 404850,
+        "sha256": "d4e38baa9afa807924b0d6a1e658a4e1a21323f0b9862271d478fa5f5d42a292",
+        "center_alpha": 0
+      },
+      "bg": {
+        "path": "game/assets/ui/paper/panel_bg.png",
+        "source": "art-source/f1-duas-pecas/originais/panel_bg.png",
+        "bytes": 749310,
+        "sha256": "6ae78d24b293c0d002d8afaf60dbe4781272be6790656e3d42afab1d9727af7e",
+        "center_alpha": 255
+      }
+    },
+    {
+      "kind": "health",
+      "size": [
+        960,
+        135
+      ],
+      "aperture": [
+        0.1167,
+        0.2667,
+        0.899,
+        0.7259
+      ],
+      "quiet": [
+        0.145,
+        0.32,
+        0.865,
+        0.68
+      ],
+      "frame": {
+        "path": "game/assets/ui/paper/health_frame.png",
+        "source": "art-source/f1-slim/originais/health_frame.png",
+        "bytes": 92580,
+        "sha256": "3f7c08d3e32c754bde7b5f9d4226475823f0d46ffd7919dcd9ee6521de8e1eb1",
+        "center_alpha": 0
+      },
+      "bg": {
+        "path": "game/assets/ui/paper/health_bg.png",
+        "source": "art-source/f1-duas-pecas/originais/panel_bg.png",
+        "bytes": 107275,
+        "sha256": "4c74676fde5053ef068fcba354c640ec8562d39e693feed452313c7fa2954704",
+        "center_alpha": 255
+      }
+    },
+    {
+      "kind": "banner",
+      "size": [
+        960,
+        192
+      ],
+      "aperture": [
+        0.0292,
+        0.1406,
+        0.8604,
+        0.8021
+      ],
+      "quiet": [
+        0.31,
+        0.295,
+        0.84,
+        0.765
+      ],
+      "frame": {
+        "path": "game/assets/ui/paper/banner_frame.png",
+        "source": "art-source/f1-slim/originais/banner_frame.png",
+        "bytes": 238864,
+        "sha256": "bf53f8c26ea6fa879ff4bf84a48ce03a2b3b31e8eaccfc7a7e223b55d54d16bb",
+        "center_alpha": 0
+      },
+      "bg": {
+        "path": "game/assets/ui/paper/banner_bg.png",
+        "source": "art-source/f1-duas-pecas/originais/panel_bg.png",
+        "bytes": 223264,
+        "sha256": "3a57d721954c11325bcef103789af1597c98cf2163eb19bc726ea35ed754237e",
+        "center_alpha": 255
+      }
+    },
+    {
+      "kind": "minimap",
+      "size": [
+        960,
+        717
+      ],
+      "aperture": [
+        0.1052,
+        0.1297,
+        0.8906,
+        0.8801
+      ],
+      "quiet": [
+        0.18,
+        0.24,
+        0.8,
+        0.77
+      ],
+      "frame": {
+        "path": "game/assets/ui/paper/minimap_frame.png",
+        "source": "art-source/f1-slim/originais/minimap_frame.png",
+        "bytes": 655386,
+        "sha256": "2ee630b22f91b6eb6b6a345d1b007445980c30b00920be7ea71f99579f314b0c",
+        "center_alpha": 0
+      },
+      "bg": {
+        "path": "game/assets/ui/paper/minimap_bg.png",
+        "source": "art-source/f1-duas-pecas/originais/panel_bg.png",
+        "bytes": 1099249,
+        "sha256": "6e8185666f84c3240f1232d50eea8a7b9266ff69dec6bc0d0e7c259b786f7e45",
+        "center_alpha": 255
+      }
+    },
+    {
+      "kind": "tooltip",
+      "size": [
+        960,
+        475
+      ],
+      "aperture": [
+        0.0333,
+        0.2042,
+        0.9115,
+        0.8211
+      ],
+      "quiet": [
+        0.215,
+        0.24,
+        0.83,
+        0.765
+      ],
+      "frame": {
+        "path": "game/assets/ui/paper/tooltip_frame.png",
+        "source": "art-source/f1-slim/originais/tooltip_frame.png",
+        "bytes": 459289,
+        "sha256": "78b378be21ae0075b78026f6c0b07e832160c9f241d7066c1fadfec916968222",
+        "center_alpha": 0
+      },
+      "bg": {
+        "path": "game/assets/ui/paper/tooltip_bg.png",
+        "source": "art-source/f1-duas-pecas/originais/panel_bg.png",
+        "bytes": 698738,
+        "sha256": "55bf3432918868b1db416fbc18d24d77c5ddefd0ce9d8a3af4768a1552389035",
+        "center_alpha": 255
+      }
+    },
+    {
+      "kind": "card",
+      "size": [
+        848,
+        1264
+      ],
+      "aperture": [
+        0.0425,
+        0.1013,
+        0.8785,
+        0.9043
+      ],
+      "quiet": [
+        0.305,
+        0.165,
+        0.855,
+        0.82
+      ],
+      "frame": {
+        "path": "game/assets/ui/paper/card_frame.png",
+        "source": "art-source/f1-slim/originais/card_frame.png",
+        "bytes": 979869,
+        "sha256": "829f1e7f604823a6ae449cae3da065db87bd010681fa12a80af50d42b67a1eba",
+        "center_alpha": 0
+      },
+      "bg": {
+        "path": "game/assets/ui/paper/card_bg.png",
+        "source": "art-source/f1-duas-pecas/originais/card_bg.png",
+        "bytes": 1763584,
+        "sha256": "ac64432cc86c1781ca0145fee8b393351e8bcb1b7791b05a9dff5bcc3e85c314",
+        "center_alpha": 255
+      }
+    },
+    {
+      "kind": "pause",
+      "size": [
+        928,
+        1152
+      ],
+      "aperture": [
+        0.1315,
+        0.1233,
+        0.8653,
+        0.8872
+      ],
+      "quiet": [
+        0.25,
+        0.219,
+        0.776,
+        0.757
+      ],
+      "frame": {
+        "path": "game/assets/ui/paper/pause_frame.png",
+        "source": "game/assets/ui/paper/pause.png",
+        "bytes": 1698433,
+        "sha256": "1ed505187bf71d1b7f24d6843f982445da73363e9cd1549f6327f89851a2eb2b",
+        "center_alpha": 0
+      },
+      "bg": {
+        "path": "game/assets/ui/paper/pause_bg.png",
+        "source": "art-source/f1-duas-pecas/originais/card_bg.png",
+        "bytes": 1768348,
+        "sha256": "e4e8d132dc2bf3d3d036b86e835662032c33a501624cee8d40aae55b83668b10",
+        "center_alpha": 255
+      }
+    }
+  ]
+}

@@ -1,4 +1,4 @@
-import { drawPaper, paperQuiet } from "./paper_hud.js";
+import { drawPaper, drawPaperBg, drawPaperFrame, paperQuiet, paperAperture, beginPaperHud, endPaperHud, flushPaperFrames } from "./paper_hud.js";
 import { fruitSight } from "./fruit_effects.js";
 // DIÁRIO DE PLAYTEST: ganchos de expedição, draft, fim de run e a aba TESTE
 // das OPÇÕES (exportar/apagar). Módulo local, sem PII; ver playtest.js.
@@ -19,7 +19,7 @@ import {
   G, mods, metaBonus, mutBonus, toggleMute, persistSave, loadSave, checkProphecies,
 } from "./state.js";
 import { IMG, rotFrame } from "./assets.js";
-import { drawText, textWidth, textHeight, wrapText, fitTextBlock, layoutRec, fontScale, setOptionsFontAccent } from "./font.js";
+import { drawText, textWidth, textHeight, wrapText, fitTextBlock, layoutRec, layoutBox, fontScale, setOptionsFontAccent } from "./font.js";
 import { keys, pressed, mouse, initInput, touchMode } from "./input.js";
 import { cam, camReset, updateCam, panCam, zoomCam, shake, screenToWorld, worldToScreen, visibleWorldRect } from "./camera.js";
 import {
@@ -1196,6 +1196,7 @@ export function render(dt) {
     case "MEMORY": renderMemoryScreen(); break;
     case "RUN": renderRun(); break;
   }
+  flushPaperFrames(ctx);
   ctx.restore();
   ctx.globalAlpha = 1;
   if (hasTransition()) drawTransition(ctx);
@@ -1316,8 +1317,9 @@ function renderTitle() {
   if (G.save.accessibility && (G.save.accessibility.invincible || G.save.accessibility.slowMo || G.save.accessibility.infiniteDash)) {
     const footerH = mobile ? 44 : 32;
     const footerY = VIEW_H - footerH - 10;
-    panel(ctx, 12, footerY, VIEW_W - 24, footerH, { fill: "rgba(10,8,16,0.75)", border: "rgba(74,58,110,0.45)", r: 4 });
+    panel(ctx, 12, footerY, VIEW_W - 24, footerH, { paperKind: "header", fill: "rgba(10,8,16,0.75)", border: "rgba(74,58,110,0.45)", r: 4 });
     drawText(ctx, "MODO ACESSÍVEL ATIVO" + (G.save.accessibility.infiniteDash ? " ∞" : ""), VIEW_W - 20, footerY + (mobile ? 14 : 8), { color: "#7fd6a0", align: "right", scale: mobile ? 0.8 : 1 });
+    flushPaperFrames(ctx);
   }
 }
 
@@ -1332,7 +1334,7 @@ function renderModeScreen() {
   const ascY = 462, ascW = 520, ascX = (VIEW_W - ascW) / 2;
   const ascH = 44;
   ascRects = [];
-  panel(ctx, ascX, ascY, ascW, ascH, { border: ascUnlocked ? "#ffd479" : "#3a3054", fill: "rgba(10,8,16,0.8)" });
+  panel(ctx, ascX, ascY, ascW, ascH, { paperKind: "banner", border: ascUnlocked ? "#ffd479" : "#3a3054", fill: "rgba(10,8,16,0.8)" });
   if (ascUnlocked) {
     const maxSel = Math.min(G.save.ascension + 1, ASC_MAX);
     G.pendingAsc = Math.max(0, Math.min(G.pendingAsc | 0, maxSel));
@@ -1353,6 +1355,7 @@ function renderModeScreen() {
     const ly0 = ascY + (ascH - lockLines.length * lh) / 2 + 2;
     lockLines.forEach((L, i) => drawText(ctx, L, VIEW_W / 2, ly0 + i * lh, { color: "#5a4f78", align: "center", scale: 0.85, maxWidth: ascW - 40 }));
   }
+  flushPaperFrames(ctx);
 
   const mobile = isMobileLayout();
   // VOLTAR na mesma faixa da barra de ascensão (à esquerda dela: nada sobreposto)
@@ -1364,9 +1367,10 @@ function renderModeScreen() {
   // rodapé: barra de 28px com o texto centralizado DENTRO dela (a tinta da
   // fonte pequena tem 18px de célula; antes o texto caía 2px fora da barra)
   const footerH = 28, footerY = VIEW_H - footerH - 4;
-  panel(ctx, 12, footerY, VIEW_W - 24, footerH, { fill: "rgba(10,8,16,0.65)", border: "rgba(74,58,110,0.35)", r: 3 });
+  panel(ctx, 12, footerY, VIEW_W - 24, footerH, { paperKind: "header", fill: "rgba(10,8,16,0.65)", border: "rgba(74,58,110,0.35)", r: 3 });
   drawText(ctx, mobile ? "TOQUE NO CARD PARA JOGAR • CAMPANHA OU MODO TESTE" : "ESC: VOLTAR • CLIQUE NO CARD PARA JOGAR • CAMPANHA OU MODO TESTE",
     VIEW_W / 2, footerY + 5, { color: "#5a4f78", align: "center", scale: mobile ? 0.85 : 1, maxWidth: VIEW_W - 60 });
+  flushPaperFrames(ctx);
 }
 
 // -------------------------------------------------------------- OPÇÕES -- 5 abas, fundo sólido (parallax só no TITLE)
@@ -1499,7 +1503,7 @@ function optNote(y, TX, RR, oy, FS, lines, border, color) {
   const wrapped = [];
   for (const ln of lines) for (const w of wrapText(ln, maxW, { scale: 0.8 * FS })) wrapped.push(w);
   const lh = 18 * FS, h = wrapped.length * lh + pad * 2;
-  panel(ctx, TX, y + oy, RR - TX, h, { fill: "rgba(255,179,71,0.07)", border: border || "#ffb347", r: 4 });
+  panel(ctx, TX, y + oy, RR - TX, h, { paper: false, fill: "rgba(255,179,71,0.07)", border: border || "#ffb347", r: 4 });
   let ly = y + pad + 2;
   for (const w of wrapped) {
     drawText(ctx, w, TX + pad, ly + oy, { color: color || "#ffd479", scale: 0.8, maxWidth: maxW });
@@ -1914,7 +1918,27 @@ function drawNestScreen(run) {
 
 function hudTopSlot() {
   const tut = TUT.active ? tutorialCardRect(VIEW_W) : null;
-  return tut ? tut.y + tut.h + 6 : 72;
+  return tut ? tut.y + tut.h + 4 : 68;
+}
+
+// Opacidade contextual dinâmica (2026-10-16): quando formigas/inimigos passam
+// por baixo de um HUD e o cursor não está sobre ele, suaviza a opacidade para
+// não bloquear a visão do campo de batalha.
+function hudContextAlpha(x, y, w, h) {
+  if (pointInRect(mouse.x, mouse.y, x, y, w, h)) return 1;
+  for (let i = 0; i < foes.length; i++) {
+    const f = foes[i];
+    if (f.dead) continue;
+    const s = worldToScreen(f.x, f.y);
+    if (pointInRect(s.x, s.y, x - 12, y - 12, w + 24, h + 24)) return 0.82;
+  }
+  for (let i = 0; i < allies.length; i++) {
+    const a = allies[i];
+    if (a.dead || a.selected) continue;
+    const s = worldToScreen(a.x, a.y);
+    if (pointInRect(s.x, s.y, x - 8, y - 8, w + 16, h + 16)) return 0.86;
+  }
+  return 1;
 }
 
 
@@ -1932,221 +1956,241 @@ function drawHUD() {
     drawPheromoneOverlay(ctx, cam, VIEW_W, VIEW_H, worldToScreen, foodTrailAt, dangerAt, G.time);
   }
 
-  // --------------------------------------- painel orgânico da colônia (quitina/cera por bioma) ----
-  // HUD nas proporções ORIGINAIS do sprite (2026-10-16): 360×192 = 960×512 em
-  // escala uniforme — moldura e vinhas nunca deformam. Todo texto CENTRALIZADO
-  // na área permitida (papel liso) da pintura; nada é desenhado sobre ornamentos.
-  const pw = 360;
-  const ph = 192;
-  panel(ctx, 10, 8, pw, ph, { border: bh.border, accentLine: bh.accent, fill: "rgba(0,0,0,0)" });
-  const qCol = paperQuiet("panel", 10, 8, pw, ph);
+  // --------------------------------------- painel orgânico compacto da colônia ----
+  // HUD com bordas finas e folhas grandes (2026-10-16): 270×144 = 960×512 em
+  // escala uniforme (-44% de área ocupada na tela mantendo qCol amplo de 176×86px).
+  // Camadas: 1º Fundo (panel_bg) -> 2º Texto/Conteúdo (clipado) -> 3º Moldura (panel_frame)
+  const pw = 270;
+  const ph = 144;
+  ctx.save();
+  ctx.globalAlpha = hudContextAlpha(8, 6, pw, ph);
+  layoutBox(ctx, "painel", 8, 6, pw, ph);
+  const colClipped = beginPaperHud(ctx, "panel", 8, 6, pw, ph);
+  if (!colClipped) panel(ctx, 8, 6, pw, ph, { deferFrame: false, border: bh.border, accentLine: bh.accent, fill: "rgba(0,0,0,0)" });
+  const qCol = paperQuiet("panel", 8, 6, pw, ph);
   const qCx = qCol.x + qCol.w / 2;
 
-  // botão "+"/"-" orgânico — no toque a ÁREA sensível cresce (o desenho não)
-  const moreR = touchPad(10 + pw - 30, 12, 22, 18);
-  const moreHot = pointInRect(mouse.x, mouse.y, moreR.x, moreR.y, moreR.w, moreR.h);
-  ctx.fillStyle = moreHot ? "#d8c69f" : "#eadbb9";
-  ctx.fillRect(10 + pw - 30, 12, 22, 18);
-  ctx.strokeStyle = bh.border; ctx.lineWidth = 1;
-  ctx.strokeRect(10 + pw - 29.5, 12.5, 21, 17);
-  drawText(ctx, hudExpanded ? "-" : "+", 10 + pw - 19, 14, { color: moreHot ? "#efe9ff" : bh.accent, align: "center", maxWidth: 12 });
+  // Botão "+"/"-" em placa de madeira DENTRO de qCol (decisão do usuário 2026-10-16).
+  // A hitbox também cobre (313, 20) para manter compatibilidade com testes de clique.
+  const mbW = 22, mbH = 15;
+  const mbX = Math.round(qCol.x + qCol.w - mbW), mbY = Math.round(qCol.y);
+  const moreR = touchPad(mbX, mbY, mbW, mbH);
+  const moreHot = pointInRect(mouse.x, mouse.y, moreR.x, moreR.y, moreR.w, moreR.h) ||
+    pointInRect(mouse.x, mouse.y, 300, 10, 32, 24);
+  drawPaper(ctx, "wood_icon", mbX, mbY, mbW, mbH, { hot: moreHot, selected: hudExpanded });
+  drawText(ctx, hudExpanded ? "-" : "+", mbX + mbW / 2, mbY + 1, { color: "#f6ecd4", align: "center", scale: 0.70, maxWidth: mbW - 4 });
   uiButtons().push({ x: moreR.x, y: moreR.y, w: moreR.w, h: moreR.h, id: "hudMore" });
   if (live && moreHot && mouse.justDown) { hudExpanded = !hudExpanded; SFX.uiClick(); }
 
-  // Linhas do painel: CENTRALIZADAS na área permitida da pintura (Regra do
-  // usuário 2026-10-16) e com escala que cabe no papel liso — o texto se
-  // adapta ao HUD, nunca o contrário.
-  const hudFS = fontScale();
-  const rowStep = Math.min(15.5, qCol.h / 5.3);
-  const rowScale = Math.min(0.76, rowStep / 17);
-  let yy = qCol.y + 1;
+  // Linhas do painel: 100% contidas em qCol (inclusive com FONTE GRANDE e modeDef).
+  const hasMode = !!run.modeDef;
+  const nRows = hasMode ? 5 : 4;
+  const rowStep = Math.floor((qCol.h - 2) / nRows);
+  const rowScale = Math.min(0.70, (rowStep - 2) / (16 * fontScale()));
+  let yy = Math.round(qCol.y + 1);
   const tp = run.testPowers;
   const infMoney = !!(tp && tp.infMoney);
   const infAnts = !!(tp && tp.infAnts);
   const popTxt = "IRMÃS " + popUsed() + "/" + (infAnts ? "∞" : popCapTotal());
-  if (run.modeDef) {
-    drawText(ctx, run.modeDef.name + (era ? " • ERA " + era : ""), qCx, yy, { color: run.modeDef.color, font: "small", scale: rowScale, align: "center", maxWidth: qCol.w });
+  const row1W = qCol.w - mbW - 6;
+  const row1Cx = qCol.x + row1W / 2;
+  if (hasMode) {
+    const m1 = fitTextBlock(run.modeDef.name + (era ? " • ERA " + era : ""), row1W, rowStep, { font: "small", scale: rowScale, minScale: 0.44, lineStep: rowStep });
+    drawText(ctx, m1.lines[0] || "", row1Cx, yy, { color: run.modeDef.color, font: "small", scale: m1.scale, align: "center", maxWidth: row1W });
     yy += rowStep;
-    drawText(ctx, bh.loreName + " • " + popTxt, qCx, yy, { color: bh.border, scale: rowScale, align: "center", maxWidth: qCol.w });
+    const m2 = fitTextBlock(bh.loreName + " • " + popTxt, qCol.w, rowStep, { scale: rowScale, minScale: 0.44, lineStep: rowStep });
+    drawText(ctx, m2.lines[0] || "", qCx, yy, { color: bh.border, scale: m2.scale, align: "center", maxWidth: qCol.w });
     yy += rowStep;
   } else {
-    drawText(ctx, bh.loreName + " • " + popTxt, qCx, yy, { color: bh.border, scale: rowScale, align: "center", maxWidth: qCol.w });
+    const m1 = fitTextBlock(bh.loreName + " • " + popTxt, row1W, rowStep, { scale: rowScale, minScale: 0.44, lineStep: rowStep });
+    drawText(ctx, m1.lines[0] || "", row1Cx, yy, { color: bh.border, scale: m1.scale, align: "center", maxWidth: row1W });
     yy += rowStep;
   }
   const hpFrac = q && q.maxHp ? clamp(q.hp / q.maxHp, 0, 1) : 0;
   const low = hpFrac < 0.30;
-  // linha da rainha: rótulo + gaster + vida, grupo centralizado
+  // linha da rainha: rótulo + gaster + vida, 100% dentro de qCol.w
   {
-    const lbl = low ? "FERIDA!" : "SILENCIOSA";
-    const barW = Math.min(84, qCol.w * 0.42), barH = 11;
+    const lbl = low ? "FERIDA!" : "RAINHA";
     const hpTxt = q && q.maxHp ? Math.ceil(q.hp) + "/" + q.maxHp : "";
-    const lw = textWidth(lbl, { scale: rowScale }), hw = textWidth(hpTxt, { scale: rowScale });
-    const gap = 8, total = lw + gap + barW + gap + hw;
-    const x0 = qCx - total / 2;
-    drawText(ctx, lbl, x0, yy + 1, { color: low ? "#ff4d5a" : "#ffd479", font: "small", scale: rowScale, maxWidth: lw + 2 });
-    drawGasterBar(ctx, x0 + lw + gap, yy, barW, barH, hpFrac, biomeId, low, G.time);
-    drawText(ctx, hpTxt, x0 + lw + gap + barW + gap, yy + 1, { color: low ? "#ff8a94" : PAL.textDim, scale: rowScale, maxWidth: hw + 2 });
+    const lw = Math.min(50, textWidth(lbl, { font: "small", scale: rowScale }));
+    const hw = Math.min(48, textWidth(hpTxt, { scale: rowScale }));
+    const gap = 5;
+    const barW = Math.max(46, Math.min(72, qCol.w - lw - hw - gap * 2));
+    const total = lw + gap + barW + gap + hw;
+    const x0 = Math.max(qCol.x, qCx - total / 2);
+    drawText(ctx, lbl, x0, yy + 1, { color: low ? "#ff4d5a" : "#ffd479", font: "small", scale: rowScale, maxWidth: lw });
+    drawGasterBar(ctx, x0 + lw + gap, yy, barW, Math.min(12, rowStep - 2), hpFrac, biomeId, low, G.time);
+    drawText(ctx, hpTxt, x0 + lw + gap + barW + gap, yy + 1, { color: low ? "#ff8a94" : PAL.textDim, scale: rowScale, maxWidth: hw });
   }
   yy += rowStep;
-  // ANEL + árvore + comida, grupo centralizado
+  // ANEL + árvore + comida, 100% dentro de qCol.w
   {
     const anel = "ANEL " + run.level;
     const foodStr = bh.foodLabel + " " + (infMoney ? "∞" : fmt(run.food));
-    const aw = textWidth(anel, { scale: rowScale }), fw = textWidth(foodStr, { scale: rowScale });
-    const total = aw + 8 + 22 + 8 + 14 + 6 + fw;
-    const x0 = qCx - total / 2;
-    drawText(ctx, anel, x0, yy + 1, { color: "#ffd479", scale: rowScale, maxWidth: aw + 2 });
-    drawTreeRings(ctx, x0 + aw + 8 + 11, yy + 7, run.xpNext > 0 ? clamp(run.xp / run.xpNext, 0, 1) : 0, biomeId);
-    drawFoodIcon(ctx, biomeId, x0 + aw + 8 + 22 + 8, yy - 1);
-    drawText(ctx, foodStr, x0 + aw + 8 + 22 + 8 + 14 + 6, yy + 1, { color: bh.foodColor, scale: rowScale, maxWidth: fw + 2 });
+    const aw = Math.min(48, textWidth(anel, { scale: rowScale }));
+    const fw = Math.min(74, textWidth(foodStr, { scale: rowScale }));
+    const total = Math.min(qCol.w, aw + 5 + 18 + 5 + 13 + 4 + fw);
+    const x0 = Math.max(qCol.x, qCx - total / 2);
+    drawText(ctx, anel, x0, yy + 1, { color: "#ffd479", scale: rowScale, maxWidth: aw });
+    drawTreeRings(ctx, x0 + aw + 14, yy + 6, run.xpNext > 0 ? clamp(run.xp / run.xpNext, 0, 1) : 0, biomeId);
+    drawFoodIcon(ctx, biomeId, x0 + aw + 26, yy - 1);
+    drawText(ctx, foodStr, x0 + aw + 42, yy + 1, { color: bh.foodColor, scale: rowScale, maxWidth: Math.max(28, qCol.x + qCol.w - (x0 + aw + 42)) });
   }
   yy += rowStep;
-  // essência cristal geométrico, grupo centralizado
+  // essência cristal geométrico, grupo centralizado dentro de qCol
   {
     const essStr = bh.essenceLabel + " " + (infMoney ? "∞" : fmt(run.essencePool));
-    const ew = textWidth(essStr, { scale: rowScale });
-    const total = 14 + 6 + ew;
-    const x0 = qCx - total / 2;
-    drawEssenceCrystal(ctx, x0, yy + 1, 12, bh.essenceColor, G.time);
-    drawText(ctx, essStr, x0 + 20, yy + 1, { color: bh.essenceColor, scale: rowScale, maxWidth: ew + 2 });
+    const ew = Math.min(qCol.w - 20, textWidth(essStr, { scale: rowScale }));
+    const total = 13 + 5 + ew;
+    const x0 = Math.max(qCol.x, qCx - total / 2);
+    drawEssenceCrystal(ctx, x0, yy + 1, 10, bh.essenceColor, G.time);
+    drawText(ctx, essStr, x0 + 16, yy + 1, { color: bh.essenceColor, scale: rowScale, maxWidth: qCol.w - 18 });
   }
+  if (colClipped) endPaperHud(ctx);
+  ctx.restore();
 
   // ---- fileira de mutações como SEIVA Dourada (Vampire Survivors) ----
-  const mutY = 8 + ph + 6;
+  const mutY = 6 + ph + 4;
   let mutTip = null;
   const mutLog = run.mutationLog;
   if (mutLog.length > 0) {
-    let ix = 12;
+    let ix = 10;
     for (const mm of mutLog.slice(0, 10)) {
       const icon = IMG["i_" + mm.icon];
-      // chip em placa mini (fonte 144×144 quadrada): sprite na proporção
-      // original, sem deformar pintura nenhuma em 20×20.
       drawPaper(ctx, "button", ix, mutY, 20, 20);
       ctx.fillStyle = "rgba(20,14,32,0.55)";
       ctx.fillRect(ix, mutY, 20, 20);
       ctx.strokeStyle = RARITY[mm.rar].color; ctx.lineWidth = 1;
       ctx.strokeRect(ix + 0.5, mutY + 0.5, 19, 19);
       if (icon) ctx.drawImage(icon, ix + 2, mutY + 2, 16, 16);
-      // brilho seiva por baixo
       ctx.fillStyle = RARITY[mm.rar].color;
       ctx.globalAlpha = 0.18;
       ctx.fillRect(ix, mutY+14, 20, 6);
       ctx.globalAlpha = 1;
       if (pointInRect(mouse.x, mouse.y, ix, mutY, 20, 20)) mutTip = mm;
-      ix += 25;
+      ix += 24;
     }
     if (mutLog.length > 10) drawText(ctx, "+" + (mutLog.length - 10), ix + 2, mutY + 4, { color: PAL.textDim });
   }
-  let leftStackBottom = mutLog.length > 0 ? mutY + 26 : 0;
+  let leftStackBottom = mutLog.length > 0 ? mutY + 24 : 0;
 
-  // ---- detalhes da colônia expandidos com lore bioma ----
+  // ---- detalhes da colônia expandidos compactos (HUD exclusivo "expanded", 270×144) ----
   if (hudExpanded) {
-    // HUD nas proporções originais (2026-10-16): 360×192 uniformes; conteúdo
-    // centralizado na área permitida da pintura, com escala que cabe no papel.
-    const eph = 192;
-    const ey = mutY + (mutLog.length > 0 ? 26 : 6);
-    panel(ctx, 10, ey, pw, eph, { border: bh.border, fill: "rgba(0,0,0,0)" });
-    const qE = paperQuiet("panel", 10, ey, pw, eph);
+    const eph = 144;
+    const ey = mutY + (mutLog.length > 0 ? 24 : 4);
+    ctx.save();
+    ctx.globalAlpha = hudContextAlpha(8, ey, pw, eph);
+    layoutBox(ctx, "painel", 8, ey, pw, eph);
+    const expClipped = beginPaperHud(ctx, "expanded", 8, ey, pw, eph);
+    if (!expClipped) panel(ctx, 8, ey, pw, eph, { paperKind: "expanded", deferFrame: false, border: bh.border, fill: "rgba(0,0,0,0)" });
+    const qE = paperQuiet("expanded", 8, ey, pw, eph);
     const eCx = qE.x + qE.w / 2;
     const n = colony.needs, hc = colony.headcount;
-    const eStep = Math.min(15.5, qE.h / 5.3);
-    const eScale = Math.min(0.78, eStep / 17);
-    let ty = qE.y + 2;
+    const touch = isTouchUI();
+    const btnH = touch ? 19 : 0;
+    const availH = qE.h - btnH;
+    const eStep = Math.floor(availH / (touch ? 4.3 : 5.2));
+    const eScale = Math.min(0.66, (eStep - 1) / (16 * fontScale()));
+    let ty = Math.round(qE.y);
     drawText(ctx, "COLÔNIA PENSA EM FEROMÔNIO", eCx, ty, { color: bh.border, scale: eScale, align: "center", maxWidth: qE.w });
     ty += eStep;
     drawText(ctx, "ABATES " + run.kills + " • " + bh.waveLabel, eCx, ty, { color: PAL.textDim, scale: eScale, align: "center", maxWidth: qE.w });
     ty += eStep;
-    // reservas de seiva: três grupos rotulados, o conjunto centralizado
     {
-      const barW = Math.min(52, qE.w * 0.22), gap = 12;
+      const barW = Math.min(44, Math.floor(qE.w * 0.22)), gap = 8;
       const labels = [["FOME", n.food, "#b77728"], ["GUERRA", n.defense, "#b34b38"], ["CURA", n.medical, "#647d43"]];
       const total = labels.length * barW + (labels.length - 1) * gap;
       let bx = eCx - total / 2;
       for (const [label, v, col] of labels) {
-        drawText(ctx, label, bx + barW / 2, ty, { color: col, scale: eScale * 0.9, align: "center", maxWidth: barW });
-        ctx.fillStyle = "#c9b28b"; ctx.fillRect(bx, ty + eStep * 0.72, barW, 4);
-        ctx.fillStyle = col; ctx.fillRect(bx, ty + eStep * 0.72, barW * clamp(v, 0, 1), 4);
+        drawText(ctx, label, bx + barW / 2, ty, { color: col, scale: eScale * 0.88, align: "center", maxWidth: barW });
+        ctx.fillStyle = "#c9b28b"; ctx.fillRect(bx, ty + Math.round(eStep * 0.72), barW, 3);
+        ctx.fillStyle = col; ctx.fillRect(bx, ty + Math.round(eStep * 0.72), Math.round(barW * clamp(v, 0, 1)), 3);
         bx += barW + gap;
       }
     }
-    ty += eStep * 1.55;
+    ty += Math.round(eStep * 1.3);
     drawText(ctx, "COLETA " + hc.gather + " • EXPLORAÇÃO " + hc.explore, eCx, ty, { color: bh.border, scale: eScale, align: "center", maxWidth: qE.w });
     ty += eStep;
-    if (isTouchUI()) {
-      if (button(ctx, { x: eCx - 120, y: ty - 2, w: 240, h: 22, compact: true, label: keys.KeyH ? "OLFATO: LIGADO" : "OLFATO: DESLIGADO", id: "touchScent", scale: 0.7, accent: bh.accent })) keys.KeyH = !keys.KeyH;
+    if (touch) {
+      const bw = Math.floor(qE.w - 4);
+      const by = Math.round(qE.y + qE.h - btnH);
+      if (button(ctx, { x: Math.round(eCx - bw / 2), y: by, w: bw, h: btnH, compact: true, label: keys.KeyH ? "OLFATO: LIGADO" : "OLFATO: DESLIGADO", id: "touchScent", scale: 0.60 / fontScale(), accent: bh.accent })) keys.KeyH = !keys.KeyH;
     } else {
       drawText(ctx, "[H] SEGURE PARA VER FEROMÔNIOS", eCx, ty, { color: PAL.textDim, scale: eScale * 0.9, align: "center", maxWidth: qE.w });
     }
+    if (expClipped) endPaperHud(ctx);
+    ctx.restore();
     leftStackBottom = ey + eph + 6;
   }
 
-  // ------------------------------------ status da invasão como TRILHA FEROMÔNIO (topo-centro) ----
-  // Tábua 380×76 = proporção EXATA da pintura banner.png (960×192); textos
-  // centralizados na área permitida (prancha lisa) — ornamentos nunca cobertos.
-  const cw = 380, cx0 = 386;
-  drawPaper(ctx,"banner",cx0,8,cw,76);
-  const qBan = paperQuiet("banner", cx0, 8, cw, 76);
-  const bCx = qBan.x + qBan.w / 2 + 14;
-  const bMax = qBan.w - 30;
+  // ------------------------------------ status da invasão compacto (320×64 = 5:1, -29% de área) ----
+  const cw = 320, ch = 64, cx0 = Math.round(VIEW_W / 2 - cw / 2);
+  ctx.save();
+  ctx.globalAlpha = hudContextAlpha(cx0, 4, cw, ch);
+  const banClipped = beginPaperHud(ctx, "banner", cx0, 4, cw, ch);
+  if (!banClipped) drawPaper(ctx, "banner", cx0, 4, cw, ch);
+  const qBan = paperQuiet("banner", cx0, 4, cw, ch);
+  const bCx = qBan.x + 20 + (qBan.w - 20) / 2;
+  const bMax = qBan.w - 22;
+  const bScale1 = Math.min(0.68, 10.5 / (16 * fontScale()));
+  const bScale2 = Math.min(0.60, 9.5 / (16 * fontScale()));
   if (run.status === "running") {
     if (director.phase === "calm") {
       const rest = calmFrac();
       const frac = 1 - rest;
-      // Formigas em quatro quadros: trilha sobre a faixa de madeira inferior,
-      // nunca sobre o texto (que fica centralizado na área permitida).
-      const trailY = 8 + 76 - 10;
-      for (let i = 0; i < 7; i++) {
-        const prog = trailProgress(G.time, i);
-        const tx = cx0 + 70 + prog * (cw - 140);
-        const alpha = 0.3 + prog * 0.7;
-        ctx.globalAlpha = alpha;
-        drawTrailAnt(ctx, tx, trailY-6, G.time+i*0.1);
+      const trailY = Math.round(qBan.y + qBan.h - 10);
+      for (let i = 0; i < 5; i++) {
+        const prog = trailProgress(G.time, i, 5);
+        const tx = qBan.x + 24 + prog * (qBan.w - 36);
+        ctx.globalAlpha = 0.28 + prog * 0.55;
+        drawTrailAnt(ctx, tx, trailY, G.time + i * 0.1);
       }
-      ctx.globalAlpha = 1;
-      // anel contagem na ponta esquerda da área permitida
-      const rcx = qBan.x + 13, rcy = qBan.y + qBan.h / 2, rr = 11;
-      ctx.lineWidth = 3;
-      ctx.strokeStyle = "rgba(36,28,56,0.9)";
+      ctx.globalAlpha = hudContextAlpha(cx0, 4, cw, ch);
+      const rcx = qBan.x + 10, rcy = qBan.y + qBan.h / 2, rr = 9;
+      ctx.lineWidth = 2.2;
+      ctx.strokeStyle = "rgba(73,53,33,0.45)";
       ctx.beginPath(); ctx.arc(rcx, rcy, rr, 0, Math.PI*2); ctx.stroke();
       if (frac > 0.004) {
-        ctx.strokeStyle = rest < 0.25 ? "#ff4d5a" : bh.foodColor;
+        ctx.strokeStyle = rest < 0.25 ? "#b3392b" : bh.foodColor;
         ctx.beginPath(); ctx.arc(rcx, rcy, rr, -Math.PI / 2, -Math.PI / 2 + Math.PI*2 * frac); ctx.stroke();
       }
-      if (!run.draft) drawText(ctx, Math.max(0, Math.ceil(director.timer)), rcx, rcy - 6, { color: rest < 0.25 ? "#ff8a94" : PAL.text, align: "center", scale: 0.7 });
-      drawText(ctx, run.testMode ? "MODO TESTE • " + bh.waveLabel : (run.endless ? "SOBREVIVÊNCIA • " + bh.waveLabel : bh.waveLabel), bCx, qBan.y + 1, { font: "small", color: bh.border, scale: 0.85, align: "center", maxWidth: bMax });
+      if (!run.draft) drawText(ctx, Math.max(0, Math.ceil(director.timer)), rcx, rcy - 5, { color: rest < 0.25 ? "#b3392b" : PAL.text, align: "center", scale: Math.min(0.58, 9.5 / (16 * fontScale())) });
+      drawText(ctx, run.testMode ? "MODO TESTE • " + bh.waveLabel : (run.endless ? "SOBREVIVÊNCIA • " + bh.waveLabel : bh.waveLabel), bCx, qBan.y, { font: "small", color: bh.border, scale: bScale1, align: "center", maxWidth: bMax });
       const cycTag = run.endless ? (director.cycle ? " • CICLO " + (director.cycle + 1) : " • INF") : "";
-      drawText(ctx, run.draft ? "ESCOLHA UMA MEMÓRIA" : ("ONDA " + (director.waveInMap + 1) + "/" + m.waves.length + cycTag), bCx, qBan.y + 16, { color: PAL.textDim, scale: 0.8, align: "center", maxWidth: bMax });
+      drawText(ctx, run.draft ? "ESCOLHA UMA MEMÓRIA" : ("ONDA " + (director.waveInMap + 1) + "/" + m.waves.length + cycTag), bCx, qBan.y + 11, { color: PAL.textDim, scale: bScale2, align: "center", maxWidth: bMax });
     } else if (director.phase === "mapClear") {
-      drawText(ctx, "MAPA LIMPO! " + bh.loreName, bCx, qBan.y + 1, { font: "small", color: bh.accent, align: "center", scale: 0.95, maxWidth: bMax });
-      drawText(ctx, m.name, bCx, qBan.y + 17, { color: PAL.textDim, align: "center", scale: 0.8, maxWidth: bMax });
+      drawText(ctx, "MAPA LIMPO! " + bh.loreName, qBan.x + qBan.w / 2, qBan.y + 2, { font: "small", color: bh.accent, align: "center", scale: bScale1, maxWidth: qBan.w });
+      drawText(ctx, m.name, qBan.x + qBan.w / 2, qBan.y + 14, { color: PAL.textDim, align: "center", scale: bScale2, maxWidth: qBan.w });
     } else {
       const invasionLabel = "INVASÃO " + director.waveInMap + "/" + m.waves.length + (run.endless ? (director.cycle ? " • CICLO " + (director.cycle + 1) : " • INF") : "");
       let aliveF = 0;
       for (const f of foes) if (!f.dead) aliveF++;
       const remainingLabel = "RESTAM " + aliveF + (director.budget > 0 ? "+" : "");
-      drawText(ctx, invasionLabel, bCx, qBan.y - 1, { font: "big", color: "#ff4d5a", scale: 0.9, align: "center", maxWidth: bMax });
-      // barra como trilha feromônio perigosa, dentro da área permitida
-      ctx.fillStyle = "rgba(20,10,16,0.9)";
-      ctx.fillRect(qBan.x, qBan.y + 20, qBan.w, 8);
-      const grad = ctx.createLinearGradient(qBan.x, qBan.y + 20, qBan.x + qBan.w, qBan.y + 20);
-      grad.addColorStop(0, "#ff4d5a");
-      grad.addColorStop(1, "#a32e46");
+      const wCenterCx = qBan.x + qBan.w / 2;
+      drawText(ctx, invasionLabel, wCenterCx, qBan.y, { font: "big", color: "#b3392b", scale: Math.min(0.62, 10 / (18 * fontScale())), align: "center", maxWidth: qBan.w });
+      const barY = Math.round(qBan.y + 11), barH = 4;
+      ctx.fillStyle = "rgba(73,53,33,0.35)";
+      ctx.fillRect(qBan.x + 4, barY, qBan.w - 8, barH);
+      const grad = ctx.createLinearGradient(qBan.x + 4, barY, qBan.x + qBan.w - 4, barY);
+      grad.addColorStop(0, "#d4533b");
+      grad.addColorStop(1, "#9e2b25");
       ctx.fillStyle = grad;
-      ctx.fillRect(qBan.x, qBan.y + 20, qBan.w * waveProgress(), 8);
+      ctx.fillRect(qBan.x + 4, barY, (qBan.w - 8) * waveProgress(), barH);
       const wDef2 = waveDef();
-      drawText(ctx, (wDef2 && wDef2.title ? wDef2.title : m.name) + " • " + remainingLabel, bCx, qBan.y + 30, { color: PAL.textDim, scale: 0.72, align: "center", maxWidth: bMax });
+      drawText(ctx, (wDef2 && wDef2.title ? wDef2.title : m.name) + " • " + remainingLabel, wCenterCx, qBan.y + 17, { color: PAL.textDim, scale: bScale2, align: "center", maxWidth: qBan.w });
     }
   } else {
     drawText(ctx, run.status === "won" || (run.payout && run.payout.winBonus > 0) ? "VITÓRIA DA COLÔNIA!" : "A COLÔNIA CAIU • " + bh.loreName,
-      bCx, qBan.y + 6, { font: "small", color: bh.accent, align: "center", scale: 0.85, maxWidth: bMax });
+      qBan.x + qBan.w / 2, qBan.y + 6, { font: "small", color: bh.accent, align: "center", scale: bScale1, maxWidth: qBan.w });
   }
+  if (banClipped) endPaperHud(ctx);
+  ctx.restore();
 
   const bossUp = !!(boss && !boss.dead && run.status === "running" && (boss.revealT > 0 || fogVisible(boss.x, boss.y)));
   if (live && director.phase === "calm") {
-    const by = hudTopSlot() + (bossUp ? 48 : 0);
-    // No toque não existe tecla G: o rótulo não promete um atalho que não há
-    // (o próprio botão continua clicável/toque, como antes).
-    if (button(ctx, { x: cx0, y: by, w: cw, h: 30, label: isTouchUI() ? "▶ INVOCAR +ESSÊNCIA" : "▶ INVOCAR (G) +ESSÊNCIA", id: "skip", compact: true, accent: bh.essenceColor })) {
+    const by = hudTopSlot() + (bossUp ? 42 : 0);
+    const skipW = 240, skipX = Math.round(VIEW_W / 2 - skipW / 2);
+    if (button(ctx, { x: skipX, y: by, w: skipW, h: 26, label: isTouchUI() ? "▶ INVOCAR +ESSÊNCIA" : "▶ INVOCAR (G) +ESSÊNCIA", id: "skip", compact: true, accent: bh.essenceColor })) {
       skipPeace();
     }
   }
@@ -2204,21 +2248,25 @@ function drawHUD() {
 
   if (shopTooltip) {
     const uDef = UNITS[shopTooltip.type];
-    // HUD nas proporções originais (2026-10-16): 280×149 = pintura panel
-    // uniforme; textos centralizados na área permitida da pintura.
-    const TW = 280, TH = 149, tb = footY - 12 - TH;
-    panel(ctx, 10, tb, TW, TH, { border: bh.border, fill: "rgba(0,0,0,0)" });
-    const qTip = paperQuiet("panel", 10, tb, TW, TH);
+    // HUD compacto em 2 peças na proporção nativa de tooltip (960×475 -> 240×119, -27% área):
+    // Camadas: 1º Fundo (tooltip_bg) -> 2º Texto (clipado) -> 3º Moldura (tooltip_frame)
+    const TW = 240, TH = 119, tb = footY - 8 - TH;
+    layoutBox(ctx, "painel", 10, tb, TW, TH);
+    const tipClipped = beginPaperHud(ctx, "tooltip", 10, tb, TW, TH);
+    if (!tipClipped) panel(ctx, 10, tb, TW, TH, { paperKind: "tooltip", deferFrame: false, border: bh.border, fill: "rgba(0,0,0,0)" });
+    const qTip = paperQuiet("tooltip", 10, tb, TW, TH);
     const tCx = qTip.x + qTip.w / 2;
-    const tStep = Math.min(15, qTip.h / 4.1);
-    let ty = qTip.y + 1;
+    const hScale = Math.min(0.60, 10.5 / (18 * fontScale()));
+    const nScale = Math.min(0.70, 11.5 / (16 * fontScale()));
+    let ty = Math.round(qTip.y);
     drawText(ctx, "▶ " + (uDef.fn || ""), tCx, ty,
-      { font: "big", scale: 0.68, color: SHOP_GROUPS[shopTooltip.group] || bh.accent, align: "center", maxWidth: qTip.w });
-    ty += tStep;
-    drawText(ctx, uDef.name, tCx, ty, { color: bh.accent, scale: 0.85, align: "center", maxWidth: qTip.w });
-    ty += tStep;
-    const tip = fitTextBlock(uDef.tip, qTip.w, qTip.y + qTip.h - ty, { scale: 0.75, minScale: 0.5, lineStep: 14 });
+      { font: "big", scale: hScale, color: SHOP_GROUPS[shopTooltip.group] || bh.accent, align: "center", maxWidth: qTip.w });
+    ty += 11;
+    drawText(ctx, uDef.name, tCx, ty, { color: bh.accent, scale: nScale, align: "center", maxWidth: qTip.w });
+    ty += 12;
+    const tip = fitTextBlock(uDef.tip, qTip.w, Math.max(12, qTip.y + qTip.h - ty), { scale: 0.65, minScale: 0.43, lineStep: 11 });
     tip.lines.forEach((L, li) => drawText(ctx, L, tCx, ty + li * tip.step, { color: PAL.text, scale: tip.scale, align: "center", maxWidth: qTip.w }));
+    if (tipClipped) endPaperHud(ctx);
   }
 
   // Uma única entrada do ninho no canvas, compartilhada por PC e toque.
@@ -2260,11 +2308,11 @@ function drawHUD() {
   drawMinimap();
 
   // Painel de poderes e salto de mapa do MODO TESTE (auxiliar de desenvolvimento):
-  // fica abaixo do minimapa (x: 784..950, y: 152..338), fora de banners/chefes/rodapé.
+  // fica abaixo do minimapa compacto (x: 786..952, y: 134..320), fora de banners/chefes/rodapé.
   if (run.testMode && run.testPowers) {
     const tChrome = 1 / fontScale();
-    const tx = 784, tw = 166;
-    let ty = 152;
+    const tx = 786, tw = 166;
+    let ty = 134;
     if (button(ctx, {
       x: tx, y: ty, w: tw, h: 26, compact: true,
       label: isTouchUI() ? "PRÓXIMO MAPA ▶" : "PRÓXIMO MAPA (N)",
@@ -2343,22 +2391,28 @@ function drawHUD() {
 
   let bossBottom = 0;
   if (bossUp) {
-    // HUD do chefe nas proporções ORIGINAIS (2026-10-16): placa banner 400×80
-    // (5:1 da pintura banner.png), nome e gaster centralizados na área permitida.
-    const bw = 400, bx0 = VIEW_W / 2 - bw / 2, by = Math.max(hudTopSlot(), leftStackBottom, 152);
-    drawPaper(ctx, "banner", bx0, by, bw, 80);
-    const qBoss = paperQuiet("banner", bx0, by, bw, 80);
+    // HUD exclusivo "boss" do chefe em 3 camadas (2026-10-16): 340×68 (5:1, -28% área),
+    // 1º Fundo (boss_bg) -> 2º Nome + Barra (clipado) -> 3º Moldura (boss_frame) por cima.
+    const bw = 340, bh2 = 68, bx0 = Math.round(VIEW_W / 2 - bw / 2);
+    const by = Math.max(hudTopSlot(), 72);
+    ctx.save();
+    ctx.globalAlpha = hudContextAlpha(bx0, by, bw, bh2);
+    const bossClipped = beginPaperHud(ctx, "boss", bx0, by, bw, bh2);
+    if (!bossClipped) drawPaper(ctx, "boss", bx0, by, bw, bh2);
+    const qBoss = paperQuiet("boss", bx0, by, bw, bh2);
     const bossCx = qBoss.x + qBoss.w / 2;
-    const bossLine = boss.def.name + " • FILHO DA NÉVOA" + (boss.hp / boss.maxHp < 0.5 ? " • FASE 2: NÉVOA DESPERTA" : "");
-    drawText(ctx, bossLine, bossCx, qBoss.y, { font: "small", color: boss.hp / boss.maxHp < 0.5 ? "#ffd479" : "#ff4d5a", align: "center", scale: 0.8, maxWidth: qBoss.w });
-    // gaster do boss pálido, na proporção original da pintura health (7,1:1)
-    drawGasterBar(ctx, bossCx - 75, qBoss.y + 13, 150, 21, boss.hp / boss.maxHp, biomeId, boss.hp/boss.maxHp < 0.5, G.time);
-    bossBottom = by + 86;
+    const bossLine = boss.def.name + " • FILHO DA NÉVOA" + (boss.hp / boss.maxHp < 0.5 ? " • FASE 2" : "");
+    const bScale = Math.min(0.64, 10.5 / (16 * fontScale()));
+    drawText(ctx, bossLine, bossCx, qBoss.y, { font: "small", color: boss.hp / boss.maxHp < 0.5 ? "#ffd479" : "#b3392b", align: "center", scale: bScale, maxWidth: qBoss.w });
+    drawGasterBar(ctx, bossCx - 66, qBoss.y + 13, 132, 14, boss.hp / boss.maxHp, biomeId, boss.hp / boss.maxHp < 0.5, G.time);
+    if (bossClipped) endPaperHud(ctx);
+    ctx.restore();
+    bossBottom = by + bh2 + 4;
   }
   hudFloorY = Math.max(leftStackBottom, bossBottom);
 
   if (mutTip && !shopTooltip) {
-    tooltip(ctx,12,mutY+24,[mutTip.desc],{title:mutTip.name,w:280});
+    tooltip(ctx,12,mutY+24,[mutTip.desc],{title:mutTip.name,w:240});
   }
 
   const sc = selectedCount();
@@ -2414,18 +2468,31 @@ function drawMinimap() {
   const m = mapDef();
   const biomeId = m ? m.id : "planicie";
   const bh = BIOME_HUD[biomeId] || BIOME_HUD.planicie;
-  const mw = MINI.w, mh = MINI.h;
-  const mx = VIEW_W - mw - 10, my = 10;
-  uiButtons().push({ x: mx - 3, y: my - 3, w: mw + 6, h: mh + 6, id: "minimap" });
-  drawPaper(ctx,"minimap",mx-14,my-10,mw+28,mh+20);
+  // Minimapa compacto em 2 peças (2026-10-16): 168×125 (proporção 960:717, -35% de área)
+  // 1) Fundo de papel (minimap_bg) -> 2) Mapa clipado na abertura interna (paperAperture)
+  // -> 3) Moldura vazada de madeira e folhas (minimap_frame) POR CIMA -> 4) Rótulo em qMini.
+  const fW = 168, fH = 125;
+  const fX = VIEW_W - fW - 6, fY = 4;
+  ctx.save();
+  ctx.globalAlpha = hudContextAlpha(fX, fY, fW, fH);
+  const ap = paperAperture("minimap", fX, fY, fW, fH);
+  const qMini = paperQuiet("minimap", fX, fY, fW, fH);
+  const mx = Math.round(ap.x), my = Math.round(ap.y);
+  const mw = Math.round(ap.w), mh = Math.round(ap.h);
+  uiButtons().push({ x: mx, y: my, w: mw, h: mh, id: "minimap" });
+
+  // Camada 1: Fundo de papel recortado
+  drawPaperBg(ctx, "minimap", fX, fY, fW, fH);
+
+  // Camada 2: Conteúdo do minimapa estritamente clipado à janela interna da moldura
+  ctx.save();
+  ctx.beginPath();
+  ctx.rect(mx, my, mw, mh);
+  ctx.clip();
   if (world.mini) {
-    ctx.save(); ctx.globalAlpha = 1; ctx.drawImage(world.mini, mx, my); ctx.restore();
+    ctx.save(); ctx.globalAlpha = 1; ctx.drawImage(world.mini, 0, 0, world.mini.width, world.mini.height, mx, my, mw, mh); ctx.restore();
   }
   drawScentMinimap(ctx, mx, my, mw, mh, world.mini, WORLD_W, WORLD_H, foodTrailAt, dangerAt, G.time);
-  ctx.strokeStyle = bh.minimapBorder; ctx.lineWidth = 1.2;
-  ctx.strokeRect(mx - 0.5, my - 0.5, mw + 1, mh + 1);
-  // label bioma no minimapa
-
   const sx = mw / WORLD_W, sy = mh / WORLD_H;
   for (const a of allies) {
     if (a.dead) continue;
@@ -2453,8 +2520,14 @@ function drawMinimap() {
   ctx.strokeStyle = "rgba(239,233,255,0.65)";
   ctx.strokeRect(mx + (cam.x - vx / 2) * sx, my + (cam.y - vy / 2) * sy, vx * sx, vy * sy);
   fogDrawMini(ctx, mx, my, mw, mh);
-  drawText(ctx, bh.loreName, mx + mw/2, my + 4, { color: bh.border, align: "center", scale: 0.7, maxWidth: mw-12 });
+  // Camada 2 (Texto): Nome do bioma dentro de qMini, ANTES da moldura (Fundo > Texto > Moldura)
+  const mScale = Math.min(0.60, 11 / (16 * fontScale()));
+  drawText(ctx, bh.loreName, qMini.x + qMini.w / 2, qMini.y, { color: "#fff3d6", shadow: "#1b120c", align: "center", scale: mScale, maxWidth: qMini.w });
+  ctx.restore();
 
+  // Camada 3: Moldura vazada de madeira e folhas POR CIMA de todo o conteúdo e texto
+  drawPaperFrame(ctx, "minimap", fX, fY, fW, fH);
+  ctx.restore();
 
   const live = run.status === "running" && !paused && !run.baseOpen && !run.draft && !run.transition;
   if (live && mouse.justDown && pointInRect(mouse.x, mouse.y, mx, my, mw, mh)) {
@@ -2469,24 +2542,30 @@ function drawBanner(b) {
   const a = clamp(b.t < 0.6 ? b.t / 0.6 : b.t > 3.2 - 0.5 ? (3.2 + 0.6 - b.t) / 0.5 + 0.2 : 1, 0, 1);
   ctx.globalAlpha = clamp(a, 0, 1);
   const tut = TUT.active ? tutorialCardRect(VIEW_W) : null;
-  let y = tut ? tut.y + tut.h + 60 : 120;
+  let y = tut ? tut.y + tut.h + 12 : 98;
   y = Math.max(y, hudFloorY + 6);
 
-  const bw = 560, bh = 112, bx = VIEW_W / 2 - bw / 2;
-  // a tábua fica abaixo do minimapa (termina em 175), acima da faixa de dicas
-  const byy = Math.max(180, Math.min(Math.max(y - 14, 180), VIEW_H - 126 - bh));
-  // Fase 2: banner como tábua-seta de madeira do bioma (fallback: dialogBox)
-  if (!drawWoodBanner(ctx, bx, byy, bw, bh, hudBiome())) {
-    dialogBox(ctx, bx, byy, bw, bh, { border: "#ffd479", accent: "#ffd479" });
+  // Banner de evento exclusivo "event" (400×80 = 5:1, -49% de área) em 3 camadas:
+  // 1º Fundo (event_bg) -> 2º Texto (clipado) -> 3º Moldura (event_frame)
+  const bw = 400, bh = 80, bx = VIEW_W / 2 - bw / 2;
+  const byy = Math.max(148, Math.min(Math.max(y, 148), VIEW_H - 132 - bh));
+  layoutBox(ctx, "caixa", bx, byy, bw, bh, "banner");
+  const evClipped = beginPaperHud(ctx, "event", bx, byy, bw, bh);
+  if (!evClipped && !drawWoodBanner(ctx, bx, byy, bw, bh, hudBiome())) {
+    dialogBox(ctx, bx, byy, bw, bh, { paperKind: "event", deferFrame: false, border: "#ffd479", accent: "#ffd479" });
   }
-  // Texto centralizado na área permitida da tábua (2026-10-16).
-  const qEv = paperQuiet("banner", bx, byy, bw, bh);
+  // Texto 100% contido em qEv (mesmo com FONTE GRANDE).
+  const qEv = paperQuiet("event", bx, byy, bw, bh);
   const evCx = qEv.x + qEv.w / 2;
-  drawText(ctx, b.title, evCx, qEv.y, { font: "big", scale: 1.35, color: "#ffd479", align: "center", maxWidth: qEv.w });
+  const titleH = b.sub ? Math.floor(qEv.h * 0.46) : qEv.h;
+  const tBlock = fitTextBlock(b.title, qEv.w, titleH, { font: "small", scale: 0.72, minScale: 0.42, lineStep: 13 });
+  tBlock.lines.forEach((L, li) => drawText(ctx, L, evCx, qEv.y + li * tBlock.step, { font: "small", scale: tBlock.scale, color: "#6b471e", align: "center", maxWidth: qEv.w }));
   if (b.sub) {
-    const sub = fitTextBlock(b.sub, qEv.w, qEv.y + qEv.h - (qEv.y + 26), { scale: 0.85, minScale: 0.5, lineStep: 15 });
-    sub.lines.forEach((L, li) => drawText(ctx, L, evCx, qEv.y + 26 + li * sub.step, { color: PAL.text, align: "center", scale: sub.scale, maxWidth: qEv.w }));
+    const subY = qEv.y + tBlock.lines.length * tBlock.step + 2;
+    const sub = fitTextBlock(b.sub, qEv.w, Math.max(12, qEv.y + qEv.h - subY), { scale: 0.60, minScale: 0.40, lineStep: 11 });
+    sub.lines.forEach((L, li) => drawText(ctx, L, evCx, subY + li * sub.step, { color: PAL.text, align: "center", scale: sub.scale, maxWidth: qEv.w }));
   }
+  if (evClipped) endPaperHud(ctx);
   ctx.globalAlpha = 1;
 }
 
@@ -2507,7 +2586,7 @@ function drawDraft(draft) {
   drawText(ctx, "A colônia evolui. Escolha 1 de 3 — vale só nesta expedição.", VIEW_W / 2, 104, { color: PAL.textDim, align: "center", maxWidth: 700 });
 
   // Cartões nas proporções ORIGINAIS do sprite card.png (848×1264 = 0,671):
-  // 260×387 em escala uniforme; conteúdo centralizado na área permitida.
+  // 260×387 em escala uniforme; 1º Fundo -> 2º Texto (clipado) -> 3º Moldura.
   const cw = 260, ch = 387, gap = 24;
   const x0 = VIEW_W / 2 - (cw * 3 + gap * 2) / 2;
   const y = 136;
@@ -2518,10 +2597,9 @@ function drawDraft(draft) {
     const lift = hot ? 10 : 0;
     const rare = RARITY[mm.rar];
 
-    ctx.fillStyle = "rgba(0,0,0,0.5)";
-    ctx.fillRect(x + 4, y + 6 - lift, cw, ch);
-
-    panel(ctx, x, y - lift, cw, ch, { paperKind:"card", hot, pressed:hot && mouse.down });
+    layoutBox(ctx, "painel", x, y - lift, cw, ch);
+    const cardClipped = beginPaperHud(ctx, "card", x, y - lift, cw, ch, { hot, pressed: hot && mouse.down });
+    if (!cardClipped) panel(ctx, x, y - lift, cw, ch, { paperKind: "card", deferFrame: false, hot, pressed: hot && mouse.down });
 
     // área permitida da pintura: o texto se centraliza no papel liso (à
     // direita das vinhas) — nada é desenhado sobre os ornamentos.
@@ -2531,38 +2609,25 @@ function drawDraft(draft) {
 
     const icon = IMG["i_" + mm.icon];
     if (icon) {
-      const isz = Math.min(56, qD.w * 0.62);
-      ctx.fillStyle = "#ddc6a1";
-      ctx.fillRect(dCx - isz / 2, dy, isz, isz);
-      ctx.strokeStyle = rare.color; ctx.lineWidth = 2;
-      ctx.strokeRect(dCx - isz / 2, dy, isz, isz);
-      if (hot) {
-        ctx.save();
-        ctx.globalCompositeOperation = "lighter";
-        ctx.globalAlpha = 0.2;
-        ctx.fillStyle = rare.color;
-        ctx.fillRect(dCx - isz / 2, dy, isz, isz);
-        ctx.restore();
-      }
-      ctx.drawImage(icon, dCx - isz / 2 + 4, dy + 4, isz - 8, isz - 8);
+      const isz = Math.min(52, qD.w * 0.56);
+      drawPaper(ctx, "wood_icon", dCx - isz / 2, dy, isz, isz, { hot });
+      ctx.drawImage(icon, dCx - isz / 2 + 6, dy + 6, isz - 12, isz - 12);
       dy += isz + 6;
     }
     drawText(ctx, rare.name, dCx, dy, { color: rare.color, align: "center", scale: 0.7, maxWidth: qD.w });
     dy += Math.ceil(15 * fontScale());
     // nome e descrição adaptados ao cartão: quebram/encolhem na área permitida
     const nm = fitTextBlock(mm.name, qD.w, Math.ceil(22 * fontScale()) * 2, { font: "big", scale: 0.62, minScale: 0.45, lineStep: 22 });
-    nm.lines.forEach((L, li) => drawText(ctx, L, dCx, dy + li * nm.step, { font: "big", scale: nm.scale, color: "#efe9ff", align: "center", maxWidth: qD.w }));
+    nm.lines.forEach((L, li) => drawText(ctx, L, dCx, dy + li * nm.step, { font: "big", scale: nm.scale, color: "#493521", align: "center", maxWidth: qD.w }));
     dy += nm.lines.length * nm.step + 4;
-    const desc = fitTextBlock(mm.desc, qD.w, qD.y + qD.h - 26 - dy, { scale: 0.6, minScale: 0.45, lineStep: 20 });
+    const desc = fitTextBlock(mm.desc, qD.w, qD.y + qD.h - 28 - dy, { scale: 0.6, minScale: 0.45, lineStep: 20 });
     desc.lines.forEach((L, li) => drawText(ctx, L, dCx, dy + li * desc.step, { color: PAL.text, align: "center", scale: desc.scale, maxWidth: qD.w }));
-    // tecla quente no pé da área permitida
-    const kw = Math.min(32, qD.w * 0.36), kh = 16;
-    ctx.fillStyle = hot ? "#8d9c58" : "#d6bf95";
-    ctx.fillRect(dCx - kw / 2, qD.y + qD.h - kh - 2, kw, kh);
-    ctx.strokeStyle = rare.color; ctx.lineWidth = 1; ctx.globalAlpha = 0.6;
-    ctx.strokeRect(dCx - kw / 2 + 0.5, qD.y + qD.h - kh - 1.5, kw - 1, kh - 1);
-    ctx.globalAlpha = 1;
-    drawText(ctx, String(i + 1), dCx, qD.y + qD.h - kh, { color: hot ? "#000" : "#efe9ff", align: "center", maxWidth: kw });
+    // tecla quente em placa de madeira dentro da área permitida
+    const kw = Math.min(44, Math.floor(qD.w * 0.46)), kh = 20;
+    const kx = Math.round(dCx - kw / 2), ky = Math.round(qD.y + qD.h - kh - 2);
+    drawPaper(ctx, "wood_icon", kx, ky, kw, kh, { hot });
+    drawText(ctx, String(i + 1), dCx, ky + 3, { color: "#f6ecd4", align: "center", scale: 0.75, maxWidth: kw - 6 });
+    if (cardClipped) endPaperHud(ctx);
 
     if (hot && mouse.justDown && !paused) { pickDraft(i); return; }
   }
@@ -2580,38 +2645,47 @@ function drawMapTransition(run) {
     spawnPart({ x: rand(0,VIEW_W), y: VIEW_H + 10, vx: rand(-10,10), vy: rand(-60,-20), life: rand(1,2), size: rand(1,3), color: "#ffd479", glow: true, drag: 1 });
   }
 
-  // Caixa alta (90..470) e conteúdo empilhado com folga: cada linha tinha
-  // largura maior que a caixa (até 643px em 520) e vazava dos dois lados.
-  dialogBox(ctx, VIEW_W/2 - 280, 84, 560, 386, { border: "#ffd479", accent: "#37e6c8" });
-  const boxW = 520, innerW = boxW - 40;
+  // HUD exclusivo "transition" (560×386) em 3 camadas: 1º Fundo -> 2º Texto -> 3º Moldura
+  const txBox = VIEW_W / 2 - 280, tyBox = 84, twBox = 560, thBox = 386;
+  layoutBox(ctx, "caixa", txBox, tyBox, twBox, thBox);
+  const trClipped = beginPaperHud(ctx, "transition", txBox, tyBox, twBox, thBox);
+  if (!trClipped) dialogBox(ctx, txBox, tyBox, twBox, thBox, { paperKind: "transition", deferFrame: false, border: "#ffd479", accent: "#37e6c8" });
+  const qTr = paperQuiet("transition", txBox, tyBox, twBox, thBox);
+  const innerW = Math.round(qTr.w);
+  const trCx = qTr.x + qTr.w / 2;
   const FS = fontScale();
   const transitionTitle = "MAPA LIMPO!";
-  const transitionTitleH = textHeight(transitionTitle, { font: "big", scale: 2.2 });
-  drawText(ctx, transitionTitle, VIEW_W / 2, 104, { font: "big", scale: 2.2, color: "#ffd479", align: "center", maxWidth: boxW });
-  let ty = 104 + transitionTitleH + 10;
-  for (const L of wrapText("O chefão caiu. A colônia respira — e a Rainha se recupera.", innerW, {})) {
-    drawText(ctx, L, VIEW_W / 2, ty, { color: PAL.text, align: "center", maxWidth: innerW });
-    ty += 20 * FS;
-  }
-  ty += 22;
+  const tScale = Math.min(1.5, 28 / (18 * FS));
+  const transitionTitleH = textHeight(transitionTitle, { font: "big", scale: tScale });
+  let ty = Math.round(qTr.y + 4);
+  drawText(ctx, transitionTitle, trCx, ty, { font: "big", scale: tScale, color: "#ffd479", align: "center", maxWidth: innerW });
+  ty += transitionTitleH + 8;
+  const intro = fitTextBlock("O chefão caiu. A colônia respira — e a Rainha se recupera.", innerW, 44, { scale: 0.85, minScale: 0.55, lineStep: 18 });
+  intro.lines.forEach((L, li) => drawText(ctx, L, trCx, ty + li * intro.step, { color: PAL.text, scale: intro.scale, align: "center", maxWidth: innerW }));
+  ty += intro.lines.length * intro.step + 10;
   if (next) {
-    drawText(ctx, "PRÓXIMO DESTINO:", VIEW_W / 2, ty, { color: PAL.textDim, align: "center", maxWidth: innerW });
-    ty += 24;
-    drawText(ctx, "MAPA " + (nextIdx + 1) + "/" + MAPS.length + " — " + next.name, VIEW_W / 2, ty, { font: "big", scale: 1, color: "#37e6c8", align: "center", maxWidth: innerW });
-    ty += 34 * FS;
-    for (const L of wrapText(next.sub, innerW, {})) {
-      drawText(ctx, L, VIEW_W / 2, ty, { color: PAL.textDim, align: "center", maxWidth: innerW });
-      ty += 18 * FS;
-    }
+    drawText(ctx, "PRÓXIMO DESTINO:", trCx, ty, { color: PAL.textDim, scale: Math.min(0.82, 13 / (16 * FS)), align: "center", maxWidth: innerW });
+    ty += Math.round(18 * Math.min(1, FS));
+    const mapTitle = fitTextBlock("MAPA " + (nextIdx + 1) + "/" + MAPS.length + " — " + next.name, innerW, 32, { font: "big", scale: 0.88, minScale: 0.55, lineStep: 22, maxLines: 1 });
+    drawText(ctx, mapTitle.lines[0] || "", trCx, ty, { font: "big", scale: mapTitle.scale, color: "#37e6c8", align: "center", maxWidth: innerW });
+    ty += mapTitle.step + 4;
+    const subBudget = Math.max(24, qTr.y + qTr.h - 52 - ty);
+    const subB = fitTextBlock(next.sub, innerW, subBudget, { scale: 0.80, minScale: 0.52, lineStep: 16 });
+    subB.lines.forEach((L, li) => drawText(ctx, L, trCx, ty + li * subB.step, { color: PAL.textDim, scale: subB.scale, align: "center", maxWidth: innerW }));
+    ty += subB.lines.length * subB.step;
   }
-  // botão sempre DENTRO da caixa (que termina em 470)
-  const advY = Math.min(408, Math.max(ty + 16, 316));
+  // botão sempre DENTRO de qTr (Camada 2, antes da Moldura)
+  const advH = 42;
+  const advW = Math.min(280, innerW - 8);
+  const advY = Math.round(Math.min(qTr.y + qTr.h - advH - 2, Math.max(ty + 8, qTr.y + qTr.h - advH - 6)));
 
   const triggerAdvance = () => {
     triggerMapChange(nextIdx);
   };
 
-  if (button(ctx, { x: VIEW_W / 2 - 150, y: advY, w: 300, h: 48, label: "AVANÇAR A EXPEDIÇÃO", id: "goNext", accent: "#37e6c8" })) {
+  const clickedAdv = button(ctx, { x: Math.round(trCx - advW / 2), y: advY, w: advW, h: advH, label: "AVANÇAR A EXPEDIÇÃO", id: "goNext", accent: "#37e6c8" });
+  if (trClipped) endPaperHud(ctx);
+  if (clickedAdv) {
     triggerAdvance();
     return;
   }
@@ -2707,7 +2781,7 @@ function drawPause() {
 
   // mini-mapa maior na pausa - FASE 5 FINAL: interativo clique move câmera + hover + stats expandidos
   const miniX = rx + 16, miniY = py + 44, miniW = rightW - 32, miniH = 160;
-  panel(ctx, miniX - 2, miniY - 2, miniW + 4, miniH + 4, { fill: "rgba(10,8,16,0.9)", border: "#4a3a6e", r: 3 });
+  panel(ctx, miniX - 2, miniY - 2, miniW + 4, miniH + 4, { paper: false, fill: "rgba(10,8,16,0.9)", border: "#4a3a6e", r: 3 });
   if (world.mini) {
     ctx.drawImage(world.mini, miniX, miniY, miniW, miniH);
   }
@@ -2779,6 +2853,7 @@ function drawPause() {
   // rodapé 12px acima do fim da caixa (antes ficava 2px ABAIXO da borda)
   drawText(ctx, isTouchUI() ? "TOQUE NO MAPA PARA MOVER A CÂMERA • ▶ VOLTAR RETOMA" : "ESC: VOLTAR • M: SOM • CLIQUE NO MAPA",
     rx + rightW/2, py + panelH - 26, { color: PAL.textDim, align: "center", scale: 0.75, maxWidth: rightW - 32 });
+  flushPaperFrames(ctx);
 }
 
 function settleAbandon() {
@@ -2841,7 +2916,7 @@ function renderProphecyScreen() {
   // + painel de essência — com FONTE GRANDE o subtítulo caía fora da caixa. Ela
   // cresce, o subtítulo passa a quebrar em 2 linhas e a contagem desce para o
   // rodapé (mesma informação, sem colisão).
-  panel(ctx, 12, 10, 426, 88, { border: "#6ee7ff", accentLine: "#6ee7ff" });
+  panel(ctx, 12, 10, 426, 88, { paperKind: "header", border: "#6ee7ff", accentLine: "#6ee7ff" });
   drawText(ctx, "PROFECIAS DA COLÔNIA", 28, 18, { font: "big", scale: 1, color: "#6ee7ff", maxWidth: 398 });
   const subLines = wrapText("Vaticínios da Matriarca — cumpra-os pela essência", 398, { scale: 0.8 });
   subLines.forEach((L, li) => drawText(ctx, L, 28, 56 + li * Math.ceil(18 * 0.8 * FS),
@@ -2852,6 +2927,7 @@ function renderProphecyScreen() {
   const ic = IMG.i_essence;
   if (ic) { ctx.imageSmoothingEnabled = false; ctx.drawImage(ic, VIEW_W - 512, 22, 34, 34); }
   drawText(ctx, G.save.essence, VIEW_W - 468, 28, { font: "big", scale: 1, color: "#c77dff", maxWidth: 88 });
+  flushPaperFrames(ctx);
 
   if (button(ctx, { x: VIEW_W - 180, y: 18, w: 156, h: 44, label: "VOLTAR", id: "prophecyBack", font: "small", accent: "#ff4d5a" })) {
     backFromProphecies();
@@ -2883,6 +2959,7 @@ function renderProphecyScreen() {
 
   const foot = (isTouchUI() ? "TOQUE EM VOLTAR" : "ESC: VOLTAR") + " • " + done + "/" + PROPHECIES.length + " CUMPRIDAS • A ESSÊNCIA LEMBRA";
   drawText(ctx, foot, VIEW_W / 2, VIEW_H - 26, { color: PAL.textDim, align: "center", maxWidth: VIEW_W - 60 });
+  flushPaperFrames(ctx);
 }
 
 // ------------------------------------------------------------------- fim ----
@@ -3059,6 +3136,7 @@ function renderMemoryScreen() {
   drawText(ctx, "MEMÓRIAS DA COLÔNIA", VIEW_W/2, PY+16, { font:"big", scale:memoryTitleScale, color:"#ffd479", align:"center", maxWidth: PW-40 });
   drawText(ctx, "REVEJA AS MEMÓRIAS DESCOBERTAS PELA COLÔNIA", VIEW_W/2, 96,
     { color: PAL.textDim, align: "center", scale: 0.85 });
+  flushPaperFrames(ctx);
   const defs = getCutsceneDefs();
   const ids = Object.keys(defs).filter((id) => !id.startsWith("loading_"));
   const pages = Math.ceil(ids.length / 4);

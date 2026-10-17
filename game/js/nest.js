@@ -16,8 +16,8 @@ import { CHAMBERS, MAPS, PAL, VIEW_W, VIEW_H } from "./config.js";
 import { G, mods } from "./state.js";
 import { IMG, rotFrame, rotDrawSize } from "./assets.js";
 import { drawOutsideEye, PIP } from "./render.js";
-import { drawText, textWidth, wrapText, fitTextBlock, fontScale } from "./font.js";
-import { paperQuiet } from "./paper_hud.js";
+import { drawText, textWidth, wrapText, fitTextBlock, fontScale, layoutBox } from "./font.js";
+import { paperQuiet, beginPaperHud, endPaperHud } from "./paper_hud.js";
 import { button, panel, bar, pointInRect, isTouchUI } from "./ui.js";
 import { world } from "./world.js";
 import { SFX } from "./audio.js";
@@ -1047,30 +1047,31 @@ function drawNestHud(ctx) {
   drawText(ctx, "O MUNDO LÁ FORA CONTINUA VIVO AGORA MESMO — É O QUE MOSTRA O OLHO LÁ FORA",
     VIEW_W / 2, BOTTOM + 50 + hintStep, { color: "#8a7a5e", align: "center", scale: 0.75, maxWidth: VIEW_W - 40 });
 
-  // tooltip da câmara sob o mouse
+  // tooltip da câmara sob o mouse (compacta com moldura de bordas finas: 256×136 = -43,4% área)
   if (nest.hover && nest.hover !== "royal" && nest.hover !== "entrance") {
     const def = CHAMBERS[nest.hover];
     const st = chamberState(nest.hover);
-    // HUD nas proporções ORIGINAIS (2026-10-16): 340×181 = pintura panel
-    // uniforme; textos centralizados na área permitida da pintura.
-    const w = 340, h = 181;
+    const w = 256, h = 136;
     const costTxt = st.maxed ? "" : (infMoney ? "CUSTO: GRÁTIS (MODO TESTE ∞)" : "CUSTO: " + st.cost.food + " COMIDA" + (st.cost.ess ? " + " + st.cost.ess + " ESSÊNCIA" : ""));
     const r = roomOf(nest.hover);
     let tx = clamp(r.x + r.w / 2 - w / 2, 10, VIEW_W - w - 10);
-    let ty = r.y - h - 8;
-    if (ty < 46) ty = r.y + r.h + 8;
-    ty = clamp(ty, 46, VIEW_H - h - 10);
-    panel(ctx, tx, ty, w, h);
-    const qC = paperQuiet("panel", tx, ty, w, h);
+    let ty = r.y - h - 6;
+    if (ty < 44) ty = r.y + r.h + 6;
+    ty = clamp(ty, 44, VIEW_H - h - 10);
+    layoutBox(ctx, "painel", tx, ty, w, h);
+    const clipped = beginPaperHud(ctx, "nest_tip", tx, ty, w, h);
+    if (!clipped) panel(ctx, tx, ty, w, h, { paperKind: "nest_tip", deferFrame: false });
+    const qC = paperQuiet("nest_tip", tx, ty, w, h);
     const cCx = qC.x + qC.w / 2;
     let cy = qC.y + 1;
-    drawText(ctx, def.name + "  (NÍVEL " + st.lvl + "/" + def.max + ")", cCx, cy, { color: "#ffd479", align: "center", scale: 0.68, maxWidth: qC.w });
-    cy += Math.min(15, qC.h / 5);
-    const tip = fitTextBlock(def.tip + " " + def.per, qC.w, qC.y + qC.h - (costTxt ? 14 : 0) - cy, { scale: 0.6, minScale: 0.42, lineStep: 12 });
+    drawText(ctx, def.name + "  (NÍVEL " + st.lvl + "/" + def.max + ")", cCx, cy, { color: "#ffd479", align: "center", scale: 0.64, maxWidth: qC.w });
+    cy += Math.min(14, qC.h / 5);
+    const tip = fitTextBlock(def.tip + " " + def.per, qC.w, qC.y + qC.h - (costTxt ? 13 : 0) - cy, { scale: 0.58, minScale: 0.41, lineStep: 11 });
     tip.lines.forEach((L, i) => drawText(ctx, L, cCx, cy + i * tip.step, { color: PAL.text, scale: tip.scale, align: "center", maxWidth: qC.w }));
     if (costTxt) {
-      drawText(ctx, costTxt, cCx, qC.y + qC.h - 12, { color: st.afford ? "#7fd6a0" : "#ff8a96", align: "center", scale: 0.58, maxWidth: qC.w });
+      drawText(ctx, costTxt, cCx, qC.y + qC.h - 11, { color: st.afford ? "#7fd6a0" : "#ff8a96", align: "center", scale: 0.55, maxWidth: qC.w });
     }
+    if (clipped) endPaperHud(ctx);
   }
 
   // números flutuantes por último (sempre legíveis)

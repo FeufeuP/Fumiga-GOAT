@@ -10,6 +10,21 @@ const MANIFEST = {
   paper_tooltip: "ui/paper/tooltip.png",
   paper_card: "ui/paper/card.png",
   paper_pause: "ui/paper/pause.png",
+  // HUD em 2 peças (2026-10-16): moldura vazada (*_frame) + fundo de papel (*_bg)
+  paper_panel_frame: "ui/paper/panel_frame.png",
+  paper_panel_bg: "ui/paper/panel_bg.png",
+  paper_health_frame: "ui/paper/health_frame.png",
+  paper_health_bg: "ui/paper/health_bg.png",
+  paper_banner_frame: "ui/paper/banner_frame.png",
+  paper_banner_bg: "ui/paper/banner_bg.png",
+  paper_minimap_frame: "ui/paper/minimap_frame.png",
+  paper_minimap_bg: "ui/paper/minimap_bg.png",
+  paper_tooltip_frame: "ui/paper/tooltip_frame.png",
+  paper_tooltip_bg: "ui/paper/tooltip_bg.png",
+  paper_card_frame: "ui/paper/card_frame.png",
+  paper_card_bg: "ui/paper/card_bg.png",
+  paper_pause_frame: "ui/paper/pause_frame.png",
+  paper_pause_bg: "ui/paper/pause_bg.png",
   // Placas de madeira dos botões (2026-10-14): 4 variações x 5 estados,
   // artes de estado separadas — ver tools/prepare_wood_buttons.py.
   wood_button_largo_normal: "ui/paper/wood/button_largo_normal.png",
@@ -213,7 +228,7 @@ const WROT = {};         // silhuetas brancas rotacionadas (hit flash)
 // ANTIGA nos mesmos nomes de arquivo (foi assim que o rework dos inimigos da
 // Fase 2 "não apareceu" para quem já tinha jogado antes dele).
 // ---------------------------------------------------------------------------
-export const ASSET_V = "20261014-botao-duas-pontas";
+export const ASSET_V = "20261016-hud-slim-2pecas";
 
 /**
  * URL final de um asset do jogo: base certa para a página atual + anti-cache.

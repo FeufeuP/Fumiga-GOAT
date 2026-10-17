@@ -349,7 +349,8 @@ export function drawTrailAnt(ctx, x, y, time) {
 
 // Desenha barra de vida como gaster da rainha com coroa fungo/seda
 export function drawGasterBar(ctx, x, y, w, h, frac, biome, low, time) {
-  if(drawPaperBar(ctx,x,y-h*.25,w,h*1.5,frac,{low})) return;
+  const barH = Math.max(h, Math.min(Math.round(h * 1.18), Math.round(w * 135 / 960)));
+  if (drawPaperBar(ctx, x, y + Math.round((h - barH) / 2), w, barH, frac, { low })) return;
   const style = getBiomeHUD(biome);
   frac = Math.max(0, Math.min(1, Number.isFinite(frac) ? frac : 0));
   if (art.gaster && w >= 80 && w <= 160 && h >= 10) {

@@ -15,13 +15,14 @@ import {
 } from "./tree_layout.js";
 import { treeArtCanvas, treeGrowth } from "./tree_art.js";
 import { createColorRestorer } from "./color_restore.js";
+import { flushPaperFrames } from "./paper_hud.js";
 
 export const TREE_VIEW = { x: 184, y: 100, w: 764, h: 386 };
-const DETAIL = { x: 608, y: 100, w: 340, h: 386 };
+const DETAIL = { x: 664, y: 100, w: 284, h: 386 };
 // Painel de detalhe DENTRO do santuário (mais estreito que o da árvore).
 // Constante única: o desenho (drawNodeTip) e o clique das flores compartilham
 // o retângulo, senão um toque no EVOLUIR/FECHAR atravessaria para uma flor.
-const FRUIT_DETAIL = { x: 738, y: 116, w: 210, h: 382 };
+const FRUIT_DETAIL = { x: 738, y: 100, w: 210, h: 382 };
 const MINI_TOP = 162, MIN_ZOOM = .10, MAX_ZOOM = 1.25;
 const ART_W = TREE_ART.width * TREE_ART.scale, ART_H = TREE_ART.height * TREE_ART.scale;
 const reduced = () => !!G.save.accessibility?.reducedParticles || G.save.settings?.particles === false;
@@ -380,7 +381,7 @@ function drawTreeHUD(ctx, growth) {
   if (button(ctx, { x: 22, y: 440, w: 144, h: 44, compact: true, label: "", id: "treeRoot", accent: "#ffd479" })) selectNode(TREE_BY_ID.get("raiz"));
   drawText(ctx, "RAIZ ANCESTRAL", 34, 444, { scale: .66, color: "#ffd479", maxWidth: 118 });
   drawText(ctx, metaLevel("raiz") ? "MEMÓRIA VIVA" : "GRÁTIS • COMEÇAR", 34, 466, { scale: .55, color: PAL.textDim, maxWidth: 118 });
-  panel(ctx, 12, 492, 936, 44, { border: "#51465e" });
+  panel(ctx, 12, 492, 936, 44, { paperKind: "header", border: "#51465e" });
   drawText(ctx, isTouchUI() ? "ARRASTE • PINÇA" : "ARRASTE • RODA", 24, 505, { scale: .65, color: PAL.textDim, maxWidth: 146 });
   if (button(ctx, { x: 184, y: 492, w: 122, h: 44, compact: true, label: "VER TUDO", id: "treeFit", scale: .8 })) treeFit();
   if (button(ctx, { x: 314, y: 492, w: 44, h: 44, compact: true, label: "-", id: "treeZoomOut" })) zoomAt(.8);
@@ -389,6 +390,7 @@ function drawTreeHUD(ctx, growth) {
   drawText(ctx, note, 426, 496, { scale: .67, color: "#ddc9a6", maxWidth: 504 });
   drawText(ctx, "FRUTOS ABREM HABILIDADES • ZOOM " + Math.round(zoom * 100) + "%", 426, 517,
     { scale: .55, color: PAL.textDim, maxWidth: 504 });
+  flushPaperFrames(ctx);
   return null;
 }
 
@@ -398,7 +400,7 @@ function drawNodeTip(ctx, n) {
     { x: DETAIL.x, y: DETAIL.y, w: DETAIL.w, h: 386 };
   const { x, y, w, h } = detail;
   const chk = metaCanBuy(n.id), lvl = metaLevel(n.id), col = n._fruit?.color || META_BRANCHES[n.br].color;
-  panel(ctx, x, y, w, h, { border: n.supreme ? "#ffd479" : col });
+  panel(ctx, x, y, w, h, { paperKind: "tree_detail", border: n.supreme ? "#ffd479" : col });
   const stageLabel = n.supreme
     ? " • " + supremeFlowerStage(n.id).name
     : (n._fruit && n.cost.length >= 3
@@ -419,7 +421,7 @@ function drawNodeTip(ctx, n) {
   const heightAt = factor => blocks.reduce((sum, [text, , scale]) =>
     sum + wrapText(text, w - 28, { scale: scale * factor }).length * Math.ceil(18 * scale * factor * fontScale()) + 9, 0);
   let factor = 1;
-  while (factor > .75 && heightAt(factor) > h - 78) factor -= .025;
+  while (factor > .66 && heightAt(factor) > h - 78) factor -= .025;
   let ty = y + 12;
   for (const [text, color, baseScale] of blocks) {
     const scale = baseScale * factor;
@@ -429,12 +431,13 @@ function drawNodeTip(ctx, n) {
     ty += 9;
   }
   const actionY = y + h - 54;
-  const buyW = activeFruit ? 88 : 196, closeX = activeFruit ? x + 106 : x + 220;
-  const closeW = activeFruit ? 92 : 108;
-  if (button(ctx, { x: x + 12, y: actionY, w: buyW, h: 44, compact: true, label: "EVOLUIR", id: "treeBuy", disabled: !chk.ok, accent: n.supreme ? "#ffd479" : col, scale: activeFruit ? .68 : 1 })) {
+  const buyW = activeFruit ? 88 : 150, closeX = activeFruit ? x + 106 : x + 170;
+  const closeW = activeFruit ? 92 : 100;
+  if (button(ctx, { x: x + 12, y: actionY, w: buyW, h: 44, compact: true, label: "EVOLUIR", id: "treeBuy", disabled: !chk.ok, accent: n.supreme ? "#ffd479" : col, scale: activeFruit ? .68 : .9 })) {
     if (metaBuy(n.id)) { SFX.buy(); if (n.tier >= 2 || n.supreme) SFX.chime(); }
   }
-  if (button(ctx, { x: closeX, y: actionY, w: closeW, h: 44, compact: true, label: "FECHAR", id: "treeClose", scale: activeFruit ? .72 : .85 })) selectedNode = null;
+  if (button(ctx, { x: closeX, y: actionY, w: closeW, h: 44, compact: true, label: "FECHAR", id: "treeClose", scale: activeFruit ? .72 : .82 })) selectedNode = null;
+  flushPaperFrames(ctx);
 }
 const SANTUARIO_IMAGES = new Map();
 // Um restaurador ENXUTO por santuário: depois de assado só o canvas 960×540
@@ -896,17 +899,19 @@ function drawFruitMini(ctx) {
   if (f.pending) drawSanctuarySeal(ctx);
   else drawSanctuaryFlowers(ctx, f, visibleFruitNodes(), garden.saturation);
   layoutRec.layer = "ui";
-  // O cabeçalho não esconde a clareira inteira e conserva os dados do fruto.
-  panel(ctx, 12, 10, 936, 96, { border: f.color, fill: "#17121fdc", noise: false });
-  drawText(ctx, f.name, 26, 15, { font: "big", color: f.color, maxWidth: 630 });
+  // O cabeçalho compacto (82px) expõe mais da clareira e conserva os dados do fruto.
+  panel(ctx, 12, 8, 936, 82, { paperKind: "header", border: f.color, fill: "#17121fdc", noise: false });
+  drawText(ctx, f.name, 26, 12, { font: "big", scale: .92, color: f.color, maxWidth: 630 });
   drawText(ctx, unlocked ? "FRUTO CONQUISTADO • PODERES GLOBAIS" : "PRÉVIA BLOQUEADA • " + (f.pending ? "PÁLIDA: FUTURO" : "DERROTE " + f.bossName),
-    26, 48, { scale: .73, color: unlocked ? PAL.text : PAL.textDim, maxWidth: 630 });
+    26, 42, { scale: .70, color: unlocked ? PAL.text : PAL.textDim, maxWidth: 630 });
   drawText(ctx, f.pending ? "GALHO " + stage + " • ESSÊNCIA " + G.save.essence + " • FUTURO" :
     "GALHO " + stage + " • ESSÊNCIA " + G.save.essence + " • COR " + garden.restoredPercent + "% • " + garden.levels + "/" + garden.total + " MELHORIAS",
-    26, 75, { scale: .63, color: "#ffd479", maxWidth: 660 });
-  if (button(ctx, { x: 700, y: 13, w: 236, h: 44, compact: true, label: "VOLTAR À ÁRVORE", id: "treeMiniBack", scale: .78 })) {
+    26, 66, { scale: .61, color: "#ffd479", maxWidth: 660 });
+  if (button(ctx, { x: 700, y: 12, w: 236, h: 42, compact: true, label: "VOLTAR À ÁRVORE", id: "treeMiniBack", scale: .78 })) {
+    flushPaperFrames(ctx);
     leaveFruit(); selectedNode = null; return null;
   }
+  flushPaperFrames(ctx);
   drawText(ctx, f.pending ? "FRUTO FUTURO • NENHUMA MELHORIA DISPONÍVEL" :
     "SELECIONE UMA FLOR PARA LER • SELECIONAR NÃO GASTA ESSÊNCIA • EVOLUIR CONFIRMA A COMPRA", 480, 520,
     { align: "center", scale: .62, color: PAL.textDim, maxWidth: 936 });
