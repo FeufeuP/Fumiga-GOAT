@@ -13,14 +13,14 @@
       "kind": "panel",
       "local": "Painel Colônia RUN",
       "native": [
-        960,
-        512
+        722,
+        385
       ],
       "aperture": [
-        0.03,
-        0.148,
-        0.925,
-        0.848
+        0.1385,
+        0.2649,
+        0.8698,
+        0.7974
       ],
       "quiet": [
         0.215,
@@ -29,22 +29,52 @@
         0.8
       ],
       "fallback": null,
-      "status": "GERADO_SPRITESHEET",
+      "status": "RECORTADO_OK",
       "lote": 1,
-      "source": "spritesheet cut art-source/f1-unificado-zero/preview/spritesheet-10-huds-unificado.png bbox (np.int64(175), np.int64(483), np.int64(876), np.int64(847), 117172, np.int64(702), np.int64(365), 3)"
+      "frame": {
+        "path": "game/assets/ui/paper/panel_frame.png",
+        "size": [
+          722,
+          385
+        ],
+        "bytes": 276391,
+        "sha256": "dae79f61aa03faf408e975a789ca0a42df1a13530955ab9805f23ee7f36eee73",
+        "center_opaque_ratio": 0.0011,
+        "blue_leak": 0
+      },
+      "bg": {
+        "path": "game/assets/ui/paper/panel_bg.png",
+        "size": [
+          722,
+          385
+        ],
+        "bytes": 363352,
+        "sha256": "c58c1c79aca6e1037d1c5e8017fa5ad8ab8a262e2018ddf12947262b45fa8798",
+        "border_alpha_max": 0,
+        "corner_alpha_max": 0,
+        "center_alpha_min": 255
+      },
+      "combined": {
+        "path": "game/assets/ui/paper/panel.png",
+        "size": [
+          722,
+          385
+        ],
+        "sha256": "ddca5a73a757bd96bc6bded5c25613cb3d19cf7cdf824b5b54ebd988aae13ae3"
+      }
     },
     {
       "kind": "expanded",
       "local": "Expandido Feromônio RUN",
       "native": [
-        960,
-        512
+        601,
+        346
       ],
       "aperture": [
-        0.035,
-        0.148,
-        0.92,
-        0.848
+        0.1248,
+        0.2197,
+        0.8735,
+        0.7688
       ],
       "quiet": [
         0.2,
@@ -53,22 +83,52 @@
         0.8
       ],
       "fallback": "panel",
-      "status": "GERADO_SPRITESHEET",
+      "status": "RECORTADO_OK",
       "lote": 1,
-      "source": "spritesheet cut art-source/f1-unificado-zero/preview/spritesheet-10-huds-unificado.png bbox (np.int64(818), np.int64(1306), np.int64(1398), np.int64(1631), 89951, np.int64(581), np.int64(326), 13)"
+      "frame": {
+        "path": "game/assets/ui/paper/expanded_frame.png",
+        "size": [
+          601,
+          346
+        ],
+        "bytes": 208116,
+        "sha256": "f60e3685a122568040fad61328fabbc73ea9685dbde5c22f9c72362eba028695",
+        "center_opaque_ratio": 0.0,
+        "blue_leak": 0
+      },
+      "bg": {
+        "path": "game/assets/ui/paper/expanded_bg.png",
+        "size": [
+          601,
+          346
+        ],
+        "bytes": 271411,
+        "sha256": "9702ab68023fd96ffd55cd059b249feb272251033894394125e23fb03b421ff7",
+        "border_alpha_max": 0,
+        "corner_alpha_max": 0,
+        "center_alpha_min": 255
+      },
+      "combined": {
+        "path": "game/assets/ui/paper/expanded.png",
+        "size": [
+          601,
+          346
+        ],
+        "sha256": "0eaff7acd24fa9d8a565162233f530b2924410fd6b3b6ebb4ce37584d367c91d"
+      }
     },
     {
       "kind": "tutorial",
       "local": "Cartão Tutorial RUN",
       "native": [
-        960,
-        512
+        977,
+        467
       ],
       "aperture": [
-        0.035,
-        0.148,
-        0.92,
-        0.848
+        0.1515,
+        0.2634,
+        0.8454,
+        0.7559
       ],
       "quiet": [
         0.195,
@@ -77,22 +137,52 @@
         0.8
       ],
       "fallback": "panel",
-      "status": "GERADO_SPRITESHEET",
+      "status": "RECORTADO_OK",
       "lote": 1,
-      "source": "spritesheet cut art-source/f1-unificado-zero/preview/spritesheet-10-huds-unificado.png bbox (np.int64(47), np.int64(34), np.int64(1003), np.int64(480), 214642, np.int64(957), np.int64(447), 1)"
+      "frame": {
+        "path": "game/assets/ui/paper/tutorial_frame.png",
+        "size": [
+          977,
+          467
+        ],
+        "bytes": 495293,
+        "sha256": "5f23dfd13e75df12feb1afaa5c1f5d695d2c975ea2f2246a2017294aac9322fa",
+        "center_opaque_ratio": 0.0073,
+        "blue_leak": 0
+      },
+      "bg": {
+        "path": "game/assets/ui/paper/tutorial_bg.png",
+        "size": [
+          977,
+          467
+        ],
+        "bytes": 587749,
+        "sha256": "23fa354f75ae4386de2511642e564ad786ef17b3198c7839ed5f5f61b3f2b120",
+        "border_alpha_max": 0,
+        "corner_alpha_max": 0,
+        "center_alpha_min": 255
+      },
+      "combined": {
+        "path": "game/assets/ui/paper/tutorial.png",
+        "size": [
+          977,
+          467
+        ],
+        "sha256": "85c9d7d7f163662a1bbe970a76d1031cc0a6f7c70acd9eb771ccc42513761133"
+      }
     },
     {
       "kind": "banner",
       "local": "Banner Onda RUN",
       "native": [
-        960,
-        192
+        1405,
+        357
       ],
       "aperture": [
-        0.029,
-        0.141,
-        0.86,
-        0.802
+        0.0783,
+        0.3053,
+        0.921,
+        0.6975
       ],
       "quiet": [
         0.31,
@@ -101,22 +191,52 @@
         0.765
       ],
       "fallback": null,
-      "status": "GERADO_SPRITESHEET",
+      "status": "RECORTADO_OK",
       "lote": 1,
-      "source": "spritesheet cut art-source/f1-unificado-zero/preview/spritesheet-10-huds-unificado.png bbox (np.int64(76), np.int64(1674), np.int64(1460), np.int64(2010), 181078, np.int64(1385), np.int64(337), 16)"
+      "frame": {
+        "path": "game/assets/ui/paper/banner_frame.png",
+        "size": [
+          1405,
+          357
+        ],
+        "bytes": 359915,
+        "sha256": "2b42f758586061e5e9f92337b96e8a725fe8bfb9393e4da5f5ac3fa6802f0cd4",
+        "center_opaque_ratio": 0.0151,
+        "blue_leak": 0
+      },
+      "bg": {
+        "path": "game/assets/ui/paper/banner_bg.png",
+        "size": [
+          1405,
+          357
+        ],
+        "bytes": 639873,
+        "sha256": "c77388a42defd6b86cfec5fd3bff336b83caddeeccc284d58f4cb0ddb2b6b8fd",
+        "border_alpha_max": 0,
+        "corner_alpha_max": 0,
+        "center_alpha_min": 255
+      },
+      "combined": {
+        "path": "game/assets/ui/paper/banner.png",
+        "size": [
+          1405,
+          357
+        ],
+        "sha256": "545d6f2dd22cfefa0e6840cd5e89b6800272ac21f926898c41447b9fa898dd6b"
+      }
     },
     {
       "kind": "boss",
       "local": "Banner Chefão RUN",
       "native": [
-        960,
-        192
+        982,
+        360
       ],
       "aperture": [
-        0.04,
-        0.145,
-        0.9,
-        0.82
+        0.1222,
+        0.3,
+        0.8534,
+        0.7444
       ],
       "quiet": [
         0.2,
@@ -125,22 +245,52 @@
         0.76
       ],
       "fallback": "banner",
-      "status": "GERADO_SPRITESHEET",
+      "status": "RECORTADO_OK",
       "lote": 1,
-      "source": "spritesheet cut art-source/f1-unificado-zero/preview/spritesheet-10-huds-unificado.png bbox (np.int64(41), np.int64(871), np.int64(1002), np.int64(1210), 170096, np.int64(962), np.int64(340), 5)"
+      "frame": {
+        "path": "game/assets/ui/paper/boss_frame.png",
+        "size": [
+          982,
+          360
+        ],
+        "bytes": 430047,
+        "sha256": "ebb8ab3c2d43008cebd8dd6ea3ba8fa5b39d2f83c6ce379653dc0d61ee65473e",
+        "center_opaque_ratio": 0.0851,
+        "blue_leak": 0
+      },
+      "bg": {
+        "path": "game/assets/ui/paper/boss_bg.png",
+        "size": [
+          982,
+          360
+        ],
+        "bytes": 470240,
+        "sha256": "f02206e915517bf863c3f03923ef1d9c97794f13d91411a2ba3f72d01c85692a",
+        "border_alpha_max": 0,
+        "corner_alpha_max": 0,
+        "center_alpha_min": 255
+      },
+      "combined": {
+        "path": "game/assets/ui/paper/boss.png",
+        "size": [
+          982,
+          360
+        ],
+        "sha256": "17f0cde3736754ebaa3f3e6708e1c5fe2253415fb54af3447fbfeb5f68f404e3"
+      }
     },
     {
       "kind": "event",
       "local": "Banner Evento RUN",
       "native": [
-        960,
-        192
+        983,
+        385
       ],
       "aperture": [
-        0.04,
-        0.145,
-        0.9,
-        0.82
+        0.1516,
+        0.2623,
+        0.8423,
+        0.7169
       ],
       "quiet": [
         0.2,
@@ -149,22 +299,52 @@
         0.765
       ],
       "fallback": "banner",
-      "status": "GERADO_SPRITESHEET",
+      "status": "RECORTADO_OK",
       "lote": 2,
-      "source": "spritesheet cut art-source/f1-unificado-zero/preview/spritesheet-10-huds-unificado.png bbox (np.int64(1045), np.int64(890), np.int64(2007), np.int64(1254), 166609, np.int64(963), np.int64(365), 6)"
+      "frame": {
+        "path": "game/assets/ui/paper/event_frame.png",
+        "size": [
+          983,
+          385
+        ],
+        "bytes": 335297,
+        "sha256": "1bfff4a000caebef6fefa3ab6a3134458f1a3e92280da5b65783318925fd8910",
+        "center_opaque_ratio": 0.0044,
+        "blue_leak": 0
+      },
+      "bg": {
+        "path": "game/assets/ui/paper/event_bg.png",
+        "size": [
+          983,
+          385
+        ],
+        "bytes": 501693,
+        "sha256": "bb1164e4ad34803c227c38a7b69eb7bfff85105b07b63a669b85a9e340fdd25a",
+        "border_alpha_max": 0,
+        "corner_alpha_max": 0,
+        "center_alpha_min": 255
+      },
+      "combined": {
+        "path": "game/assets/ui/paper/event.png",
+        "size": [
+          983,
+          385
+        ],
+        "sha256": "39557fb6b39bde2ce899cf7004941cab6d0b31e3f6a49981d156303adc6792d3"
+      }
     },
     {
       "kind": "minimap",
       "local": "Minimapa RUN",
       "native": [
-        960,
-        717
+        641,
+        487
       ],
       "aperture": [
-        0.105,
-        0.13,
-        0.891,
-        0.88
+        0.1934,
+        0.2238,
+        0.8206,
+        0.8049
       ],
       "quiet": [
         0.18,
@@ -173,22 +353,52 @@
         0.77
       ],
       "fallback": null,
-      "status": "GERADO_SPRITESHEET",
+      "status": "RECORTADO_OK",
       "lote": 2,
-      "source": "spritesheet cut art-source/f1-unificado-zero/preview/spritesheet-10-huds-unificado.png bbox (np.int64(66), np.int64(1224), np.int64(686), np.int64(1690), 139729, np.int64(621), np.int64(467), 11)"
+      "frame": {
+        "path": "game/assets/ui/paper/minimap_frame.png",
+        "size": [
+          641,
+          487
+        ],
+        "bytes": 341607,
+        "sha256": "95e7e17c3140515c115de15d822d84af3ba45343d046f82b272d38689d982383",
+        "center_opaque_ratio": 0.0068,
+        "blue_leak": 0
+      },
+      "bg": {
+        "path": "game/assets/ui/paper/minimap_bg.png",
+        "size": [
+          641,
+          487
+        ],
+        "bytes": 417927,
+        "sha256": "500bb6247bdbb748dfcbee20a1e80b1da8894653f24230377436abb7731741c6",
+        "border_alpha_max": 0,
+        "corner_alpha_max": 0,
+        "center_alpha_min": 255
+      },
+      "combined": {
+        "path": "game/assets/ui/paper/minimap.png",
+        "size": [
+          641,
+          487
+        ],
+        "sha256": "4c370d8966a5f0b228a952cc42064e264ee455fcb671744d8afccbd9eac12d30"
+      }
     },
     {
       "kind": "tooltip",
       "local": "Tooltip Loja RUN",
       "native": [
-        960,
-        475
+        988,
+        422
       ],
       "aperture": [
-        0.033,
-        0.204,
-        0.912,
-        0.821
+        0.0911,
+        0.1825,
+        0.917,
+        0.7701
       ],
       "quiet": [
         0.215,
@@ -197,22 +407,52 @@
         0.765
       ],
       "fallback": null,
-      "status": "GERADO_SPRITESHEET",
+      "status": "RECORTADO_OK",
       "lote": 2,
-      "source": "spritesheet cut art-source/f1-unificado-zero/preview/spritesheet-10-huds-unificado-parte2.png bbox (np.int64(1046), np.int64(453), np.int64(2013), np.int64(854), 153114, np.int64(968), np.int64(402), 4)"
+      "frame": {
+        "path": "game/assets/ui/paper/tooltip_frame.png",
+        "size": [
+          988,
+          422
+        ],
+        "bytes": 366327,
+        "sha256": "b008796c20942fe833941b8da7e261f376352c5549eeb169d25872ee9df83bce",
+        "center_opaque_ratio": 0.0,
+        "blue_leak": 0
+      },
+      "bg": {
+        "path": "game/assets/ui/paper/tooltip_bg.png",
+        "size": [
+          988,
+          422
+        ],
+        "bytes": 543539,
+        "sha256": "fb0a50bb080746b387c2b2a7532faeb6f62e1f92678a6049c72be515dc56681a",
+        "border_alpha_max": 0,
+        "corner_alpha_max": 0,
+        "center_alpha_min": 255
+      },
+      "combined": {
+        "path": "game/assets/ui/paper/tooltip.png",
+        "size": [
+          988,
+          422
+        ],
+        "sha256": "99340763f3c6aca6b124b541e281f753d0ece8c733e21459e94e1c124f386bc4"
+      }
     },
     {
       "kind": "health",
       "local": "Barra Gaster RUN",
       "native": [
-        960,
-        135
+        1003,
+        394
       ],
       "aperture": [
-        0.117,
-        0.267,
-        0.899,
-        0.726
+        0.0917,
+        0.198,
+        0.9073,
+        0.8223
       ],
       "quiet": [
         0.145,
@@ -221,22 +461,52 @@
         0.68
       ],
       "fallback": null,
-      "status": "GERADO_SPRITESHEET",
+      "status": "RECORTADO_OK",
       "lote": 2,
-      "source": "spritesheet cut art-source/f1-unificado-zero/preview/spritesheet-10-huds-unificado-parte2.png bbox (np.int64(1044), np.int64(1664), np.int64(2026), np.int64(2040), 155861, np.int64(983), np.int64(377), 9)"
+      "frame": {
+        "path": "game/assets/ui/paper/health_frame.png",
+        "size": [
+          1003,
+          394
+        ],
+        "bytes": 354662,
+        "sha256": "eecf6a2b7befe65d485b9577e96f1ddaf3f631cf829a40889262d469d6638bf5",
+        "center_opaque_ratio": 0.0,
+        "blue_leak": 0
+      },
+      "bg": {
+        "path": "game/assets/ui/paper/health_bg.png",
+        "size": [
+          1003,
+          394
+        ],
+        "bytes": 510257,
+        "sha256": "b4ea809e2c178cd03372469f36ba2c1f922d7e8693216c4639f3ab26e42687f8",
+        "border_alpha_max": 0,
+        "corner_alpha_max": 0,
+        "center_alpha_min": 255
+      },
+      "combined": {
+        "path": "game/assets/ui/paper/health.png",
+        "size": [
+          1003,
+          394
+        ],
+        "sha256": "9bb2d4ac24bef9e7389057eb93b7a1afaa3b5db5a44dcc6f3aaa00503459f529"
+      }
     },
     {
       "kind": "card",
       "local": "Cartas Draft DRAFT",
       "native": [
-        848,
-        1264
+        498,
+        738
       ],
       "aperture": [
-        0.043,
-        0.101,
-        0.879,
-        0.904
+        0.1928,
+        0.1409,
+        0.8052,
+        0.8686
       ],
       "quiet": [
         0.305,
@@ -245,22 +515,52 @@
         0.82
       ],
       "fallback": null,
-      "status": "GERADO_SPRITESHEET",
+      "status": "RECORTADO_OK",
       "lote": 2,
-      "source": "spritesheet cut art-source/f1-unificado-zero/preview/spritesheet-10-huds-unificado.png bbox (np.int64(1521), np.int64(1282), np.int64(1998), np.int64(1999), 147622, np.int64(478), np.int64(718), 12)"
+      "frame": {
+        "path": "game/assets/ui/paper/card_frame.png",
+        "size": [
+          498,
+          738
+        ],
+        "bytes": 318593,
+        "sha256": "76db35fa992cd045803ede9c22f6c0f728281423347177f9942dbe9145c3ca9c",
+        "center_opaque_ratio": 0.0,
+        "blue_leak": 0
+      },
+      "bg": {
+        "path": "game/assets/ui/paper/card_bg.png",
+        "size": [
+          498,
+          738
+        ],
+        "bytes": 487844,
+        "sha256": "5f4fe92d745aa732f161705e65ca29865b274ed5cbc9bad83bd4c7540daee383",
+        "border_alpha_max": 0,
+        "corner_alpha_max": 0,
+        "center_alpha_min": 255
+      },
+      "combined": {
+        "path": "game/assets/ui/paper/card.png",
+        "size": [
+          498,
+          738
+        ],
+        "sha256": "827b86e7cc078cce4fe848564bfa5d8620d2981a50d88ff99bf8139dc60833b1"
+      }
     },
     {
       "kind": "transition",
       "local": "Transição Mapa",
       "native": [
-        960,
-        662
+        968,
+        421
       ],
       "aperture": [
-        0.055,
-        0.13,
-        0.915,
-        0.865
+        0.0961,
+        0.2185,
+        0.905,
+        0.7838
       ],
       "quiet": [
         0.185,
@@ -269,22 +569,52 @@
         0.815
       ],
       "fallback": "minimap",
-      "status": "GERADO_SPRITESHEET",
+      "status": "RECORTADO_OK",
       "lote": 3,
-      "source": "spritesheet cut art-source/f1-unificado-zero/preview/spritesheet-10-huds-unificado-parte2.png bbox (np.int64(1058), np.int64(27), np.int64(2005), np.int64(427), 210795, np.int64(948), np.int64(401), 1)"
+      "frame": {
+        "path": "game/assets/ui/paper/transition_frame.png",
+        "size": [
+          968,
+          421
+        ],
+        "bytes": 484321,
+        "sha256": "e02ebd5e175030e70578c9c62656bec564ae703bb5302b581daf4a4556d77a75",
+        "center_opaque_ratio": 0.0015,
+        "blue_leak": 0
+      },
+      "bg": {
+        "path": "game/assets/ui/paper/transition_bg.png",
+        "size": [
+          968,
+          421
+        ],
+        "bytes": 546256,
+        "sha256": "7c7068df03fb46268292c2fe9a018f179a93d09072f00bd39cfbf2f5a6c22a87",
+        "border_alpha_max": 0,
+        "corner_alpha_max": 0,
+        "center_alpha_min": 255
+      },
+      "combined": {
+        "path": "game/assets/ui/paper/transition.png",
+        "size": [
+          968,
+          421
+        ],
+        "sha256": "300bcef33fc4058e9837f6a6418ea87799f0c99169f70948069990308c20f43c"
+      }
     },
     {
       "kind": "pause",
       "local": "Pausa PAUSE",
       "native": [
-        928,
-        1152
+        991,
+        409
       ],
       "aperture": [
-        0.174,
-        0.167,
-        0.829,
-        0.808
+        0.0868,
+        0.1907,
+        0.9142,
+        0.802
       ],
       "quiet": [
         0.25,
@@ -293,22 +623,52 @@
         0.757
       ],
       "fallback": null,
-      "status": "GERADO_SPRITESHEET",
+      "status": "RECORTADO_OK",
       "lote": 3,
-      "source": "spritesheet cut art-source/f1-unificado-zero/preview/spritesheet-10-huds-unificado-parte2.png bbox (np.int64(1047), np.int64(865), np.int64(2017), np.int64(1253), 146817, np.int64(971), np.int64(389), 6)"
+      "frame": {
+        "path": "game/assets/ui/paper/pause_frame.png",
+        "size": [
+          991,
+          409
+        ],
+        "bytes": 298338,
+        "sha256": "748afcda01bfdfbae4d5b9dbba34c3dbeeefef2a27382712a6205fa70be4abba",
+        "center_opaque_ratio": 0.0,
+        "blue_leak": 0
+      },
+      "bg": {
+        "path": "game/assets/ui/paper/pause_bg.png",
+        "size": [
+          991,
+          409
+        ],
+        "bytes": 515422,
+        "sha256": "a733845ad89e1d1add853623082d65c59e5c7d1540821a23b04de4c935cc8aec",
+        "border_alpha_max": 0,
+        "corner_alpha_max": 0,
+        "center_alpha_min": 255
+      },
+      "combined": {
+        "path": "game/assets/ui/paper/pause.png",
+        "size": [
+          991,
+          409
+        ],
+        "sha256": "1a6afda5b13cf97d499787e9d76d1526db1fb65539c1a2a7594bc51b5b8227ff"
+      }
     },
     {
       "kind": "nest_tip",
       "local": "Tooltip Ninho NEST",
       "native": [
-        960,
-        512
+        956,
+        434
       ],
       "aperture": [
-        0.035,
-        0.148,
-        0.92,
-        0.848
+        0.1056,
+        0.2419,
+        0.8902,
+        0.7696
       ],
       "quiet": [
         0.205,
@@ -317,22 +677,52 @@
         0.8
       ],
       "fallback": "panel",
-      "status": "GERADO_SPRITESHEET",
+      "status": "RECORTADO_OK",
       "lote": 3,
-      "source": "spritesheet cut art-source/f1-unificado-zero/preview/spritesheet-10-huds-unificado.png bbox (np.int64(1053), np.int64(53), np.int64(1988), np.int64(466), 164940, np.int64(936), np.int64(414), 2)"
+      "frame": {
+        "path": "game/assets/ui/paper/nest_tip_frame.png",
+        "size": [
+          956,
+          434
+        ],
+        "bytes": 332440,
+        "sha256": "a0fa4926bd1d7566e0e3fa98c795748af142b482254e4e4224b25b86810488d1",
+        "center_opaque_ratio": 0.0,
+        "blue_leak": 0
+      },
+      "bg": {
+        "path": "game/assets/ui/paper/nest_tip_bg.png",
+        "size": [
+          956,
+          434
+        ],
+        "bytes": 537113,
+        "sha256": "c2f9160f9470ab44b84b3f4c7a5837f9d221c5ab624f9d1def779dd7d112f06f",
+        "border_alpha_max": 0,
+        "corner_alpha_max": 0,
+        "center_alpha_min": 255
+      },
+      "combined": {
+        "path": "game/assets/ui/paper/nest_tip.png",
+        "size": [
+          956,
+          434
+        ],
+        "sha256": "88be1848b5f01ed78ef284c08cc3bdab1d9a22d36b73c880576e8161e2158946"
+      }
     },
     {
       "kind": "tree_detail",
       "local": "Lateral Árvore/Santuário TREE",
       "native": [
-        680,
-        924
+        996,
+        423
       ],
       "aperture": [
-        0.055,
-        0.105,
-        0.895,
-        0.9
+        0.1456,
+        0.2175,
+        0.8614,
+        0.7801
       ],
       "quiet": [
         0.185,
@@ -341,22 +731,52 @@
         0.835
       ],
       "fallback": "card",
-      "status": "GERADO_SPRITESHEET",
+      "status": "RECORTADO_OK",
       "lote": 3,
-      "source": "spritesheet cut art-source/f1-unificado-zero/preview/spritesheet-10-huds-unificado-parte2.png bbox (np.int64(28), np.int64(28), np.int64(1003), np.int64(430), 234475, np.int64(976), np.int64(403), 2)"
+      "frame": {
+        "path": "game/assets/ui/paper/tree_detail_frame.png",
+        "size": [
+          996,
+          423
+        ],
+        "bytes": 500217,
+        "sha256": "678df1cedf05412a2a0be6ad3f4401b6605905c10177cba00b76e4f30391a9a1",
+        "center_opaque_ratio": 0.0,
+        "blue_leak": 0
+      },
+      "bg": {
+        "path": "game/assets/ui/paper/tree_detail_bg.png",
+        "size": [
+          996,
+          423
+        ],
+        "bytes": 552711,
+        "sha256": "6a15791d599097809bb75a732901492c805e9fb5e42116ec25ff8766ee802add",
+        "border_alpha_max": 0,
+        "corner_alpha_max": 0,
+        "center_alpha_min": 255
+      },
+      "combined": {
+        "path": "game/assets/ui/paper/tree_detail.png",
+        "size": [
+          996,
+          423
+        ],
+        "sha256": "000abbdeb75370453266bd44536b860185b979fc117a874ce87d04635ec1a973"
+      }
     },
     {
       "kind": "header",
       "local": "Faixa Cabeçalho TREE/PROPHECY",
       "native": [
-        960,
-        120
+        995,
+        391
       ],
       "aperture": [
-        0.035,
-        0.15,
-        0.93,
-        0.84
+        0.0965,
+        0.202,
+        0.8734,
+        0.8056
       ],
       "quiet": [
         0.14,
@@ -365,9 +785,39 @@
         0.78
       ],
       "fallback": "banner",
-      "status": "GERADO_SPRITESHEET",
+      "status": "RECORTADO_OK",
       "lote": 3,
-      "source": "spritesheet cut art-source/f1-unificado-zero/preview/spritesheet-10-huds-unificado-parte2.png bbox (np.int64(27), np.int64(1667), np.int64(1001), np.int64(2037), 200492, np.int64(975), np.int64(371), 10)"
+      "frame": {
+        "path": "game/assets/ui/paper/header_frame.png",
+        "size": [
+          995,
+          391
+        ],
+        "bytes": 412563,
+        "sha256": "31dff0f88915334118fbd37eb4893cea0636ea65b1ab038953d7357fb7ec8508",
+        "center_opaque_ratio": 0.0003,
+        "blue_leak": 0
+      },
+      "bg": {
+        "path": "game/assets/ui/paper/header_bg.png",
+        "size": [
+          995,
+          391
+        ],
+        "bytes": 529783,
+        "sha256": "f1572ad127785a4db7041d313a4aa17eaecf6b2f13d869e620ada3999bb6f582",
+        "border_alpha_max": 0,
+        "corner_alpha_max": 0,
+        "center_alpha_min": 255
+      },
+      "combined": {
+        "path": "game/assets/ui/paper/header.png",
+        "size": [
+          995,
+          391
+        ],
+        "sha256": "a200929fbbccfab8ee3725f856dab240585751cf21e86d35b604d12876c6f318"
+      }
     }
   ],
   "grupoB": 19,
@@ -435,5 +885,99 @@
     "card",
     "tree_detail",
     "pause"
-  ]
+  ],
+  "apertures": {
+    "panel": [
+      0.1385,
+      0.2649,
+      0.8698,
+      0.7974
+    ],
+    "expanded": [
+      0.1248,
+      0.2197,
+      0.8735,
+      0.7688
+    ],
+    "tutorial": [
+      0.1515,
+      0.2634,
+      0.8454,
+      0.7559
+    ],
+    "nest_tip": [
+      0.1056,
+      0.2419,
+      0.8902,
+      0.7696
+    ],
+    "banner": [
+      0.0783,
+      0.3053,
+      0.921,
+      0.6975
+    ],
+    "boss": [
+      0.1222,
+      0.3,
+      0.8534,
+      0.7444
+    ],
+    "event": [
+      0.1516,
+      0.2623,
+      0.8423,
+      0.7169
+    ],
+    "header": [
+      0.0965,
+      0.202,
+      0.8734,
+      0.8056
+    ],
+    "minimap": [
+      0.1934,
+      0.2238,
+      0.8206,
+      0.8049
+    ],
+    "transition": [
+      0.0961,
+      0.2185,
+      0.905,
+      0.7838
+    ],
+    "tooltip": [
+      0.0911,
+      0.1825,
+      0.917,
+      0.7701
+    ],
+    "health": [
+      0.0917,
+      0.198,
+      0.9073,
+      0.8223
+    ],
+    "card": [
+      0.1928,
+      0.1409,
+      0.8052,
+      0.8686
+    ],
+    "tree_detail": [
+      0.1456,
+      0.2175,
+      0.8614,
+      0.7801
+    ],
+    "pause": [
+      0.0868,
+      0.1907,
+      0.9142,
+      0.802
+    ]
+  },
+  "alpha_fix": "2026-10-19 despill + sangria + fundo mascarado na janela",
+  "pieces": 15
 }

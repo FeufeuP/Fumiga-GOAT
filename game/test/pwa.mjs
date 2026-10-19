@@ -187,7 +187,10 @@ for (const rel of PAGINAS) {
 const totalBytes = lista.grupos.reduce((sum, g) => sum + g.bytes, 0);
 assert.ok(totalBytes > 5 * 1024 * 1024 && totalBytes < 200 * 1024 * 1024, "tamanho plausível para o jogo completo");
 // Sobe quando entra asset novo (o painel 3 da Noite Branca trouxe 4 em 2026-10-04).
-assert.equal(pacoteCompleto.size, 275, "pacote completo: 261 anteriores + 14 PNGs RGBA dos HUDs em 2 peças (2026-10-16)");
+// 2026-10-19: os 7 HUDs em 2 peças (14 PNGs + 7 reservas = 21) viraram as 15
+// famílias do recomeço ZERO (15 molduras + 15 fundos + 15 reservas = 45).
+// 275 - 21 + 45 = 299 — número conferido por `tools/make_assets_list.mjs`.
+assert.equal(pacoteCompleto.size, 299, "pacote completo: 15 famílias de HUD em 2 peças (+ reserva combinada) e arte das ondas (2026-10-19)");
 console.log("ok    pacote único — " + mb(totalBytes) + " · " + pacoteCompleto.size + " arquivos (sem versão parcial)");
 
 console.log("PWA OK — shell completo, sem pacote parcial, cache versionado e nenhum link quebrado");

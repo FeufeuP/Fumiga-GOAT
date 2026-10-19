@@ -60,25 +60,28 @@ export const PAPER_NATIVE_SIZE = Object.freeze({
   pause:       Object.freeze([928, 1152]),
   tooltip:     Object.freeze([960, 475]),
 });
-// Janela interna vazada (aperture) medida nas molduras *_frame.png (2026-10-16):
-// região onde o fundo de papel (*_bg.png) e conteúdos clipados (minimapa, barras, textos)
-// ficam visíveis por baixo da moldura vazada (*_frame.png).
+// Janela interna vazada (aperture) MEDIDA nas molduras *_frame.png (2026-10-19,
+// tools/prepare_huds_zero.py): é o buraco real da moldura, não uma estimativa.
+// O fundo (*_bg.png) só existe DENTRO desta janela — fora dela é transparente,
+// por isso nenhum HUD pode mais aparecer como um quadrado de papel.
+// Região onde o fundo de papel (*_bg.png) e os conteúdos clipados (minimapa,
+// barras, textos) ficam visíveis por baixo da moldura vazada (*_frame.png).
 export const PAPER_APERTURE = Object.freeze({
-  panel:       Object.freeze([.030, .148, .925, .848]),
-  expanded:    Object.freeze([.035, .148, .920, .848]),
-  tutorial:    Object.freeze([.035, .148, .920, .848]),
-  nest_tip:    Object.freeze([.035, .148, .920, .848]),
-  health:      Object.freeze([.117, .267, .899, .726]),
-  banner:      Object.freeze([.029, .141, .860, .802]),
-  boss:        Object.freeze([.040, .145, .900, .820]),
-  event:       Object.freeze([.040, .145, .900, .820]),
-  header:      Object.freeze([.035, .150, .930, .840]),
-  minimap:     Object.freeze([.105, .130, .891, .880]),
-  transition:  Object.freeze([.055, .130, .915, .865]),
-  card:        Object.freeze([.043, .101, .879, .904]),
-  tree_detail: Object.freeze([.055, .105, .895, .900]),
-  pause:       Object.freeze([.174, .167, .829, .808]),
-  tooltip:     Object.freeze([.033, .204, .912, .821]),
+  panel:        Object.freeze([0.1385, 0.2649, 0.8698, 0.7974]),
+  expanded:     Object.freeze([0.1248, 0.2197, 0.8735, 0.7688]),
+  tutorial:     Object.freeze([0.1515, 0.2634, 0.8454, 0.7559]),
+  nest_tip:     Object.freeze([0.1056, 0.2419, 0.8902, 0.7696]),
+  health:       Object.freeze([0.0917, 0.1980, 0.9073, 0.8223]),
+  banner:       Object.freeze([0.0783, 0.3053, 0.9210, 0.6975]),
+  boss:         Object.freeze([0.1222, 0.3000, 0.8534, 0.7444]),
+  event:        Object.freeze([0.1516, 0.2623, 0.8423, 0.7169]),
+  header:       Object.freeze([0.0965, 0.2020, 0.8734, 0.8056]),
+  minimap:      Object.freeze([0.1934, 0.2238, 0.8206, 0.8049]),
+  transition:   Object.freeze([0.0961, 0.2185, 0.9050, 0.7838]),
+  card:         Object.freeze([0.1928, 0.1409, 0.8052, 0.8686]),
+  tree_detail:  Object.freeze([0.1456, 0.2175, 0.8614, 0.7801]),
+  pause:        Object.freeze([0.0868, 0.1907, 0.9142, 0.8020]),
+  tooltip:      Object.freeze([0.0911, 0.1825, 0.9170, 0.7701]),
 });
 // Placas de madeira dos botões (2026-10-14): a variação segue o tamanho
 // REAL desenhado em 960x540 — inventário completo em
@@ -103,7 +106,22 @@ export const PAPER_FALLBACK = Object.freeze({
   transition:  'minimap',
   tree_detail: 'card',
 });
+// Resgate dos HUDs ALTOS (2026-10-19): as molduras geradas no spritesheet saíram
+// todas largas (~2.5:1). Numa caixa alta (pausa 355×440, detalhe da árvore) a
+// moldura larga virava um selo minúsculo no meio. Enquanto não existir arte
+// alta própria, essas telas usam a moldura `card` (0.67:1, mesma folha, mesma
+// paleta) — que preenche a caixa sem deformar nada. O resgate se desliga
+// sozinho quando a arte do kind já for alta o bastante (ver `artFitsBox`).
+export const PAPER_TALL_RESCUE = Object.freeze({ pause: 'card', tree_detail: 'card' });
+function artFitsBox(img, w, h) {
+  if (!img || !img.width || !img.height) return false;
+  return (img.height / img.width) >= (h / w) * 0.72; // arte tão alta quanto a caixa
+}
 export function paperSource(kind,w,h) {
+  const tallRescue = PAPER_TALL_RESCUE[kind];
+  if (tallRescue && h > w * 1.02 && typeof document !== 'undefined' && !artFitsBox(IMG['paper_' + kind + '_frame'], w, h)) {
+    return tallRescue;
+  }
   if(kind==='tooltip'||kind==='pause'||PAPER_FALLBACK[kind]) return kind; // explicit functional art
   if(kind==='panel'||kind==='card') {
     return h>w*1.12 ? 'card' : h>w*.68 ? 'pause' : 'panel';
@@ -136,22 +154,79 @@ export function paperFit(sw, sh, w, h) {
   return { fw, fh, ox: Math.round((w - fw) / 2), oy: Math.round((h - fh) / 2), scale: s };
 }
 /**
+ * Geometria de destino do HUD — DUAS opções, nenhuma delas deforma a arte:
+ *
+ *  1. `contain` (padrão): a pintura inteira entra na caixa com a proporção da
+ *     fonte preservada (letterbox centralizado).
+ *  2. `sliced` (3 colunas): quando a caixa é MUITO mais larga que a arte, as
+ *     duas pontas (postes de madeira + folhagem) ficam na proporção original e
+ *     SÓ a viga central acompanha a largura. É assim que uma barra de vida
+ *     7:1 usa a mesma moldura de um painel, sem esticar folha nenhuma.
+ *
+ * O corte central é a própria janela vazada da moldura (`PAPER_APERTURE`), ou
+ * seja, a faixa de madeira lisa entre os ornamentos.
+ */
+export function paperLayout(kind, w, h, sw, sh) {
+  return layoutFor(paperSource(kind, w, h), w, h, sw, sh);
+}
+/** Igual a `paperLayout`, mas recebe a fonte JÁ resolvida (sem re-resolver). */
+export function layoutFor(src, w, h, sw, sh) {
+  const nat = PAPER_NATIVE_SIZE[src] || PAPER_NATIVE_SIZE.panel;
+  const img = (typeof document !== 'undefined') ? (IMG['paper_' + src + '_frame'] || IMG['paper_' + src]) : null;
+  const iw = sw || (img && img.width > 64 ? img.width : nat[0]);
+  const ih = sh || (img && img.height > 64 ? img.height : nat[1]);
+  const fit = paperFit(iw, ih, w, h);
+  const a = PAPER_APERTURE[src] || PAPER_APERTURE.panel;
+  const cut0 = Math.round(a[0] * iw), cut1 = Math.round(a[2] * iw);
+  const s = h / ih;
+  const lw = Math.round(cut0 * s), rw = Math.round((iw - cut1) * s);
+  const sliced = (w / h) > (iw / ih) * 1.18 && lw + rw <= w - 2 && (cut1 - cut0) > iw * 0.25;
+  if (!sliced) return { fit, sliced: false, source: src, iw, ih, s };
+  return {
+    fit: { fw: w, fh: h, ox: 0, oy: 0, scale: s }, sliced: true, source: src,
+    cut0, cut1, s, lw, rw, mw: w - lw - rw, iw, ih,
+  };
+}
+/**
  * Área permitida pelo sprite em coordenadas de destino: o retângulo de papel
  * liso de `kind`, mapeado sobre o desenho realmente ocupado (paperFit).
  * O texto do HUD fica CENTRALIZADO dentro deste retângulo.
  */
 export function paperQuiet(kind, x, y, w, h, sw, sh) {
   const src = paperSource(kind, w, h);
-  const q = PAPER_QUIET[src] || PAPER_QUIET.panel;
-  const nat = PAPER_NATIVE_SIZE[src] || PAPER_NATIVE_SIZE.panel;
-  const img = (typeof document !== 'undefined') ? (IMG['paper_' + src + '_frame'] || IMG['paper_' + src]) : null;
-  const iw = sw || (img && img.width > 64 ? img.width : nat[0]);
-  const ih = sh || (img && img.height > 64 ? img.height : nat[1]);
-  const { fw, fh, ox, oy } = paperFit(iw, ih, w, h);
+  const a = PAPER_APERTURE[src] || PAPER_APERTURE.panel;
+  const raw = PAPER_QUIET[src] || PAPER_QUIET.panel;
+  // A área de texto NUNCA pode sair da janela real da moldura: se a fração
+  // antiga vazar (as medidas eram estimadas à mão), ela é aparada aqui. Sem
+  // isso o texto cairia sobre pixels transparentes depois que o fundo passou a
+  // ser mascarado na janela (2026-10-19). A folga interna evita encostar na
+  // madeira/folhagem que invade a janela.
+  const padX = (a[2] - a[0]) * .02, padY = (a[3] - a[1]) * .03;
+  const q = [
+    Math.min(Math.max(raw[0], a[0] + padX), a[2] - padX), Math.min(Math.max(raw[1], a[1] + padY), a[3] - padY),
+    Math.max(Math.min(raw[2], a[2] - padX), a[0] + padX), Math.max(Math.min(raw[3], a[3] - padY), a[1] + padY),
+  ];
+  if (q[2] - q[0] < 0.08 || q[3] - q[1] < 0.08) {
+    q[0] = a[0] + padX; q[1] = a[1] + padY; q[2] = a[2] - padX; q[3] = a[3] - padY;
+  }
+  const lay = layoutFor(src, w, h, sw, sh);
+  const fw = lay.fit.fw, fh = lay.fit.fh, ox = lay.fit.ox, oy = lay.fit.oy;
+  if (!lay.sliced) {
+    return {
+      x: x + ox + q[0] * fw, y: y + oy + q[1] * fh,
+      w: (q[2] - q[0]) * fw, h: (q[3] - q[1]) * fh,
+      fit: { fw, fh, ox, oy }, source: src,
+    };
+  }
+  // Fatiado: as frações do miolo são remapeadas DENTRO da coluna central, que é
+  // a única parte esticada — o texto nunca cai sobre a folhagem das pontas.
+  const [a0, a1, a2, a3] = PAPER_APERTURE[src] || PAPER_APERTURE.panel;
+  const rx = (v) => (v - a0) / Math.max(1e-6, a2 - a0), ry = (v) => (v - a1) / Math.max(1e-6, a3 - a1);
   return {
-    x: x + ox + q[0] * fw, y: y + oy + q[1] * fh,
-    w: (q[2] - q[0]) * fw, h: (q[3] - q[1]) * fh,
-    fit: { fw, fh, ox, oy }, source: src,
+    x: x + lay.lw + rx(q[0]) * lay.mw, y: y + (a1 * lay.ih + ry(q[1]) * (a3 - a1) * lay.ih) * lay.s,
+    w: (rx(q[2]) - rx(q[0])) * lay.mw,
+    h: (ry(q[3]) - ry(q[1])) * (a3 - a1) * lay.ih * lay.s,
+    fit: lay.fit, sliced: true, source: src,
   };
 }
 /**
@@ -162,15 +237,19 @@ export function paperQuiet(kind, x, y, w, h, sw, sh) {
 export function paperAperture(kind, x, y, w, h, sw, sh) {
   const src = paperSource(kind, w, h);
   const a = PAPER_APERTURE[src] || PAPER_APERTURE.panel;
-  const nat = PAPER_NATIVE_SIZE[src] || PAPER_NATIVE_SIZE.panel;
-  const img = (typeof document !== 'undefined') ? (IMG['paper_' + src + '_frame'] || IMG['paper_' + src]) : null;
-  const iw = sw || (img && img.width > 64 ? img.width : nat[0]);
-  const ih = sh || (img && img.height > 64 ? img.height : nat[1]);
-  const { fw, fh, ox, oy } = paperFit(iw, ih, w, h);
+  const lay = layoutFor(src, w, h, sw, sh);
+  if (!lay.sliced) {
+    const { fw, fh, ox, oy } = lay.fit;
+    return {
+      x: x + ox + a[0] * fw, y: y + oy + a[1] * fh,
+      w: (a[2] - a[0]) * fw, h: (a[3] - a[1]) * fh,
+      fit: lay.fit, source: src,
+    };
+  }
   return {
-    x: x + ox + a[0] * fw, y: y + oy + a[1] * fh,
-    w: (a[2] - a[0]) * fw, h: (a[3] - a[1]) * fh,
-    fit: { fw, fh, ox, oy }, source: src,
+    x: x + lay.lw, y: y + a[1] * lay.ih * lay.s,
+    w: lay.mw, h: (a[3] - a[1]) * lay.ih * lay.s,
+    fit: lay.fit, sliced: true, source: src,
   };
 }
 // Geometria de fatiamento sobre o retângulo ENCAIXADO (proporção da fonte):
@@ -215,14 +294,31 @@ function tileFor(img, kind, w, h, state, bgImg = null, layer = 'both') {
     }
     // estado já é arte própria: nunca tingir por cima (guarda abaixo)
   } else {
-    // Pintura inteira, escala uniforme (contain + centralizado): o sprite sai
-    // nas proporções originais — moldura e ornamentos nunca são deformados.
-    const fit=paperFit(img.width,img.height,w,h);
-    if (layer !== 'frame' && bgImg) {
-      c.drawImage(bgImg,0,0,bgImg.width,bgImg.height,fit.ox,fit.oy,fit.fw,fit.fh);
-    }
-    if (layer !== 'bg') {
-      c.drawImage(img,0,0,img.width,img.height,fit.ox,fit.oy,fit.fw,fit.fh);
+    // Pintura inteira, escala uniforme. Duas formas de encaixar, ambas sem
+    // deformar ornamento (ver `paperLayout`):
+    //   contain — proporção da fonte intacta, centralizada;
+    //   sliced  — 3 colunas: pontas na proporção, só a viga central estica.
+    const lay = layoutFor(kind, w, h, img.width, img.height);
+    if (lay.sliced) {
+      const { cut0, cut1, lw, mw, rw } = lay;
+      const sx = [0, cut0, cut1, img.width];
+      const dx = [0, lw, lw + mw, lw + mw + rw];
+      const dy = lay.fit.fh;
+      for (let i = 0; i < 3; i++) {
+        const dw = dx[i + 1] - dx[i];
+        if (dw <= 0) continue;
+        const sw2 = sx[i + 1] - sx[i];
+        if (layer !== 'frame' && bgImg) c.drawImage(bgImg, sx[i], 0, sw2, bgImg.height, dx[i], 0, dw, dy);
+        if (layer !== 'bg') c.drawImage(img, sx[i], 0, sw2, img.height, dx[i], 0, dw, dy);
+      }
+    } else {
+      const fit = lay.fit;
+      if (layer !== 'frame' && bgImg) {
+        c.drawImage(bgImg,0,0,bgImg.width,bgImg.height,fit.ox,fit.oy,fit.fw,fit.fh);
+      }
+      if (layer !== 'bg') {
+        c.drawImage(img,0,0,img.width,img.height,fit.ox,fit.oy,fit.fw,fit.fh);
+      }
     }
   }
   // State treatment changes depth and adds a readable selection mark, never
@@ -230,7 +326,7 @@ function tileFor(img, kind, w, h, state, bgImg = null, layer = 'both') {
   // It is clipped to the painted pixels ('source-atop') so no state repaints a
   // rectangle over the transparent sheet that was just removed.
   if(state !== 'normal' && !kind.startsWith('wood_')) {
-    const fit=paperFit(img.width,img.height,w,h);
+    const fit=layoutFor(kind,w,h,img.width,img.height).fit;
     c.globalCompositeOperation='source-atop';
     const inset = Math.max(2, Math.min(6,fit.fh*.12));
     const x0=fit.ox+inset,y0=fit.oy+inset,ww=fit.fw-inset*2,hh=fit.fh-inset*2;
@@ -288,7 +384,8 @@ export function drawPaper(ctx, kind, x, y, w, h, opt = {}) {
   const iw = frameImg.width > 64 ? frameImg.width : nat[0];
   const ih = frameImg.height > 64 ? frameImg.height : nat[1];
   const tile=tileFor(frameImg,source,w,h,paperState(opt),bgImg,layer);
-  const fit=paperFit(iw,ih,w,h);
+  const lay=layoutFor(source,w,h,iw,ih);
+  const fit=lay.fit;
   ctx.save();ctx.globalCompositeOperation='source-over';
   ctx.drawImage(tile,Math.round(x),Math.round(y));ctx.restore();
   if (layer !== 'frame') {

@@ -57,7 +57,10 @@ try {
   MOD.paper.drawPaper(tt.getContext('2d'),'tooltip',0,0,420,240);
   MOD.paper.drawPaper(pp.getContext('2d'),'panel',0,0,420,240);
   if(tt.toDataURL()===pp.toDataURL())throw Error('tooltip still aliases panel');
-  if(MOD.paper.paperSource('pause',360,440)!=='pause')throw Error('pause not integrated');
+  // 2026-10-19: HUD alto usa a moldura ALTA da mesma família (resgate) em vez
+  // de espremer uma pintura 2.4:1 no meio de uma caixa 0.8:1.
+  if(MOD.paper.paperSource('pause',360,440)!=='card')throw Error('tall pause must fall back to the portrait frame');
+  if(MOD.paper.paperSource('pause',330,230)!=='pause')throw Error('wide pause must use its own art');
   MOD.paper.drawPaper(ctx,'tooltip',300,20,420,240);
   // Tall surfaces must use portrait art and enclose the whole content area,
   // not a small landscape painting stranded on blank matte.
@@ -83,8 +86,11 @@ try {
   const geo=MOD.paper.paperGeometry('card',848,1264,120,300);
   if(geo.dx.at(-1)!==geo.fw||geo.dy.at(-1)!==geo.fh)throw Error('incomplete frame');
   if(Math.abs(geo.fw/geo.fh-848/1264)>0.02)throw Error('geometry distorted the sprite');
-  // Nenhum sprite é deformado em nenhum alvo: a CAIXA PINTADA mantém a mesma
-  // proporção em alvos de formatos diferentes (medição por alfa).
+  // Contrato de encaixe (2026-10-19) — em nenhum alvo a ARTE é deformada:
+  //   * contain  -> a caixa pintada mantém a proporção da fonte;
+  //   * sliced   -> 3 colunas: as PONTAS (madeira + folhagem) mantêm a
+  //                 proporção da fonte e só a viga central acompanha a largura,
+  //                 então o desenho ocupa a largura toda sem esticar ornamento.
   for(const [kind,w,h] of [['panel',320,122],['panel',420,160],['panel',960,512],['banner',300,60],['banner',120,90],['card',220,300],['card',120,180],['tooltip',280,138],['tooltip',400,120],['pause',330,230],['pause',120,160],['health',540,12],['health',200,28]]) {
     const t=document.createElement('canvas');t.width=w;t.height=h;
     const cx=t.getContext('2d');MOD.paper.drawPaper(cx,kind,0,0,w,h);
@@ -94,10 +100,21 @@ try {
       if(d[(yy*w+xx)*4+3]>8){if(xx<x0)x0=xx;if(xx>x1)x1=xx;if(yy<y0)y0=yy;if(yy>y1)y1=yy;}
     }
     const drawn=(x1-x0+1)/(y1-y0+1);
-    const ref=shapeRef[kind];
-    const tol=Math.max(0.04,2.5/Math.max(1,y1-y0+1)); // ±1px de arredondamento
-    if(ref==null)shapeRef[kind]=drawn;
-    else if(Math.abs(drawn/ref-1)>tol)throw Error('distorted sprite '+kind+' '+w+'x'+h+' ('+drawn.toFixed(2)+' vs '+ref.toFixed(2)+')');
+    const lay=MOD.paper.paperLayout(kind,w,h);
+    // A ponta esquerda do desenho: largura fixa pela escala uniforme da altura.
+    const capAspect=(lay.lw||lay.fit.fw)/Math.max(1,(lay.fit.fh||y1-y0+1));
+    const refKey=kind+':'+lay.source;
+    const ref=shapeRef[refKey];
+    if(lay.sliced) {
+      if(x0>2||x1<w-3)throw Error('sliced sprite did not reach the box edges '+kind+' '+w+'x'+h);
+      if(ref==null)shapeRef[refKey]={sliced:true,cap:capAspect};
+      else if(ref.sliced && Math.abs(capAspect/ref.cap-1)>0.06)throw Error('ornament deformed in slice '+kind+' '+w+'x'+h);
+    } else {
+      const tol=Math.max(0.04,2.5/Math.max(1,y1-y0+1)); // ±1px de arredondamento
+      if(ref==null)shapeRef[refKey]={sliced:false,aspect:drawn};
+      else if(!ref.sliced && Math.abs(drawn/ref.aspect-1)>tol)throw Error('distorted sprite '+kind+' '+w+'x'+h+' ('+drawn.toFixed(2)+' vs '+ref.aspect.toFixed(2)+')');
+    }
+    if(!isFinite(capAspect)||capAspect<=0)throw Error('bad layout '+kind);
   }
   // Área permitida: o texto se centraliza no papel liso medido da pintura.
   const qq=MOD.paper.paperQuiet('panel',10,8,320,171);

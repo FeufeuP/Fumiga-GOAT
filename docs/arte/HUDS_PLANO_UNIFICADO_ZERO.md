@@ -205,4 +205,50 @@ Regra: `FUMIGA-PAPEL-v4-CHROMA`, fundo chroma, sem disco/anel, derivado 128×128
 
 Aguardar **aprovação deste plano ZERO** (formato, dimensões, prompts) e iniciar **Rodada 1** (5 primeiras molduras com `offer_options`). O texto já está adaptado ao HUD (Regra 21) e o sprite nunca deforma (Regra 22) — a troca de arte é só de material visual.
 
+---
+
+## 12. Correção do recorte (2026-10-19) — "quadrado branco atrás de todos os HUDs"
+
+Relato do usuário ao abrir o preview: *"o recorte dos HUDs ficou ruim, todos ficaram com um quadrado branco atrás"*.
+Diagnóstico no código e nos PNGs (não é opinião: cada item foi medido):
+
+1. **Fundo retangular.** O `*_bg.png` era um retângulo de pergaminho de ponta a ponta;
+   como ele é desenhado ANTES da moldura, o resultado era uma chapa creme nas margens
+   transparentes → o "quadrado branco". O papel agora é **mascarado na janela real da
+   moldura** (buraco medido por `binary_fill_holes`, dilatado ~1,2% para correr por baixo
+   da madeira, borda com 1px de suavização). Fora da janela: alfa 0.
+2. **Halo azul do chroma.** O #0000FF vazava nas bordas anti-aliased (folhas com contorno
+   azul) e os pixels 100% transparentes carregavam RGB azul — ao reduzir, o navegador
+   misturava esse azul. **Despill** (corta o azul para `max(R,G)`, alfa macio proporcional)
+   + **sangria** (RGB dos transparentes recebe a cor opaca vizinha mais próxima).
+3. **Janela estimada ≠ janela real.** `PAPER_APERTURE` era chute manual; agora é **medido**
+   em cada moldura e conferido pelo teste. `paperQuiet` também é aparado dentro da janela,
+   então texto nunca cai sobre pixel transparente.
+4. **HUD espremido em caixa alta.** As molduras saíram todas largas (~2,5:1). Em caixa alta
+   (pausa 355×440, detalhe da árvore) a moldura virava um selo. Duas soluções, ambas sem
+   deformar nada: `paperLayout` **fatiado em 3 colunas** (as pontas — madeira + folhagem —
+   ficam na proporção original, só a **viga central** acompanha a largura; é o que faz a
+   barra de vida 7:1 e o cabeçalho 8:1 usarem a mesma moldura do painel) e **resgate alto**
+   `pause/tree_detail → card` (moldura 0,67:1 da mesma família) enquanto não existir arte
+   alta própria.
+
+### Ferramenta e registro
+
+- `tools/prepare_huds_zero.py` — despill + sangria + fundo mascarado + medição da janela.
+  `--check` só mede; `--record` regrava `docs/arte/huds-zero.json` (não toca nos PNGs).
+- `docs/arte/huds-zero.json` — por HUD: `frame{size,bytes,sha256,center_opaque_ratio,blue_leak}`,
+  `bg{size,bytes,sha256,border_alpha_max,corner_alpha_max,center_alpha_min}`, `aperture` medida.
+- `game/test/hud-publication.mjs` — passou a validar o conjunto ZERO (15 HUDs) e as garantias:
+  `bg.border_alpha_max = 0`, `bg.corner_alpha_max = 0` (nada de quadrado), `bg.center_alpha_min = 255`
+  (legibilidade), `frame.blue_leak = 0`, `frame.center_opaque_ratio < 0,2` (moldura vazada) e um
+  bloco de **geometria headless** que percorre as 15 telas reais exigindo texto dentro da janela.
+- `game/test/paper-hud-browser.mjs` — contrato de encaixe reescrito: `contain` mantém a proporção
+  da caixa pintada; `sliced` exige desenho de ponta a ponta com as **pontas na proporção da fonte**.
+- Prova visual (Regra 20): `docs/arte/hud-quadrado-antes-depois.png`.
+
+### Resultado
+
+`npm test` **33/33 verde** (4 pulados sem Playwright neste ambiente) · `inspect:layout` 118 estados
+limpos · `paper-hud-browser` **sem navegador aqui**, então a conferência final é a do usuário no preview.
+
 *Fim do Plano Unificado ZERO.*
