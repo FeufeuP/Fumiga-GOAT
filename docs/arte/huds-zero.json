@@ -1,0 +1,439 @@
+{
+  "date": "2026-10-18",
+  "decision": "ZERO — recomeço total HUDs, estilo único Piloto F0b + FUMIGA-PAPEL-v4-CHROMA",
+  "style": {
+    "prompt": "FUMIGA-PAPEL-v4-CHROMA",
+    "reference": "art-source/piloto-f0b/originais/ + panel_frame slim 2026-10-16",
+    "palette": "pastel terroso: marrom terra, laranja âmbar, verde sálvia/musgo, papel creme",
+    "bg_chroma": "#0000FF",
+    "engine": "paper_hud.js 3 camadas Fundo>Texto clipado>Moldura, PAPER_NATIVE_SIZE/APERTURE/QUIET"
+  },
+  "huds": [
+    {
+      "kind": "panel",
+      "local": "Painel Colônia RUN",
+      "native": [
+        960,
+        512
+      ],
+      "aperture": [
+        0.03,
+        0.148,
+        0.925,
+        0.848
+      ],
+      "quiet": [
+        0.215,
+        0.2,
+        0.865,
+        0.8
+      ],
+      "fallback": null,
+      "status": "GERADO_SPRITESHEET",
+      "lote": 1,
+      "source": "spritesheet cut art-source/f1-unificado-zero/preview/spritesheet-10-huds-unificado.png bbox (np.int64(175), np.int64(483), np.int64(876), np.int64(847), 117172, np.int64(702), np.int64(365), 3)"
+    },
+    {
+      "kind": "expanded",
+      "local": "Expandido Feromônio RUN",
+      "native": [
+        960,
+        512
+      ],
+      "aperture": [
+        0.035,
+        0.148,
+        0.92,
+        0.848
+      ],
+      "quiet": [
+        0.2,
+        0.2,
+        0.855,
+        0.8
+      ],
+      "fallback": "panel",
+      "status": "GERADO_SPRITESHEET",
+      "lote": 1,
+      "source": "spritesheet cut art-source/f1-unificado-zero/preview/spritesheet-10-huds-unificado.png bbox (np.int64(818), np.int64(1306), np.int64(1398), np.int64(1631), 89951, np.int64(581), np.int64(326), 13)"
+    },
+    {
+      "kind": "tutorial",
+      "local": "Cartão Tutorial RUN",
+      "native": [
+        960,
+        512
+      ],
+      "aperture": [
+        0.035,
+        0.148,
+        0.92,
+        0.848
+      ],
+      "quiet": [
+        0.195,
+        0.2,
+        0.86,
+        0.8
+      ],
+      "fallback": "panel",
+      "status": "GERADO_SPRITESHEET",
+      "lote": 1,
+      "source": "spritesheet cut art-source/f1-unificado-zero/preview/spritesheet-10-huds-unificado.png bbox (np.int64(47), np.int64(34), np.int64(1003), np.int64(480), 214642, np.int64(957), np.int64(447), 1)"
+    },
+    {
+      "kind": "banner",
+      "local": "Banner Onda RUN",
+      "native": [
+        960,
+        192
+      ],
+      "aperture": [
+        0.029,
+        0.141,
+        0.86,
+        0.802
+      ],
+      "quiet": [
+        0.31,
+        0.295,
+        0.84,
+        0.765
+      ],
+      "fallback": null,
+      "status": "GERADO_SPRITESHEET",
+      "lote": 1,
+      "source": "spritesheet cut art-source/f1-unificado-zero/preview/spritesheet-10-huds-unificado.png bbox (np.int64(76), np.int64(1674), np.int64(1460), np.int64(2010), 181078, np.int64(1385), np.int64(337), 16)"
+    },
+    {
+      "kind": "boss",
+      "local": "Banner Chefão RUN",
+      "native": [
+        960,
+        192
+      ],
+      "aperture": [
+        0.04,
+        0.145,
+        0.9,
+        0.82
+      ],
+      "quiet": [
+        0.2,
+        0.26,
+        0.835,
+        0.76
+      ],
+      "fallback": "banner",
+      "status": "GERADO_SPRITESHEET",
+      "lote": 1,
+      "source": "spritesheet cut art-source/f1-unificado-zero/preview/spritesheet-10-huds-unificado.png bbox (np.int64(41), np.int64(871), np.int64(1002), np.int64(1210), 170096, np.int64(962), np.int64(340), 5)"
+    },
+    {
+      "kind": "event",
+      "local": "Banner Evento RUN",
+      "native": [
+        960,
+        192
+      ],
+      "aperture": [
+        0.04,
+        0.145,
+        0.9,
+        0.82
+      ],
+      "quiet": [
+        0.2,
+        0.25,
+        0.835,
+        0.765
+      ],
+      "fallback": "banner",
+      "status": "GERADO_SPRITESHEET",
+      "lote": 2,
+      "source": "spritesheet cut art-source/f1-unificado-zero/preview/spritesheet-10-huds-unificado.png bbox (np.int64(1045), np.int64(890), np.int64(2007), np.int64(1254), 166609, np.int64(963), np.int64(365), 6)"
+    },
+    {
+      "kind": "minimap",
+      "local": "Minimapa RUN",
+      "native": [
+        960,
+        717
+      ],
+      "aperture": [
+        0.105,
+        0.13,
+        0.891,
+        0.88
+      ],
+      "quiet": [
+        0.18,
+        0.24,
+        0.8,
+        0.77
+      ],
+      "fallback": null,
+      "status": "GERADO_SPRITESHEET",
+      "lote": 2,
+      "source": "spritesheet cut art-source/f1-unificado-zero/preview/spritesheet-10-huds-unificado.png bbox (np.int64(66), np.int64(1224), np.int64(686), np.int64(1690), 139729, np.int64(621), np.int64(467), 11)"
+    },
+    {
+      "kind": "tooltip",
+      "local": "Tooltip Loja RUN",
+      "native": [
+        960,
+        475
+      ],
+      "aperture": [
+        0.033,
+        0.204,
+        0.912,
+        0.821
+      ],
+      "quiet": [
+        0.215,
+        0.24,
+        0.83,
+        0.765
+      ],
+      "fallback": null,
+      "status": "GERADO_SPRITESHEET",
+      "lote": 2,
+      "source": "spritesheet cut art-source/f1-unificado-zero/preview/spritesheet-10-huds-unificado-parte2.png bbox (np.int64(1046), np.int64(453), np.int64(2013), np.int64(854), 153114, np.int64(968), np.int64(402), 4)"
+    },
+    {
+      "kind": "health",
+      "local": "Barra Gaster RUN",
+      "native": [
+        960,
+        135
+      ],
+      "aperture": [
+        0.117,
+        0.267,
+        0.899,
+        0.726
+      ],
+      "quiet": [
+        0.145,
+        0.32,
+        0.865,
+        0.68
+      ],
+      "fallback": null,
+      "status": "GERADO_SPRITESHEET",
+      "lote": 2,
+      "source": "spritesheet cut art-source/f1-unificado-zero/preview/spritesheet-10-huds-unificado-parte2.png bbox (np.int64(1044), np.int64(1664), np.int64(2026), np.int64(2040), 155861, np.int64(983), np.int64(377), 9)"
+    },
+    {
+      "kind": "card",
+      "local": "Cartas Draft DRAFT",
+      "native": [
+        848,
+        1264
+      ],
+      "aperture": [
+        0.043,
+        0.101,
+        0.879,
+        0.904
+      ],
+      "quiet": [
+        0.305,
+        0.165,
+        0.855,
+        0.82
+      ],
+      "fallback": null,
+      "status": "GERADO_SPRITESHEET",
+      "lote": 2,
+      "source": "spritesheet cut art-source/f1-unificado-zero/preview/spritesheet-10-huds-unificado.png bbox (np.int64(1521), np.int64(1282), np.int64(1998), np.int64(1999), 147622, np.int64(478), np.int64(718), 12)"
+    },
+    {
+      "kind": "transition",
+      "local": "Transição Mapa",
+      "native": [
+        960,
+        662
+      ],
+      "aperture": [
+        0.055,
+        0.13,
+        0.915,
+        0.865
+      ],
+      "quiet": [
+        0.185,
+        0.185,
+        0.835,
+        0.815
+      ],
+      "fallback": "minimap",
+      "status": "GERADO_SPRITESHEET",
+      "lote": 3,
+      "source": "spritesheet cut art-source/f1-unificado-zero/preview/spritesheet-10-huds-unificado-parte2.png bbox (np.int64(1058), np.int64(27), np.int64(2005), np.int64(427), 210795, np.int64(948), np.int64(401), 1)"
+    },
+    {
+      "kind": "pause",
+      "local": "Pausa PAUSE",
+      "native": [
+        928,
+        1152
+      ],
+      "aperture": [
+        0.174,
+        0.167,
+        0.829,
+        0.808
+      ],
+      "quiet": [
+        0.25,
+        0.219,
+        0.776,
+        0.757
+      ],
+      "fallback": null,
+      "status": "GERADO_SPRITESHEET",
+      "lote": 3,
+      "source": "spritesheet cut art-source/f1-unificado-zero/preview/spritesheet-10-huds-unificado-parte2.png bbox (np.int64(1047), np.int64(865), np.int64(2017), np.int64(1253), 146817, np.int64(971), np.int64(389), 6)"
+    },
+    {
+      "kind": "nest_tip",
+      "local": "Tooltip Ninho NEST",
+      "native": [
+        960,
+        512
+      ],
+      "aperture": [
+        0.035,
+        0.148,
+        0.92,
+        0.848
+      ],
+      "quiet": [
+        0.205,
+        0.2,
+        0.855,
+        0.8
+      ],
+      "fallback": "panel",
+      "status": "GERADO_SPRITESHEET",
+      "lote": 3,
+      "source": "spritesheet cut art-source/f1-unificado-zero/preview/spritesheet-10-huds-unificado.png bbox (np.int64(1053), np.int64(53), np.int64(1988), np.int64(466), 164940, np.int64(936), np.int64(414), 2)"
+    },
+    {
+      "kind": "tree_detail",
+      "local": "Lateral Árvore/Santuário TREE",
+      "native": [
+        680,
+        924
+      ],
+      "aperture": [
+        0.055,
+        0.105,
+        0.895,
+        0.9
+      ],
+      "quiet": [
+        0.185,
+        0.16,
+        0.845,
+        0.835
+      ],
+      "fallback": "card",
+      "status": "GERADO_SPRITESHEET",
+      "lote": 3,
+      "source": "spritesheet cut art-source/f1-unificado-zero/preview/spritesheet-10-huds-unificado-parte2.png bbox (np.int64(28), np.int64(28), np.int64(1003), np.int64(430), 234475, np.int64(976), np.int64(403), 2)"
+    },
+    {
+      "kind": "header",
+      "local": "Faixa Cabeçalho TREE/PROPHECY",
+      "native": [
+        960,
+        120
+      ],
+      "aperture": [
+        0.035,
+        0.15,
+        0.93,
+        0.84
+      ],
+      "quiet": [
+        0.14,
+        0.22,
+        0.865,
+        0.78
+      ],
+      "fallback": "banner",
+      "status": "GERADO_SPRITESHEET",
+      "lote": 3,
+      "source": "spritesheet cut art-source/f1-unificado-zero/preview/spritesheet-10-huds-unificado-parte2.png bbox (np.int64(27), np.int64(1667), np.int64(1001), np.int64(2037), 200492, np.int64(975), np.int64(371), 10)"
+    }
+  ],
+  "grupoB": 19,
+  "grupoC": {
+    "paineis": 10,
+    "icones": 32
+  },
+  "cronograma": [
+    {
+      "rodada": 1,
+      "kinds": [
+        "panel",
+        "expanded",
+        "tutorial",
+        "banner",
+        "boss"
+      ]
+    },
+    {
+      "rodada": 2,
+      "kinds": [
+        "event",
+        "minimap",
+        "tooltip",
+        "health",
+        "card"
+      ]
+    },
+    {
+      "rodada": 3,
+      "kinds": [
+        "transition",
+        "pause",
+        "nest_tip",
+        "tree_detail",
+        "header"
+      ]
+    }
+  ],
+  "superseded": [
+    "docs/arte/PLANO_HUDS_DISTINTOS_E_CAMADAS.md",
+    "docs/arte/PLANO_CORRECAO_HUDS_GRUPOS_B_C.md",
+    "docs/arte/hud-duas-pecas.json (congelado)",
+    "docs/arte/paper-hud.json (congelado)"
+  ],
+  "generated_at": "2026-10-19",
+  "sheets": [
+    "art-source/f1-unificado-zero/preview/spritesheet-10-huds-unificado.png",
+    "art-source/f1-unificado-zero/preview/spritesheet-10-huds-unificado-parte2.png"
+  ],
+  "total_extracted": 20,
+  "assigned": [
+    "panel",
+    "expanded",
+    "tutorial",
+    "nest_tip",
+    "banner",
+    "boss",
+    "event",
+    "header",
+    "minimap",
+    "transition",
+    "tooltip",
+    "health",
+    "card",
+    "tree_detail",
+    "pause"
+  ]
+}

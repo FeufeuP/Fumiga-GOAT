@@ -1,0 +1,102 @@
+{
+  "date": "2026-10-09",
+  "lot": [
+    {
+      "id": "brasa",
+      "source": "art-source/f1-publicacao/originais/brasa.png",
+      "source_size": [
+        1024,
+        1024
+      ],
+      "source_sha256": "13bdc06b3704ff00cfb9669b0f4ed7b0c6ec28751b4f40ade9c1a2257d27a035",
+      "runtime": "game/assets/sprites/icons/ember.png",
+      "runtime_size": [
+        128,
+        128
+      ],
+      "runtime_sha256": "29d81a1c6cbc0b80f0f13d4007c0193efae067f554de7a3ff73845918688ef04",
+      "runtime_bytes": 20595,
+      "mode": "RGBA",
+      "reference": "game/assets/ui/paper/panel.png",
+      "prompt": "FUMIGA-PAPEL-v3-PASTEL-ORGANICO",
+      "integration": "explicit user request 2026-10-09",
+      "visual_approval": "not separately claimed",
+      "backup": {
+        "drive_id": "1PyhCP8ZgR44euAZKn0vinuxcdCC1vyQT",
+        "sha256": "13bdc06b3704ff00cfb9669b0f4ed7b0c6ec28751b4f40ade9c1a2257d27a035",
+        "bytes": 1470057,
+        "parent": "1IMj_-7VQf_asmRmMoMSzKxIQ37M6DXlW",
+        "verified": true
+      },
+      "matte": "removed 2026-10-09 by tools/strip_paper_matte.py; flood filled cream sheet only, drawing and enclosed paper interior untouched"
+    },
+    {
+      "id": "tooltip",
+      "source": "art-source/f1-publicacao/originais/tooltip.png",
+      "source_size": [
+        1456,
+        720
+      ],
+      "source_sha256": "cb0b703d042b3e9f2ac54d492d92abe3ad3ba1694bc70e7f503902615e2813d9",
+      "runtime": "game/assets/ui/paper/tooltip.png",
+      "runtime_size": [
+        960,
+        475
+      ],
+      "runtime_sha256": "19b102418d4ee21f05a9f212708f3831cefbcef051b53260c5b831d8dffd44a4",
+      "runtime_bytes": 701381,
+      "mode": "RGBA",
+      "reference": "game/assets/ui/paper/panel.png",
+      "prompt": "FUMIGA-PAPEL-v3-PASTEL-ORGANICO",
+      "integration": "explicit user request 2026-10-09",
+      "visual_approval": "not separately claimed",
+      "backup": {
+        "drive_id": "1ovKDKVrN0NLnAOrBS6sZzgvPFT8XEk57",
+        "sha256": "cb0b703d042b3e9f2ac54d492d92abe3ad3ba1694bc70e7f503902615e2813d9",
+        "bytes": 1720465,
+        "parent": "1IMj_-7VQf_asmRmMoMSzKxIQ37M6DXlW",
+        "verified": true
+      },
+      "matte": "removed 2026-10-09 by tools/strip_paper_matte.py; flood filled cream sheet only, drawing and enclosed paper interior untouched"
+    },
+    {
+      "id": "pausa",
+      "source": "art-source/f1-publicacao/originais/pausa.png",
+      "source_size": [
+        928,
+        1152
+      ],
+      "source_sha256": "e29ba76bc6d1d6ad37f18cd3e8892bfdd162636ee53a1fe65fade2f082bb118b",
+      "runtime": "game/assets/ui/paper/pause.png",
+      "runtime_size": [
+        928,
+        1152
+      ],
+      "runtime_sha256": "e0d5f9ea51169b3c436a1530551a18fe88590ec5dd567f151a0443fcc41fb429",
+      "runtime_bytes": 1680165,
+      "mode": "RGBA",
+      "reference": "game/assets/ui/paper/panel.png",
+      "prompt": "FUMIGA-PAPEL-v3-PASTEL-ORGANICO",
+      "integration": "explicit user request 2026-10-09",
+      "visual_approval": "not separately claimed",
+      "backup": {
+        "drive_id": "1LCxyCfeDGuGDt-M4kCGR3RD_tcB5wqGK",
+        "sha256": "e29ba76bc6d1d6ad37f18cd3e8892bfdd162636ee53a1fe65fade2f082bb118b",
+        "bytes": 1799646,
+        "parent": "1IMj_-7VQf_asmRmMoMSzKxIQ37M6DXlW",
+        "verified": true
+      },
+      "matte": "removed 2026-10-09 by tools/strip_paper_matte.py; flood filled cream sheet only, drawing and enclosed paper interior untouched"
+    }
+  ],
+  "scope": "one recreated flame without rings, three new HUD paintings, all delivered with the cream matte flood filled away; no approval of lost prior icons inferred; botao retirado em 2026-10-14: sprite de papel excluido do projeto, botoes sao as placas de madeira de docs/arte/botoes-madeira.json",
+  "archive": {
+    "drive_id": "18TJQjBVRqwtEAw_nhCaGk1oj7NEn-cB6",
+    "name": "FUMIGA-brasa-novos-HUDs-integrados-2026-10-09.zip",
+    "bytes": 59882132,
+    "sha256": "df51212ac80fd7871655e43728301125cd938d77b2dbb02ef404d6c30522b058",
+    "parent": "1IMj_-7VQf_asmRmMoMSzKxIQ37M6DXlW",
+    "verified": true,
+    "contains": "four high-resolution originals, all production HUD PNGs and ember, gallery, screenshots, manifests, checksums; archive snapshot precedes final publication status"
+  }
+}

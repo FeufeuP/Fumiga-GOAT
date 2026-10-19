@@ -25,6 +25,30 @@ const MANIFEST = {
   paper_card_bg: "ui/paper/card_bg.png",
   paper_pause_frame: "ui/paper/pause_frame.png",
   paper_pause_bg: "ui/paper/pause_bg.png",
+  paper_expanded: "ui/paper/expanded.png",
+  paper_expanded_frame: "ui/paper/expanded_frame.png",
+  paper_expanded_bg: "ui/paper/expanded_bg.png",
+  paper_boss: "ui/paper/boss.png",
+  paper_boss_frame: "ui/paper/boss_frame.png",
+  paper_boss_bg: "ui/paper/boss_bg.png",
+  paper_event: "ui/paper/event.png",
+  paper_event_frame: "ui/paper/event_frame.png",
+  paper_event_bg: "ui/paper/event_bg.png",
+  paper_header: "ui/paper/header.png",
+  paper_header_frame: "ui/paper/header_frame.png",
+  paper_header_bg: "ui/paper/header_bg.png",
+  paper_transition: "ui/paper/transition.png",
+  paper_transition_frame: "ui/paper/transition_frame.png",
+  paper_transition_bg: "ui/paper/transition_bg.png",
+  paper_nest_tip: "ui/paper/nest_tip.png",
+  paper_nest_tip_frame: "ui/paper/nest_tip_frame.png",
+  paper_nest_tip_bg: "ui/paper/nest_tip_bg.png",
+  paper_tree_detail: "ui/paper/tree_detail.png",
+  paper_tree_detail_frame: "ui/paper/tree_detail_frame.png",
+  paper_tree_detail_bg: "ui/paper/tree_detail_bg.png",
+  paper_tutorial: "ui/paper/tutorial.png",
+  paper_tutorial_frame: "ui/paper/tutorial_frame.png",
+  paper_tutorial_bg: "ui/paper/tutorial_bg.png",
   // Placas de madeira dos botões (2026-10-14): 4 variações x 5 estados,
   // artes de estado separadas — ver tools/prepare_wood_buttons.py.
   wood_button_largo_normal: "ui/paper/wood/button_largo_normal.png",
@@ -228,7 +252,7 @@ const WROT = {};         // silhuetas brancas rotacionadas (hit flash)
 // ANTIGA nos mesmos nomes de arquivo (foi assim que o rework dos inimigos da
 // Fase 2 "não apareceu" para quem já tinha jogado antes dele).
 // ---------------------------------------------------------------------------
-export const ASSET_V = "20261016-hud-slim-2pecas";
+export const ASSET_V = "20261019-hud-unificado-zero-2sheets";
 
 /**
  * URL final de um asset do jogo: base certa para a página atual + anti-cache.
