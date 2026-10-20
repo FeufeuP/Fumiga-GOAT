@@ -12,8 +12,8 @@ android {
         applicationId = "com.feufeup.fumigagoat"
         minSdk = 26
         targetSdk = 35
-        versionCode = 4
-        versionName = "1.0.3"
+        versionCode = 5
+        versionName = "1.0.4"
 
         // One sideload APK for 32-bit and 64-bit ARM Android phones. GeckoView's
         // x86 emulator libraries are omitted to keep the public download smaller.

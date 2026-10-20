@@ -1,6 +1,6 @@
 {
   "name": "fumiga-windows-installer",
-  "version": "1.0.3",
+  "version": "1.0.4",
   "private": true,
   "description": "FUMIGA — Colônia Eterna (Windows x64, completo e offline)",
   "main": "main.cjs",
