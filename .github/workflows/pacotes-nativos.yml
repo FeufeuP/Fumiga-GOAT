@@ -139,13 +139,23 @@ jobs:
           path: installers/android/dist/FUMIGA-Android.apk
           if-no-files-found: error
           retention-days: 7
-      - name: Aviso — APK pulado (sem secrets)
+      - name: Compilar APK debug de fallback (sem secrets — opção A)
         if: env.SKIP_APK == '1'
         run: |
-          echo "::notice::APK assinado pulado por falta de secrets. A Release será criada com WEB + Windows."
-          mkdir -p dist
-          echo "Sem APK — configure os secrets para incluir Android" > dist/SEM-APK-LEIA.txt
-          cat dist/SEM-APK-LEIA.txt
+          echo "::notice::Sem secrets — gerando APK DEBUG fallback para download imediato (instalável, sem assinatura de release)"
+          bash tools/build-android.sh debug
+          ls -lh installers/android/dist/FUMIGA-Android-DEBUG.apk
+          # publica também com nome padrão para o botão continuar funcionando
+          cp installers/android/dist/FUMIGA-Android-DEBUG.apk installers/android/dist/FUMIGA-Android.apk
+          ls -lh installers/android/dist/FUMIGA-Android.apk
+      - name: Publicar artefato debug fallback
+        if: env.SKIP_APK == '1'
+        uses: actions/upload-artifact@v4
+        with:
+          name: apk-android
+          path: installers/android/dist/FUMIGA-Android.apk
+          if-no-files-found: error
+          retention-days: 7
 
   # ────────────── ANDROID DEBUG (pré-validação em push de branch) ──────────────
   android-prevalidacao:
