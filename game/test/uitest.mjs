@@ -115,8 +115,12 @@ expect(!!en.boss, "chefe presente: " + (en.boss && en.boss.kind));
 // cards de 38 px em pitch 42, fileira de 64 px de altura colada no rodapé;
 // 11 classes em 4 grupos com respiro de 12 px entre grupos — a DINOPONERA é
 // o 11º e último card, após combate(5) + coleta(3) + criação(2))
-const FOOT_Y = 540 - 64, SHOP_TOGGLE_X = 10 + 46,
-  GIANT_X = 10 + 92 + 6 + 5 * 42 + 12 + 3 * 42 + 12 + 2 * 42 + 12 + 19;
+// O rodapé usa as placas novas (família v2): o botão IRMÃS tem 160px e os
+// cards da loja são placas verticais de 30px. As posições vêm do próprio
+// jogo (game.js), para o teste não duplicar números do layout.
+const gameMod = await import(BASE + "/game.js");
+const FOOT_Y = 540 - 64, SHOP_TOGGLE_X = 10 + 160 / 2,
+  GIANT_X = gameMod.shopCardXByType("giant") + gameMod.SHOP_CARD.w / 2;
 expect(units.eggs.length === 0, "loja começa recolhida (sem encomenda pendente)");
 mouse.x = GIANT_X; mouse.y = FOOT_Y + 32; mouse.down = mouse.justDown = true;
 await wait(60); mouse.down = mouse.justDown = false; mouse.justUp = true;
@@ -153,7 +157,7 @@ expect(G.run.status === "running", "run segue viva com o colosso em campo");
 // ---- FORMIGUEIRO (REWORK DA BOCA)
 const nestMod = await import(BASE + "/nest.js");
 const enMod = await import(BASE + "/enemies.js");
-mouse.x = 960 - 10 - 132 + 66; mouse.y = FOOT_Y + 32; mouse.down = mouse.justDown = true;
+mouse.x = 960 - 10 - 190 + 95; mouse.y = FOOT_Y + 32; mouse.down = mouse.justDown = true;
 await wait(60); mouse.down = mouse.justDown = false; mouse.justUp = true;
 await wait(40); mouse.justUp = false; await wait(120);
 expect(G.run.baseOpen === true && nestMod.nest.open === true, "formigueiro aberto pelo botão do canto");

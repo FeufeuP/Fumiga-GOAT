@@ -93,6 +93,65 @@ export function woodButtonSize(w,h) {
   if (w < 175) return 'pequeno';                            // abas, VOLTAR curto
   return 'grande';                                          // 180-240: pausa, fim
 }
+
+// ---------------------------------------------------------------------------
+// PLACAS NOVAS (2026-10-19) — família de botões derivada do modelo aprovado
+// pelo usuário (tábua de madeira em papel recortado). São sprites INTEIROS:
+// desenhados com escala uniforme (paperFit), nunca fatiados nem esticados
+// (Regra 22). A área do texto (PAPEL CALMO) foi medida na arte real.
+// ---------------------------------------------------------------------------
+export const PLACA_QUIET = Object.freeze({
+  placa_grande:  Object.freeze([0.30, 0.32, 0.54, 0.88]),
+  placa_media:   Object.freeze([0.18, 0.16, 0.71, 0.84]),
+  placa_pequena: Object.freeze([0.06, 0.16, 0.60, 0.84]),
+  placa_cartao:  Object.freeze([0.16, 0.31, 0.84, 0.74]),
+});
+export const PLACA_NATIVE = Object.freeze({
+  placa_grande:  Object.freeze([400, 180]),
+  placa_media:   Object.freeze([326, 90]),
+  placa_pequena: Object.freeze([312, 100]),
+  placa_cartao:  Object.freeze([87, 200]),
+});
+/** Placa inteira em escala uniforme + a área de texto medida (ou null). */
+export function drawPlaca(ctx, kind, x, y, w, h, opt = {}) {
+  const state = WOOD_STATE[paperState(opt)] || 'normal';
+  const img = IMG[kind + '_' + state] || IMG[kind + '_normal'];
+  if (!img || typeof document === 'undefined') return null;
+  const nat = PLACA_NATIVE[kind] || PLACA_NATIVE.placa_media;
+  const sw = img.width > 64 ? img.width : nat[0];
+  const sh = img.height > 64 ? img.height : nat[1];
+  const fit = paperFit(sw, sh, w, h);
+  const prev = ctx.imageSmoothingEnabled;
+  ctx.save();
+  ctx.globalAlpha = 1; ctx.globalCompositeOperation = 'source-over';
+  ctx.imageSmoothingEnabled = true;   // arte pintada: escala suave, sem serrilhado
+  ctx.drawImage(img, Math.round(x + fit.ox), Math.round(y + fit.oy), fit.fw, fit.fh);
+  ctx.restore();
+  ctx.imageSmoothingEnabled = prev;
+  const q = PLACA_QUIET[kind];
+  if (!q) return { x, y, w, h };
+  return {
+    x: x + fit.ox + q[0] * fit.fw, y: y + fit.oy + q[1] * fit.fh,
+    w: (q[2] - q[0]) * fit.fw, h: (q[3] - q[1]) * fit.fh,
+  };
+}
+
+/** Área de texto (madeira calma) de uma placa, sem desenhar.
+ *  Mesma conta do drawPlaca(): sprite inteiro, escala uniforme, centralizado. */
+export function placaQuiet(kind, x, y, w, h) {
+  const nat = PLACA_NATIVE[kind] || PLACA_NATIVE.placa_media;
+  const img = IMG[kind + '_normal'];
+  const sw = img && img.width > 64 ? img.width : nat[0];
+  const sh = img && img.height > 64 ? img.height : nat[1];
+  const fit = paperFit(sw, sh, w, h);
+  const q = PLACA_QUIET[kind];
+  if (!q) return { x, y, w, h };
+  return {
+    x: x + fit.ox + q[0] * fit.fw, y: y + fit.oy + q[1] * fit.fh,
+    w: (q[2] - q[0]) * fit.fw, h: (q[3] - q[1]) * fit.fh,
+  };
+}
+
 export const PAPER_FALLBACK = Object.freeze({
   expanded:    'panel',
   tutorial:    'panel',

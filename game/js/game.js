@@ -1,4 +1,4 @@
-import { drawPaper, drawPaperBg, drawPaperFrame, paperQuiet, paperAperture, beginPaperHud, endPaperHud, flushPaperFrames } from "./paper_hud.js";
+import { drawPaper, drawPaperBg, drawPaperFrame, paperQuiet, paperAperture, beginPaperHud, endPaperHud, flushPaperFrames, placaQuiet } from "./paper_hud.js";
 import { fruitSight } from "./fruit_effects.js";
 // DIÁRIO DE PLAYTEST: ganchos de expedição, draft, fim de run e a aba TESTE
 // das OPÇÕES (exportar/apagar). Módulo local, sem PII; ver playtest.js.
@@ -56,7 +56,7 @@ import {
   isLoadingFadingOut, dismissLoadingScreen, handleLoadingInput,
   shouldUseLoadingScreen, runWithLoadingScreen,
 } from "./loading_screen.js";
-import { uiBegin, uiButtons, button, iconButton, panel, bar, pointInRect, dialogBox, isTouchUI, touchPad, tooltip } from "./ui.js";
+import { uiBegin, uiButtons, button, iconButton, panel, bar, pointInRect, dialogBox, isTouchUI, touchPad, tooltip, lastButton } from "./ui.js";
 import { startTutorial, stopTutorial, updateTutorial, drawTutorial, tutEvent, TUT, tutorialCardRect } from "./tutorial.js";
 import {
   nest, nestEnter, nestExit, nestUpdate, nestDraw, nestClick, nestHover,
@@ -85,7 +85,25 @@ const SHOP = [
   { type: "giant",    label: "DINOPONERA", iconScale: 0.13, accent: "#ffd479", group: "colossus" },
 ];
 const SHOP_GROUPS = { combat: "#ff4d5a", gather: "#7fd6a0", care: "#6db7ff", colossus: "#ffd479" };
-const SHOP_W = 38, SHOP_PITCH = 42; // cards compactos da loja (rework HUD minimalista)
+// Layout dos cards da loja no rodapé (placas 'cartao' da família v2).
+// Uma única conta para o desenho e para o teste headless (uitest), para o
+// clique do teste não depender de números repetidos aqui e lá.
+export const SHOP_CARD = Object.freeze({ w: 30, h: 64, pitch: 36, groupGap: 10, x0: 10 + 160 + 8 });
+export function shopCardX(i) {
+  let gx = SHOP_CARD.x0, lastGroup = null;
+  for (let k = 0; k < SHOP.length; k++) {
+    const sp = SHOP[k];
+    if (lastGroup && sp.group !== lastGroup) gx += SHOP_CARD.groupGap;
+    lastGroup = sp.group;
+    if (k === i) return gx;
+    gx += SHOP_CARD.pitch;
+  }
+  return gx;
+}
+export function shopCardXByType(type) {
+  const i = SHOP.findIndex((s) => s.type === type);
+  return i < 0 ? -1 : shopCardX(i);
+}
 let shopOpen = false;
 let rallyCooldown = 0; // FASE 4: cooldown rally F quando infiniteDash desligado
 
@@ -150,8 +168,18 @@ const OPTIONS_TABS = [
 let ptMsg = "", ptMsgT = 0, ptArmed = false;
 function ptAviso(texto) { ptMsg = String(texto || ""); ptMsgT = 5; }
 
-/** Janela do conteúdo rolável (entre as abas e o rodapé). */
-function optViewport() { return { x: 52, y: 156, w: VIEW_W - 104, h: 324 }; }
+/** Janela do conteúdo rolável das OPÇÕES (dentro de paperQuiet do painel). */
+function optBox() {
+  const PX = 24, PY = 38, PW = VIEW_W - 48, PH = VIEW_H - 92;
+  const q = paperQuiet("panel", PX, PY, PW, PH);
+  return { PX, PY, PW, PH, q };
+}
+function optViewport() {
+  const { q } = optBox();
+  const top = Math.round(q.y + 46);
+  const bot = Math.round(q.y + q.h - 2);
+  return { x: Math.round(q.x), y: top, w: Math.round(q.w), h: Math.max(80, bot - top) };
+}
 /** Multiplicador da FONTE GRANDE (igual ao de font.js). */
 function optFS() { return G.save.accessibility.bigFont ? 1.3 : 1; }
 /** Troca de aba pelo teclado: zera a rolagem como os botões fazem. */
@@ -556,9 +584,16 @@ export function update(dt) {
   G.time += dt;
 
   if (isLoadingActive()) {
-    if (pressed.Escape) handleLoadingInput("key", "Escape");
-    else if (mouse.justDown) handleLoadingInput("pointer");
-    else if (pressed.Space || pressed.Enter) handleLoadingInput("key", pressed.Enter ? "Enter" : "Space");
+    // A tela de carga é MODAL: a tecla/toque que ela consome não pode acionar o
+    // menu que aparece atrás no mesmo quadro. Sem isto, o ESPAÇO que pulava o
+    // carregamento também confirmava o botão "COMEÇAR" do título (a tecla ainda
+    // estava em `pressed` quando a tela de trás é desenhada no fadeout).
+    if (pressed.Escape) { handleLoadingInput("key", "Escape"); pressed.Escape = false; }
+    else if (mouse.justDown) { if (handleLoadingInput("pointer")) mouse.justDown = false; }
+    else if (pressed.Space || pressed.Enter) {
+      handleLoadingInput("key", pressed.Enter ? "Enter" : "Space");
+      pressed.Space = false; pressed.Enter = false; pressed.NumpadEnter = false;
+    }
     updateLoadingScreen(dt);
     return;
   }
@@ -1329,48 +1364,46 @@ function renderModeScreen() {
   // FASE 6 FINAL: passa scrollOffset para render com offset visual
   modeRects = drawModeCards(ctx, GAME_MODES, modeHover, G.time, modeScrollOffset);
 
-  // PÓS-FINAL — barra da ASCENSÃO DA NÉVOA (embaixo dos cards, só campanha)
+  // PÓS-FINAL — barra da ASCENSÃO DA NÉVOA (embaixo dos cards, só campanha).
+  // Proporção original de banner (960×192 = 5:1): 360×72 centrada, sem sobrepor VOLTAR nem o rodapé.
   const ascUnlocked = G.save.best.wins > 0;
-  const ascY = 462, ascW = 520, ascX = (VIEW_W - ascW) / 2;
-  const ascH = 44;
+  const ascW = 360, ascH = 72, ascX = Math.round((VIEW_W - ascW) / 2), ascY = 434;
   ascRects = [];
   panel(ctx, ascX, ascY, ascW, ascH, { paperKind: "banner", border: ascUnlocked ? "#ffd479" : "#3a3054", fill: "rgba(10,8,16,0.8)" });
+  const qAsc = paperQuiet("banner", ascX, ascY, ascW, ascH);
+  const ascCx = qAsc.x + qAsc.w / 2;
   if (ascUnlocked) {
     const maxSel = Math.min(G.save.ascension + 1, ASC_MAX);
     G.pendingAsc = Math.max(0, Math.min(G.pendingAsc | 0, maxSel));
     const lv = G.pendingAsc;
-    drawText(ctx, "<", ascX + 14, ascY + 12, { color: lv > 0 ? "#ffd479" : "#5a4f78" });
-    drawText(ctx, ">", ascX + ascW - 22, ascY + 12, { color: lv < maxSel ? "#ffd479" : "#5a4f78" });
-    // texto limitado à largura útil da barra (nada de vazar com FONTE GRANDE)
-    drawText(ctx, "ASCENSÃO DA NÉVOA " + lv + "/" + ASC_MAX, VIEW_W / 2, ascY + 3, { color: "#ffd479", align: "center", maxWidth: ascW - 96 });
-    drawText(ctx, ascLabel(lv) + " • ESSÊNCIA x" + ascMods(lv).ess.toFixed(2), VIEW_W / 2, ascY + 23, { color: PAL.textDim, align: "center", scale: 0.85, maxWidth: ascW - 96 });
+    drawText(ctx, "<", qAsc.x + 2, qAsc.y + 8, { color: lv > 0 ? "#ffd479" : "#5a4f78", scale: 0.72 / fontScale() });
+    drawText(ctx, ">", qAsc.x + qAsc.w - 10, qAsc.y + 8, { color: lv < maxSel ? "#ffd479" : "#5a4f78", scale: 0.72 / fontScale() });
+    const innerAscW = Math.max(40, qAsc.w - 28);
+    drawText(ctx, "ASCENSÃO DA NÉVOA " + lv + "/" + ASC_MAX, ascCx, qAsc.y + 2, { color: "#ffd479", align: "center", scale: 0.62, maxWidth: innerAscW });
+    drawText(ctx, ascLabel(lv) + " • ESSÊNCIA x" + ascMods(lv).ess.toFixed(2), ascCx, qAsc.y + 17, { color: PAL.textDim, align: "center", scale: 0.56, maxWidth: innerAscW });
     ascRects = [
-      { x: ascX, y: ascY, w: 44, h: ascH, d: -1 },
-      { x: ascX + ascW - 44, y: ascY, w: 44, h: ascH, d: 1 },
+      { x: ascX, y: ascY, w: 48, h: ascH, d: -1 },
+      { x: ascX + ascW - 48, y: ascY, w: 48, h: ascH, d: 1 },
     ];
   } else {
-    // quebra em linhas em vez de esticar 736px dentro de uma barra de 560
-    const lockLines = wrapText("VENÇA A CAMPANHA PARA DESPERTAR A ASCENSÃO DA NÉVOA", ascW - 40, { scale: 0.85 });
-    const lh = Math.ceil(18 * 0.85 * fontScale());
-    const ly0 = ascY + (ascH - lockLines.length * lh) / 2 + 2;
-    lockLines.forEach((L, i) => drawText(ctx, L, VIEW_W / 2, ly0 + i * lh, { color: "#5a4f78", align: "center", scale: 0.85, maxWidth: ascW - 40 }));
+    const lockX = qAsc.x + 12, lockW = Math.max(40, qAsc.w - 24);
+    const lockB = fitTextBlock("VENÇA A CAMPANHA PARA DESPERTAR A ASCENSÃO DA NÉVOA", lockW, qAsc.h, { scale: 0.56, minScale: 0.40, lineStep: 13 });
+    const ly0 = qAsc.y + Math.max(0, (qAsc.h - lockB.lines.length * lockB.step) / 2);
+    lockB.lines.forEach((L, i) => drawText(ctx, L, lockX + lockW / 2, ly0 + i * lockB.step, { color: "#5a4f78", align: "center", scale: lockB.scale, maxWidth: lockW }));
   }
   flushPaperFrames(ctx);
 
   const mobile = isMobileLayout();
   // VOLTAR na mesma faixa da barra de ascensão (à esquerda dela: nada sobreposto)
-  if (button(ctx, { x: 20, y: ascY, w: mobile ? 190 : 190, h: ascH, label: "VOLTAR", id: "modeBack", accent: "#ff4d5a" })) {
+  if (button(ctx, { x: 20, y: 448, w: 190, h: 44, label: "VOLTAR", id: "modeBack", accent: "#ff4d5a" })) {
     notePointer(mouse.x, mouse.y);
     if (mobile && navigator.vibrate) navigator.vibrate(20);
     startTransition("auto", "MODE", "TITLE", 0, () => { G.screen = "TITLE"; });
   }
-  // rodapé: barra de 28px com o texto centralizado DENTRO dela (a tinta da
-  // fonte pequena tem 18px de célula; antes o texto caía 2px fora da barra)
-  const footerH = 28, footerY = VIEW_H - footerH - 4;
-  panel(ctx, 12, footerY, VIEW_W - 24, footerH, { paperKind: "header", fill: "rgba(10,8,16,0.65)", border: "rgba(74,58,110,0.35)", r: 3 });
+  // rodapé limpo sem tábua encolhida: texto legível direto sobre o fundo
+  const footerY = VIEW_H - 22;
   drawText(ctx, mobile ? "TOQUE NO CARD PARA JOGAR • CAMPANHA OU MODO TESTE" : "ESC: VOLTAR • CLIQUE NO CARD PARA JOGAR • CAMPANHA OU MODO TESTE",
-    VIEW_W / 2, footerY + 5, { color: "#5a4f78", align: "center", scale: mobile ? 0.85 : 1, maxWidth: VIEW_W - 60 });
-  flushPaperFrames(ctx);
+    VIEW_W / 2, footerY, { color: "#9a8fc0", align: "center", scale: mobile ? 0.78 : 0.85, maxWidth: VIEW_W - 60 });
 }
 
 // -------------------------------------------------------------- OPÇÕES -- 5 abas, fundo sólido (parallax só no TITLE)
@@ -1384,19 +1417,36 @@ function renderOptions() {
   ctx.fillStyle = "rgba(10,8,18,0.78)";
   ctx.fillRect(0, 0, VIEW_W, VIEW_H);
 
-  const PX = 24, PY = 16, PW = VIEW_W - 48, PH = VIEW_H - 32;
-  dialogBox(ctx, PX, PY, PW, PH, { border: "#ffb347", accent: "#37e6c8" });
+  const { PX, PY, PW, PH, q: qOpt } = optBox();
   // Chrome fixo: com FONTE GRANDE só o CONTEÚDO cresce (e rola); título,
   // subtítulo, abas e rodapé mantêm o tamanho — senão o cabeçalho engole a
   // tela e colide com o subtítulo. O 1/FS cancela os +30% do drawText.
   const chrome = 1 / optFS();
-  drawText(ctx, "OPÇÕES", VIEW_W / 2, PY + 12, { font: "big", scale: 2 * chrome, color: "#ffd479", align: "center" });
+  drawText(ctx, "OPÇÕES", VIEW_W / 2, 4, { font: "big", scale: 1.5 * chrome, color: "#ffd479", align: "center" });
+
+  dialogBox(ctx, PX, PY, PW, PH, { border: "#ffb347", accent: "#37e6c8" });
 
   const V = optViewport();
   const FS = optFS();
   if (optionsTab !== optionsTabPrev) { optionsTabPrev = optionsTab; optionsScroll = 0; optGrab = null; }
 
-  // subtítulo curto da aba ativa (sem notas de desenvolvimento)
+  // abas: 6 botões de largura igual preenchendo a área limpa (qOpt), livres das folhas
+  const NT = OPTIONS_TABS.length, tabGap = 6, tabW = Math.floor((qOpt.w - tabGap * (NT - 1)) / NT), tabH = 26, tabY = Math.round(qOpt.y);
+  const tabX0 = Math.round(qOpt.x + (qOpt.w - (tabW * NT + tabGap * (NT - 1))) / 2);
+  for (let i = 0; i < OPTIONS_TABS.length; i++) {
+    const tab = OPTIONS_TABS[i];
+    const x = tabX0 + i * (tabW + tabGap);
+    const sel = optionsTab === i;
+    if (button(ctx, { x, y: tabY, w: tabW, h: tabH, compact: true, label: tab.label, id: "tab" + i, accent: tab.color, selected: sel, color: sel ? "#000" : undefined, scale: 0.72 * chrome })) {
+      optionsTab = i; optionsScroll = 0; optGrab = null;
+    }
+    if (sel) {
+      ctx.fillStyle = tab.color;
+      ctx.fillRect(x + 8, tabY + tabH + 1, tabW - 16, 2);
+    }
+  }
+
+  // subtítulo curto da aba ativa (dentro de qOpt, abaixo das abas)
   const SUBS = [
     "VOLUME DA MÚSICA E DOS EFEITOS",
     "GRÁFICOS, TELA E DESEMPENHO",
@@ -1405,29 +1455,13 @@ function renderOptions() {
     "MENUS E TUTORIAIS",
     "DIÁRIO DE PLAYTEST — NADA SAI DESTE APARELHO",
   ];
-  drawText(ctx, SUBS[optionsTab], VIEW_W / 2, PY + 74, { color: "#9a8fc0", align: "center", scale: 0.85 * chrome, maxWidth: PW - 60 });
-
-  // abas: 5 botões de largura igual preenchendo o diálogo
-  const NT = OPTIONS_TABS.length, tabGap = 10, tabW = Math.floor((PW - 16 - tabGap * (NT - 1)) / NT), tabH = 34, tabY = PY + 92;
-  const tabX0 = VIEW_W / 2 - (tabW * NT + tabGap * (NT - 1)) / 2;
-  for (let i = 0; i < OPTIONS_TABS.length; i++) {
-    const tab = OPTIONS_TABS[i];
-    const x = tabX0 + i * (tabW + tabGap);
-    const sel = optionsTab === i;
-    if (button(ctx, { x, y: tabY, w: tabW, h: tabH, label: (sel ? "▶ " : "") + tab.label, id: "tab" + i, accent: tab.color, color: sel ? "#000" : undefined, scale: 0.85 * chrome })) {
-      optionsTab = i; optionsScroll = 0; optGrab = null;
-    }
-    if (sel) {
-      ctx.fillStyle = tab.color;
-      ctx.fillRect(x, tabY + tabH + 2, tabW, 3);
-    }
-  }
+  drawText(ctx, SUBS[optionsTab], qOpt.x + qOpt.w / 2, tabY + tabH + 5, { color: "#9a8fc0", align: "center", scale: 0.65 * chrome, maxWidth: qOpt.w - 16 });
 
   // conteúdo rolável com recorte (o que passa da janela não desenha nem clica)
   optionsScroll = clamp(optionsScroll, 0, Math.max(0, optionsContentH - V.h));
   const oy = V.y - optionsScroll;
-  const TX = V.x + 8;        // margem esquerda do conteúdo
-  const RR = V.x + V.w - 24; // margem direita (antes da barra de rolagem)
+  const TX = V.x + 6;        // margem esquerda do conteúdo (já dentro de qOpt)
+  const RR = V.x + V.w - 18; // margem direita (antes da barra de rolagem)
   optSliders = [];
   ctx.save();
   ctx.beginPath();
@@ -1443,21 +1477,22 @@ function renderOptions() {
   layoutRec.clip = null;
   ctx.restore();
 
-  // barra de rolagem (só quando o conteúdo passa da janela)
+  // barra de rolagem (só quando o conteúdo passa da janela, com tons de madeira/papel)
   const maxScroll = Math.max(0, optionsContentH - V.h);
   if (maxScroll > 0) {
-    const sbX = V.x + V.w - 14;
-    ctx.fillStyle = "rgba(74,58,110,0.4)";
-    ctx.fillRect(sbX, V.y, 8, V.h);
-    const hh = Math.max(30, V.h * V.h / optionsContentH);
+    const sbX = V.x + V.w - 10;
+    ctx.fillStyle = "rgba(107,71,30,0.28)";
+    ctx.fillRect(sbX, V.y, 7, V.h);
+    const hh = Math.max(26, V.h * V.h / optionsContentH);
     const hy = V.y + (V.h - hh) * (optionsScroll / maxScroll);
-    ctx.fillStyle = "#8f6fd6";
-    ctx.fillRect(sbX, hy, 8, hh);
-    ctx.fillStyle = "#c9b8f5";
-    ctx.fillRect(sbX + 2, hy + 2, 4, hh - 4);
+    ctx.fillStyle = "#8b5e2b";
+    ctx.fillRect(sbX, hy, 7, hh);
+    ctx.fillStyle = "#e4ba70";
+    ctx.fillRect(sbX + 2, hy + 2, 3, hh - 4);
   }
+  flushPaperFrames(ctx);
 
-  // rodapé fixo (fora da área rolável: nunca some nem colide com o conteúdo)
+  // rodapé fixo (fora da área rolável e abaixo do painel: nunca some nem colide com a moldura)
   if (button(ctx, { x: VIEW_W / 2 - 250, y: VIEW_H - 48, w: 220, h: 36, label: "VOLTAR", id: "optionsBack", accent: "#8f6fd6", scale: chrome })) {
     notePointer(mouse.x, mouse.y);
     startTransition("auto", "OPTIONS", optionsReturn, 0, () => { G.screen = optionsReturn; });
@@ -1468,7 +1503,7 @@ function renderOptions() {
     location.href = touchMode.on ? "../" : "mobile/";
   }
   if (!touchMode.on) {
-    drawText(ctx, "ESC VOLTA", VIEW_W - 40, VIEW_H - 44, { color: "#5a4f78", scale: 0.75 * chrome, align: "right", maxWidth: 120 });
+    drawText(ctx, "ESC VOLTA", VIEW_W - 40, VIEW_H - 40, { color: "#9a8fc0", scale: 0.75 * chrome, align: "right", maxWidth: 120 });
   }
 }
 
@@ -1542,7 +1577,7 @@ function optVolRow(y, TX, RR, oy, V, FS, id, label, color) {
   ctx.fillStyle = "#fff";
   ctx.fillRect(hx - 2, ty - 3, 4, th + 6);
   optSliders.push({ id, x: tx0, y: ty - 6, w: tw, h: th + 12 });
-  return by + bh + 14 * FS;
+  return by + bh + 18 * FS;
 }
 
 function optContentAudio(TX, RR, oy, V, FS) {
@@ -1661,15 +1696,15 @@ function optContentAccess(TX, RR, oy, V, FS) {
     { v: 2, label: "2X TURBO", color: "#ff4d5a" },
   ];
   let bw = 0;
-  for (const sp of speeds) bw = Math.max(bw, textWidth(sp.label, { scale: 0.8 }));
-  bw = Math.min(150, Math.ceil(bw) + 24);
-  let sx = TX + 170;
+  for (const sp of speeds) bw = Math.max(bw, textWidth(sp.label, { scale: 0.72 }));
+  let sx = TX + 148;
+  bw = Math.min(130, Math.floor((RR - sx - 6 * 3) / 4));
   for (const sp of speeds) {
     const sel = s.gameSpeed === sp.v;
-    if (button(ctx, { x: sx, y: cy + oy, w: bw, h: 30, label: sp.label, id: "speed_" + sp.v, accent: sp.color, color: sel ? "#000" : undefined, tap: true, clip: V, scale: 0.8 })) {
+    if (button(ctx, { x: sx, y: cy + oy, w: bw, h: 28, compact: true, label: sp.label, id: "speed_" + sp.v, accent: sp.color, selected: sel, color: sel ? "#000" : undefined, tap: true, clip: V, scale: 0.72 })) {
       s.gameSpeed = sp.v; persistSave();
     }
-    sx += bw + 8;
+    sx += bw + 6;
   }
   cy += 30 + 12 * FS;
   if (a.invincible || a.slowMo || s.gameSpeed !== 1) {
@@ -1779,69 +1814,72 @@ function renderHelp() {
   ctx.fillStyle = "rgba(10,8,16,0.62)";
   ctx.fillRect(0, 0, VIEW_W, VIEW_H);
 
-  const PX = 32, PY = 20, PW = VIEW_W - 64, PH = VIEW_H - 56;
-  dialogBox(ctx, PX, PY, PW, PH, { border: "#8f6fd6", accent: "#ffd479" });
   const helpFS = fontScale();
-  const helpTitleY = PY + 16;
-  const helpTitleH = textHeight("COMO JOGAR", { font: "big", scale: 2 });
-  drawText(ctx, "COMO JOGAR", VIEW_W / 2, helpTitleY, { font: "big", scale: 2, color: "#ffd479", align: "center", maxWidth: PW - 40 });
+  const chrome = 1 / helpFS;
+  drawText(ctx, "COMO JOGAR", VIEW_W / 2, 4, { font: "big", scale: 1.5 * chrome, color: "#ffd479", align: "center", maxWidth: VIEW_W - 60 });
 
-  const colW = (PW - 80) / 2;
-  const colX = [PX + 24, PX + 40 + colW];
-  // passos proporcionais à TINTA de cada escala (com FONTE GRANDE a linha de
-  // 14px ficava mais alta que o próprio passo e as linhas se atravessavam)
-  const bigStep = Math.ceil(26 * helpFS);
-  const lineGoal = Math.ceil(20 * 0.9 * helpFS);
+  const PX = 32, PY = 38, PW = VIEW_W - 64, PH = VIEW_H - 88;
+  dialogBox(ctx, PX, PY, PW, PH, { border: "#8f6fd6", accent: "#ffd479" });
+  const qH = paperQuiet("panel", PX, PY, PW, PH);
+
+  const colGap = 18;
+  const colW = Math.floor((qH.w - colGap) / 2);
+  const colX = [Math.round(qH.x), Math.round(qH.x + colW + colGap)];
+  const contentY = Math.round(qH.y + 2);
+  const maxColH = Math.round(qH.h - 4);
+  const headH = 24;
   const controlsTable = touchMode.on ? HELP_CONTROLS_TOUCH : HELP_CONTROLS;
-  const goalLines = HELP_GOAL.flatMap((t) => wrapText(t, colW, { scale: 0.9 }));
 
-  const drawGoal = (x, y) => {
-    drawText(ctx, "OBJETIVO", x, y, { font: "big", color: "#c77dff", maxWidth: colW });
-    let yy = y + bigStep;
-    for (const L of goalLines) { drawText(ctx, L, x, yy, { color: PAL.text, scale: 0.9, maxWidth: colW }); yy += lineGoal; }
-    return yy;
-  };
-  const drawTips = (x, y, scale) => {
-    drawText(ctx, "DICAS", x, y, { font: "big", color: "#c77dff", maxWidth: colW });
-    const step = Math.ceil(20 * scale * helpFS);
-    let yy = y + bigStep;
-    for (const t of HELP_TIPS) {
-      for (const L of wrapText(t, colW, { scale })) { drawText(ctx, L, x, yy, { color: PAL.text, scale, maxWidth: colW }); yy += step; }
-      yy += 4;
-    }
-    return yy;
-  };
-  const drawControls = (x, y, labScale, descScale) => {
-    let descX = 120;
-    for (const [k] of controlsTable) descX = Math.max(descX, textWidth(k, { scale: labScale }) + 12);
-    drawText(ctx, touchMode.on ? "CONTROLES (TOQUE)" : "CONTROLES", x, y, { font: "big", color: "#c77dff", maxWidth: colW });
-    const dStep = Math.ceil(18 * descScale * helpFS);
-    let yy = y + bigStep + 2;
-    for (const [k, d] of controlsTable) {
-      drawText(ctx, k, x, yy, { color: "#37e6c8", scale: labScale, maxWidth: descX - 6 });
-      const lines = wrapText(d, colW - descX, { scale: descScale });
-      lines.forEach((L, li) => drawText(ctx, L, x + descX, yy + li * dStep, { color: PAL.text, scale: descScale, maxWidth: colW - descX }));
-      yy += Math.max(dStep, lines.length * dStep + 2);
-    }
-    return yy;
-  };
-
-  const contentY = helpTitleY + helpTitleH + 12;
-  // A tabela de CONTROLES (13 linhas no PC com a navegação do TITLE, 10 no
-  // toque) ocupa sozinha a coluna da direita; OBJETIVO + DICAS ficam na
-  // esquerda. Tudo cabe dentro da caixa, sem rolagem — também com FONTE GRANDE.
-  if (helpFS > 1) {
-    let yl = drawGoal(colX[0], contentY);
-    drawTips(colX[0], yl + 18, 0.8);
-    drawControls(colX[1], contentY, 0.7, 0.7);
-  } else {
-    let yl = drawGoal(colX[0], contentY);
-    drawTips(colX[0], yl + 18, 0.9);
-    drawControls(colX[1], contentY, 0.85, 0.85);
+  // Coluna esquerda: OBJETIVO + DICAS ajustados dentro de qH.h (mesmo com FONTE GRANDE)
+  drawText(ctx, "OBJETIVO", colX[0], contentY, { font: "big", scale: 0.72 * chrome, color: "#c77dff", maxWidth: colW });
+  const goalTop = contentY + headH;
+  const goalBudget = Math.floor((maxColH - headH * 2 - 10) * 0.34);
+  const gBlock = fitTextBlock(HELP_GOAL, colW, goalBudget, { scale: 0.72, minScale: 0.46, lineStep: 14 });
+  let yl = goalTop;
+  for (const L of gBlock.lines) {
+    drawText(ctx, L, colX[0], yl, { color: PAL.text, scale: gBlock.scale, maxWidth: colW });
+    yl += gBlock.step;
+  }
+  yl += 8;
+  drawText(ctx, "DICAS", colX[0], yl, { font: "big", scale: 0.72 * chrome, color: "#c77dff", maxWidth: colW });
+  yl += headH;
+  const tipsBudget = Math.max(40, contentY + maxColH - yl);
+  const tBlock = fitTextBlock(HELP_TIPS, colW, tipsBudget, { scale: 0.68, minScale: 0.44, lineStep: 13.5 });
+  for (const L of tBlock.lines) {
+    drawText(ctx, L, colX[0], yl, { color: PAL.text, scale: tBlock.scale, maxWidth: colW });
+    yl += tBlock.step;
   }
 
+  // Coluna direita: CONTROLES dentro de qH (sem invadir folhas/moldura da direita)
+  drawText(ctx, touchMode.on ? "CONTROLES (TOQUE)" : "CONTROLES", colX[1], contentY, { font: "big", scale: 0.72 * chrome, color: "#c77dff", maxWidth: colW });
+  const ctlTop = contentY + headH;
+  const ctlAvailH = Math.max(60, contentY + maxColH - ctlTop);
+  let chosenScale = 0.66, chosenStep = 14, chosenDescX = 96, chosenWrapped = [];
+  for (let sc = 0.66; sc >= 0.36; sc -= 0.025) {
+    let dX = 68;
+    for (const [k] of controlsTable) dX = Math.max(dX, Math.ceil(textWidth(k, { scale: sc })) + 7);
+    dX = Math.min(Math.floor(colW * 0.42), dX);
+    const dStep = Math.ceil(19.5 * sc * helpFS);
+    const wrapped = controlsTable.map(([k, d]) => [k, wrapText(d, colW - dX, { scale: sc })]);
+    const totalH = wrapped.reduce((acc, [, ls]) => acc + Math.max(dStep, ls.length * dStep + 1), 0);
+    chosenScale = sc; chosenStep = dStep; chosenDescX = dX; chosenWrapped = wrapped;
+    if (totalH <= ctlAvailH) break;
+  }
+  let yr = ctlTop;
+  for (const [k, lines] of chosenWrapped) {
+    if (yr + chosenStep > contentY + maxColH + 4) break;
+    drawText(ctx, k, colX[1], yr, { color: "#37e6c8", scale: chosenScale, maxWidth: chosenDescX - 4 });
+    lines.forEach((L, li) => {
+      if (yr + (li + 1) * chosenStep <= contentY + maxColH + 4) {
+        drawText(ctx, L, colX[1] + chosenDescX, yr + li * chosenStep, { color: PAL.text, scale: chosenScale, maxWidth: colW - chosenDescX });
+      }
+    });
+    yr += Math.max(chosenStep, lines.length * chosenStep + 1);
+  }
+  flushPaperFrames(ctx);
+
   const helpMobile = isMobileLayout();
-  if (button(ctx, { x: VIEW_W / 2 - 100, y: VIEW_H - 44, w: helpMobile ? 240 : 200, h: 36, label: "VOLTAR", id: "helpBack", accent: "#8f6fd6" })) {
+  if (button(ctx, { x: VIEW_W / 2 - (helpMobile ? 120 : 100), y: VIEW_H - 44, w: helpMobile ? 240 : 200, h: 36, label: "VOLTAR", id: "helpBack", accent: "#8f6fd6" })) {
     notePointer(mouse.x, mouse.y);
     startTransition("auto", "HELP", helpReturn, 0, () => { G.screen = helpReturn; helpReturn = "TITLE"; });
   }
@@ -2155,9 +2193,9 @@ function drawHUD() {
         ctx.beginPath(); ctx.arc(rcx, rcy, rr, -Math.PI / 2, -Math.PI / 2 + Math.PI*2 * frac); ctx.stroke();
       }
       if (!run.draft) drawText(ctx, Math.max(0, Math.ceil(director.timer)), rcx, rcy - 5, { color: rest < 0.25 ? "#b3392b" : PAL.text, align: "center", scale: Math.min(0.58, 9.5 / (16 * fontScale())) });
-      drawText(ctx, run.testMode ? "MODO TESTE • " + bh.waveLabel : (run.endless ? "SOBREVIVÊNCIA • " + bh.waveLabel : bh.waveLabel), bCx, qBan.y, { font: "small", color: bh.border, scale: bScale1, align: "center", maxWidth: bMax });
+      drawText(ctx, run.testMode ? "MODO TESTE • " + bh.waveLabel : (run.endless ? "SOBREVIVÊNCIA • " + bh.waveLabel : bh.waveLabel), bCx, qBan.y - 1, { font: "small", color: bh.border, scale: bScale1, align: "center", maxWidth: bMax });
       const cycTag = run.endless ? (director.cycle ? " • CICLO " + (director.cycle + 1) : " • INF") : "";
-      drawText(ctx, run.draft ? "ESCOLHA UMA MEMÓRIA" : ("ONDA " + (director.waveInMap + 1) + "/" + m.waves.length + cycTag), bCx, qBan.y + 11, { color: PAL.textDim, scale: bScale2, align: "center", maxWidth: bMax });
+      drawText(ctx, run.draft ? "ESCOLHA UMA MEMÓRIA" : ("ONDA " + (director.waveInMap + 1) + "/" + m.waves.length + cycTag), bCx, qBan.y + 13, { color: PAL.textDim, scale: bScale2, align: "center", maxWidth: bMax });
     } else if (director.phase === "mapClear") {
       drawText(ctx, "MAPA LIMPO! " + bh.loreName, qBan.x + qBan.w / 2, qBan.y + 2, { font: "small", color: bh.accent, align: "center", scale: bScale1, maxWidth: qBan.w });
       drawText(ctx, m.name, qBan.x + qBan.w / 2, qBan.y + 14, { color: PAL.textDim, align: "center", scale: bScale2, maxWidth: qBan.w });
@@ -2196,53 +2234,85 @@ function drawHUD() {
   }
 
   // ----------------------------------------- barra de formigas orgânica (rodapé) ----
+  // Ícone pequeno (sprite de 58px reduzido para ~20px): com o nearest-neighbor
+  // do jogo (pixel art) o desenho vira um borrão — aqui a redução é suave.
+  const drawIcon = (img, x, y, w, h) => {
+    const prev = ctx.imageSmoothingEnabled;
+    ctx.imageSmoothingEnabled = true;
+    ctx.drawImage(img, Math.round(x), Math.round(y), w, h);
+    ctx.imageSmoothingEnabled = prev;
+  };
+  // Botão IRMÃS + cards da loja: placas NOVAS (família 2026-10-19), desenhadas
+  // INTEIRAS (escala uniforme) e com o texto dentro da madeira calma medida.
+  // A placa antiga (quadrada) esmagava em 92×64 e o texto saía da placa.
   shopTooltip = null;
   const footY = VIEW_H - (isMobileLayout() ? 84 : 64);
-  // a placa de madeira do botão É o rodapé — sem pintura atrás dobrando a moldura
-  const shopSprite = rotFrame("worker", Math.PI / 2);
-  const rShop = iconButton(ctx, { x: 10, y: footY, w: 92, h: 64, id: "shopToggle", frame: shopOpen ? bh.accent : bh.border, selected: shopOpen, maxPadX: 12 });
-  ctx.drawImage(shopSprite, 56 - shopSprite.width * 0.17, footY + 3, shopSprite.width * 0.34, shopSprite.height * 0.34);
-  // rótulo e ação em faixas separadas dentro dos 64px do botão (antes "IRMÃS"
-  // e "ABRIR (Q)" se encostavam — e com FONTE GRANDE se atravessavam)
-  drawText(ctx, "IRMÃS", 56, footY + 16, { color: PAL.text, align: "center", maxWidth: 88 });
-  drawText(ctx, isTouchUI() ? (shopOpen ? "FECHAR" : "ABRIR") : (shopOpen ? "FECHAR (Q)" : "ABRIR (Q)"),
-    56, footY + 40, { color: shopOpen ? bh.accent : bh.border, align: "center", scale: 0.85, maxWidth: 88 });
+  const footH = 64;                                   // altura da fileira
+  const shopW = 160, shopH = 44;                      // placa 'media' (3,62:1)
+  const shopY = footY + Math.round((footH - shopH) / 2);
+  button(ctx, {
+    x: 10, y: shopY, w: shopW, h: shopH, plate: "media", compact: true,
+    label: "", id: "shopToggle",
+  });
+  const rShop = lastButton();
+  {
+    const q = placaQuiet("placa_media", 10, shopY, shopW, shopH);
+    const shopSprite = rotFrame("worker", Math.PI / 2);
+    const sw2 = 20, sh2 = shopSprite.height * (sw2 / shopSprite.width);
+    drawIcon(shopSprite, q.x + 1, q.y + (q.h - sh2) / 2, sw2, sh2);
+    // O /FS cancela o +30% do FONTE GRANDE: o chrome do rodapé não cresce, e
+    // as duas linhas cabem na faixa calma sem se cruzar.
+    const FS = fontScale();
+    const tx = q.x + 24, tw = Math.max(20, q.x + q.w - tx);
+    // Tinta marrom com halo creme: a madeira calma da placa é clara, e tinta
+    // creme puro sumia entre os veios (contraste ~1,3:1).
+    drawText(ctx, "IRMÃS", tx, q.y, { color: "#4a3116", scale: .85 / FS, maxWidth: tw, paper: true });
+    const sub = isTouchUI() ? (shopOpen ? "FECHAR" : "ABRIR") : (shopOpen ? "FECHAR (Q)" : "ABRIR (Q)");
+    drawText(ctx, sub, tx, q.y + 20, { color: shopOpen ? "#7a3d12" : "#5a3d1c", scale: .58 / FS, maxWidth: tw, paper: true });
+  }
 
   if (live && rShop.clicked) { shopOpen = !shopOpen; }
 
   if (shopOpen) {
-    const x0 = 10 + 92 + 6;
-    let gx = x0, lastGroup = null;
+    const CARD_W = SHOP_CARD.w, CARD_H = SHOP_CARD.h;  // placa 'cartao' (0,43:1)
+    const CARD_PITCH = SHOP_CARD.pitch;
+    let gx = SHOP_CARD.x0, lastGroup = null;
     for (let i = 0; i < SHOP.length; i++) {
       const sp = SHOP[i];
-      if (lastGroup && sp.group !== lastGroup) gx += 12;
+      if (lastGroup && sp.group !== lastGroup) gx += SHOP_CARD.groupGap;
       lastGroup = sp.group;
       const x = gx;
       const cost = infMoney ? 0 : unitCost(sp.type);
       const canBuy = (infMoney || run.food >= cost) && (infAnts || (popUsed() < popCapTotal() && unitLimitLeft(sp.type)));
       // a placa de madeira do card é o card — pintura atrás dobrava a moldura
-      const r = iconButton(ctx, { x, y: footY, w: SHOP_W, h: 64, id: "shop" + sp.type, disabled: !canBuy, frame: sp.accent, maxPadX: 2 });
+      button(ctx, { x, y: footY, w: CARD_W, h: CARD_H, plate: "cartao", compact: true, label: "", id: "shop" + sp.type, disabled: !canBuy });
+      const r = lastButton();
+      const q = placaQuiet("placa_cartao", x, footY, CARD_W, CARD_H);
       ctx.fillStyle = SHOP_GROUPS[sp.group] || "#4a3a6e";
       ctx.globalAlpha = 0.9;
-      ctx.fillRect(x + 3, footY + 3, SHOP_W - 6, 3);
+      ctx.fillRect(Math.round(q.x), Math.round(q.y), Math.round(q.w), 2);
       ctx.globalAlpha = 1;
       const frame = rotFrame(UNITS[sp.type].sprite, Math.PI / 2);
-      const sc2 = (sp.iconScale !== undefined ? sp.iconScale : sp.type === "worker" || sp.type === "scout" || sp.type === "gatherer" || sp.type === "weaver" ? 0.5 : 0.42) * 0.62;
+      const base = (sp.iconScale !== undefined ? sp.iconScale : sp.type === "worker" || sp.type === "scout" || sp.type === "gatherer" || sp.type === "weaver" ? 0.5 : 0.42) * 0.5;
+      // a formiga cabe em 10px: acima disso ela cobria o preço (mesma faixa calma)
+      let iw2 = frame.width * base, ih2 = frame.height * base;
+      if (ih2 > 10) { const k = 10 / ih2; iw2 *= k; ih2 = 10; }
       ctx.globalAlpha = canBuy ? 1 : 0.35;
-      ctx.drawImage(frame, x + SHOP_W / 2 - frame.width * sc2 / 2, footY + 5, frame.width * sc2, frame.height * sc2);
+      drawIcon(frame, q.x + q.w / 2 - iw2 / 2, q.y + 3, iw2, ih2);
       ctx.globalAlpha = 1;
-      drawText(ctx, infMoney ? "∞" : cost, x + SHOP_W / 2, footY + 40, { color: canBuy ? bh.accent : "#a32e46", align: "center", scale: 0.85, maxWidth: SHOP_W - 4 });
+      drawText(ctx, infMoney ? "∞" : cost, q.x + q.w / 2, q.y + 13, { color: canBuy ? "#4a3116" : "#8d3b2c", align: "center", scale: .78 / fontScale(), maxWidth: q.w, paper: true });
       const hot = i < 9 ? String(i + 1) : i === 9 ? "0" : "";
-      if (hot) drawText(ctx, hot, x + SHOP_W - 3, footY + 4, { color: PAL.textDim, align: "right", scale: 0.8 });
+      // tecla quente no canto inferior do card (sobre a bolota, fora da area de texto)
+      if (hot) drawText(ctx, hot, x + CARD_W - 2, footY + CARD_H - 13, { color: "#4a3116", align: "right", scale: 0.55, paper: true });
       if (r.hot) shopTooltip = sp;
       if (live && r.clicked) {
         const res = buyUnit(sp.type);
         if (!res.ok) {
-          const wp = screenToWorld(x + SHOP_W / 2, footY - 14);
+          const wp = screenToWorld(x + CARD_W / 2, footY - 14);
           floatText(wp.x, wp.y, res.why, { color: "#ff4d5a", life: 1 });
         }
       }
-      gx += SHOP_PITCH;
+      gx += CARD_PITCH;
     }
   }
 
@@ -2272,33 +2342,43 @@ function drawHUD() {
   // Uma única entrada do ninho no canvas, compartilhada por PC e toque.
   // A duplicata DOM foi removida da camada mobile.
   {
-    const nw = 142, nx2 = VIEW_W - 10 - nw;
-    const rNest = iconButton(ctx, { x: nx2, y: footY, w: nw, h: 64, id: "nestBtn", frame: bh.accent });
+    // Formigueiro: placa NOVA 'pequena' (3,12:1) — antes era um quadrado
+    // esmagado em 142x64 e o nome do bioma vazava para fora da placa.
+    const nw = 190, nh = 60, nx2 = VIEW_W - 10 - nw;
+    const ny2 = footY + Math.round((64 - nh) / 2);
+    button(ctx, { x: nx2, y: ny2, w: nw, h: nh, plate: "pequena", compact: true, label: "", id: "nestBtn" });
+    const rNest = lastButton();
+    const qN = placaQuiet("placa_pequena", nx2, ny2, nw, nh);
     const nestImg = IMG.nest || IMG.i_essence;
-    if (nestImg) ctx.drawImage(nestImg, nx2 + nw / 2 - 14, footY + 2, 28, 28);
+    if (nestImg) drawIcon(nestImg, qN.x + 1, qN.y + (qN.h - 20) / 2, 20, 20);
     {
       const t = G.time * 2.2;
       for (let i = 0; i < 3; i++) {
         const tp = (t + i * 0.33) % 1;
-        const ax = nx2 + nw / 2 - 26 + tp * 52;
-        const ay = footY + 28 - Math.sin(tp * Math.PI) * 5;
+        const ax = qN.x + 26 + tp * 46;
+        const ay = qN.y + 3 - Math.sin(tp * Math.PI) * 4;
         ctx.fillStyle = bh.accent;
         ctx.globalAlpha = 0.9;
-        ctx.fillRect(ax, ay, 3, 2);
+        ctx.fillRect(Math.round(ax), Math.round(ay), 3, 2);
         ctx.globalAlpha = 1;
       }
     }
-    // nomes lore formigueiro por bioma
+    // nomes lore formigueiro por bioma (o nome curto cabe na madeira calma;
+    // o nome completo aparece no HUD do bioma e na tela do formigueiro)
     const nestNames = {
-      planicie: "VENTRE ÂMBAR",
-      floresta: "JARDIM ETERNO",
-      pantano: "CÂMARA SILENCIOSA",
-      deserto: "FORNALHA REAL",
-      outono: "BERÇO DOURADO",
-      gelo: "GASTER DE GELO"
+      planicie: ["VENTRE ÂMBAR", "VENTRE"],
+      floresta: ["JARDIM ETERNO", "JARDIM"],
+      pantano: ["CÂMARA SILENCIOSA", "CÂMARA"],
+      deserto: ["FORNALHA REAL", "FORNALHA"],
+      outono: ["BERÇO DOURADO", "BERÇO"],
+      gelo: ["GASTER DE GELO", "GASTER"]
     };
-    drawText(ctx, nestNames[biomeId] || "FORMIGUEIRO", nx2 + nw / 2, footY + 22, { color: PAL.text, align: "center", scale: 0.9, maxWidth: nw - 16 });
-    drawText(ctx, isTouchUI() ? "ENTRAR" : "ENTRAR (B)", nx2 + nw / 2, footY + 42, { color: bh.accent, align: "center", scale: 0.85, maxWidth: nw - 8 });
+    const ntx = qN.x + 24, ntw = Math.max(24, qN.x + qN.w - ntx);
+    const pair = nestNames[biomeId] || ["FORMIGUEIRO", "FORMIGUEIRO"];
+    const nestName = textWidth(pair[0], { scale: .8 }) <= ntw ? pair[0] : pair[1];
+    const nFS = fontScale();
+    drawText(ctx, nestName, ntx, qN.y + 1, { color: "#4a3116", scale: .85 / nFS, maxWidth: ntw, paper: true });
+    drawText(ctx, isTouchUI() ? "ENTRAR" : "ENTRAR (B)", ntx, qN.y + qN.h - 13, { color: "#5a3d1c", scale: .6 / nFS, maxWidth: ntw, paper: true });
     if (live && rNest.clicked) {
       openNest(run);
       return;
@@ -2712,17 +2792,13 @@ function drawPause() {
   // o painel cabendo no canvas é o que impede "REINICIAR/SAIR" de sumir no celular
   const panelH = Math.min(mobile ? 500 : 440, VIEW_H - py - 16);
 
-  // painel esquerda - botões
+  // painel esquerda - botões (dentro de paperQuiet da moldura pause)
   dialogBox(ctx, startX, py, leftW, panelH, { paperKind:"pause", border: "#8f6fd6", accent: "#37e6c8" });
-  drawText(ctx, "PAUSA", startX + leftW/2, py + 18, { font: "big", scale: 2, color: "#ffd479", align: "center" });
+  const qPL = paperQuiet("pause", startX, py, leftW, panelH);
+  const plCx = qPL.x + qPL.w / 2;
+  drawText(ctx, "PAUSA", plCx, qPL.y, { font: "big", scale: 1.05 / fontScale(), color: "#ffd479", align: "center", maxWidth: qPL.w });
 
   const run = G.run;
-  const btnW = leftW - 32;
-  const btnH = mobile ? 52 : 40;
-  // o título "PAUSA" (fonte big, escala 2) tem tinta até py+68 — botões só abaixo
-  let by = py + 78;
-  const gap = mobile ? 22 : 10;
-
   const pauseBtns = [
     { label: "CONTINUAR", id: "resume", accent: "#37e6c8" },
     { label: "OPÇÕES", id: "pauseOptions", accent: "#ffb347" },
@@ -2731,9 +2807,15 @@ function drawPause() {
     { label: "REINICIAR EXPEDIÇÃO", id: "restart", accent: "#ffb347" },
     { label: "SAIR PARA O MENU", id: "quit", accent: "#ff4d5a" },
   ];
+  let by = Math.round(qPL.y + 30);
+  const availBtnsH = Math.max(180, qPL.y + qPL.h - by);
+  const gap = 6;
+  const btnH = Math.max(28, Math.floor((availBtnsH - gap * (pauseBtns.length - 1)) / pauseBtns.length));
+  const btnW = Math.round(qPL.w);
+  const btnX = Math.round(qPL.x);
 
   for (const b of pauseBtns) {
-    if (button(ctx, { x: startX + 16, y: by, w: btnW, h: btnH, label: b.label, id: b.id, accent: b.accent })) {
+    if (button(ctx, { x: btnX, y: by, w: btnW, h: btnH, compact: true, label: b.label, id: b.id, accent: b.accent, scale: 0.78 / fontScale() })) {
       if (b.id === "resume") { paused = false; return; }
       if (b.id === "pauseOptions") {
         notePointer(mouse.x, mouse.y);
@@ -2774,13 +2856,15 @@ function drawPause() {
     by += btnH + gap;
   }
 
-  // painel direita - mapa + stats
+  // painel direita - mapa + stats (dentro de paperQuiet da moldura pause)
   const rx = startX + leftW + 24;
   dialogBox(ctx, rx, py, rightW, panelH, { paperKind:"pause", border: "#4a3a6e", accent: "#ffd479" });
-  drawText(ctx, "MAPA E STATUS", rx + rightW/2, py + 18, { font: "big", color: "#ffd479", align: "center" });
+  const qPR = paperQuiet("pause", rx, py, rightW, panelH);
+  const prCx = qPR.x + qPR.w / 2;
+  drawText(ctx, "MAPA E STATUS", prCx, qPR.y, { font: "big", scale: 0.78 / fontScale(), color: "#ffd479", align: "center", maxWidth: qPR.w });
 
-  // mini-mapa maior na pausa - FASE 5 FINAL: interativo clique move câmera + hover + stats expandidos
-  const miniX = rx + 16, miniY = py + 44, miniW = rightW - 32, miniH = 160;
+  // mini-mapa maior na pausa - interativo clique move câmera + hover + stats expandidos
+  const miniX = Math.round(qPR.x + 2), miniY = Math.round(qPR.y + 24), miniW = Math.round(qPR.w - 4), miniH = 104;
   panel(ctx, miniX - 2, miniY - 2, miniW + 4, miniH + 4, { paper: false, fill: "rgba(10,8,16,0.9)", border: "#4a3a6e", r: 3 });
   if (world.mini) {
     ctx.drawImage(world.mini, miniX, miniY, miniW, miniH);
@@ -2811,7 +2895,6 @@ function drawPause() {
   if (pointInRect(mouse.x, mouse.y, miniX, miniY, miniW, miniH)) {
     ctx.strokeStyle = "#37e6c8"; ctx.lineWidth = 2;
     ctx.strokeRect(miniX-1, miniY-1, miniW+2, miniH+2);
-    drawText(ctx, "CLIQUE PARA MOVER CÂMERA", rx + rightW/2, miniY + miniH + 4, { color: "#37e6c8", align: "center", scale: 0.7 });
     if (mouse.justDown) {
       cam.x = (mouse.x - miniX) / sx;
       cam.y = (mouse.y - miniY) / sy;
@@ -2821,38 +2904,37 @@ function drawPause() {
   // fog no mini pausa
   fogDrawMini(ctx, miniX, miniY, miniW, miniH);
 
-  // Estatísticas: a lista é montada ANTES e o passo entre linhas é calculado
-  // para caber entre o mini-mapa e o rodapé — com FONTE GRANDE e as linhas
-  // opcionais (invencível/dashes/rali) o bloco passava da borda da caixa.
-  let sy2 = miniY + miniH + 20;
+  // Estatísticas dentro de qPR
+  let sy2 = miniY + miniH + 8;
   if (run) {
-    const statW = rightW - 60;
+    const statW = Math.round(qPR.w - 4);
     const pFS = fontScale();
     const lines = [];
-    lines.push(["MODO: " + (run.modeDef ? run.modeDef.name : "CAMPANHA"), run.modeDef ? run.modeDef.color : "#37e6c8", 1]);
-    if (run.ascension) lines.push(["ASCENSÃO DA NÉVOA: " + run.ascension, "#ff8a96", 1]);
-    lines.push(["MAPA: " + (run.mapIdx + 1) + "/" + MAPS.length + " - " + MAPS[run.mapIdx].name, PAL.text, 1]);
-    lines.push(["ONDA: " + run.wave + " • ABATES: " + run.kills, PAL.textDim, 1]);
-    lines.push(["NÍVEL: " + run.level + " • COMIDA: " + fmt(run.food), PAL.textDim, 1]);
-    lines.push(["ESSÊNCIA: " + fmt(run.essencePool) + " • MUTAÇÕES: " + run.mutationLog.length, "#c77dff", 0.85]);
-    lines.push(["POP: " + popUsed() + "/" + popCapTotal() + " • TEMPO: " + Math.floor(run.elapsed) + "s", PAL.textDim, 0.85]);
+    lines.push(["MODO: " + (run.modeDef ? run.modeDef.name : "CAMPANHA"), run.modeDef ? run.modeDef.color : "#37e6c8", 0.72]);
+    if (run.ascension) lines.push(["ASCENSÃO DA NÉVOA: " + run.ascension, "#ff8a96", 0.68]);
+    lines.push(["MAPA: " + (run.mapIdx + 1) + "/" + MAPS.length + " - " + MAPS[run.mapIdx].name, PAL.text, 0.68]);
+    lines.push(["ONDA: " + run.wave + " • ABATES: " + run.kills, PAL.textDim, 0.68]);
+    lines.push(["NÍVEL: " + run.level + " • COMIDA: " + fmt(run.food), PAL.textDim, 0.68]);
+    lines.push(["ESSÊNCIA: " + fmt(run.essencePool) + " • MUTAÇÕES: " + run.mutationLog.length, "#c77dff", 0.65]);
+    lines.push(["POP: " + popUsed() + "/" + popCapTotal() + " • TEMPO: " + Math.floor(run.elapsed) + "s", PAL.textDim, 0.65]);
     const n = colony.needs, hc = colony.headcount;
-    lines.push(["COLÔNIA: FOME " + Math.round(n.food*100) + "% • GUERRA " + Math.round(n.defense*100) + "% • CURA " + Math.round(n.medical*100) + "%", "#8f7bb5", 0.75]);
-    lines.push(["COLETANDO " + hc.gather + " • EXPLORANDO " + hc.explore + " • DEFENDENDO " + (hc.defend||0), "#9a8fc0", 0.75]);
-    if (G.save.accessibility.invincible) lines.push(["INVENCÍVEL ATIVO", "#7fd6a0", 1]);
-    if (G.save.accessibility.infiniteDash) lines.push(["∞ DASHES INFINITOS ATIVO", "#37e6c8", 0.85]);
-    if (rallyCooldown > 0) lines.push(["RALI RECARGA: " + rallyCooldown.toFixed(1) + "s", "#ff4d5a", 0.8]);
+    lines.push(["COLÔNIA: FOME " + Math.round(n.food*100) + "% • GUERRA " + Math.round(n.defense*100) + "% • CURA " + Math.round(n.medical*100) + "%", "#8f7bb5", 0.58]);
+    lines.push(["COLETANDO " + hc.gather + " • EXPLORANDO " + hc.explore + " • DEFENDENDO " + (hc.defend||0), "#9a8fc0", 0.58]);
+    if (G.save.accessibility.invincible) lines.push(["INVENCÍVEL ATIVO", "#7fd6a0", 0.68]);
+    if (G.save.accessibility.infiniteDash) lines.push(["∞ DASHES INFINITOS ATIVO", "#37e6c8", 0.65]);
+    if (rallyCooldown > 0) lines.push(["RALI RECARGA: " + rallyCooldown.toFixed(1) + "s", "#ff4d5a", 0.62]);
 
-    const footTop = py + panelH - 40;
-    const pitch = Math.max(12, Math.min(18 * pFS, (footTop - sy2) / Math.max(1, lines.length)));
+    const footTop = qPR.y + qPR.h - 14;
+    const pitch = Math.max(9, Math.min(13.5, (footTop - sy2) / Math.max(1, lines.length)));
     lines.forEach(([txt, col, sc], i) => {
-      drawText(ctx, txt, rx + 30, sy2 + i * pitch, { color: col, scale: sc, maxWidth: statW });
+      const effSc = Math.min(sc / pFS, (pitch - 1) / (18 * pFS));
+      drawText(ctx, txt, qPR.x + 2, sy2 + i * pitch, { color: col, scale: effSc, maxWidth: statW });
     });
   }
 
-  // rodapé 12px acima do fim da caixa (antes ficava 2px ABAIXO da borda)
-  drawText(ctx, isTouchUI() ? "TOQUE NO MAPA PARA MOVER A CÂMERA • ▶ VOLTAR RETOMA" : "ESC: VOLTAR • M: SOM • CLIQUE NO MAPA",
-    rx + rightW/2, py + panelH - 26, { color: PAL.textDim, align: "center", scale: 0.75, maxWidth: rightW - 32 });
+  // rodapé dentro de qPR
+  drawText(ctx, isTouchUI() ? "TOQUE NO MAPA • ▶ VOLTAR RETOMA" : "ESC: VOLTAR • M: SOM • CLIQUE NO MAPA",
+    prCx, qPR.y + qPR.h - 11, { color: PAL.textDim, align: "center", scale: 0.56 / fontScale(), maxWidth: qPR.w });
   flushPaperFrames(ctx);
 }
 
@@ -2912,54 +2994,54 @@ function renderProphecyScreen() {
   ctx.fillRect(0, 0, VIEW_W, VIEW_H);
 
   const FS = fontScale();
-  // Barra do topo: antes tinha 60px de altura para título + subtítulo + contagem
-  // + painel de essência — com FONTE GRANDE o subtítulo caía fora da caixa. Ela
-  // cresce, o subtítulo passa a quebrar em 2 linhas e a contagem desce para o
-  // rodapé (mesma informação, sem colisão).
-  panel(ctx, 12, 10, 426, 88, { paperKind: "header", border: "#6ee7ff", accentLine: "#6ee7ff" });
-  drawText(ctx, "PROFECIAS DA COLÔNIA", 28, 18, { font: "big", scale: 1, color: "#6ee7ff", maxWidth: 398 });
-  const subLines = wrapText("Vaticínios da Matriarca — cumpra-os pela essência", 398, { scale: 0.8 });
-  subLines.forEach((L, li) => drawText(ctx, L, 28, 56 + li * Math.ceil(18 * 0.8 * FS),
-    { color: PAL.textDim, scale: 0.8, maxWidth: 398 }));
+  const chrome = 1 / FS;
+  // Cabeçalho na proporção original de banner (425×85 = 5:1) e texto dentro de paperQuiet
+  const hBox = { x: 12, y: 6, w: 425, h: 85 };
+  panel(ctx, hBox.x, hBox.y, hBox.w, hBox.h, { paperKind: "banner", border: "#6ee7ff", accentLine: "#6ee7ff" });
+  const qH = paperQuiet("banner", hBox.x, hBox.y, hBox.w, hBox.h);
+  const hX = qH.x + 12, hW = Math.max(40, qH.w - 24), hCx = hX + hW / 2;
+  drawText(ctx, "PROFECIAS DA COLÔNIA", hCx, qH.y + 1, { font: "big", scale: 0.56 * chrome, color: "#6ee7ff", align: "center", maxWidth: hW });
+  const subB = fitTextBlock("Vaticínios da Matriarca — cumpra-os pela essência", hW, Math.max(14, qH.h - 18), { scale: 0.52, minScale: 0.38, lineStep: 11 });
+  subB.lines.forEach((L, li) => drawText(ctx, L, hCx, qH.y + 17 + li * subB.step,
+    { color: PAL.textDim, scale: subB.scale, align: "center", maxWidth: hW }));
   const done = Object.keys(G.save.prophecies || {}).length;
 
-  panel(ctx, VIEW_W - 520, 10, 160, 70, { border: "#c77dff" });
+  // Painel de essência na proporção original de panel (160×85)
+  const eBox = { x: 452, y: 6, w: 160, h: 85 };
+  panel(ctx, eBox.x, eBox.y, eBox.w, eBox.h, { border: "#c77dff" });
+  const qE = paperQuiet("panel", eBox.x, eBox.y, eBox.w, eBox.h);
   const ic = IMG.i_essence;
-  if (ic) { ctx.imageSmoothingEnabled = false; ctx.drawImage(ic, VIEW_W - 512, 22, 34, 34); }
-  drawText(ctx, G.save.essence, VIEW_W - 468, 28, { font: "big", scale: 1, color: "#c77dff", maxWidth: 88 });
+  if (ic) { ctx.imageSmoothingEnabled = false; ctx.drawImage(ic, qE.x + 2, qE.y + (qE.h - 24) / 2, 24, 24); }
+  drawText(ctx, G.save.essence, qE.x + 30 + (qE.w - 30) / 2, qE.y + (qE.h - 24) / 2, { font: "big", scale: 0.78 * chrome, color: "#c77dff", align: "center", maxWidth: qE.w - 32 });
   flushPaperFrames(ctx);
 
   if (button(ctx, { x: VIEW_W - 180, y: 18, w: 156, h: 44, label: "VOLTAR", id: "prophecyBack", font: "small", accent: "#ff4d5a" })) {
     backFromProphecies();
   }
 
-  // Quatro cartões por página: fonte grande cresce de verdade, não é
-  // reduzida para esconder colisões. Todos os vaticínios continuam acessíveis.
+  // Quatro cartões por página (345×184 = proporção original de panel, centrados na tela)
   const pages = Math.ceil(PROPHECIES.length / 4);
   prophecyPage = clamp(prophecyPage, 0, pages - 1);
   PROPHECIES.slice(prophecyPage * 4, prophecyPage * 4 + 4).forEach((p, i) => {
-    // Cartões nas proporções ORIGINAIS do sprite panel (360×192 uniformes);
-    // nome e descrição centralizados na área permitida da pintura (2026-10-16).
-    const x = 20 + (i % 2) * 380, y = 108 + Math.floor(i / 2) * 198;
-    const w = 360, h = 192, ok = !!(G.save.prophecies || {})[p.id];
+    const x = 110 + (i % 2) * 395, y = 94 + Math.floor(i / 2) * 186;
+    const w = 345, h = 184, ok = !!(G.save.prophecies || {})[p.id];
     panel(ctx, x, y, w, h, { border: ok ? "#7fd6a0" : "#3a3054" });
     const qP = paperQuiet("panel", x, y, w, h);
     const pCx = qP.x + qP.w / 2;
     drawKitIcon(ctx, ok ? 0 : 1, pCx - 6, qP.y, 13);
-    const step = Math.min(11, qP.h / 7);
-    const nm = fitTextBlock(p.name, qP.w, step * 2, { scale: 0.72, minScale: 0.5, lineStep: 12 });
+    const nm = fitTextBlock(p.name, qP.w, 34, { scale: 0.68, minScale: 0.44, lineStep: 14 });
     let py2 = qP.y + 15;
     nm.lines.forEach((line, j) => drawText(ctx, line, pCx, py2 + j * nm.step, { scale: nm.scale, color: ok ? "#7fd6a0" : "#6ee7ff", align: "center", maxWidth: qP.w }));
-    py2 += nm.lines.length * nm.step + 2;
-    const ds = fitTextBlock(p.desc, qP.w, qP.y + qP.h - 14 - py2, { scale: 0.64, minScale: 0.45, lineStep: 11 });
+    py2 += nm.lines.length * nm.step + 3;
+    const ds = fitTextBlock(p.desc, qP.w, Math.max(18, qP.y + qP.h - 15 - py2), { scale: 0.60, minScale: 0.42, lineStep: 13 });
     ds.lines.forEach((line, j) => drawText(ctx, line, pCx, py2 + j * ds.step, { scale: ds.scale, color: PAL.text, align: "center", maxWidth: qP.w }));
-    drawText(ctx, "+" + p.reward + " ESSÊNCIA", pCx, qP.y + qP.h - 12, { color: "#c77dff", scale: 0.62, align: "center", maxWidth: qP.w });
+    drawText(ctx, "+" + p.reward + " ESSÊNCIA", pCx, qP.y + qP.h - 13, { color: "#c77dff", scale: 0.56 * chrome, align: "center", maxWidth: qP.w });
   });
-  prophecyPage = drawPageControls("prophecy", prophecyPage, pages, 360);
+  flushPaperFrames(ctx);
+  prophecyPage = drawPageControls("prophecy", prophecyPage, pages, 470);
 
   const foot = (isTouchUI() ? "TOQUE EM VOLTAR" : "ESC: VOLTAR") + " • " + done + "/" + PROPHECIES.length + " CUMPRIDAS • A ESSÊNCIA LEMBRA";
-  drawText(ctx, foot, VIEW_W / 2, VIEW_H - 26, { color: PAL.textDim, align: "center", maxWidth: VIEW_W - 60 });
-  flushPaperFrames(ctx);
+  drawText(ctx, foot, VIEW_W / 2, VIEW_H - 22, { color: PAL.textDim, align: "center", scale: 0.78 * chrome, maxWidth: VIEW_W - 60 });
 }
 
 // ------------------------------------------------------------------- fim ----
@@ -2970,28 +3052,29 @@ function drawEnd(run) {
   if (!p) return;
   const won = p.winBonus > 0;
   const FS = fontScale();
+  const chrome = 1 / FS;
   const mobile = isMobileLayout();
-  // Painel quase de tela cheia: com FONTE GRANDE o resumo (10-13 linhas de
-  // estatística) não cabia em 520x460 — a caixa cresce e a lista passa a ter
-  // 3 colunas, o que mantém o passo entre linhas legível em 1.3x.
-  const PX = 40, PY = 10, PW = VIEW_W - 80, PH = VIEW_H - 20;
-  dialogBox(ctx, PX, PY, PW, PH, { border: won ? "#ffd479" : "#ff4d5a", accent: won ? "#ffd479" : "#ff4d5a" });
 
-  const titleH = 30 * 2 * FS;                       // altura da linha do título
-  drawText(ctx, won ? "VITÓRIA DA COLÔNIA!" : "A COLÔNIA CAIU", VIEW_W / 2, PY + 14,
-    { font: "big", scale: 2, color: won ? "#ffd479" : "#ff4d5a", align: "center", maxWidth: PW - 40 });
+  // Título na faixa superior (acima da moldura, nunca cortado pela madeira)
+  drawText(ctx, won ? "VITÓRIA DA COLÔNIA!" : "A COLÔNIA CAIU", VIEW_W / 2, 4,
+    { font: "big", scale: 1.45 * chrome, color: won ? "#ffd479" : "#ff4d5a", align: "center", maxWidth: VIEW_W - 60 });
+
+  // Painel central na proporção de panel (780×416) com todo conteúdo dentro de qEnd
+  const PX = 90, PY = 42, PW = 780, PH = 416;
+  dialogBox(ctx, PX, PY, PW, PH, { border: won ? "#ffd479" : "#ff4d5a", accent: won ? "#ffd479" : "#ff4d5a" });
+  const qEnd = paperQuiet("panel", PX, PY, PW, PH);
+  const eCx = qEnd.x + qEnd.w / 2;
+
   const subLock = won ? "O arauto do inverno caiu. A colônia atravessou os seis degraus — e no alto do mundo a Névoa ainda espera." : "A rainha tombou. Mas a essência alimenta a próxima geração.";
-  const innerW = PW - 80;
-  const subLines = wrapText(subLock, innerW, {});
-  let ty = PY + 14 + titleH + 4;
-  subLines.forEach((L) => { drawText(ctx, L, VIEW_W / 2, ty, { color: PAL.text, align: "center", maxWidth: innerW }); ty += 18 * FS; });
+  const subB = fitTextBlock(subLock, qEnd.w, 34, { scale: 0.72, minScale: 0.48, lineStep: 14 });
+  let ty = Math.round(qEnd.y);
+  subB.lines.forEach((L) => { drawText(ctx, L, eCx, ty, { color: PAL.text, scale: subB.scale, align: "center", maxWidth: qEnd.w }); ty += subB.step; });
   // PÓS-FINAL: a Era do Formigueiro Eterno avança a cada vitória de campanha
-  let eraLine = "";
   if (won && run.mode === "campanha") {
     const e = Math.max(1, G.save.era || 1);
-    eraLine = "ERA " + e + " — " + ERA_LINES[(e - 1) % ERA_LINES.length];
-    drawText(ctx, eraLine, VIEW_W / 2, ty, { color: "#ffd479", align: "center", maxWidth: innerW });
-    ty += 18 * FS;
+    const eraLine = "ERA " + e + " — " + ERA_LINES[(e - 1) % ERA_LINES.length];
+    drawText(ctx, eraLine, eCx, ty + 2, { color: "#ffd479", scale: 0.65 * chrome, align: "center", maxWidth: qEnd.w });
+    ty += 16;
   }
 
   const rows = [
@@ -3011,60 +3094,61 @@ function drawEnd(run) {
   if (p.prophecies) for (const pr of p.prophecies) rows.push(["PROFECIA: " + pr.name, "+" + pr.reward, "#6ee7ff"]);
   if (p.mult > 1) rows.push(["MULTIPLICADOR", "x" + p.mult.toFixed(2), "#ffd479"]);
 
-  // pilha de baixo para cima: rodapé de botões -> total -> ícones -> linhas
-  const btnH = mobile ? 52 : 40, row2H = mobile ? 44 : 32, gap2 = mobile ? 10 : 8;
-  const menuY = PY + PH - 16 - row2H;
-  const by = menuY - gap2 - btnH;
-  const sepY = by - 88;
-  const iconsH = run.mutationLog.length ? 26 : 0;
-  const rowsBottom = sepY - 14 - iconsH;
+  // dentro de qEnd: linhas -> ícones -> separador + total
+  const sepY = Math.round(qEnd.y + qEnd.h - 46);
+  const iconsH = run.mutationLog.length ? 24 : 0;
+  const rowsBottom = sepY - 8 - iconsH;
 
   const maxRows = Math.ceil(rows.length / 3);
-  const rowsTop = ty + 12;
-  const step = Math.max(12, Math.min(18 * FS, (rowsBottom - rowsTop) / Math.max(1, maxRows - 1)));
-  const colW = Math.floor((PW - 48) / 3) - 12;
+  const rowsTop = ty + 6;
+  const step = Math.max(12, Math.min(18, (rowsBottom - rowsTop) / Math.max(1, maxRows)));
+  const colGap = 14;
+  const colW = Math.floor((qEnd.w - colGap * 2) / 3);
   rows.forEach(([label, val, col], i) => {
     const ci = Math.floor(i / maxRows), ri = i % maxRows;
-    const cx = PX + 24 + ci * (colW + 12);
-    const ry = rowsTop + ri * step;
-    // encolhe SÓ a linha que não cabe (nome comprido + valor) em vez de deixar
-    // o valor passar por cima do rótulo, como "INIMIGOS ABATIDOS" x "1234"
-    const fit = Math.min(1, (colW - 12) / Math.max(1, textWidth(label, {}) + 8 + textWidth(val, {})));
-    drawText(ctx, label, cx, ry, { color: PAL.textDim, scale: fit, maxWidth: colW - 6 });
-    drawText(ctx, val, cx + colW, ry, { color: col, align: "right", scale: fit, maxWidth: colW - 6 });
+    const cx = Math.round(qEnd.x + ci * (colW + colGap));
+    const ry = Math.round(rowsTop + ri * step);
+    const fit = Math.min(0.76 * chrome, (colW - 6) / Math.max(1, textWidth(label, {}) + 8 + textWidth(val, {})));
+    drawText(ctx, label, cx, ry, { color: PAL.textDim, scale: fit, maxWidth: colW - 4 });
+    drawText(ctx, val, cx + colW, ry, { color: col, align: "right", scale: fit, maxWidth: colW - 4 });
   });
 
   if (run.mutationLog.length) {
     const maxIcons = 14;
-    const iy = rowsBottom + 4;
-    let ix = PX + 24;
+    const iy = rowsBottom + 2;
+    let ix = Math.round(qEnd.x);
     for (const mm of run.mutationLog.slice(0, maxIcons)) {
       const icon = IMG["i_" + mm.icon];
-      if (icon) ctx.drawImage(icon, ix, iy, 20, 20);
-      ix += 26;
+      if (icon) ctx.drawImage(icon, ix, iy, 18, 18);
+      ix += 22;
     }
     if (run.mutationLog.length > maxIcons) {
-      drawText(ctx, "+" + (run.mutationLog.length - maxIcons), ix, iy + 3, { color: PAL.textDim, maxWidth: 60 });
+      drawText(ctx, "+" + (run.mutationLog.length - maxIcons), ix, iy + 2, { color: PAL.textDim, scale: 0.7 * chrome, maxWidth: 60 });
     }
   }
 
-  ctx.fillStyle = "#3a3054";
-  ctx.fillRect(PX + 24, sepY, PW - 48, 2);
-  drawText(ctx, "TOTAL DE GELÉIA REAL", PX + 24, sepY + 14, { font: "big", scale: 1, color: "#c77dff", maxWidth: PW / 2 - 40 });
-  drawText(ctx, "+" + p.total, PX + PW - 24, sepY + 8, { font: "big", scale: 2, color: "#ffd479", align: "right", maxWidth: PW / 2 - 40 });
+  ctx.fillStyle = "#bea779";
+  ctx.fillRect(qEnd.x, sepY, qEnd.w, 1.5);
+  drawText(ctx, "TOTAL DE GELÉIA REAL", qEnd.x, sepY + 12, { font: "big", scale: 0.85 * chrome, color: "#c77dff", maxWidth: qEnd.w * 0.62 });
+  drawText(ctx, "+" + p.total, qEnd.x + qEnd.w, sepY + 6, { font: "big", scale: 1.45 * chrome, color: "#ffd479", align: "right", maxWidth: qEnd.w * 0.36 });
+  flushPaperFrames(ctx);
 
-  if (button(ctx, { x: VIEW_W / 2 - 230, y: by, w: 220, h: btnH, label: "NOVA EXPEDIÇÃO", id: "again", accent: "#37e6c8" })) {
+  // Rodapé de 3 botões lado a lado (abaixo do painel, nunca sobrepostos à moldura)
+  const btnY = VIEW_H - (mobile ? 46 : 42), btnH = mobile ? 40 : 36;
+  const bW = 216, bGap = 14;
+  const bx0 = Math.round(VIEW_W / 2 - (bW * 3 + bGap * 2) / 2);
+  if (button(ctx, { x: bx0, y: btnY, w: bW, h: btnH, compact: true, label: "NOVA EXPEDIÇÃO", id: "again", accent: "#37e6c8", scale: 0.82 * chrome })) {
     notePointer(mouse.x, mouse.y);
     paused = false;
     startRunWithLoading(run.modeDef);
     return;
   }
-  if (button(ctx, { x: VIEW_W / 2 + 10, y: by, w: 220, h: btnH, label: "ÁRVORE DA EVOLUÇÃO", id: "goTree", accent: "#c77dff" })) {
+  if (button(ctx, { x: bx0 + bW + bGap, y: btnY, w: bW, h: btnH, compact: true, label: "ÁRVORE DA EVOLUÇÃO", id: "goTree", accent: "#c77dff", scale: 0.78 * chrome })) {
     notePointer(mouse.x, mouse.y);
     openTreeScreen("TITLE");
     return;
   }
-  if (button(ctx, { x: VIEW_W / 2 - 110, y: menuY, w: 220, h: row2H, label: "MENU PRINCIPAL", id: "menu" })) {
+  if (button(ctx, { x: bx0 + (bW + bGap) * 2, y: btnY, w: bW, h: btnH, compact: true, label: "MENU PRINCIPAL", id: "menu", scale: 0.82 * chrome })) {
     notePointer(mouse.x, mouse.y);
     startTransition("auto", "RUN", "TITLE", 0, () => { G.screen = "TITLE"; });
     return;
@@ -3118,9 +3202,9 @@ function updateMemoryScreen(dt) {
 }
 
 function drawPageControls(id, page, pages, y) {
-  if (page > 0 && button(ctx, { x: 48, y, w: 180, h: 44, label: "ANTERIOR", id: id + "Prev" })) page--;
-  if (page < pages - 1 && button(ctx, { x: 732, y, w: 180, h: 44, label: "PRÓXIMA", id: id + "Next" })) page++;
-  drawText(ctx, (page + 1) + "/" + pages, 280, y + 12, { color: PAL.textDim, scale: 0.85 });
+  if (page > 0 && button(ctx, { x: 40, y, w: 164, h: 38, compact: true, label: "ANTERIOR", id: id + "Prev", scale: 0.8 })) page--;
+  if (page < pages - 1 && button(ctx, { x: 756, y, w: 164, h: 38, compact: true, label: "PRÓXIMA", id: id + "Next", scale: 0.8 })) page++;
+  drawText(ctx, (page + 1) + "/" + pages, 224, y + 10, { color: PAL.textDim, scale: 0.8 });
   return page;
 }
 
@@ -3130,13 +3214,10 @@ function renderMemoryScreen() {
   ctx.fillStyle = "rgba(10,8,16,0.78)";
   ctx.fillRect(0,0,VIEW_W,VIEW_H);
   const FS = fontScale();
-  const PX=24, PY=16, PW=VIEW_W-48, PH=VIEW_H-32;
-  dialogBox(ctx, PX, PY, PW, PH, { border: "#ffd479", accent: "#7fd6a0" });
-  const memoryTitleScale = FS > 1 ? 1.6 : 2;
-  drawText(ctx, "MEMÓRIAS DA COLÔNIA", VIEW_W/2, PY+16, { font:"big", scale:memoryTitleScale, color:"#ffd479", align:"center", maxWidth: PW-40 });
-  drawText(ctx, "REVEJA AS MEMÓRIAS DESCOBERTAS PELA COLÔNIA", VIEW_W/2, 96,
-    { color: PAL.textDim, align: "center", scale: 0.85 });
-  flushPaperFrames(ctx);
+  const chrome = 1 / FS;
+  drawText(ctx, "MEMÓRIAS DA COLÔNIA", VIEW_W/2, 8, { font:"big", scale:1.5 * chrome, color:"#ffd479", align:"center", maxWidth: VIEW_W-60 });
+  drawText(ctx, "REVEJA AS MEMÓRIAS DESCOBERTAS PELA COLÔNIA", VIEW_W/2, 54,
+    { color: PAL.textDim, align: "center", scale: 0.78 * chrome });
   const defs = getCutsceneDefs();
   const ids = Object.keys(defs).filter((id) => !id.startsWith("loading_"));
   const pages = Math.ceil(ids.length / 4);
@@ -3144,33 +3225,33 @@ function renderMemoryScreen() {
   memoryRects = [];
   ids.slice(memoryPage * 4, memoryPage * 4 + 4).forEach((id, i) => {
     const def = defs[id], seen = G.save.cutscenes && G.save.cutscenes[id];
-    // Cartões nas proporções ORIGINAIS do sprite panel (360×192 uniformes);
+    // Cartões nas proporções ORIGINAIS do sprite panel (345×184 = 960×512 uniformes);
     // título e subtítulo centralizados na área permitida (2026-10-16).
-    const x = 20 + (i % 2) * 380, y = 124 + Math.floor(i / 2) * 198;
-    const w = 360, h = 192, step = Math.ceil(16 * FS);
+    const x = 110 + (i % 2) * 395, y = 80 + Math.floor(i / 2) * 188;
+    const w = 345, h = 184;
     const hot = memoryHover === i;
     panel(ctx, x, y, w, h, { border: hot ? "#ffd479" : "#4a3a6e" });
     const qM = paperQuiet("panel", x, y, w, h);
     const mCx = qM.x + qM.w / 2;
     drawKitIcon(ctx, seen ? 0 : 1, mCx - 6, qM.y, 13);
-    const mStep = Math.min(11, qM.h / 7);
-    const tl = fitTextBlock(def.title, qM.w, mStep * 2, { scale: 0.72, minScale: 0.5, lineStep: 12 });
+    const tl = fitTextBlock(def.title, qM.w, 34, { scale: 0.68, minScale: 0.44, lineStep: 14 });
     let my2 = qM.y + 15;
     tl.lines.forEach((line, j) => drawText(ctx, line, mCx, my2 + j * tl.step, { scale: tl.scale, color: seen ? "#ffd479" : PAL.textDim, align: "center", maxWidth: qM.w }));
-    my2 += tl.lines.length * tl.step + 2;
-    const ds = fitTextBlock(def.subtitle, qM.w, qM.y + qM.h - 14 - my2, { scale: 0.64, minScale: 0.45, lineStep: 11 });
+    my2 += tl.lines.length * tl.step + 3;
+    const ds = fitTextBlock(def.subtitle, qM.w, Math.max(18, qM.y + qM.h - 15 - my2), { scale: 0.60, minScale: 0.42, lineStep: 13 });
     ds.lines.forEach((line, j) => drawText(ctx, line, mCx, my2 + j * ds.step, { scale: ds.scale, color: PAL.textDim, align: "center", maxWidth: qM.w }));
-    drawText(ctx, def.panels.length + " PAINÉIS • " + (seen ? "REVER" : "NÃO DESCOBERTA"), mCx, qM.y + qM.h - 12,
-      { scale: 0.62, color: seen ? "#ffd479" : PAL.textDim, align: "center", maxWidth: qM.w });
+    drawText(ctx, def.panels.length + " PAINÉIS • " + (seen ? "REVER" : "NÃO DESCOBERTA"), mCx, qM.y + qM.h - 13,
+      { scale: 0.56 / FS, color: seen ? "#ffd479" : PAL.textDim, align: "center", maxWidth: qM.w });
     memoryRects.push({ x, y, w, h, id });
   });
-  memoryPage = drawPageControls("memory", memoryPage, pages, 360);
+  flushPaperFrames(ctx);
+  memoryPage = drawPageControls("memory", memoryPage, pages, 464);
 
-  if (button(ctx, { x: VIEW_W/2-120, y: 446, w: 240, h: 44, label:"VOLTAR ÁRVORE", id:"memBack", accent:"#8f6fd6" })) {
+  if (button(ctx, { x: VIEW_W/2-110, y: 464, w: 220, h: 38, compact: true, label:"VOLTAR ÁRVORE", id:"memBack", accent:"#8f6fd6", scale: 0.85 * chrome })) {
     backFromMemories();
   }
   drawText(ctx, (isTouchUI() ? "TOQUE NO CARTÃO PARA REVER • " : "ESC: VOLTAR • CLIQUE PARA REVER CUTSCENE • ") + "320x180 8 LAYERS",
-    VIEW_W/2, VIEW_H-42, { color:"#5a4f78", align:"center", scale:0.8, maxWidth: VIEW_W-60 });
+    VIEW_W/2, VIEW_H-24, { color:"#9a8fc0", align:"center", scale:0.74 * chrome, maxWidth: VIEW_W-60 });
 }
 
 // ---------------------------------------------------------------- exports ---

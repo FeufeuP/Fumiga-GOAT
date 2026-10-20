@@ -9,6 +9,11 @@ try {
   for(const mobile of [false,true]) {
     const context = await browser.newContext({ viewport:mobile?{width:844,height:390}:{width:1280,height:720},hasTouch:mobile,isMobile:mobile });
     const page=await context.newPage(), errors=[];watchPage(page,errors);
+    // O Chrome guarda no máximo 250 entradas de resource timing por padrão: com
+    // as 20 placas novas o buffer transborda e as entradas mais novas (o
+    // santuário que só carrega ao abrir o fruto) deixam de ser registradas —
+    // o teste viajava num carregamento que NA FALHOU. Buffer maior antes do boot.
+    await page.addInitScript(()=>{try{performance.setResourceTimingBufferSize(2000);}catch(e){}});
     await page.goto(server.url+(mobile?'/game/mobile/':'/game/')+'?debug&limpo&hud=0&tela=TREE');
     await page.waitForFunction(()=>window.FUMIGA?.pronto);
     await page.evaluate(()=>{const root=document.querySelector('script[src*="main.js"]').src.replace(/main\.js.*$/,'');window.M=n=>import(root+n);});

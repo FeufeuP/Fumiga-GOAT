@@ -240,6 +240,7 @@ export function resolveFontColor(color = null, paper = false) {
       '#ffd479':'#8b4e18','#ffb347':'#8b4e18','#7fd6a0':'#456032','#37e6c8':'#356847',
       '#c77dff':'#705334','#8f6fd6':'#705334','#6db7ff':'#456032','#7fd6ff':'#456032',
       '#bfffa8':'#456032','#e8f4ff':'#456032','#ff9a5c':'#8b4e18','#ff8a94':'#a8342b',
+      '#6ee7ff':'#2f5e4d','#d7a2ff':'#634329','#d9b8ff':'#634329','#ff4d5a':'#a8342b','#ff8a96':'#a8342b',
     };
     return mapped[k] || color;
   }
@@ -366,20 +367,23 @@ export function fitTextBlock(text, maxW, maxH, { font = "small", scale = 1, minS
   const FS = fontScale();
   const paras = Array.isArray(text) ? text.map(String) : [String(text)];
   const wrapAt = (s) => paras.flatMap((p) => wrapText(p, maxW, { font, scale: s }));
+const F = FONT[font] || FONT.small;
+  const minStep = (F.size + 2) * FS;
+  const effLineStep = Math.max(lineStep * FS, minStep);
   for (let s = scale; s >= minScale - 1e-6; s -= 0.05) {
     const lines = wrapAt(s);
-    const step = Math.ceil(lineStep * s * FS);
+    const step = Math.ceil(effLineStep * s);
     if (lines.length * step <= maxH) return { lines, scale: s, step };
   }
   // Último recurso: o texto se adapta — cabe no que a caixa oferece.
   const s = minScale;
-  const step = Math.max(1, Math.ceil(lineStep * s * FS));
+  const step = Math.max(1, Math.ceil(effLineStep * s));
   const maxLines = Math.max(1, Math.floor(maxH / step));
   const all = wrapAt(s);
   const lines = all.slice(0, maxLines);
   if (lines.length && all.length > maxLines) {
     let last = lines[lines.length - 1];
-    while (last.length && lineWidth(last + "...", { font, scale: s }) > maxW) last = last.slice(0, -1);
+    while (last.length && textWidth(last + "...", { font, scale: s }) > maxW) last = last.slice(0, -1);
     lines[lines.length - 1] = last + "...";
   }
   return { lines, scale: s, step };

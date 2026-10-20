@@ -9,9 +9,14 @@ import { SFX } from "./audio.js";
 import { G } from "./state.js";
 import { drawLoreTextbox, hudBiome, drawWoodBarFrame } from "./lore_hud.js";
 
-import { drawPaper, drawPaperBar, paperQuiet, deferPaperFrame, flushPaperFrames, beginPaperHud, endPaperHud } from "./paper_hud.js";
+import { drawPaper, drawPaperBar, paperQuiet, deferPaperFrame, flushPaperFrames, beginPaperHud, endPaperHud, drawPlaca } from "./paper_hud.js";
 
 let buttons = [];
+// Resultado do ÚLTIMO button() desenhado. button() devolve só o `clicked`
+// (booleano) porque é assim que o resto do jogo chama; quem precisa também do
+// `hot` (tooltip, brilho) lê aqui logo depois da chamada.
+let lastBtn = { clicked: false, hot: false, disabled: false };
+export function lastButton() { return lastBtn; }
 // Animação de interface: hover/pressão de cada botão são NÚMEROS que correm
 // atrás do estado real (0..1), então entrar e sair do botão é suave em vez de
 // piscar. A chave é o id do botão.
@@ -271,7 +276,13 @@ export function button(ctx, opt) {
     drawText(ctx, opt.label, tx, ty,
       { font: opt.font || "small", scale, color: col, align: "left", shadow: true, maxWidth: VIEW_W - tx - 24 });
   } else {
-  const woodButton=drawPaper(ctx,'button',bx,by,w,h,{disabled:dis,hot:hot,pressed:down,selected:opt.selected});
+  // opt.plate: usa uma das PLACAS NOVAS (família 2026-10-19) — sprite inteiro,
+  // escala uniforme, e o rótulo fica CENTRALIZADO na área de madeira calma
+  // medida da arte (Regra 21). Sem opt.plate, o botão segue com a placa de
+  // madeira antiga (a dos botões de configuração).
+  const placaQ = opt.plate ? drawPlaca(ctx, 'placa_' + opt.plate, bx, by, w, h,
+    { disabled: dis, hot: hot, pressed: down, selected: opt.selected }) : null;
+  const woodButton=placaQ ? true : drawPaper(ctx,'button',bx,by,w,h,{disabled:dis,hot:hot,pressed:down,selected:opt.selected});
   if(!woodButton) {
     panel(ctx,bx,by,w,h,{paper:false,kind:'botao',fill:PAL.panel,border:PAL.border});
   }
@@ -284,11 +295,30 @@ export function button(ctx, opt) {
   }
 
   // rótulo: clareia e cresce um toque no hover (o texto acompanha o botão)
-  const col = woodButton ? (dis ? "#675b48" : "#493521") : dis ? "#5a4f78" : (opt.color || PAL.text);
+  // Tinta: as PLACAS NOVAS têm a madeira calma CLARA (luminância ~175) — tinta
+  // creme ali dá contraste ~1,3:1 e some entre os veios. Por isso o texto das
+  // placas novas é marrom escuro (#4a3116) com halo creme de 1px, que recorta
+  // a palavra sem apagar a leitura. opt.labelColor força outra cor.
+  const col = opt.labelColor ? (dis ? "#8a7a66" : opt.labelColor)
+    : placaQ ? (dis ? "#7d6c58" : "#4a3116")
+    : woodButton ? (dis ? "#675b48" : "#493521") : dis ? "#5a4f78" : (opt.color || PAL.text);
   const scale = (opt.scale || 1) * (1 + 0.05 * hv - 0.02 * pr);
-  drawText(ctx, opt.label, bx + w / 2 + (opt.icon ? 12 : 0) - (opt.selected ? 8 : 0),
-    by + h / 2 - (opt.font === "big" ? 15 : 8) - 2,
-    { font: opt.font || "small", scale, color: col, align: "center", shadow: true, paper: woodButton, maxWidth: Math.max(8,w - (woodButton ? Math.min(w*.36,h*1.5) : 48) - (opt.icon ? 24 : 0) - (opt.selected ? 18 : 0)) });
+  // nas placas novas o texto vive na área medida da arte; nas antigas, no miolo
+  const labelBox = placaQ
+    ? { cx: placaQ.x + placaQ.w / 2,
+        cy: placaQ.y + placaQ.h / 2 - textHeight(opt.label, { font: opt.font || "small", scale }) / 2,
+        w: placaQ.w, h: placaQ.h }
+    : { cx: bx + w / 2 + (opt.icon ? 12 : 0) - (opt.selected ? 8 : 0),
+        cy: by + h / 2 - (opt.font === "big" ? 15 : 8) - 2,
+        w: Math.max(8, w - (woodButton ? Math.min(w*.36,h*1.5) : 48) - (opt.icon ? 24 : 0) - (opt.selected ? 18 : 0)),
+        h: h };
+  // Tinta sobre madeira: o modo 'paper' usa o marrom escuro, que é o que se
+  // lê na madeira clara das placas novas. Nas PLACAS NOVAS a sombra é
+  // desligada de propósito — a fonte Kiwi Soda tem traço de 1px e um halo
+  // deslocado comeria a própria letra.
+  const inkOnPaper = opt.labelColor ? false : woodButton;
+  drawText(ctx, opt.label, labelBox.cx, labelBox.cy,
+    { font: opt.font || "small", scale, color: col, align: "center", shadow: !placaQ, paper: inkOnPaper, maxWidth: labelBox.w });
   }
 
   // o retângulo publicado é o da HITBOX: é ele que decide se o toque é da UI
@@ -296,6 +326,7 @@ export function button(ctx, opt) {
   // botão no mobile (acionava o botão E a ordem no mundo ao mesmo tempo)
   if (!hr.hidden) buttons.push({ x: hr.x, y: hr.y, w: hr.w, h: hr.h, id: opt.id, disabled: dis });
   if (clicked) SFX.uiClick();
+  lastBtn = { clicked, hot, disabled: dis, x: bx, y: by, w, h };
   return clicked;
 }
 

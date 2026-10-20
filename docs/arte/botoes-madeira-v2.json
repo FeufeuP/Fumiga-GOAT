@@ -1,0 +1,232 @@
+{
+  "decisao": "2026-10-19: modelo de botao GRANDE aprovado pelo usuario; variacoes (media/pequena/cartao) derivadas do MESMO modelo em uma spritesheet unica, com silhueta de TABUA (botao), nao de moldura; area de texto medida na madeira calma; estados como artes separadas; prompt FUMIGA-PAPEL-v4-CHROMA, fundo azul",
+  "source_sha256": "1f177f6c13f664deb69a28b5936bfb80b743cc56ca34eee11d01d8ffc44d1e0d",
+  "area_permitida": {
+    "grande": [
+      0.3,
+      0.32,
+      0.54,
+      0.88
+    ],
+    "media": [
+      0.18,
+      0.16,
+      0.71,
+      0.84
+    ],
+    "pequena": [
+      0.06,
+      0.16,
+      0.6,
+      0.84
+    ],
+    "cartao": [
+      0.16,
+      0.31,
+      0.84,
+      0.74
+    ]
+  },
+  "images": [
+    {
+      "id": "placa_grande_normal",
+      "source": "art-source/botoes-madeira-v2/spritesheet_botoes_v2.png",
+      "size": [
+        400,
+        180
+      ],
+      "bytes": 133760,
+      "sha256": "d095f53693e64b2398ce49bb869caf53ee0cffa153ef04ddfe03ce409c92e656"
+    },
+    {
+      "id": "placa_grande_hover",
+      "source": "art-source/botoes-madeira-v2/spritesheet_botoes_v2.png",
+      "size": [
+        400,
+        180
+      ],
+      "bytes": 137994,
+      "sha256": "0f658ad9dcb49ecbf3c8d5171ae35c7e4dfe0f77fae8a081b16db0ae5ce3dc13"
+    },
+    {
+      "id": "placa_grande_pressionado",
+      "source": "art-source/botoes-madeira-v2/spritesheet_botoes_v2.png",
+      "size": [
+        400,
+        180
+      ],
+      "bytes": 129248,
+      "sha256": "a9aae06a7d47f9e11eba0f60bf562489d56dec6fbb47b00f2b8439a6ecdb9280"
+    },
+    {
+      "id": "placa_grande_selecionado",
+      "source": "art-source/botoes-madeira-v2/spritesheet_botoes_v2.png",
+      "size": [
+        400,
+        180
+      ],
+      "bytes": 131111,
+      "sha256": "07dadc4ae62ca44ae603f1fbdea7783c9c26bfe7c53caea590e94ab5269915e0"
+    },
+    {
+      "id": "placa_grande_desabilitado",
+      "source": "art-source/botoes-madeira-v2/spritesheet_botoes_v2.png",
+      "size": [
+        400,
+        180
+      ],
+      "bytes": 125634,
+      "sha256": "01d6ac259b9793fa39edeb069cfac79c1c39cab909e1b0fe8bc58e46fb2b31e1"
+    },
+    {
+      "id": "placa_media_normal",
+      "source": "art-source/botoes-madeira-v2/spritesheet_botoes_v2.png",
+      "size": [
+        326,
+        90
+      ],
+      "bytes": 54739,
+      "sha256": "9d46f2d6c0312d6b3fa4ce46e389e6302f2b8e001eadb1d8cbee0498acebf339"
+    },
+    {
+      "id": "placa_media_hover",
+      "source": "art-source/botoes-madeira-v2/spritesheet_botoes_v2.png",
+      "size": [
+        326,
+        90
+      ],
+      "bytes": 54725,
+      "sha256": "129332d1847f296b2dda1df619e0167f51324fa9951938d1553cc9e87fa6d9cf"
+    },
+    {
+      "id": "placa_media_pressionado",
+      "source": "art-source/botoes-madeira-v2/spritesheet_botoes_v2.png",
+      "size": [
+        326,
+        90
+      ],
+      "bytes": 52887,
+      "sha256": "8964e23610c1415099fa873d6f234f1e5f147936525495d1c8a793c6a97c96cb"
+    },
+    {
+      "id": "placa_media_selecionado",
+      "source": "art-source/botoes-madeira-v2/spritesheet_botoes_v2.png",
+      "size": [
+        326,
+        90
+      ],
+      "bytes": 54620,
+      "sha256": "a8576dcbcc290178c98a23629030619c347e27819fe967659390a0f4b42f49f8"
+    },
+    {
+      "id": "placa_media_desabilitado",
+      "source": "art-source/botoes-madeira-v2/spritesheet_botoes_v2.png",
+      "size": [
+        326,
+        90
+      ],
+      "bytes": 51212,
+      "sha256": "69fcf0b3ee4bcbf4f00f11c944aa73eb3b5a57336a929d0ef62641d427c5af0c"
+    },
+    {
+      "id": "placa_pequena_normal",
+      "source": "art-source/botoes-madeira-v2/spritesheet_botoes_v2.png",
+      "size": [
+        312,
+        100
+      ],
+      "bytes": 58500,
+      "sha256": "525eb796b948c0ea265de10d7f659a627d4918f8bfd7688d7a8cfbd464dee6ea"
+    },
+    {
+      "id": "placa_pequena_hover",
+      "source": "art-source/botoes-madeira-v2/spritesheet_botoes_v2.png",
+      "size": [
+        312,
+        100
+      ],
+      "bytes": 59236,
+      "sha256": "5adeac779fcbb17c3f7e9295f9de2ed42699f4e268106f323c546ada82242552"
+    },
+    {
+      "id": "placa_pequena_pressionado",
+      "source": "art-source/botoes-madeira-v2/spritesheet_botoes_v2.png",
+      "size": [
+        312,
+        100
+      ],
+      "bytes": 56435,
+      "sha256": "140eef209972e6622cd1d5d9f462a4e6ab246b76ad40fca3b4d7891450d416a0"
+    },
+    {
+      "id": "placa_pequena_selecionado",
+      "source": "art-source/botoes-madeira-v2/spritesheet_botoes_v2.png",
+      "size": [
+        312,
+        100
+      ],
+      "bytes": 58474,
+      "sha256": "35d9c0a4c92f898059a76e13dee832737074f48fedc7f70c2afcb091d2c78261"
+    },
+    {
+      "id": "placa_pequena_desabilitado",
+      "source": "art-source/botoes-madeira-v2/spritesheet_botoes_v2.png",
+      "size": [
+        312,
+        100
+      ],
+      "bytes": 54901,
+      "sha256": "e2b910adb085ce154bdce051acf9c0cab3470bfb1570e542c930537ec43af025"
+    },
+    {
+      "id": "placa_cartao_normal",
+      "source": "art-source/botoes-madeira-v2/spritesheet_botoes_v2.png",
+      "size": [
+        87,
+        200
+      ],
+      "bytes": 32138,
+      "sha256": "c654a24e62e389734c536d56cd18daceb1b168c72a2ee13e8f324f83d6122f6b"
+    },
+    {
+      "id": "placa_cartao_hover",
+      "source": "art-source/botoes-madeira-v2/spritesheet_botoes_v2.png",
+      "size": [
+        87,
+        200
+      ],
+      "bytes": 32698,
+      "sha256": "4fbb568b68e4cb04b18a87eb2670f47df55614c5ad4e399cf1b49a30ebc62af4"
+    },
+    {
+      "id": "placa_cartao_pressionado",
+      "source": "art-source/botoes-madeira-v2/spritesheet_botoes_v2.png",
+      "size": [
+        87,
+        200
+      ],
+      "bytes": 31303,
+      "sha256": "f6ee35c31e6899f5bc0b99958c9ce06124032b6eda47fa08965000ae3843b430"
+    },
+    {
+      "id": "placa_cartao_selecionado",
+      "source": "art-source/botoes-madeira-v2/spritesheet_botoes_v2.png",
+      "size": [
+        87,
+        200
+      ],
+      "bytes": 25921,
+      "sha256": "3b73995736d89d2aba943aad8e30efe8b0fa6307d9b494b8d4b317753a7d3a88"
+    },
+    {
+      "id": "placa_cartao_desabilitado",
+      "source": "art-source/botoes-madeira-v2/spritesheet_botoes_v2.png",
+      "size": [
+        87,
+        200
+      ],
+      "bytes": 31087,
+      "sha256": "410b0d4d2a246ee24b8a359aa194ff1f80f2fd5d0ad14814277853fb1273d7f9"
+    }
+  ]
+}
