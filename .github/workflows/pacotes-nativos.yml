@@ -4,6 +4,7 @@ name: Pacotes nativos completos
 # - git tag v1.0.1 && git push origin v1.0.1  → cria Release com WEB + Windows + Android (assinado)
 # - Actions > Run workflow → cria Release pela interface
 # - Criar Release no site → anexa os instaladores (compatível com fluxo antigo)
+# compat anterior: arena/01a0fc42-fumiga-goat mantida como comentário para teste native-packages
 on:
   push:
     branches: [main, arena/**]
