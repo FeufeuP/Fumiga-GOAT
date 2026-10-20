@@ -38,6 +38,15 @@ repetições, datas, branches, checklists e notas históricas foram preservados.
 > funciona deve ser confirmado por testes e inspeção no preview.
 
 ## Registro — Tinta legível nas placas novas + vazamento de tecla no carregamento (2026-10-20)
+### Publicação — PR #78 (2026-10-20)
+
+**Vínculo autoritativo:** [PR #78 — HUDs das telas de menu corrigidos, placas de madeira v2 no rodapé e tinta legível](https://github.com/FeufeuP/Fumiga-GOAT/pull/78), branch `arena/354fb3a0-fumiga-goat` → `main`, commits `65a06a3` (implementação) e `5b8c139` (buffer de resource timing do teste da ÁRVORE).
+
+**Estado do merge, SHA de integração e checks:** consultar o PR — o CI do repositório roda a mesma bateria (`bateria headless (node)` e `inspeção no navegador (Chromium, PC + mobile)`) e o merge só é feito com os checks verdes.
+
+**Uma correção de teste entrou junto:** `game/test/tree-browser.mjs` falhava por timeout ao abrir um fruto da ÁRVORE. Diagnóstico: **não era falha de carregamento** — o Chrome registra no máximo 250 entradas de resource timing por padrão, o buffer transbordou com as 20 placas novas e a entrada do santuário deixou de ser registrada (`loadSantuario` resolvia com a imagem, sem erro de rede). O teste agora amplia o buffer antes do boot; `inspect:tree` volta a passar em PC e mobile (133 posições de flor/nó sem colisão). No `628c6a6` (base) esse mesmo teste falhava **antes**, com uma colisão de texto na ÁRVORE ("CORAÇÃO DO DOSSEL" × "ETERNO") que o trabalho das telas já eliminou.
+
+
 
 **Pedido/verificação final do usuário:** "foi realmente terminado?" — a resposta exigiu evidência (testes + capturas), não afirmação. A conferência das capturas do rodapé e das quatro telas acusou que **a tinta creme sobre a madeira clara das placas novas estava ilegível** (contraste ~1,3:1) e o `regressions-browser` falhava de forma intermitente (`MODE` em vez de `TITLE`). Ambos foram investigated, corrigidos e reconferidos.
 
