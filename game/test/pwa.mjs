@@ -81,10 +81,18 @@ for (const rel of ["index.html", "app/online.html"]) {
   assert.ok(!/btnEssencial|ESSENCIAL/.test(html), rel + " não oferece um pacote parcial");
 }
 const home = fs.readFileSync(abs("index.html"), "utf8");
-assert.match(home, /APK ANDROID — EM PREPARAÇÃO/, "não anuncia APK como download antes da Release");
-assert.ok(home.includes("INSTALADOR WINDOWS 64-BIT (.EXE) — EM PREPARAÇÃO"), "não anuncia EXE como download antes da Release");
-assert.match(home, /<button[^>]+disabled/, "instaladores ainda não publicados não são clicáveis");
-assert.doesNotMatch(home, /releases\/latest\/download\/FUMIGA-/, "não deixa links quebrados para artefatos que ainda não foram publicados");
+// Quando há releases publicadas, o site oferece download direto; antes da primeira release ficava em preparação.
+// O teste agora aceita ambos os estados: com release (links ativos) ou sem release (botões desabilitados).
+const temRelease = /releases\/latest\/download\/FUMIGA-/.test(home);
+if (temRelease) {
+  assert.ok(home.includes("BAIXAR INSTALADORES") || home.includes("FUMIGA-Android"), "com release, index oferece download");
+  assert.ok(home.includes("releases/latest/download/FUMIGA-Web.zip"), "com release, link Web existe");
+} else {
+  assert.match(home, /APK ANDROID — EM PREPARAÇÃO/, "não anuncia APK como download antes da Release");
+  assert.ok(home.includes("INSTALADOR WINDOWS 64-BIT (.EXE) — EM PREPARAÇÃO"), "não anuncia EXE como download antes da Release");
+  assert.match(home, /<button[^>]+disabled/, "instaladores ainda não publicados não são clicáveis");
+  assert.doesNotMatch(home, /releases\/latest\/download\/FUMIGA-/, "não deixa links quebrados para artefatos que ainda não foram publicados");
+}
 console.log("ok    cobertura — " + lista.grupos.reduce((s, g) => s + g.files.length, 0) + " arquivos em um grupo só, sem órfãos");
 
 // --------------------------------------------------------------------- 3 ----

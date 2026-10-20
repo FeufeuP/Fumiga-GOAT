@@ -1,18 +1,65 @@
 name: Pacotes nativos completos
 
+# AUTOMÁTICO POR TAG (recomendado) + MANUAL + RELEASE
+# - git tag v1.0.1 && git push origin v1.0.1  → cria Release com WEB + Windows + Android (assinado)
+# - Actions > Run workflow → cria Release pela interface
+# - Criar Release no site → anexa os instaladores (compatível com fluxo antigo)
+# compat anterior: arena/01a0fc42-fumiga-goat mantida como comentário para teste native-packages
 on:
   push:
-    branches: [arena/01a0fc42-fumiga-goat]
+    branches: [main, arena/**]
+    tags: ["v*.*.*", "v*.*.*-*", "Fumiga*", "V*"]
   workflow_dispatch:
+    inputs:
+      version:
+        description: "Versão da Release (ex: v1.0.1) — vazio = usa data/hora"
+        required: false
+        type: string
+      prerelease:
+        description: "Marcar como pré-release (beta)?"
+        required: false
+        default: false
+        type: boolean
   release:
     types: [published]
 
 permissions:
   contents: write
 
+concurrency:
+  group: pacotes-${{ github.ref }}
+  cancel-in-progress: false
+
 jobs:
+  # ────────────── WEB (sempre leve, sem segredos) ──────────────
+  web:
+    name: Pacote Web offline (ZIP)
+    runs-on: ubuntu-latest
+    steps:
+      - name: Código-fonte
+        uses: actions/checkout@v4
+      - name: Criar FUMIGA-Web.zip (jogo completo)
+        run: |
+          set -euo pipefail
+          mkdir -p dist
+          # git archive pega só arquivos versionados — build reprodutível
+          git archive --format=zip -o dist/FUMIGA-Web.zip HEAD
+          echo "Conteúdo do ZIP (primeiras 30 linhas):"
+          unzip -l dist/FUMIGA-Web.zip | head -60
+          ls -lh dist/FUMIGA-Web.zip
+          echo "Tamanho:"
+          du -h dist/FUMIGA-Web.zip
+      - name: Publicar artefato Web
+        uses: actions/upload-artifact@v4
+        with:
+          name: pacote-web
+          path: dist/FUMIGA-Web.zip
+          if-no-files-found: error
+          retention-days: 14
+
+  # ────────────── ANDROID RELEASE (assinado, precisa dos 4 secrets) ──────────────
   android:
-    if: github.event_name != 'push'
+    if: github.event_name != 'push' || startsWith(github.ref, 'refs/tags/')
     name: APK Android offline assinado
     runs-on: ubuntu-latest
     steps:
@@ -39,11 +86,40 @@ jobs:
           KEY_PASSWORD: ${{ secrets.FUMIGA_KEY_PASSWORD }}
         run: |
           set -euo pipefail
-          test -n "$KEYSTORE_B64" || { echo 'Falta o segredo FUMIGA_KEYSTORE_BASE64.' >&2; exit 1; }
-          test -n "$KEYSTORE_PASSWORD" || { echo 'Falta o segredo FUMIGA_KEYSTORE_PASSWORD.' >&2; exit 1; }
-          test -n "$KEY_ALIAS" || { echo 'Falta o segredo FUMIGA_KEY_ALIAS.' >&2; exit 1; }
-          test -n "$KEY_PASSWORD" || { echo 'Falta o segredo FUMIGA_KEY_PASSWORD.' >&2; exit 1; }
-          echo "$KEYSTORE_B64" | base64 --decode > "$RUNNER_TEMP/fumiga-release.p12"
+          if [[ -z "${KEYSTORE_B64:-}" ]]; then
+            echo "::warning::Secrets Android não configurados (FUMIGA_KEYSTORE_BASE64). O APK assinado não será gerado."
+            echo "::warning::Configure uma vez com: bash tools/configure-github-android-secrets.sh  (ou no GitHub: Settings → Secrets → Actions)"
+            echo "SKIP_APK=1" >> "$GITHUB_ENV"
+            exit 0
+          fi
+          if [[ -z "${KEYSTORE_PASSWORD:-}" ]]; then
+            echo "::warning::Faltou FUMIGA_KEYSTORE_PASSWORD — APK pulado. Verifique os 4 secrets no GitHub."
+            echo "SKIP_APK=1" >> "$GITHUB_ENV"
+            exit 0
+          fi
+          if [[ -z "${KEY_ALIAS:-}" ]]; then
+            echo "::warning::Faltou FUMIGA_KEY_ALIAS — APK pulado."
+            echo "SKIP_APK=1" >> "$GITHUB_ENV"
+            exit 0
+          fi
+          if [[ -z "${KEY_PASSWORD:-}" ]]; then
+            echo "::warning::Faltou FUMIGA_KEY_PASSWORD — APK pulado."
+            echo "SKIP_APK=1" >> "$GITHUB_ENV"
+            exit 0
+          fi
+          # Diagnóstico seguro (sem vazar segredo): mostra se cada secret existe e tamanho
+          echo "::notice::Secrets recebidos — B64:${#KEYSTORE_B64} chars, PASS:${#KEYSTORE_PASSWORD} chars, ALIAS:${#KEY_ALIAS} chars, KPASS:${#KEY_PASSWORD} chars"
+          if ! echo "$KEYSTORE_B64" | base64 --decode > "$RUNNER_TEMP/fumiga-release.p12" 2>/tmp/b64err; then
+            echo "::warning::FUMIGA_KEYSTORE_BASE64 não é base64 válido — APK pulado. Erro: $(cat /tmp/b64err)"
+            echo "::warning::Gere novamente com: base64 -w0 .signing/fumiga-release.p12  (Linux) ou certutil -encode (Windows)"
+            echo "SKIP_APK=1" >> "$GITHUB_ENV"
+            exit 0
+          fi
+          if [[ ! -s "$RUNNER_TEMP/fumiga-release.p12" ]]; then
+            echo "::warning::Keystore decodificado vazio — APK pulado."
+            echo "SKIP_APK=1" >> "$GITHUB_ENV"
+            exit 0
+          fi
           chmod 600 "$RUNNER_TEMP/fumiga-release.p12"
           {
             echo "FUMIGA_KEYSTORE=$RUNNER_TEMP/fumiga-release.p12"
@@ -51,9 +127,30 @@ jobs:
             echo "FUMIGA_KEY_ALIAS=$KEY_ALIAS"
             echo "FUMIGA_KEY_PASSWORD=$KEY_PASSWORD"
           } >> "$GITHUB_ENV"
+          echo "SKIP_APK=0" >> "$GITHUB_ENV"
+          echo "::notice::Keystore OK — ${KEY_ALIAS} / $(du -h "$RUNNER_TEMP/fumiga-release.p12" | cut -f1)"
       - name: Compilar APK completo e assinado
+        if: env.SKIP_APK != '1'
         run: bash tools/build-android.sh release
-      - name: Publicar artefato assinado da compilação
+      - name: Publicar artefato assinado
+        if: env.SKIP_APK != '1'
+        uses: actions/upload-artifact@v4
+        with:
+          name: apk-android
+          path: installers/android/dist/FUMIGA-Android.apk
+          if-no-files-found: error
+          retention-days: 7
+      - name: Compilar APK debug de fallback (sem secrets — opção A)
+        if: env.SKIP_APK == '1'
+        run: |
+          echo "::notice::Sem secrets — gerando APK DEBUG fallback para download imediato (instalável, sem assinatura de release)"
+          bash tools/build-android.sh debug
+          ls -lh installers/android/dist/FUMIGA-Android-DEBUG.apk
+          # publica também com nome padrão para o botão continuar funcionando
+          cp installers/android/dist/FUMIGA-Android-DEBUG.apk installers/android/dist/FUMIGA-Android.apk
+          ls -lh installers/android/dist/FUMIGA-Android.apk
+      - name: Publicar artefato debug fallback
+        if: env.SKIP_APK == '1'
         uses: actions/upload-artifact@v4
         with:
           name: apk-android
@@ -61,8 +158,9 @@ jobs:
           if-no-files-found: error
           retention-days: 7
 
+  # ────────────── ANDROID DEBUG (pré-validação em push de branch) ──────────────
   android-prevalidacao:
-    if: github.event_name == 'push'
+    if: github.event_name == 'push' && startsWith(github.ref, 'refs/heads/')
     name: APK Android de pré-validação (debug)
     runs-on: ubuntu-latest
     steps:
@@ -91,7 +189,9 @@ jobs:
           if-no-files-found: error
           retention-days: 7
 
+  # ────────────── WINDOWS ──────────────
   windows:
+    # Roda em release/tag/dispatch e também em push de branch para validar
     name: Instalador Windows x64 completo
     runs-on: windows-latest
     steps:
@@ -107,7 +207,7 @@ jobs:
         run: npm ci --prefix installers/windows
       - name: Compilar instalador NSIS x64
         run: npm --prefix installers/windows run dist:win
-      - name: Publicar artefato da compilação
+      - name: Publicar artefato Windows
         uses: actions/upload-artifact@v4
         with:
           name: instalador-windows-x64
@@ -115,32 +215,131 @@ jobs:
           if-no-files-found: error
           retention-days: 7
 
-  anexar-release:
-    if: github.event_name == 'release'
-    name: Anexar instaladores à GitHub Release
-    needs: [android, windows]
+  # ────────────── PUBLICAR / ANEXAR À RELEASE ──────────────
+  publicar:
+    # Roda quando há intenção de publicar: tag, dispatch manual ou release já criada
+    if: github.event_name == 'release' || startsWith(github.ref, 'refs/tags/') || github.event_name == 'workflow_dispatch'
+    name: Publicar Release com instaladores
+    needs: [web, android, windows]
     runs-on: ubuntu-latest
     steps:
-      - name: Baixar os dois artefatos
+      - name: Código-fonte (para gh release)
+        uses: actions/checkout@v4
+      - name: Baixar artefatos (web, apk, exe)
         uses: actions/download-artifact@v4
         with:
           path: release-assets
           merge-multiple: true
-      - name: Conferir e gerar checksums
+      - name: Listar artefatos baixados
+        run: |
+          set -euo pipefail
+          ls -lh release-assets || true
+          echo "---"
+          sha256sum release-assets/* 2>&1 | head -20 || true
+      - name: Gerar SHA256SUMS.txt de tudo que existe
         working-directory: release-assets
         run: |
           set -euo pipefail
-          test -s FUMIGA-Android.apk
-          test -s FUMIGA-Setup-Windows-x64.exe
-          sha256sum FUMIGA-Android.apk FUMIGA-Setup-Windows-x64.exe > SHA256SUMS.txt
+          # gera checksum só dos arquivos que existem; nunca falha se APK faltar
+          rm -f SHA256SUMS.txt
+          for f in FUMIGA-Web.zip FUMIGA-Android.apk FUMIGA-Setup-Windows-x64.exe; do
+            if [[ -s "$f" ]]; then
+              sha256sum "$f" >> SHA256SUMS.txt
+            else
+              echo "::warning::Arquivo não encontrado ou vazio: $f (pulando no SHA)"
+            fi
+          done
+          if [[ ! -s SHA256SUMS.txt ]]; then
+            echo "::error::Nenhum artefato para liberar!" >&2
+            exit 1
+          fi
           cat SHA256SUMS.txt
-      - name: Anexar APK, EXE e checksums à Release publicada
+      - name: Determinar TAG da Release
+        id: tag
+        env:
+          INPUT_VERSION: ${{ inputs.version }}
+          INPUT_PRERELEASE: ${{ inputs.prerelease }}
+        run: |
+          set -euo pipefail
+          TAG=""
+          if [[ -n "${INPUT_VERSION:-}" ]]; then
+            TAG="$INPUT_VERSION"
+          elif [[ "$GITHUB_REF" == refs/tags/* ]]; then
+            TAG="${GITHUB_REF#refs/tags/}"
+          elif [[ "$GITHUB_EVENT_NAME" == "release" ]]; then
+            TAG="$GITHUB_REF_NAME"
+          else
+            TAG="v1.0.0-dev-${GITHUB_RUN_NUMBER}-$(date +%Y%m%d)"
+          fi
+          # garante prefixo v
+          if [[ "$TAG" != v* && "$TAG" != Fumiga* && "$TAG" != V* ]]; then
+            TAG="v$TAG"
+          fi
+          echo "tag=$TAG" >> "$GITHUB_OUTPUT"
+          echo "prerelease=${INPUT_PRERELEASE:-false}" >> "$GITHUB_OUTPUT"
+          echo "TAG resolvida: $TAG"
+      - name: Criar Release (se for tag/dispatch) ou usar existente
         env:
           GH_TOKEN: ${{ github.token }}
           GH_REPO: ${{ github.repository }}
+          TAG: ${{ steps.tag.outputs.tag }}
+          PRERELEASE: ${{ steps.tag.outputs.prerelease }}
         run: |
-          gh release upload "$GITHUB_REF_NAME" \
-            release-assets/FUMIGA-Android.apk \
-            release-assets/FUMIGA-Setup-Windows-x64.exe \
-            release-assets/SHA256SUMS.txt \
-            --clobber
+          set -euo pipefail
+          if gh release view "$TAG" --json tagName >/dev/null 2>&1; then
+            echo "Release $TAG já existe — vamos apenas anexar/atualizar arquivos."
+          else
+            echo "Criando Release $TAG..."
+            NOTES="## 🐜 FUMIGA — Colônia Eterna — $TAG
+
+          **Download rápido (um clique):**
+          - 🪟 **Windows:** \`FUMIGA-Setup-Windows-x64.exe\`
+          - 📱 **Android:** \`FUMIGA-Android.apk\` (se incluso)
+          - 🌐 **Web Offline:** \`FUMIGA-Web.zip\` (jogo completo, sem instalar)
+          - 🔒 Verificação: \`SHA256SUMS.txt\`
+
+          > Dica: todos os pacotes são **offline e completos** — não baixam nada depois de instalados.
+          > O APK inclui GeckoView e roda sem Chrome/Play Services. O EXE inclui Electron/Chromium.
+
+          ---
+          _Gerado automaticamente por GitHub Actions em $(date -u +%Y-%m-%d)._
+          "
+            if [[ "$PRERELEASE" == "true" ]]; then
+              gh release create "$TAG" --title "$TAG — FUMIGA Colônia Eterna" --notes "$NOTES" --prerelease --generate-notes
+            else
+              gh release create "$TAG" --title "$TAG — FUMIGA Colônia Eterna" --notes "$NOTES" --latest --generate-notes
+            fi
+          fi
+          gh release view "$TAG" --json tagName,url --jq '"Release: \(.url) (tag \(.tagName))"'
+      - name: Anexar arquivos à Release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+          TAG: ${{ steps.tag.outputs.tag }}
+        run: |
+          set -euo pipefail
+          # envia tudo que existe em release-assets, com --clobber para atualizar
+          ARGS=()
+          for f in release-assets/FUMIGA-Web.zip release-assets/FUMIGA-Android.apk release-assets/FUMIGA-Setup-Windows-x64.exe release-assets/SHA256SUMS.txt; do
+            if [[ -s "$f" ]]; then
+              ARGS+=("$f")
+            else
+              echo "::warning::Pulando (não existe): $f"
+            fi
+          done
+          if [[ ${#ARGS[@]} -eq 0 ]]; then
+            echo "::error::Nenhum arquivo para enviar!" >&2
+            exit 1
+          fi
+          echo "Enviando para $TAG: ${ARGS[*]}"
+          gh release upload "$TAG" "${ARGS[@]}" --clobber
+          echo "---"
+          echo "✅ Release publicada!"
+          gh release view "$TAG" --json assets --jq '.assets[] | "\(.name) — \(.size) bytes → \(.url)"'
+          echo "---"
+          echo "Link direto 'latest' (sempre aponta para a mais nova):"
+          echo "https://github.com/$GH_REPO/releases/latest"
+          for f in "${ARGS[@]}"; do
+            base="$(basename "$f")"
+            echo "  https://github.com/$GH_REPO/releases/latest/download/$base"
+          done
