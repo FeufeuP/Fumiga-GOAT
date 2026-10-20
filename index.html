@@ -38,14 +38,16 @@
   </section>
 
   <section class="cartao" id="cartaoInstalar">
-    <h2>INSTALADORES COMPLETOS <span class="tag">OFFLINE · SEM LOJA</span></h2>
-    <p>Os instaladores completos estão em preparação. Quando publicados, vão incluir todos os 6 biomas, sprites, santuários e cutscenes para jogar sem internet.</p>
+    <h2>BAIXAR INSTALADORES <span class="tag">OFFLINE · SEM LOJA</span> <span class="tag" id="tagVersao">v1.0.1-beta disponível</span></h2>
+    <p>Pacotes <b>completos e offline</b> — todos os 6 biomas, sprites, santuários e cutscenes, sem baixar nada depois. Baixe direto do <b>GitHub Releases</b>, sem login nem loja.</p>
     <div class="linha">
-      <button class="botao ambar" type="button" disabled>APK ANDROID — EM PREPARAÇÃO</button>
-      <button class="botao" type="button" disabled>INSTALADOR WINDOWS 64-BIT (.EXE) — EM PREPARAÇÃO</button>
+      <a class="botao ambar" id="btnAndroid" href="https://github.com/FeufeuP/Fumiga-GOAT/releases/latest/download/FUMIGA-Android.apk" rel="noopener">📱 APK ANDROID <span class="tam">· GeckoView · offline</span></a>
+      <a class="botao" id="btnWindows" href="https://github.com/FeufeuP/Fumiga-GOAT/releases/latest/download/FUMIGA-Setup-Windows-x64.exe" rel="noopener">🪟 WINDOWS 64-BIT (.EXE)</a>
+      <a class="botao secundario" id="btnWebZip" href="https://github.com/FeufeuP/Fumiga-GOAT/releases/latest/download/FUMIGA-Web.zip" rel="noopener">🌐 WEB OFFLINE .ZIP</a>
     </div>
-    <p class="fino">Android 8+: o APK incorpora GeckoView e o jogo, sem Chrome, Android System WebView, Play Store ou Play Services; a permissão de rede será usada apenas para servir os arquivos em localhost, sem chamadas externas. A primeira instalação pode pedir autorização para instalar o APK. Windows: o instalador inclui runtime e jogo completos; sem Authenticode comercial, o SmartScreen pode exibir um aviso.</p>
-    <p class="fino">Para obter o arquivo pela primeira vez, baixe-o com internet ou transfira por USB/cartão/rede local. Depois de instalado, o jogo abre sem conexão.</p>
+    <p class="fino"><a id="linkReleases" href="https://github.com/FeufeuP/Fumiga-GOAT/releases">Ver todas as versões e notas</a> · <a href="https://github.com/FeufeuP/Fumiga-GOAT/releases/latest/download/SHA256SUMS.txt" rel="noopener">SHA256SUMS</a> <span id="infoVersao">— carregando versão…</span></p>
+    <p class="fino">Android 8+: APK único ARM64+ARMv7 com <b>GeckoView</b> embutido — sem Chrome, WebView, Play Store ou Play Services. A permissão <code>INTERNET</code> serve só o próprio jogo em <code>127.0.0.1</code>, sem chamadas externas. Pode pedir autorização para instalar APKs. Windows: instalador NSIS com Electron/Chromium; sem assinatura comercial, o SmartScreen pode mostrar aviso.</p>
+    <p class="fino">Para obter o arquivo pela primeira vez, baixe com internet ou transfira por USB/cartão/rede local. Depois de instalado, joga sem conexão.</p>
     <p class="fino" id="avisoIOS" hidden>No iPhone/iPad não é possível instalar APK; abra no Safari e use Compartilhar → Adicionar à Tela de Início.</p>
   </section>
 
@@ -90,6 +92,29 @@ $("btnJogar").href = toque ? "game/mobile/" : "game/";
 $("btnJogar").textContent = toque ? "▶ JOGAR (MOBILE)" : "▶ JOGAR (PC)";
 $("selo").textContent = toque ? "versão mobile detectada" : "versão PC detectada";
 if (ehIOS()) $("avisoIOS").hidden = false;
+
+// ── Botões de instaladores: destaca o do seu aparelho e mostra versão da Release ──
+(async () => {
+  try {
+    const r = await fetch("https://api.github.com/repos/FeufeuP/Fumiga-GOAT/releases/latest", { cache: "no-store" });
+    if (!r.ok) throw new Error(r.status);
+    const j = await r.json();
+    const tag = j.tag_name || "v1.0.1-beta";
+    const data = j.published_at ? new Date(j.published_at).toLocaleDateString("pt-BR") : "";
+    const el = document.getElementById("tagVersao");
+    if (el) el.textContent = tag + (data ? " · " + data : "");
+    const info = document.getElementById("infoVersao");
+    if (info) info.textContent = "— " + tag + (j.assets ? " · " + j.assets.length + " arquivos" : "");
+    // Se a latest ainda não tem APK (ex: v1.0.1-beta demo), mantém botão mas avisa no title
+    const temApk = (j.assets || []).some(a => a.name === "FUMIGA-Android.apk");
+    const btnA = document.getElementById("btnAndroid");
+    if (btnA && !temApk) btnA.title = "APK em finalização — baixe o .ZIP ou Windows enquanto isso. A próxima release já incluirá o APK assinado.";
+  } catch {}
+  // Inspiração: Hollow Knight (GOG offline sem Galaxy) para “sem loja” + Dead Cells mobile (UI dedicada por plataforma)
+  // — destacamos o botão do seu sistema para facilitar o download em 1 clique.
+  if (toque) document.getElementById("btnAndroid")?.classList.add("grande");
+  else document.getElementById("btnWindows")?.classList.add("grande");
+})();
 
 let lista = null;
 let baixando = false;
