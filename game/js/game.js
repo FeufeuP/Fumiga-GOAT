@@ -86,9 +86,11 @@ const SHOP = [
 ];
 const SHOP_GROUPS = { combat: "#ff4d5a", gather: "#7fd6a0", care: "#6db7ff", colossus: "#ffd479" };
 // Layout dos cards da loja no rodapé (placas 'cartao' da família v2).
-// Uma única conta para o desenho e para o teste headless (uitest), para o
-// clique do teste não depender de números repetidos aqui e lá.
-export const SHOP_CARD = Object.freeze({ w: 30, h: 64, pitch: 36, groupGap: 10, x0: 10 + 160 + 8 });
+// Cards mais largos (44px, antes 30px) e com respiro maior entre grupos, para
+// o desenho da formiga caber legível e sem espremer os botões. Uma única conta
+// para o desenho e para o teste headless (uitest), para o clique do teste não
+// depender de números repetidos aqui e lá.
+export const SHOP_CARD = Object.freeze({ w: 44, h: 64, pitch: 50, groupGap: 10, x0: 10 + 160 + 8 });
 export function shopCardX(i) {
   let gx = SHOP_CARD.x0, lastGroup = null;
   for (let k = 0; k < SHOP.length; k++) {
@@ -2246,6 +2248,7 @@ function drawHUD() {
   // INTEIRAS (escala uniforme) e com o texto dentro da madeira calma medida.
   // A placa antiga (quadrada) esmagava em 92×64 e o texto saía da placa.
   shopTooltip = null;
+  let hotCardX = 0, hotCardW = SHOP_CARD.w;  // card em hover p/ ancorar o tooltip
   const footY = VIEW_H - (isMobileLayout() ? 84 : 64);
   const footH = 64;                                   // altura da fileira
   const shopW = 160, shopH = 44;                      // placa 'media' (3,62:1)
@@ -2290,21 +2293,25 @@ function drawHUD() {
       const q = placaQuiet("placa_cartao", x, footY, CARD_W, CARD_H);
       ctx.fillStyle = SHOP_GROUPS[sp.group] || "#4a3a6e";
       ctx.globalAlpha = 0.9;
-      ctx.fillRect(Math.round(q.x), Math.round(q.y), Math.round(q.w), 2);
+      ctx.fillRect(Math.round(q.x), Math.round(q.y), Math.round(q.w), 3);
       ctx.globalAlpha = 1;
       const frame = rotFrame(UNITS[sp.type].sprite, Math.PI / 2);
-      const base = (sp.iconScale !== undefined ? sp.iconScale : sp.type === "worker" || sp.type === "scout" || sp.type === "gatherer" || sp.type === "weaver" ? 0.5 : 0.42) * 0.5;
-      // a formiga cabe em 10px: acima disso ela cobria o preço (mesma faixa calma)
-      let iw2 = frame.width * base, ih2 = frame.height * base;
-      if (ih2 > 10) { const k = 10 / ih2; iw2 *= k; ih2 = 10; }
-      ctx.globalAlpha = canBuy ? 1 : 0.35;
-      drawIcon(frame, q.x + q.w / 2 - iw2 / 2, q.y + 3, iw2, ih2);
+      // Formiga GRANDE e legível: cabe numa caixa que respeita a largura do card.
+      // Tira o teto de 10px que esmagava o desenho (a DINOPONERA virava um
+      // pontinho de ~4px). drawIcon já suaviza a redução, então não borra.
+      const boxW = q.w - 10, boxH = 36;
+      let iw2 = frame.width, ih2 = frame.height;
+      const is2 = Math.min(boxW / iw2, boxH / ih2);
+      iw2 *= is2; ih2 *= is2;
+      ctx.globalAlpha = canBuy ? 1 : 0.4;
+      drawIcon(frame, q.x + q.w / 2 - iw2 / 2, q.y + 6, iw2, ih2);
       ctx.globalAlpha = 1;
-      drawText(ctx, infMoney ? "∞" : cost, q.x + q.w / 2, q.y + 13, { color: canBuy ? "#4a3116" : "#8d3b2c", align: "center", scale: .78 / fontScale(), maxWidth: q.w, paper: true });
+      // Preço na faixa calma inferior (abaixo da formiga), maior e com contraste.
+      drawText(ctx, infMoney ? "∞" : cost, q.x + q.w / 2, q.y + q.h - 14, { color: canBuy ? "#4a3116" : "#8d3b2c", align: "center", scale: .82 / fontScale(), maxWidth: q.w, paper: true });
       const hot = i < 9 ? String(i + 1) : i === 9 ? "0" : "";
-      // tecla quente no canto inferior do card (sobre a bolota, fora da area de texto)
-      if (hot) drawText(ctx, hot, x + CARD_W - 2, footY + CARD_H - 13, { color: "#4a3116", align: "right", scale: 0.55, paper: true });
-      if (r.hot) shopTooltip = sp;
+      // tecla quente no canto superior direito (fora da área da formiga/preço)
+      if (hot) drawText(ctx, hot, x + CARD_W - 3, footY + 2, { color: "#4a3116", align: "right", scale: 0.55, paper: true });
+      if (r.hot) { shopTooltip = sp; hotCardX = x; hotCardW = CARD_W; }
       if (live && r.clicked) {
         const res = buyUnit(sp.type);
         if (!res.ok) {
@@ -2318,23 +2325,28 @@ function drawHUD() {
 
   if (shopTooltip) {
     const uDef = UNITS[shopTooltip.type];
-    // HUD compacto em 2 peças na proporção nativa de tooltip (960×475 -> 240×119, -27% área):
+    // Tooltip SEGUE o card em hover (não fica preso no canto) e é maior/legível:
     // Camadas: 1º Fundo (tooltip_bg) -> 2º Texto (clipado) -> 3º Moldura (tooltip_frame)
-    const TW = 240, TH = 119, tb = footY - 8 - TH;
-    layoutBox(ctx, "painel", 10, tb, TW, TH);
-    const tipClipped = beginPaperHud(ctx, "tooltip", 10, tb, TW, TH);
-    if (!tipClipped) panel(ctx, 10, tb, TW, TH, { paperKind: "tooltip", deferFrame: false, border: bh.border, fill: "rgba(0,0,0,0)" });
-    const qTip = paperQuiet("tooltip", 10, tb, TW, TH);
+    const TW = 264, TH = 134;
+    const cx = (hotCardX || (SHOP_CARD.x0 + 10)) + hotCardW / 2;
+    const tx = clamp(cx - TW / 2, 8, VIEW_W - TW - 8);
+    const ty0 = footY - 8 - TH;
+    layoutBox(ctx, "painel", tx, ty0, TW, TH);
+    const tipClipped = beginPaperHud(ctx, "tooltip", tx, ty0, TW, TH);
+    if (!tipClipped) panel(ctx, tx, ty0, TW, TH, { paperKind: "tooltip", deferFrame: false, border: bh.border, fill: "rgba(0,0,0,0)" });
+    const qTip = paperQuiet("tooltip", tx, ty0, TW, TH);
     const tCx = qTip.x + qTip.w / 2;
-    const hScale = Math.min(0.60, 10.5 / (18 * fontScale()));
-    const nScale = Math.min(0.70, 11.5 / (16 * fontScale()));
-    let ty = Math.round(qTip.y);
+    const FS = fontScale();
+    const hScale = Math.min(0.72, 12 / (18 * FS));
+    const nScale = Math.min(0.86, 14 / (16 * FS));
+    let ty = Math.round(qTip.y) + 3;
     drawText(ctx, "▶ " + (uDef.fn || ""), tCx, ty,
       { font: "big", scale: hScale, color: SHOP_GROUPS[shopTooltip.group] || bh.accent, align: "center", maxWidth: qTip.w });
-    ty += 11;
+    ty += 14;
     drawText(ctx, uDef.name, tCx, ty, { color: bh.accent, scale: nScale, align: "center", maxWidth: qTip.w });
-    ty += 12;
-    const tip = fitTextBlock(uDef.tip, qTip.w, Math.max(12, qTip.y + qTip.h - ty), { scale: 0.65, minScale: 0.43, lineStep: 11 });
+    ty += 15;
+    const avail = Math.max(14, qTip.y + qTip.h - ty - 2);
+    const tip = fitTextBlock(uDef.tip, qTip.w - 14, avail, { scale: 0.82, minScale: 0.55, lineStep: 13 });
     tip.lines.forEach((L, li) => drawText(ctx, L, tCx, ty + li * tip.step, { color: PAL.text, scale: tip.scale, align: "center", maxWidth: qTip.w }));
     if (tipClipped) endPaperHud(ctx);
   }
