@@ -111,12 +111,12 @@ en.spawnBoss(G.run ? waves.mapDef().boss : "hare", G.run.wave);
 await wait(400);
 expect(!!en.boss, "chefe presente: " + (en.boss && en.boss.kind));
 
-// ---- HUD loja (coordenadas espelham o HUD compacto do rework: toggle 92 px,
-// cards de 38 px em pitch 42, fileira de 64 px de altura colada no rodapé;
-// 11 classes em 4 grupos com respiro de 12 px entre grupos — a DINOPONERA é
+// ---- HUD loja (coordenadas espelham o HUD compacto do rework: toggle 160 px,
+// cards de 44 px em pitch 50, fileira de 64 px de altura colada no rodapé;
+// 11 classes em 4 grupos com respiro de 10 px entre grupos — a DINOPONERA é
 // o 11º e último card, após combate(5) + coleta(3) + criação(2))
 // O rodapé usa as placas novas (família v2): o botão IRMÃS tem 160px e os
-// cards da loja são placas verticais de 30px. As posições vêm do próprio
+// cards da loja são placas verticais de 44px. As posições vêm do próprio
 // jogo (game.js), para o teste não duplicar números do layout.
 const gameMod = await import(BASE + "/game.js");
 const FOOT_Y = 540 - 64, SHOP_TOGGLE_X = 10 + 160 / 2,
