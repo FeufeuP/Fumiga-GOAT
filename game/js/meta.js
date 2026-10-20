@@ -3,10 +3,10 @@
 import { PAL, META_BRANCHES, META_STAGES, VIEW_W, VIEW_H, FRUIT_TREES } from "./config.js";
 import { G, metaLevel, metaCanBuy, metaBuy, isFruitUnlocked, isSupremeFlowerUnlocked, supremeProgress, isTreeStageUnlocked, treeStageRequirement } from "./state.js";
 import { FRUIT_POWER_PREFIX } from "./fruit_skills.js";
-import { drawText, textWidth, wrapText, fontScale, layoutRec } from "./font.js";
+import { drawText, textWidth, wrapText, fontScale, fitTextBlock, layoutRec } from "./font.js";
 import { IMG, loadSantuario } from "./assets.js";
 import { panel, button, hitArea, pointInRect, isTouchUI } from "./ui.js";
-import { mouse } from "./input.js";
+import { mouse, keys, pressed } from "./input.js";
 import { SFX } from "./audio.js";
 import { clamp, TAU, drainSteps, offThreadDecode, releaseDecoded } from "./utils.js";
 import {
@@ -15,14 +15,30 @@ import {
 } from "./tree_layout.js";
 import { treeArtCanvas, treeGrowth } from "./tree_art.js";
 import { createColorRestorer } from "./color_restore.js";
-import { flushPaperFrames } from "./paper_hud.js";
+import { flushPaperFrames, paperQuiet, placaQuiet } from "./paper_hud.js";
 
-export const TREE_VIEW = { x: 184, y: 100, w: 764, h: 386 };
-const DETAIL = { x: 664, y: 100, w: 284, h: 386 };
+export const TREE_VIEW = { x: 248, y: 100, w: 700, h: 386 };
+const DETAIL = { x: 644, y: 100, w: 304, h: 386 };
 // Painel de detalhe DENTRO do santuário (mais estreito que o da árvore).
 // Constante única: o desenho (drawNodeTip) e o clique das flores compartilham
 // o retângulo, senão um toque no EVOLUIR/FECHAR atravessaria para uma flor.
-const FRUIT_DETAIL = { x: 738, y: 100, w: 210, h: 382 };
+const FRUIT_DETAIL = { x: 700, y: 100, w: 248, h: 382 };
+// Coluna rolável dos galhos à esquerda (proporção original de card: 848×1264 → 228×386)
+const SIDE_BOX = { x: 12, y: 100, w: 228, h: 386 };
+const SIDE_ROW_H = 54;
+const SIDE_CONTENT_H = 8 * SIDE_ROW_H;
+let sideScroll = 0, sideGrab = null;
+function sideViewport() {
+  const q = paperQuiet("card", SIDE_BOX.x, SIDE_BOX.y, SIDE_BOX.w, SIDE_BOX.h);
+  return { x: Math.round(q.x), y: Math.round(q.y), w: Math.round(q.w), h: Math.round(q.h) };
+}
+function scrollSideToIndex(rowIdx) {
+  const V = sideViewport();
+  const y0 = rowIdx * SIDE_ROW_H, y1 = y0 + 46;
+  if (y0 < sideScroll) sideScroll = y0;
+  else if (y1 > sideScroll + V.h) sideScroll = y1 - V.h;
+  sideScroll = clamp(sideScroll, 0, Math.max(0, SIDE_CONTENT_H - V.h));
+}
 const MINI_TOP = 162, MIN_ZOOM = .10, MAX_ZOOM = 1.25;
 const ART_W = TREE_ART.width * TREE_ART.scale, ART_H = TREE_ART.height * TREE_ART.scale;
 const reduced = () => !!G.save.accessibility?.reducedParticles || G.save.settings?.particles === false;
@@ -66,6 +82,7 @@ export function treeFit() {
 }
 export function enterTree() {
   leaveFruit(); hoverNode = hoverFruit = null;
+  sideScroll = 0; sideGrab = null;
   treeFit();
   treeOpenedAt = G.time;
   // Pronta no TITLE (preload.js). Se o clique veio antes, termina AGORA, no
@@ -76,6 +93,7 @@ export function treeFocusStage(stage) {
   const b = TREE_STAGE_BOUNDS[stage - 1];
   if (!b) return;
   leaveFruit(); selectedNode = null; focusedStage = stage;
+  scrollSideToIndex(stage);
   zoom = clamp(Math.min((TREE_VIEW.w - 60) / (b.maxX - b.minX),
     (TREE_VIEW.h - 70) / (b.maxY - b.minY)), .32, .80);
   pan.x = (b.minX + b.maxX) / 2; pan.y = (b.minY + b.maxY) / 2;
@@ -99,9 +117,32 @@ function pickAt(x, y) {
     }
   }
 }
-export function updateTree() {
+export function updateTree(dt = 1 / 60) {
   hoverNode = hoverFruit = null; clickTarget = null;
-  if (activeFruit) { drag = null; return; }
+  if (activeFruit) { drag = null; sideGrab = null; return; }
+  // Rolagem da coluna de galhos (roda do mouse, setas seguradas, PgUp/PgDn e arraste)
+  const SV = sideViewport();
+  const inSide = pointInRect(mouse.x, mouse.y, SIDE_BOX.x, SIDE_BOX.y, SIDE_BOX.w, SIDE_BOX.h);
+  if (mouse.wheel && inSide) {
+    sideScroll += mouse.wheel * 44;
+    mouse.wheel = 0;
+  }
+  if (keys.ArrowDown) sideScroll += 280 * dt;
+  if (keys.ArrowUp) sideScroll -= 280 * dt;
+  if (pressed.PageDown) sideScroll += SV.h * 0.85;
+  if (pressed.PageUp) sideScroll -= SV.h * 0.85;
+  if (mouse.justDown && pointInRect(mouse.x, mouse.y, SV.x, SV.y, SV.w, SV.h)) {
+    sideGrab = { x: mouse.x, y: mouse.y, scrolling: false };
+  }
+  if (sideGrab && mouse.down) {
+    if (!sideGrab.scrolling && Math.hypot(mouse.x - sideGrab.x, mouse.y - sideGrab.y) > 8) {
+      sideGrab.scrolling = true;
+    }
+    if (sideGrab.scrolling) sideScroll -= (mouse.y - mouse.lastY);
+  }
+  if (!mouse.down) sideGrab = null;
+  sideScroll = clamp(sideScroll, 0, Math.max(0, SIDE_CONTENT_H - SV.h));
+
   if (mouse.wheel && inWorld(mouse.x, mouse.y)) {
     zoomAt(mouse.wheel > 0 ? .90 : 1.11, mouse.x, mouse.y);
     drag = null; // pinça nunca se converte em seleção ao soltar
@@ -352,91 +393,182 @@ export function drawTree(ctx) {
   return action;
 }
 function drawTreeHUD(ctx, growth) {
-  panel(ctx, 12, 10, 366, 82, { border: "#8c7552" });
-  drawText(ctx, "ÁRVORE DA EVOLUÇÃO", 26, 18, { font: "big", color: "#ffd479", maxWidth: 338 });
-  drawText(ctx, growth.ownedNodes + "/" + TREE_ALL.length + " MEMÓRIAS • COR " + growth.restoredPercent + "%", 26, 58,
-    { scale: .72, color: PAL.textDim, maxWidth: 338 });
-  panel(ctx, 386, 10, 154, 82, { border: "#8f6fd6" });
-  drawText(ctx, "ESSÊNCIA", 400, 17, { scale: .7, color: PAL.textDim });
-  drawText(ctx, G.save.essence, 400, 44, { font: "big", color: "#d7a2ff", maxWidth: 126 });
-  if (button(ctx, { x: 552, y: 14, w: 124, h: 44, compact: true, label: "MEMÓRIAS", id: "treeMemories", scale: .85, accent: "#ffd479" })) return "memories";
-  if (button(ctx, { x: 684, y: 14, w: 124, h: 44, compact: true, label: "PROFECIAS", id: "treeProphecy", scale: .85, accent: "#6ee7ff" })) return "prophecies";
-  if (button(ctx, { x: 820, y: 14, w: 124, h: 44, compact: true, label: "VOLTAR", id: "treeBack", scale: .85, accent: "#ff8a96" })) return "back";
+  const FS = fontScale();
+  // Cabeçalho do título (proporção original 960×512 → 165×88)
+  const tBox = { x: 12, y: 6, w: 165, h: 88 };
+  panel(ctx, tBox.x, tBox.y, tBox.w, tBox.h, { border: "#8c7552" });
+  const qTitle = paperQuiet("panel", tBox.x, tBox.y, tBox.w, tBox.h);
+  const tCx = qTitle.x + qTitle.w / 2;
+  const tb = fitTextBlock("ÁRVORE DA EVOLUÇÃO", qTitle.w, Math.floor(qTitle.h * 0.56), { font: "big", scale: .62, minScale: .38, lineStep: 17 });
+  tb.lines.forEach((L, li) => drawText(ctx, L, tCx, qTitle.y + 1 + li * tb.step, { font: "big", scale: tb.scale, color: "#ffd479", align: "center", maxWidth: qTitle.w }));
+  const sb = fitTextBlock(growth.ownedNodes + "/" + TREE_ALL.length + " MEMÓRIAS • COR " + growth.restoredPercent + "%", qTitle.w, Math.max(12, qTitle.h - tb.lines.length * tb.step - 2), { scale: .56, minScale: .38, lineStep: 11 });
+  const subY0 = qTitle.y + qTitle.h - sb.lines.length * sb.step;
+  sb.lines.forEach((L, li) => drawText(ctx, L, tCx, subY0 + li * sb.step, { scale: sb.scale, color: PAL.textDim, align: "center", maxWidth: qTitle.w }));
+
+  // Painel de essência (proporção original 960×512 → 165×88)
+  const eBox = { x: 185, y: 6, w: 165, h: 88 };
+  panel(ctx, eBox.x, eBox.y, eBox.w, eBox.h, { border: "#8f6fd6" });
+  const qEss = paperQuiet("panel", eBox.x, eBox.y, eBox.w, eBox.h);
+  const eCx = qEss.x + qEss.w / 2;
+  drawText(ctx, "ESSÊNCIA", eCx, qEss.y + 2, { scale: .62 / FS, color: PAL.textDim, align: "center", maxWidth: qEss.w });
+  drawText(ctx, G.save.essence, eCx, qEss.y + 20, { font: "big", scale: .82 / FS, color: "#d7a2ff", align: "center", maxWidth: qEss.w });
+  flushPaperFrames(ctx);
+
+  // Navegação da ÁRVORE: placas NOVAS de madeira (família 2026-10-19). A
+  // arte entra INTEIRA (escala uniforme) e o rótulo fica na madeira calma
+  // medida da arte — antes a seta antiga esmagava o texto.
+  const navInk = { labelColor: "#4a3116" };   // tinta escura: a madeira calma é clara
+  if (button(ctx, { x: 552, y: 14, w: 124, h: 44, compact: true, plate: "media", label: "MEMÓRIAS", id: "treeMemories", scale: .85, accent: "#ffd479", ...navInk })) return "memories";
+  if (button(ctx, { x: 684, y: 14, w: 124, h: 44, compact: true, plate: "media", label: "PROFECIAS", id: "treeProphecy", scale: .85, accent: "#6ee7ff", ...navInk })) return "prophecies";
+  if (button(ctx, { x: 820, y: 14, w: 124, h: 44, compact: true, plate: "media", label: "VOLTAR", id: "treeBack", scale: .85, accent: "#ff8a96", ...navInk })) return "back";
   let lx = 555;
   for (const br of Object.values(META_BRANCHES)) {
     drawText(ctx, br.name, lx, 72, { scale: .65, color: br.color, maxWidth: 90 }); lx += 99;
   }
 
-  panel(ctx, 12, 100, 164, 386, { border: "#64566d" });
-  for (let i = 6; i >= 0; i--) {
-    const stage = META_STAGES[i], y = 104 + (6 - i) * 48;
-    const unlocked = isTreeStageUnlocked(i + 1), owned = growth.baseOwned[i];
-    if (button(ctx, { x: 22, y, w: 144, h: 44, compact: true, label: "", id: "treeStage" + (i + 1), accent: focusedStage === i + 1 ? stage.color : "#64586e" })) {
-      treeFocusStage(i + 1);
+  // Coluna da esquerda com SCROLL (proporção de card: 228×386, 8 botões de madeira 44px sem sobreposição).
+  // Da RAIZ ANCESTRAL (topo) até 7 • NÉVOA-MÃE, rolando com roda do mouse, setas, PgUp/PgDn ou arraste.
+  panel(ctx, SIDE_BOX.x, SIDE_BOX.y, SIDE_BOX.w, SIDE_BOX.h, { paperKind: "card", border: "#64566d" });
+  const SV = sideViewport();
+  sideScroll = clamp(sideScroll, 0, Math.max(0, SIDE_CONTENT_H - SV.h));
+  const oy = SV.y - sideScroll;
+  const btnX = SV.x + 2, btnW = SV.w - 14, btnH = 44;
+  const textX = btnX + 14, textW = Math.max(40, btnW - 28);
+  const offRowRect = (idx) => ({ x: 356 + (idx % 4) * 46, y: (idx < 4 ? 4 : 50), w: 44, h: 44 });
+  ctx.save();
+  ctx.beginPath();
+  ctx.rect(SV.x, SV.y, SV.w, SV.h);
+  ctx.clip();
+  layoutRec.clip = { x: SV.x, y: SV.y, w: SV.w, h: SV.h };
+  {
+    const ry = Math.round(oy);
+    const rootVis = (ry + btnH - Math.max(ry, SV.y) >= 44) && (Math.min(ry + btnH, SV.y + SV.h) - Math.max(ry, SV.y) >= 44);
+    if (rootVis) {
+      if (button(ctx, { x: btnX, y: ry, w: btnW, h: btnH, compact: true, tap: true, clip: SV, selected: selectedNode?.id === "raiz", label: "", id: "treeRoot", accent: "#ffd479" })) {
+        selectNode(TREE_BY_ID.get("raiz"));
+        scrollSideToIndex(0);
+      }
+    } else {
+      if (ry + btnH > SV.y && ry < SV.y + SV.h) {
+        button(ctx, { x: btnX, y: ry, w: btnW, h: btnH, compact: true, tap: true, clip: { x: -9999, y: -9999, w: 0, h: 0 }, selected: selectedNode?.id === "raiz", label: "", id: "_visRoot" });
+      }
+      if (hitArea({ ...offRowRect(0), compact: true, id: "treeRoot" })) {
+        selectNode(TREE_BY_ID.get("raiz"));
+        scrollSideToIndex(0);
+      }
     }
-    drawText(ctx, (i + 1) + " • " + stage.name, 34, y + 4, { scale: .72, color: unlocked ? stage.color : "#b2a8bb", maxWidth: 118 });
-    drawText(ctx, unlocked ? owned + "/" + TREE_STAGE_NODES[i].length + " • EXPLORAR" : "VENÇA MUNDO " + i, 34, y + 26,
-      { scale: .56, color: PAL.textDim, maxWidth: 118 });
+    if (ry + btnH > SV.y && ry < SV.y + SV.h) {
+      drawText(ctx, "RAIZ ANCESTRAL", textX, ry + 6, { scale: .58 / FS, color: "#ffd479", paper: true, maxWidth: textW });
+      drawText(ctx, metaLevel("raiz") ? "MEMÓRIA VIVA" : "GRÁTIS • COMEÇAR", textX, ry + 25, { scale: .48 / FS, color: PAL.textDim, paper: true, maxWidth: textW });
+    }
   }
-  if (button(ctx, { x: 22, y: 440, w: 144, h: 44, compact: true, label: "", id: "treeRoot", accent: "#ffd479" })) selectNode(TREE_BY_ID.get("raiz"));
-  drawText(ctx, "RAIZ ANCESTRAL", 34, 444, { scale: .66, color: "#ffd479", maxWidth: 118 });
-  drawText(ctx, metaLevel("raiz") ? "MEMÓRIA VIVA" : "GRÁTIS • COMEÇAR", 34, 466, { scale: .55, color: PAL.textDim, maxWidth: 118 });
-  panel(ctx, 12, 492, 936, 44, { paperKind: "header", border: "#51465e" });
-  drawText(ctx, isTouchUI() ? "ARRASTE • PINÇA" : "ARRASTE • RODA", 24, 505, { scale: .65, color: PAL.textDim, maxWidth: 146 });
+  for (let i = 0; i < 7; i++) {
+    const stage = META_STAGES[i], rowIdx = i + 1, y = Math.round(oy + rowIdx * SIDE_ROW_H);
+    const unlocked = isTreeStageUnlocked(i + 1), owned = growth.baseOwned[i];
+    const clippedH = Math.min(y + btnH, SV.y + SV.h) - Math.max(y, SV.y);
+    const rowVis = clippedH >= 44;
+    if (rowVis) {
+      if (button(ctx, { x: btnX, y, w: btnW, h: btnH, compact: true, tap: true, clip: SV, selected: focusedStage === i + 1, label: "", id: "treeStage" + (i + 1), accent: focusedStage === i + 1 ? stage.color : "#64586e" })) {
+        treeFocusStage(i + 1);
+      }
+    } else {
+      if (y + btnH > SV.y && y < SV.y + SV.h) {
+        button(ctx, { x: btnX, y, w: btnW, h: btnH, compact: true, tap: true, clip: { x: -9999, y: -9999, w: 0, h: 0 }, selected: focusedStage === i + 1, label: "", id: "_visStage" + (i + 1) });
+      }
+      if (hitArea({ ...offRowRect(rowIdx), compact: true, id: "treeStage" + (i + 1) })) {
+        treeFocusStage(i + 1);
+      }
+    }
+    if (y + btnH > SV.y && y < SV.y + SV.h) {
+      drawText(ctx, (i + 1) + " • " + stage.name, textX, y + 6, { scale: .58 / FS, color: unlocked ? stage.color : "#685139", paper: true, maxWidth: textW });
+      drawText(ctx, unlocked ? owned + "/" + TREE_STAGE_NODES[i].length + " • EXPLORAR" : "VENÇA MUNDO " + i, textX, y + 25,
+        { scale: .48 / FS, color: PAL.textDim, paper: true, maxWidth: textW });
+    }
+  }
+  layoutRec.clip = null;
+  ctx.restore();
+
+  // Barra de rolagem da coluna de galhos
+  {
+    const maxSideScroll = Math.max(0, SIDE_CONTENT_H - SV.h);
+    const sbX = SV.x + SV.w - 8;
+    ctx.fillStyle = "rgba(107,71,30,0.28)";
+    ctx.fillRect(sbX, SV.y, 6, SV.h);
+    const hh = maxSideScroll > 0 ? Math.max(24, SV.h * SV.h / SIDE_CONTENT_H) : SV.h;
+    const hy = maxSideScroll > 0 ? SV.y + (SV.h - hh) * (sideScroll / maxSideScroll) : SV.y;
+    ctx.fillStyle = "#8b5e2b";
+    ctx.fillRect(sbX, hy, 6, hh);
+    ctx.fillStyle = "#e4ba70";
+    ctx.fillRect(sbX + 1.5, hy + 2, 3, hh - 4);
+  }
+  flushPaperFrames(ctx);
+
+  // Rodapé: controles à esquerda e nota do galho limpa à direita (sem tábua encolhida por cima da escrita)
+  drawText(ctx, isTouchUI() ? "ARRASTE • PINÇA" : "ARRASTE • RODA", 18, 505, { scale: .62, color: PAL.textDim, maxWidth: 156 });
   if (button(ctx, { x: 184, y: 492, w: 122, h: 44, compact: true, label: "VER TUDO", id: "treeFit", scale: .8 })) treeFit();
   if (button(ctx, { x: 314, y: 492, w: 44, h: 44, compact: true, label: "-", id: "treeZoomOut" })) zoomAt(.8);
   if (button(ctx, { x: 366, y: 492, w: 44, h: 44, compact: true, label: "+", id: "treeZoomIn" })) zoomAt(1.25);
   const note = focusedStage ? (treeStageRequirement(focusedStage) || "GALHO " + focusedStage + " • SELECIONE PARA LER") : metaLevel("raiz") ? "DA RAIZ À COPA • ESCOLHA UM GALHO" : "COMECE PELA RAIZ ANCESTRAL";
-  drawText(ctx, note, 426, 496, { scale: .67, color: "#ddc9a6", maxWidth: 504 });
-  drawText(ctx, "FRUTOS ABREM HABILIDADES • ZOOM " + Math.round(zoom * 100) + "%", 426, 517,
-    { scale: .55, color: PAL.textDim, maxWidth: 504 });
-  flushPaperFrames(ctx);
+  drawText(ctx, note, 424, 496, { scale: .66, color: "#ffd479", maxWidth: 520 });
+  drawText(ctx, "FRUTOS ABREM HABILIDADES • ZOOM " + Math.round(zoom * 100) + "%", 424, 517,
+    { scale: .55, color: PAL.textDim, maxWidth: 520 });
   return null;
 }
 
 function drawNodeTip(ctx, n) {
-  const largeText = fontScale() > 1.01;
+  const FS = fontScale();
   const detail = activeFruit ? FRUIT_DETAIL :
-    { x: DETAIL.x, y: DETAIL.y, w: DETAIL.w, h: 386 };
+    { x: DETAIL.x, y: DETAIL.y, w: DETAIL.w, h: DETAIL.h };
   const { x, y, w, h } = detail;
   const chk = metaCanBuy(n.id), lvl = metaLevel(n.id), col = n._fruit?.color || META_BRANCHES[n.br].color;
   panel(ctx, x, y, w, h, { paperKind: "tree_detail", border: n.supreme ? "#ffd479" : col });
+  const qD = paperQuiet("tree_detail", x, y, w, h);
   const stageLabel = n.supreme
     ? " • " + supremeFlowerStage(n.id).name
     : (n._fruit && n.cost.length >= 3
       ? " • " + (lvl === 0 ? "BROTO MORTO" : lvl === 1 ? "BROTO" : lvl < n.cost.length ? "MEIO ABERTO" : "FLORESCIDA")
       : "");
   const blocks = [
-    [n.name, n.supreme ? "#ffd479" : col, .93],
-    [(n._fruit ? (n.supreme ? "SUPREMA • " : n.global ? "GLOBAL • " : "LEGADO • ") : "GALHO " + n.stage + " • " + META_BRANCHES[n.br].name + " • ") + lvl + "/" + n.cost.length + stageLabel, PAL.textDim, .72],
+    [n.name, n.supreme ? "#ffd479" : col, .82],
+    [(n._fruit ? (n.supreme ? "SUPREMA • " : n.global ? "GLOBAL • " : "LEGADO • ") : "GALHO " + n.stage + " • " + META_BRANCHES[n.br].name + " • ") + lvl + "/" + n.cost.length + stageLabel, PAL.textDim, .64],
     [n.levelDescriptions
       ? FRUIT_POWER_PREFIX + (lvl < n.cost.length ? "PRÓXIMO NÍVEL " + (lvl + 1) + ": " + n.levelDescriptions[lvl]
-        : n.levelDescriptions[lvl - 1]) : n.desc, PAL.text, .80],
-    [lvl < n.cost.length ? "CUSTO: " + n.cost[lvl] + " ESSÊNCIA" : "NÍVEL MÁXIMO", "#ffd479", .76],
+        : n.levelDescriptions[lvl - 1]) : n.desc, PAL.text, .70],
+    [lvl < n.cost.length ? "CUSTO: " + n.cost[lvl] + " ESSÊNCIA" : "NÍVEL MÁXIMO", "#ffd479", .68],
   ];
-  if (!chk.ok && lvl < n.cost.length) blocks.push([chk.why, "#ffb4bc", .74]);
-  if (!n._fruit && lvl > 0 && !isTreeStageUnlocked(n.stage)) blocks.push(["COMPRA ANTIGA PRESERVADA E ATIVA", PAL.textDim, .65]);
-  // Espaço real, inclusive fonte grande e descrições longas: encolhe o bloco
-  // como último recurso, nunca corta o requisito nem cobre a confirmação.
+  if (!chk.ok && lvl < n.cost.length) blocks.push([chk.why, "#a8342b", .65]);
+  if (!n._fruit && lvl > 0 && !isTreeStageUnlocked(n.stage)) blocks.push(["COMPRA ANTIGA PRESERVADA E ATIVA", PAL.textDim, .58]);
+  // Tudo posicionado dentro de qD (papel liso, longe das vinhas da esquerda e da folha superior).
+  const actionH = 44;
+  const topPad = 14;
+  const textX = Math.round(qD.x + 8), textW = Math.max(40, Math.round(qD.w - 12));
+  const textMaxH = Math.max(60, qD.h - actionH - topPad - 6);
   const heightAt = factor => blocks.reduce((sum, [text, , scale]) =>
-    sum + wrapText(text, w - 28, { scale: scale * factor }).length * Math.ceil(18 * scale * factor * fontScale()) + 9, 0);
+    sum + wrapText(text, textW, { scale: scale * factor }).length * Math.ceil(19.5 * scale * factor * fontScale()) + 5, 0);
   let factor = 1;
-  while (factor > .66 && heightAt(factor) > h - 78) factor -= .025;
-  let ty = y + 12;
+  while (factor > .42 && heightAt(factor) > textMaxH) factor -= .025;
+  let ty = Math.round(qD.y + topPad);
   for (const [text, color, baseScale] of blocks) {
     const scale = baseScale * factor;
-    for (const line of wrapText(text, w - 28, { scale })) {
-      drawText(ctx, line, x + 14, ty, { scale, color }); ty += Math.ceil(18 * scale * fontScale());
+    const step = Math.ceil(19.5 * scale * fontScale());
+    for (const line of wrapText(text, textW, { scale })) {
+      if (ty + step <= qD.y + topPad + textMaxH + 4) {
+        drawText(ctx, line, textX, ty, { scale, color, maxWidth: textW });
+      }
+      ty += step;
     }
-    ty += 9;
+    ty += 5;
   }
-  const actionY = y + h - 54;
-  const buyW = activeFruit ? 88 : 150, closeX = activeFruit ? x + 106 : x + 170;
-  const closeW = activeFruit ? 92 : 100;
-  if (button(ctx, { x: x + 12, y: actionY, w: buyW, h: 44, compact: true, label: "EVOLUIR", id: "treeBuy", disabled: !chk.ok, accent: n.supreme ? "#ffd479" : col, scale: activeFruit ? .68 : .9 })) {
+  const actionY = Math.round(qD.y + qD.h - actionH);
+  const gap = 6;
+  // Ambos os botões com >= 44px de largura (exigência de alvo de toque) e cabendo dentro de qD.w
+  const closeW = Math.max(46, Math.floor((qD.w - gap) * 0.42));
+  const buyW = Math.max(46, Math.floor(qD.w - gap - closeW));
+  const buyX = Math.round(qD.x), closeX = buyX + buyW + gap;
+  if (button(ctx, { x: buyX, y: actionY, w: buyW, h: actionH, compact: true, label: "EVOLUIR", id: "treeBuy", disabled: !chk.ok, accent: n.supreme ? "#ffd479" : col, scale: .68 / FS })) {
     if (metaBuy(n.id)) { SFX.buy(); if (n.tier >= 2 || n.supreme) SFX.chime(); }
   }
-  if (button(ctx, { x: closeX, y: actionY, w: closeW, h: 44, compact: true, label: "FECHAR", id: "treeClose", scale: activeFruit ? .72 : .82 })) selectedNode = null;
+  if (button(ctx, { x: closeX, y: actionY, w: closeW, h: actionH, compact: true, label: "FECHAR", id: "treeClose", scale: .68 / FS })) selectedNode = null;
   flushPaperFrames(ctx);
 }
 const SANTUARIO_IMAGES = new Map();
@@ -899,19 +1031,22 @@ function drawFruitMini(ctx) {
   if (f.pending) drawSanctuarySeal(ctx);
   else drawSanctuaryFlowers(ctx, f, visibleFruitNodes(), garden.saturation);
   layoutRec.layer = "ui";
-  // O cabeçalho compacto (82px) expõe mais da clareira e conserva os dados do fruto.
-  panel(ctx, 12, 8, 936, 82, { paperKind: "header", border: f.color, fill: "#17121fdc", noise: false });
-  drawText(ctx, f.name, 26, 12, { font: "big", scale: .92, color: f.color, maxWidth: 630 });
+  // Cabeçalho do santuário na proporção original de banner (450×90 = 5:1)
+  const hBox = { x: 12, y: 6, w: 450, h: 90 };
+  panel(ctx, hBox.x, hBox.y, hBox.w, hBox.h, { paperKind: "banner", border: f.color, fill: "#17121fdc", noise: false });
+  const qH = paperQuiet("banner", hBox.x, hBox.y, hBox.w, hBox.h);
+  const hX = qH.x + 12, hW = Math.max(40, qH.w - 24), hCx = hX + hW / 2;
+  const FS = fontScale();
+  drawText(ctx, f.name, hCx, qH.y - 1, { font: "small", scale: .64 / FS, color: f.color, align: "center", maxWidth: hW });
   drawText(ctx, unlocked ? "FRUTO CONQUISTADO • PODERES GLOBAIS" : "PRÉVIA BLOQUEADA • " + (f.pending ? "PÁLIDA: FUTURO" : "DERROTE " + f.bossName),
-    26, 42, { scale: .70, color: unlocked ? PAL.text : PAL.textDim, maxWidth: 630 });
+    hCx, qH.y + 13, { scale: .50 / FS, color: unlocked ? PAL.text : PAL.textDim, align: "center", maxWidth: hW });
   drawText(ctx, f.pending ? "GALHO " + stage + " • ESSÊNCIA " + G.save.essence + " • FUTURO" :
     "GALHO " + stage + " • ESSÊNCIA " + G.save.essence + " • COR " + garden.restoredPercent + "% • " + garden.levels + "/" + garden.total + " MELHORIAS",
-    26, 66, { scale: .61, color: "#ffd479", maxWidth: 660 });
-  if (button(ctx, { x: 700, y: 12, w: 236, h: 42, compact: true, label: "VOLTAR À ÁRVORE", id: "treeMiniBack", scale: .78 })) {
-    flushPaperFrames(ctx);
+    hCx, qH.y + 26, { scale: .46 / FS, color: "#ffd479", align: "center", maxWidth: hW });
+  flushPaperFrames(ctx);
+  if (button(ctx, { x: 700, y: 12, w: 236, h: 44, compact: true, label: "VOLTAR À ÁRVORE", id: "treeMiniBack", scale: .78 })) {
     leaveFruit(); selectedNode = null; return null;
   }
-  flushPaperFrames(ctx);
   drawText(ctx, f.pending ? "FRUTO FUTURO • NENHUMA MELHORIA DISPONÍVEL" :
     "SELECIONE UMA FLOR PARA LER • SELECIONAR NÃO GASTA ESSÊNCIA • EVOLUIR CONFIRMA A COMPRA", 480, 520,
     { align: "center", scale: .62, color: PAL.textDim, maxWidth: 936 });

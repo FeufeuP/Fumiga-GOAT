@@ -47,6 +47,29 @@ const MANIFEST = {
   wood_button_mini_pressionado: "ui/paper/wood/button_mini_pressionado.png",
   wood_button_mini_selecionado: "ui/paper/wood/button_mini_selecionado.png",
   wood_button_mini_desabilitado: "ui/paper/wood/button_mini_desabilitado.png",
+  // Placas NOVAS de botão (2026-10-19): modelo aprovado pelo usuário, variação
+  // em spritesheet única — tools/prepare_wood_buttons_v2.py. 4 variações x 5
+  // estados, artes de estado separadas (nunca tingidas em cima).
+  placa_grande_normal: "ui/paper/wood/placa_grande_normal.png",
+  placa_grande_hover: "ui/paper/wood/placa_grande_hover.png",
+  placa_grande_pressionado: "ui/paper/wood/placa_grande_pressionado.png",
+  placa_grande_selecionado: "ui/paper/wood/placa_grande_selecionado.png",
+  placa_grande_desabilitado: "ui/paper/wood/placa_grande_desabilitado.png",
+  placa_media_normal: "ui/paper/wood/placa_media_normal.png",
+  placa_media_hover: "ui/paper/wood/placa_media_hover.png",
+  placa_media_pressionado: "ui/paper/wood/placa_media_pressionado.png",
+  placa_media_selecionado: "ui/paper/wood/placa_media_selecionado.png",
+  placa_media_desabilitado: "ui/paper/wood/placa_media_desabilitado.png",
+  placa_pequena_normal: "ui/paper/wood/placa_pequena_normal.png",
+  placa_pequena_hover: "ui/paper/wood/placa_pequena_hover.png",
+  placa_pequena_pressionado: "ui/paper/wood/placa_pequena_pressionado.png",
+  placa_pequena_selecionado: "ui/paper/wood/placa_pequena_selecionado.png",
+  placa_pequena_desabilitado: "ui/paper/wood/placa_pequena_desabilitado.png",
+  placa_cartao_normal: "ui/paper/wood/placa_cartao_normal.png",
+  placa_cartao_hover: "ui/paper/wood/placa_cartao_hover.png",
+  placa_cartao_pressionado: "ui/paper/wood/placa_cartao_pressionado.png",
+  placa_cartao_selecionado: "ui/paper/wood/placa_cartao_selecionado.png",
+  placa_cartao_desabilitado: "ui/paper/wood/placa_cartao_desabilitado.png",
 
   // Árvore ancestral aprovada: recorte RGBA, a saturação é restaurada em cache.
   tree_ancestral: "ui/tree_ancestral.png",
@@ -228,7 +251,7 @@ const WROT = {};         // silhuetas brancas rotacionadas (hit flash)
 // ANTIGA nos mesmos nomes de arquivo (foi assim que o rework dos inimigos da
 // Fase 2 "não apareceu" para quem já tinha jogado antes dele).
 // ---------------------------------------------------------------------------
-export const ASSET_V = "20261016-hud-slim-2pecas";
+export const ASSET_V = "20261019-placas-madeira-v2";
 
 /**
  * URL final de um asset do jogo: base certa para a página atual + anti-cache.

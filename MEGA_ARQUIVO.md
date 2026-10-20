@@ -37,6 +37,124 @@ repetições, datas, branches, checklists e notas históricas foram preservados.
 > Divergências permanecem visíveis, sem apagar conteúdo. O que efetivamente
 > funciona deve ser confirmado por testes e inspeção no preview.
 
+## Registro — Tinta legível nas placas novas + vazamento de tecla no carregamento (2026-10-20)
+
+**Pedido/verificação final do usuário:** "foi realmente terminado?" — a resposta exigiu evidência (testes + capturas), não afirmação. A conferência das capturas do rodapé e das quatro telas acusou que **a tinta creme sobre a madeira clara das placas novas estava ilegível** (contraste ~1,3:1) e o `regressions-browser` falhava de forma intermitente (`MODE` em vez de `TITLE`). Ambos foram investigated, corrigidos e reconferidos.
+
+### 1. Tinta das placas novas: creme → marrom, sem halo (correção ao registro de 2026-10-19)
+
+**Medição (PIL sobre as artes reais, área calma de cada peça):** luminância média **153–179** (`#d88e3c`…`#e6ad5a`). Sobre isso, a tinta creme `#fdf3dc` dava contraste **~1,3:1** — a palavra sumia entre os veios da madeira (visível em `MEMÓRIAS`/`PROFECIAS`/`VOLTAR` da ÁRVORE, no `JOGAR` do card de modo, no `IRMÃS`, nos cards da loja e no `FORMIGUEIRO`). A tinta passou a **#4a3116** (contraste **~4,2:1**), desenhada no modo `paper` **sem sombra**: a fonte Kiwi Soda tem traço de 1 px e um halo deslocado de 1 px **comia a própria letra** (medição real: com halo as letras saíam claras e ilegíveis).
+
+- `game/js/ui.js`: `button({plate})` usa tinta marrom; `opt.labelColor` continua respeitado; a sombra só é desligada **nas placas novas** (`shadow: !placaQ`) — os botões de configuração com a placa antiga mantêm a sombra de sempre.
+- `game/js/render.js`: rótulo `JOGAR` do card de modo.
+- `game/js/meta.js`: navegação da ÁRVORE (`navInk`).
+- `game/js/game.js`: rodapé — `IRMÃS` + subtítulo, preço e tecla quente dos cards da loja, `FORMIGUEIRO` + `ENTRAR (B)`.
+- **Este registro substitui a conclusão de tinta do registro de 2026-10-19** ("o marrom puro sumia entre os veios; o creme recorta a palavra"): a medição mostra o contrário — marrom 4,2:1 × creme 1,3:1. As artes (Regra 2/16) não mudaram; só a tinta.
+
+### 2. Bug real do jogo: o `ESPAÇO` que pulava o carregamento também iniciava o menu
+
+A tecla era consumida no `update()` (fase "ready" → `dismissLoadingScreen()`), mas o flag `pressed.Space` continuava valendo no `render()` **do mesmo quadro**; no fadeout a tela de trás (TITLE) é desenhada e `titleConfirm` (ESPAÇO/ENTER) confirmava o botão `COMEÇAR`, levando o jogo a MODE. `game/js/game.js`, no ramo `isLoadingActive()`: as teclas consumidas são limpas (`pressed.Space/Enter/NumpadEnter/Escape`) e `mouse.justDown` só é limpo quando a tela de carga **realmente** consumiu o ponteiro (a fase de erro usa os botões no render). Esse era o "flake" do `regressions-browser` — reproduzido, explicado e corrigido (não sorteado).
+
+### 3. Robustez dos testes
+
+- `game/test/pwa.mjs`: contagem do pacote corrigida (275 → **295 arquivos**) e `app/assets.json` regenerado (44,4 MB, 295 arquivos, as 20 placas novas).
+- `game/test/regressions-browser.mjs`: a janela de registro de telas era de 2 s — sob contenção de CPU o clique no TITLE podia demorar mais para virar a tela e o teste falhava por timeout; janela elevada para 8 s (o teste continua detectando clique residual).
+
+### Verificações executadas (2026-10-20)
+
+- `npm test` — **37/37 verdes**, duas vezes seguidas (92,9 s e 95,1 s), incluindo `regressions-browser` (47,9 s e 48,3 s) e `pwa` (295 arquivos).
+- `npm run inspect:layout` — **118/118 estados limpos** ("✓ LAYOUT LIMPO — nada sobreposto, vazando ou coberto"), PC + mobile + `FONTE GRANDE`.
+- `npm run inspect` — **OK**: zero erros de JS/404/glifos, 60 FPS nos 6 mapas (PC e mobile).
+- Capturas conferidas (PC 1280×720 e mobile 844×390): ÁRVORE, OPÇÕES, COMO JOGAR, SELECIONE O MODO, RUN com a loja aberta e ÁRVORE com galho selecionado; recortes ampliados do rodapé e da navegação da ÁRVORE (antes/depois da tinta).
+- Diagrama ANTES → DEPOIS do rodapé (Regra 20): `slice-box/diagrama-rodape-antes-depois.png`, gerado por `tools/make_diagram_rodape.py` — o "ANTES" é o **código no HEAD** servido de uma árvore de trabalho aparte (`git worktree`), o "DEPOIS" é o estado atual.
+
+### Preservação (Regra 13)
+
+Backup **concluído e conferido** no Drive: [FUMIGA-placas-madeira-v2-20261020.zip](https://drive.google.com/file/d/1IRNMvxrdykwFSCCAUyX5Sp8hizedGEAn/view) na pasta [Fumiga-GOAT - Imagens do jogo](https://drive.google.com/drive/folders/1IMj_-7VQf_asmRmMoMSzKxIQ37M6DXlW) — **1.656.651 bytes**, md5 `992dd91e3f427550342c23a873d68119` **idêntico ao local** (verificado por `get_file` + `md5sum`). Conteúdo: as 20 artes em uso, `docs/arte/botoes-madeira-v2.json` (sha256 por peça), um PNG de referência 2×2 reconstruído das 4 peças e um LEIA-ME.
+
+**Limite declarado:** a **fonte original** (spritesheet 2×2 com fundo de chroma azul) foi apagada por um reset do ambiente de trabalho e não existe mais em disco. O backup preserva as peças processadas — a cópia sobrevivente e a que o jogo usa —; a receita de produção continua versionada em `tools/cut_wood_sheet.py` e `tools/prepare_wood_buttons_v2.py`.
+
+### Limites gerais
+
+Verificação em navegador headless (Chromium 153), não em aparelho físico/GPU. As quatro telas (ÁRVORE/OPÇÕES/COMO JOGAR/SELECIONE O MODO) seguem como o registro de 2026-10-19 descreve: esta rodada mudou a tinta das placas novas, corrigiu o vazamento de tecla do carregamento e endureceu dois testes — sem alterar layout, arte nem regras de jogo.
+
+## Registro — Correção das Telas de Menu/Árvore + Scroll na Coluna da Árvore (2026-10-19)
+
+**Pedido do usuário:** "arrume todas estas telas, em algumas os HUDs estão pequenos em outras o HUD cobre a escrita. Sugestão: adicionar um scroll nos HUDs que tem varios botões, como nas OPÇÕES." (acompanhado de 4 capturas: `ÁRVORE DA EVOLUÇÃO`, `OPÇÕES`, `COMO JOGAR`, `SELECIONE O MODO`).
+
+**Pesquisa de inspirações (Regra 2):**
+- *Hollow Knight* ([Interface Design Analysis](https://champicky.com/2022/03/23/hollow-knight-interface-design-analysis/), [Controls Wiki](https://hollowknight.wiki/w/Controls_(Hollow_Knight))): ornamentação orgânica preservada nas bordas e todo conteúdo/texto posicionado no miolo limpo.
+- *Rayman Legends* ([Interface In Game](https://interfaceingame.com/games/rayman-legends/), [Game UI Database](https://www.gameuidatabase.com/gameData.php?id=56)): painéis de madeira/pergaminho mantendo proporção nativa da pintura.
+- *Game UI/UX Course — Inventory & Scroll* ([The Wingless](https://thewingless.com/index.php/2021/07/26/10-simple-ways-you-can-improve-your-videogame-inventory-screen-game-ui-ux-design-course/)): uma única barra de rolagem por painel de lista, evitando sobrepor botões e textos à moldura.
+
+**Decisões confirmadas pelo usuário (Regra 1):** (1) `4mais` — arrumar as 4 telas das capturas + rodar a auditoria de layout (`inspect:layout`) em navegador real e corrigir todas as telas adicionais acusadas; (2) `encolher` — manter a arte atual sem deformar e posicionar 100% dos textos e controles dentro de `paperQuiet()` (Regras 21 e 22); (3) `scroll_coluna` — adicionar rolagem vertical dentro da coluna da esquerda na `ÁRVORE DA EVOLUÇÃO`, igual às `OPÇÕES`.
+
+**O que mudou (`game/js/meta.js`, `game/js/game.js`, `game/js/render.js`, `game/js/font.js`):**
+1. **ÁRVORE DA EVOLUÇÃO (`game/js/meta.js`):**
+   - **Coluna da esquerda com Scroll (`SIDE_BOX` `228×386` na proporção original de `card` `848×1264`):** os 8 botões de madeira (`RAIZ ANCESTRAL` + `1..7` galhos, altura `44px` e passo `54px`) vivem numa viewport recortada em `paperQuiet("card")` com barra de rolagem lateral e suporte a roda do mouse, setas `↑`/`↓`, `PgUp`/`PgDn` e arraste por toque/mouse (`updateTree`), além de auto-rolagem ao focar um galho (`treeFocusStage`).
+   - **Cabeçalho em proporção nativa (`960×512`):** dois painéis `165×88` no topo (`ÁRVORE DA EVOLUÇÃO` + `ESSÊNCIA`) com textos centralizados dentro de `paperQuiet("panel")` (antes `366×82` encolhia por `contain` para `153×82` no centro e cortava o título).
+   - **Rodapé e Detalhe de Nó (`drawNodeTip` `304×386` / `FRUIT_DETAIL` `248×382`):** removida a tábua `936×44` que encolhia para `220×44` sobre a escrita; textos e botões `EVOLUIR`/`FECHAR` posicionados 100% dentro de `paperQuiet("tree_detail")`; cabeçalho dos Santuários (`drawFruitMini`) ajustado para `450×90` (`5:1`) com textos em `paperQuiet("banner")`.
+2. **OPÇÕES (`game/js/game.js`):**
+   - Título `OPÇÕES` posicionado na faixa superior (`y = 4`, acima da viga de madeira); painel em `PY = 38, PH = 448`.
+   - As 6 abas (`ÁUDIO`, `VÍDEO`, `CONTROLES`, `ACESSO`, `IDIOMA`, `TESTE`), o subtítulo da aba ativa, a viewport rolável (`optViewport`) e a barra de rolagem agora nascem de `qOpt = paperQuiet("panel", PX, PY, PW, PH)` — livres das folhas da esquerda e da direita.
+3. **COMO JOGAR (`game/js/game.js`):**
+   - Título `COMO JOGAR` na faixa superior (`y = 4`); as duas colunas (`OBJETIVO` + `DICAS` à esquerda e `CONTROLES` à direita) calculadas dentro de `qH = paperQuiet("panel", PX, PY, PW, PH)` com `fitTextBlock` e escala adaptativa (PC e mobile, fonte normal e `FONTE GRANDE`).
+4. **SELECIONE O MODO (`game/js/game.js`, `game/js/render.js`):**
+   - Cards ajustados para `360×312` (`y = 108`), abrindo espaço para a barra `ASCENSÃO DA NÉVOA` na proporção nativa `5:1` (`360×72` em `y = 434`) com texto centralizado em `paperQuiet("banner")` longe do ornamento do tronco esquerdo; rodapé limpo sem tábua encolhida por cima da frase.
+5. **Demais telas corrigidas pela auditoria em navegador real (`inspect:layout`):**
+   - `fitTextBlock` (`game/js/font.js`): passo mínimo baseado na altura real da fonte (`(F.size + 2) * FS`), eliminando colisões entre linhas quebradas em `MEMÓRIAS`, `PROFECIAS`, `TUTORIAL`, `DRAFT` e `TRANSIÇÃO`; mapeamento de cores em `resolveFontColor` ampliado para superfícies de papel (`#6ee7ff`, `#d7a2ff`, `#ff4d5a`).
+   - `MEMÓRIAS` e `PROFECIAS` (`game/js/game.js`): cartões `345×184` centralizados e botões `ANTERIOR` / `PRÓXIMA` movidos para a faixa `y = 464..470` (fora dos cartões inferiores).
+   - `PAUSA` e `FIM DE RUN` (`game/js/game.js`): títulos, botões, minimapa e tabelas de estatísticas posicionados 100% dentro de `paperQuiet("pause")` e `paperQuiet("panel")`.
+
+**Verificações executadas:**
+- `node game/test/layout-browser.mjs` (Chromium real, PC + mobile, normal + `FONTE GRANDE`): **118/118 estados limpos (`0` problemas — antes eram 145 problemas)**;
+- `npm test`: **37/37 suítes verdes** (incluindo `layout`, `uitest`, `mobile`, `paper-hud-browser`, `hud-publication-browser`, `regressions-browser`, `psx-filter-browser`, `endless`, `pwa`, `docs`);
+- `npm run inspect`: **30/30 cenas PC + mobile verdes** (60 FPS nos mapas, zero erros JS/404/glifos);
+- `npm run inspect:tree`, `npm run inspect:ui`, `npm run inspect:preload`, `npm run inspect:hud`: **todos verdes**;
+- Diagrama ANTES → DEPOIS (Regra 20): `slice-box/diagrama-correcao-telas-scroll.png`.
+
+## Registro — Família de Placas de Madeira (v2 aprovada) + HUD do rodapé das formigas (2026-10-19)
+
+**Pedidos do usuário (nesta sessão):**
+- "eu escolho um modelo do botão grande, e você cria as variações com base nele; todas as variações em uma unica imagem spritesheet";
+- "não usar o mesmo botão para tudo (o sprite atual fica para configurações etc.)";
+- "Refazer o HUD do rodapé das formigas (botão IRMÃS feio)";
+- correção da 1ª spritesheet: "o botão está parecendo uma das moldura do HUD, faça mais parecido com um botão mesmo".
+
+**Gerações de arte (Regra 2 e 16 — até 10 imagens por rodada, aprovação do usuário):**
+1. Três gerações **separadas** (uma por peça) — o usuário não escolheu nenhuma: o pedido era **uma spritesheet única** com todas as variações.
+2. **v1 (2×2, miolo de papel creme emoldurado) — REJEITADA**: o usuário pediu "mais parecido com um botão mesmo". A v1 nunca entrou no jogo.
+3. **v2 (2×2 de tábuas de madeira, fundo azul de chroma) — APROVADA** (opção 1 de 2): madeira no corpo todo, folha e bolota nas pontas, silhueta de tábua (não de moldura de HUD). Fonte: `art-source/botoes-madeira-v2/spritesheet_botoes_v2.png` (1792×1344), fora do Git.
+
+**Pipeline (`tools/prepare_wood_buttons_v2.py` + `tools/cut_wood_sheet.py`):** unchroma + despill → corte das 4 peças por **componente conectado** (o parser do `convert -connected-components` foi refeito com regex) → máscara de madeira calma relaxada (`88 ≤ r ≤ 255`, `sat < 0.88`, `r > g + 8`, `r - b ≥ 20`) → 5 estados por peça (`normal`, `hover`, `pressionado`, `selecionado`, `desabilitado`) → **20 PNGs** em `game/assets/ui/paper/wood/placa_*` + manifesto `docs/arte/botoes-madeira-v2.json` (sha/bytes/áreas).
+
+**Áreas de texto — medidas À MÃO sobre a arte real** (fração `x0,y0,x1,y1` de cada peça), com overlay de conferência em `/tmp/fumiga-shot/pecas/quiet-montagem.png`:
+`grande (0,30 · 0,32 · 0,54 · 0,88)` · `media (0,18 · 0,16 · 0,71 · 0,84)` · `pequena (0,06 · 0,16 · 0,60 · 0,84)` · `cartao (0,16 · 0,31 · 0,84 · 0,74)`.
+**A medição automática por pixel foi abandonada**: a fibra da madeira quebra as linhas em trechos curtos e o centro das peças cai sobre ornamento (folha/bolota), o que degenerava as áreas. O código automático ficou no repositório apenas como conferência.
+
+**Integração no jogo (Regras 21 e 22 — sprite INTEIRO, escala uniforme, sem corte nem deformação):**
+- `game/js/paper_hud.js`: `PLACA_QUIET` (as 4 áreas medidas), `PLACA_NATIVE` (`400×180`, `326×90`, `312×100`, `87×200`), `drawPlaca()` (desenha a tábua inteira via `paperFit` e devolve o retângulo de texto medido) e `placaQuiet()` (a área medida sem desenhar).
+- `game/js/ui.js`: `button({plate:"media"|"pequena"|"grande"|"cartao"})` desenha a placa nova e **centra o rótulo na área medida**; `opt.labelColor` permite tinta creme com sombra na madeira clara (o marrom sumia entre os veios); `lastButton()` expõe `hot`/`clicked` (o `button()` só devolvia booleano); a placa antiga continua disponível para quem não pedir `plate`.
+- `game/js/game.js` (rodapé do RUN): **IRMÃS** = `placa_media` `160×44` (formiga + "IRMÃS" + "ABRIR (Q)" dentro da faixa calma `0,16..0,84` da altura); **cards da loja** = `placa_cartao` `30×64` (formiga + preço + faixa de grupo no topo da área calma); **formigueiro** = `placa_pequena` `190×60` (ícone + nome do bioma + "ENTRAR (B)"). Antes: a placa quadrada `144×144` era esmagada em `92×64` (IRMÃS) e os cards `38×64` mostravam formiga e preço por cima do ornamento.
+- `game/js/meta.js` (ÁRVORE): navegação `MEMÓRIAS`/`PROFECIAS`/`VOLTAR` = `placa_media` `124×44`. As **linhas de galho mantêm a seta de madeira antiga**: a coluna rolável tem só `125px` de largura útil e a arte nova comprime o texto demais nessa largura.
+- `game/js/render.js` (SELECIONE O MODO): o `JOGAR` do card deixou de ser um retângulo chapado e virou a **placa `grande`** (a tábua-modelo aprovada), com o rótulo em creme com sombra na faixa calma central.
+- **OPÇÕES/configurações continuam com o sprite antigo** (`button_grande/pequeno/largo/mini` preservados): o usuário pediu explicitamente para não usar o mesmo botão em todo lugar.
+
+**Outras correções exigidas pelos testes:** `button({tap:true})` foi REMOVIDO dos botões do rodapé — o `tap` dispara ao soltar e depende de `mouse.clickX/clickY`, que só o evento real de ponteiro preenche; o teste headless (`uitest`) aciona por `justDown`. Sem isso o clique do IRMÃS, dos cards e do formigueiro parou de funcionar. As posições dos cards da loja passaram a vir do próprio jogo (`SHOP_CARD`, `shopCardX`, `shopCardXByType` em `game/js/game.js`), e o `uitest` deixou de duplicar números do layout.
+
+**Verificações executadas:**
+- `npm run inspect:layout` (Chromium real, PC + mobile, normal + `FONTE GRANDE`): **118/118 estados limpos** — "✓ LAYOUT LIMPO — nada sobreposto, vazando ou coberto";
+- `npm test`: `uitest` **PASSOU** depois da correção do `tap` (a 1ª rodada acusou o clique do IRMÃS/cards/formigueiro, exatamente o efeito do `tap`); `regressions-browser` **PASSOU isolado** (`✓ REGRESSÕES NO NAVEGADOR OK`) e falhou 1× no paralelo; `pwa` **PASSOU isolado 2×** (`✓ PWA OK`, 65s e 67s) e falhou 3× no paralelo — no paralelo o download dos 44 MB solta arquivos (`falhas ≠ 0`) e uma vez o fechamento do navegador ficou pendurado. São **flakes de contenção do sandbox** (o runner joga várias suítes ao mesmo tempo); nenhuma delas toca o service worker ou a lista de assets, que são os mesmos do registro anterior;
+- capturas PC e mobile conferidas: rodapé do RUN com a loja aberta, ÁRVORE, SELECIONE O MODO, e as 4 placas com a área de texto marcada;
+- `app/assets.json` regenerado (20 placas novas registradas, 239 assets);
+- Diagrama ANTES → DEPOIS (Regra 20): `slice-box/diagrama-placas-madeira-v2.png` (gerado por `tools/make_diagram_placas_v2.py`).
+
+**Limites / observações:**
+- A 1ª spritesheet e as gerações separadas **não** entraram no jogo; a v2 aprovada é a única família publicada.
+- O texto sobre a madeira clara ficou creme com sombra escura; o marrom puro sumia entre os veios da madeira.
+- Verificação feita em navegador headless (Chromium 153), não em aparelho físico.
+- Sem commit/push/PR nesta solicitação; a fonte e as capturas pesadas continuam fora do Git (`art-source/` é ignorado).
+
 ## Registro — Camadas `Fundo > Texto > Moldura` + Roteamento e Plano dos 8 Novos HUDs Distintos por Local (2026-10-16)
 
 **Pedido do usuário:** "Quero que os HUDs agora sejam organizados em camadas na seguinte ordem, do mais ao fundo ao mais a frente: Fundo>Texto>Moldura. Para que assim Os textos não fiquem em cima da moldura. Junto com isso adicione mais HUD distintos para locais específicos na tela de jogo, não quero que você use alguns HUDs para vários lugares. Crie um HUD para cada local mantendo o estilo entre todos eles, para que assim não exista mais problemas de enquadramento." Em seguida: "Documente tudo isto para uma próxima implementação. Depois Salve no Github".

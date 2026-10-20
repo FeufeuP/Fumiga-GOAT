@@ -84,7 +84,10 @@ try {
         await page.evaluate(() => {
           window.__seenScreens = [];
           const timer = setInterval(() => __seenScreens.push(FUMIGA.G.screen), 16);
-          setTimeout(() => clearInterval(timer), 2000);
+          // Janela larga: sob carga (vários testes de navegador ao mesmo tempo)
+          // o clique pode demorar mais de 2s para virar a tela — a janela curta
+          // fechava o registro antes da troca e o teste falhava por timeout.
+          setTimeout(() => clearInterval(timer), 8000);
         });
         await click('start');
         await page.waitForFunction(() => window.__seenScreens.includes('MODE'));

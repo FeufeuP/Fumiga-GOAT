@@ -12,6 +12,7 @@ import { orbs, projectiles, drawProjectiles, drawOrbs } from "./combat.js";
 import { drawDecals, drawTrails, drawParts, drawGlows, drawRings, drawFloats } from "./particles.js";
 import { drawText, textWidth, lineWidth, textHeight, fontScale } from "./font.js";
 import { clamp, TAU, lerp } from "./utils.js";
+import { drawPlaca } from "./paper_hud.js";
 import { fogDraw, fogVisible } from "./fog.js";
 import { SFX } from "./audio.js";
 import { mouse } from "./input.js";
@@ -1625,26 +1626,27 @@ export function drawModeSelect(ctx, time) {
   ctx.fillStyle = "rgba(10,8,18,0.62)";
   ctx.fillRect(0, 0, VIEW_W, VIEW_H);
 
-  // título da tela — o subtítulo desce conforme a altura REAL da tinta do
-  // título (com FONTE GRANDE ele passava por cima das letras)
+  // título da tela — cabe na faixa superior (0..104) sem encostar nos cards nem com FONTE GRANDE
   const modeFS = fontScale();
-  const titleInk = textHeight("SELECIONE O MODO", { font: "big", scale: 2 });
-  drawText(ctx, "SELECIONE O MODO", VIEW_W/2, 24, { font: "big", scale: 2, color: "#ffd479", align: "center", maxWidth: VIEW_W - 40 });
-  drawText(ctx, "Cada modo é uma colônia diferente para comandar", VIEW_W/2, 24 + titleInk + 13,
-    { color: "#9a8fc0", align: "center", maxWidth: VIEW_W - 40 });
+  const titleScale = modeFS > 1 ? 1.55 / modeFS : 1.75;
+  const subScale = modeFS > 1 ? 0.85 / modeFS : 0.92;
+  const titleInk = textHeight("SELECIONE O MODO", { font: "big", scale: titleScale });
+  drawText(ctx, "SELECIONE O MODO", VIEW_W/2, 12, { font: "big", scale: titleScale, color: "#ffd479", align: "center", maxWidth: VIEW_W - 40 });
+  drawText(ctx, "Cada modo é uma colônia diferente para comandar", VIEW_W/2, 12 + titleInk + 6,
+    { color: "#9a8fc0", align: "center", scale: subScale, maxWidth: VIEW_W - 40 });
 
   // linha
   ctx.fillStyle = "rgba(143,111,214,0.3)";
-  ctx.fillRect(VIEW_W/2 - 180, 24 + titleInk + 38, 360, 1);
+  ctx.fillRect(VIEW_W/2 - 180, 98, 360, 1);
 }
 
 export function drawModeCards(ctx, modes, hoverIdx, time, scrollOffset = 0) {
-  const cardW = modes.length <= 2 ? 360 : 210, cardH = 340, gap = modes.length <= 2 ? 40 : 18;
+  const cardW = modes.length <= 2 ? 360 : 210, cardH = 312, gap = modes.length <= 2 ? 40 : 18;
   const totalW = modes.length * cardW + (modes.length - 1) * gap;
   // Com 2 modos, ambos os cards cabem na tela inteira (x: 100..460 e 500..860)
   const scrollVisual = modes.length > 2 ? scrollOffset * (cardW + gap) : 0;
   const startX = VIEW_W/2 - totalW/2 - scrollVisual;
-  const y = 116;
+  const y = 108;
 
   const rects = [];
 
@@ -1678,59 +1680,76 @@ export function drawModeCards(ctx, modes, hoverIdx, time, scrollOffset = 0) {
     }
 
     // ícone grande
-    const iconY = y + 22 - lift;
+    const iconY = y + 14 - lift;
     ctx.fillStyle = "rgba(0,0,0,0.3)";
-    ctx.fillRect(x + cardW/2 - 32, iconY, 64, 64);
+    ctx.fillRect(x + cardW/2 - 28, iconY, 56, 56);
     ctx.strokeStyle = m.color;
     ctx.lineWidth = 2;
-    ctx.strokeRect(x + cardW/2 - 32 + 0.5, iconY + 0.5, 63, 63);
+    ctx.strokeRect(x + cardW/2 - 28 + 0.5, iconY + 0.5, 55, 55);
     if (m.iconImg) {
-      ctx.drawImage(m.iconImg, x + cardW/2 - 24, iconY + 6, 48, 48);
+      ctx.drawImage(m.iconImg, x + cardW/2 - 20, iconY + 6, 40, 40);
     } else {
-      drawText(ctx, m.icon, x + cardW/2, iconY + 18, { font: "big", scale: 1.5, color: m.color, align: "center" });
+      drawText(ctx, m.icon, x + cardW/2, iconY + 14, { font: "big", scale: 1.4, color: m.color, align: "center" });
     }
 
     // nome, dificuldade e descrição em passos CALCULADOS: a tinta da fonte big
     // escala 0.9 tem 23px com FONTE GRANDE, e o passo fixo de 20px punha o
     // subtítulo por cima do nome ("CAMPANHA" x "NORMAL • 6 MAPAS")
     const FS = fontScale();
-    const nameAdv = Math.ceil(30 * 0.9 * FS);
-    const diffAdv = Math.ceil(24 * 0.85 * FS);
-    drawText(ctx, m.name, x + cardW/2, iconY + 76, { font: "big", scale: 0.9, color: "#efe9ff", align: "center", maxWidth: cardW - 16 });
+    const nameAdv = Math.ceil(28 * 0.9 * FS);
+    const diffAdv = Math.ceil(22 * 0.85 * FS);
+    drawText(ctx, m.name, x + cardW/2, iconY + 64, { font: "big", scale: 0.9, color: "#efe9ff", align: "center", maxWidth: cardW - 16 });
 
     // dificuldade
-    drawText(ctx, m.diff, x + cardW/2, iconY + 76 + nameAdv, { color: m.color, align: "center", scale: 0.85, maxWidth: cardW - 16 });
+    drawText(ctx, m.diff, x + cardW/2, iconY + 64 + nameAdv, { color: m.color, align: "center", scale: 0.85, maxWidth: cardW - 16 });
 
     // descrição quebrada — o passo entre linhas acompanha o tamanho REAL da
     // tinta (FONTE GRANDE +30%), senão as linhas se sobrepõem dentro do card
     const descLines = m.desc.split("\n");
-    let dy = iconY + 76 + nameAdv + diffAdv;
+    let dy = iconY + 64 + nameAdv + diffAdv;
     for (const line of descLines) {
-      drawText(ctx, line, x + cardW/2, dy, { color: "#9a8fc0", align: "center", scale: 0.85, maxWidth: cardW - 20 });
-      dy += 17 * FS;
+      drawText(ctx, line, x + cardW/2, dy, { color: "#9a8fc0", align: "center", scale: 0.8, maxWidth: cardW - 20 });
+      dy += Math.ceil(15.5 * FS);
     }
 
     // stats
-    dy += 6;
+    dy += 4;
     ctx.fillStyle = "rgba(74,58,110,0.4)";
     ctx.fillRect(x + 10, dy, cardW - 20, 1);
-    dy += 8;
+    dy += 6;
     for (const s of m.stats) {
-      drawText(ctx, s, x + 12, dy, { color: "#6b5a8a", scale: 0.7, maxWidth: cardW - 20 });
-      dy += 13 * FS;
+      drawText(ctx, s, x + 12, dy, { color: "#6b5a8a", scale: 0.68, maxWidth: cardW - 20 });
+      dy += Math.ceil(12.5 * FS);
     }
 
-    // botão jogar - sempre abaixo dos stats com margem
-    const btnY = y + cardH - 36 - lift;
+    // Botão JOGAR: PLACA DE MADEIRA nova (família 2026-10-19). O retângulo
+    // chapado ficava solto no card; a tábua entra INTEIRA (escala uniforme,
+    // sem deformar) e o texto fica na madeira calma medida da arte.
     const btnHot = isHover;
-    ctx.fillStyle = btnHot ? m.color : "#2a2340";
-    ctx.fillRect(x + 10, btnY, cardW - 20, 26);
-    ctx.strokeStyle = btnHot ? "#fff" : m.color;
-    ctx.lineWidth = 1;
-    ctx.globalAlpha = btnHot ? 0.9 : 0.4;
-    ctx.strokeRect(x + 10 + 0.5, btnY + 0.5, cardW - 21, 25);
-    ctx.globalAlpha = 1;
-    drawText(ctx, "JOGAR", x + cardW/2, btnY + 6, { color: btnHot ? "#000" : "#efe9ff", align: "center", font: "small", scale: 1 });
+    const availH = (y + cardH - 12 - lift) - (dy - 8);
+    const placaH = Math.max(46, Math.min(86, Math.round(availH)));
+    const placaW = Math.min(cardW - 24, Math.round(placaH * 2.22));
+    const placaX = Math.round(x + (cardW - placaW) / 2);
+    const placaY = Math.round(y + cardH - 12 - placaH - lift);
+    const qJ = drawPlaca(ctx, "placa_grande", placaX, placaY, placaW, placaH, { hot: isHover });
+    if (qJ) {
+      const jScale = Math.min(1, (qJ.w - 2) / Math.max(1, textWidth("JOGAR", { scale: .95 })));
+      // Tinta marrom com halo creme: a madeira calma da placa é clara
+      // (luminância ~175) e o creme puro sumia entre os veios.
+      drawText(ctx, "JOGAR", qJ.x + qJ.w / 2, qJ.y + (qJ.h - textHeight("JOGAR", { scale: jScale })) / 2,
+        { color: "#4a3116", align: "center", font: "small", scale: jScale, maxWidth: qJ.w, paper: true });
+    } else {
+      // sem a arte carregada: o retângulo antigo, para nunca sumir o botão
+      const btnY = y + cardH - 34 - lift;
+      ctx.fillStyle = btnHot ? m.color : "#2a2340";
+      ctx.fillRect(x + 10, btnY, cardW - 20, 26);
+      ctx.strokeStyle = btnHot ? "#fff" : m.color;
+      ctx.lineWidth = 1;
+      ctx.globalAlpha = btnHot ? 0.9 : 0.4;
+      ctx.strokeRect(x + 10 + 0.5, btnY + 0.5, cardW - 21, 25);
+      ctx.globalAlpha = 1;
+      drawText(ctx, "JOGAR", x + cardW / 2, btnY + 6, { color: btnHot ? "#000" : "#efe9ff", align: "center", font: "small", scale: 1 });
+    }
 
     rects.push({ x, y: y - lift, w: cardW, h: cardH, idx: i });
   }
