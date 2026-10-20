@@ -91,9 +91,21 @@ jobs:
             echo "SKIP_APK=1" >> "$GITHUB_ENV"
             exit 0
           fi
-          test -n "$KEYSTORE_PASSWORD" || { echo 'Falta o segredo FUMIGA_KEYSTORE_PASSWORD.' >&2; exit 1; }
-          test -n "$KEY_ALIAS" || { echo 'Falta o segredo FUMIGA_KEY_ALIAS.' >&2; exit 1; }
-          test -n "$KEY_PASSWORD" || { echo 'Falta o segredo FUMIGA_KEY_PASSWORD.' >&2; exit 1; }
+          if [[ -z "${KEYSTORE_PASSWORD:-}" ]]; then
+            echo "::warning::Faltou FUMIGA_KEYSTORE_PASSWORD — APK pulado. Verifique os 4 secrets no GitHub."
+            echo "SKIP_APK=1" >> "$GITHUB_ENV"
+            exit 0
+          fi
+          if [[ -z "${KEY_ALIAS:-}" ]]; then
+            echo "::warning::Faltou FUMIGA_KEY_ALIAS — APK pulado."
+            echo "SKIP_APK=1" >> "$GITHUB_ENV"
+            exit 0
+          fi
+          if [[ -z "${KEY_PASSWORD:-}" ]]; then
+            echo "::warning::Faltou FUMIGA_KEY_PASSWORD — APK pulado."
+            echo "SKIP_APK=1" >> "$GITHUB_ENV"
+            exit 0
+          fi
           echo "$KEYSTORE_B64" | base64 --decode > "$RUNNER_TEMP/fumiga-release.p12"
           chmod 600 "$RUNNER_TEMP/fumiga-release.p12"
           {
