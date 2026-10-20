@@ -106,7 +106,19 @@ jobs:
             echo "SKIP_APK=1" >> "$GITHUB_ENV"
             exit 0
           fi
-          echo "$KEYSTORE_B64" | base64 --decode > "$RUNNER_TEMP/fumiga-release.p12"
+          # Diagnóstico seguro (sem vazar segredo): mostra se cada secret existe e tamanho
+          echo "::notice::Secrets recebidos — B64:${#KEYSTORE_B64} chars, PASS:${#KEYSTORE_PASSWORD} chars, ALIAS:${#KEY_ALIAS} chars, KPASS:${#KEY_PASSWORD} chars"
+          if ! echo "$KEYSTORE_B64" | base64 --decode > "$RUNNER_TEMP/fumiga-release.p12" 2>/tmp/b64err; then
+            echo "::warning::FUMIGA_KEYSTORE_BASE64 não é base64 válido — APK pulado. Erro: $(cat /tmp/b64err)"
+            echo "::warning::Gere novamente com: base64 -w0 .signing/fumiga-release.p12  (Linux) ou certutil -encode (Windows)"
+            echo "SKIP_APK=1" >> "$GITHUB_ENV"
+            exit 0
+          fi
+          if [[ ! -s "$RUNNER_TEMP/fumiga-release.p12" ]]; then
+            echo "::warning::Keystore decodificado vazio — APK pulado."
+            echo "SKIP_APK=1" >> "$GITHUB_ENV"
+            exit 0
+          fi
           chmod 600 "$RUNNER_TEMP/fumiga-release.p12"
           {
             echo "FUMIGA_KEYSTORE=$RUNNER_TEMP/fumiga-release.p12"
@@ -115,6 +127,7 @@ jobs:
             echo "FUMIGA_KEY_PASSWORD=$KEY_PASSWORD"
           } >> "$GITHUB_ENV"
           echo "SKIP_APK=0" >> "$GITHUB_ENV"
+          echo "::notice::Keystore OK — ${KEY_ALIAS} / $(du -h "$RUNNER_TEMP/fumiga-release.p12" | cut -f1)"
       - name: Compilar APK completo e assinado
         if: env.SKIP_APK != '1'
         run: bash tools/build-android.sh release
