@@ -28,7 +28,7 @@ export const PAPER_QUIET = Object.freeze({
   panel:       Object.freeze([.215, .200, .865, .800]),
   expanded:    Object.freeze([.200, .200, .855, .800]),
   tutorial:    Object.freeze([.195, .200, .860, .800]),
-  nest_tip:    Object.freeze([.205, .200, .855, .800]),
+  nest_tip:    Object.freeze([.303, .243, .723, .757]),   // MEDIDO na arte entregue (2026-10-21): o retângulo livre de tinta DESVIA dos cogumelos que invadem o papel, por isso não é simétrico
   health:      Object.freeze([.145, .320, .865, .680]),
   banner:      Object.freeze([.310, .295, .840, .765]),
   boss:        Object.freeze([.200, .260, .835, .760]),
@@ -47,7 +47,7 @@ export const PAPER_NATIVE_SIZE = Object.freeze({
   panel:       Object.freeze([960, 512]),
   expanded:    Object.freeze([960, 512]),
   tutorial:    Object.freeze([960, 512]),
-  nest_tip:    Object.freeze([960, 512]),
+  nest_tip:    Object.freeze([960, 540]),   // a moldura veio 16:9, não 15:8 do plano; a ficha deriva a altura disto (nest.js) em vez de esmagar o sprite
   health:      Object.freeze([960, 135]),
   banner:      Object.freeze([960, 192]),
   boss:        Object.freeze([960, 192]),
@@ -67,7 +67,7 @@ export const PAPER_APERTURE = Object.freeze({
   panel:       Object.freeze([.030, .148, .925, .848]),
   expanded:    Object.freeze([.035, .148, .920, .848]),
   tutorial:    Object.freeze([.035, .148, .920, .848]),
-  nest_tip:    Object.freeze([.035, .148, .920, .848]),
+  nest_tip:    Object.freeze([.201, .222, .805, .785]),   // janela vazada medida na arte entregue
   health:      Object.freeze([.117, .267, .899, .726]),
   banner:      Object.freeze([.029, .141, .860, .802]),
   boss:        Object.freeze([.040, .145, .900, .820]),

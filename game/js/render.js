@@ -12,7 +12,7 @@ import { orbs, projectiles, drawProjectiles, drawOrbs } from "./combat.js";
 import { drawDecals, drawTrails, drawParts, drawGlows, drawRings, drawFloats } from "./particles.js";
 import { drawText, textWidth, lineWidth, textHeight, fontScale } from "./font.js";
 import { clamp, TAU, lerp } from "./utils.js";
-import { drawPlaca } from "./paper_hud.js";
+import { drawPlaca, drawPaper } from "./paper_hud.js";
 import { fogDraw, fogVisible } from "./fog.js";
 import { SFX } from "./audio.js";
 import { mouse } from "./input.js";
@@ -266,9 +266,17 @@ export function drawOutsideEye(ctx, x, y, w = PIP.w, h = PIP.h) {
   // faixa de 14px e saía pela borda do painel.
   const eyeFS = fontScale();
   const bandT = eyeFS > 1 ? 23 : 15, bandB = eyeFS > 1 ? 21 : 14;
-  ctx.fillStyle = "rgba(10,8,16,0.86)";
-  ctx.fillRect(x, y, w, bandT);
-  ctx.fillRect(x, y + h - bandB, w, bandB);
+  // C1.4 (plano dos Grupos B e C): as duas faixas da janela saem do fillRect
+  // preto e viram a prancha de madeira da casa — a única peça que estica uma
+  // tira de 300x15 sem deformar. A moldura de minimapa (960x717) sairia
+  // encolhida para ~44px de largura aqui, que é exatamente o encolhimento que o
+  // Grupo B existe para matar. Sem a arte carregada, volta a faixa escura.
+  const band = (by, bh) => drawPaper(ctx, "button", x, by, w, bh, {});
+  if (!(band(y, bandT) && band(y + h - bandB, bandB))) {
+    ctx.fillStyle = "rgba(10,8,16,0.86)";
+    ctx.fillRect(x, y, w, bandT);
+    ctx.fillRect(x, y + h - bandB, w, bandB);
+  }
   drawText(ctx, "OLHO LÁ FORA", x + 5, y + (bandT - 18) / 2,
     { color: alarm ? "#ff8a96" : "#ffd479", scale: 0.8, maxWidth: w / 2 - 8 });
   if (run) {

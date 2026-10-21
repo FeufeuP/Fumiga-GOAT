@@ -144,6 +144,17 @@ const S = {
     const { G } = await M("state.js"); G.run.banner = null;
     (await M("game.js")).__debug.openNest();
   },
+  ninhoObras: async (M) => {
+    window.FUMIGA.go("RUN", { mapa: 0, seed: 7 });
+    await new Promise((r) => setTimeout(r, 120));
+    const { G } = await M("state.js"); G.run.banner = null;
+    (await M("game.js")).__debug.openNest();
+    // A GAVETA das obras (mobile) aberta: sete placas sobre o rodapé e sobre o
+    // campo. HUD novo entra no auditor de layout, inclusive com fonte grande -
+    // é aí que estouro de rótulo em placa de 226px aparecería.
+    const N = (await M("nest.js")).nest;
+    N.drawer = true; N.tool = "pantry";
+  },
   cutscene: async (M) => {
     window.FUMIGA.go("RUN", { mapa: 0, seed: 7 });
     await new Promise((r) => setTimeout(r, 50));
@@ -178,10 +189,10 @@ const STATES = [
   ["RUN-FAIXA", S.run, 1200], ["RUN", S.runLimpo], ["RUN-TESTE", S.runTeste], ["RUN-EXPANDIDO", S.runExpandido], ["RUN-FORMIGAS", S.runFormigas],
   ["RUN-TUTORIAL", S.tutorial], ["RUN-CHEFE", S.chefe], ["RUN-DRAFT", S.draft], ["RUN-PAUSA", S.pausa],
   ["RUN-TRANSICAO", S.transicao], ["RUN-DERROTA", S.fim(false)], ["RUN-VITORIA", S.fim(true)],
-  ["NINHO", S.ninho], ["CUTSCENE", S.cutscene, 2600],
+  ["NINHO", S.ninho], ["NINHO-OBRAS", S.ninhoObras], ["CUTSCENE", S.cutscene, 2600],
 ];
 // fonte grande (acessibilidade) nas telas que mais têm texto
-const BIG = new Set(["ARVORE", "ARVORE-DICA", "TITULO", "AJUDA", "MODO", "OPCOES-ABA0", "OPCOES-ABA3", "OPCOES-ABA5", "RUN", "RUN-TESTE", "RUN-EXPANDIDO", "RUN-PAUSA", "RUN-DRAFT", "RUN-DERROTA", "NINHO", "MEMORIAS", "PROFECIAS", "RUN-TUTORIAL"]);
+const BIG = new Set(["ARVORE", "ARVORE-DICA", "TITULO", "AJUDA", "MODO", "OPCOES-ABA0", "OPCOES-ABA3", "OPCOES-ABA5", "RUN", "RUN-TESTE", "RUN-EXPANDIDO", "RUN-PAUSA", "RUN-DRAFT", "RUN-DERROTA", "NINHO", "NINHO-OBRAS", "MEMORIAS", "PROFECIAS", "RUN-TUTORIAL"]);
 
 fs.mkdirSync(OUT, { recursive: true });
 const server = process.env.BASE_URL ? null : await startServer();

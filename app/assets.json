@@ -1,5 +1,5 @@
 {
-  "version": "20261019-placas-madeira-v2",
+  "version": "20261021-ninho-arte-v3",
   "geradoPor": "tools/make_assets_list.mjs",
   "grupos": [
     {
@@ -75,13 +75,13 @@
         7089,
         2993,
         1576,
-        25289,
+        26005,
         11449,
         21721,
         2553,
         4559,
         8208,
-        53790,
+        59466,
         23041,
         14561,
         38797,
@@ -89,7 +89,7 @@
         17525,
         10280,
         14824,
-        153098,
+        155457,
         4785,
         27441,
         23553,
@@ -97,19 +97,19 @@
         12584,
         53985,
         1342,
-        44309,
-        21959,
+        72575,
+        22256,
         15085,
         14081,
         4494,
         15954,
-        83077,
+        83617,
         19675,
         6938,
         7119,
         8082,
         24210,
-        56951,
+        57640,
         4378,
         11211,
         23627,
@@ -121,7 +121,7 @@
         11046,
         899
       ],
-      "bytes": 1424308
+      "bytes": 1462851
     },
     {
       "id": "assets",
@@ -223,6 +223,7 @@
         "game/assets/sprites/icons/spider.png",
         "game/assets/sprites/icons/sun.png",
         "game/assets/sprites/icons/wing_gem.png",
+        "game/assets/sprites/nest/terra.png",
         "game/assets/sprites/props/bush_autumn1.png",
         "game/assets/sprites/props/bush_autumn2.png",
         "game/assets/sprites/props/bush_autumn3.png",
@@ -308,6 +309,8 @@
         "game/assets/ui/paper/minimap_bg.png",
         "game/assets/ui/paper/minimap_frame.png",
         "game/assets/ui/paper/minimap.png",
+        "game/assets/ui/paper/nest_tip_bg.png",
+        "game/assets/ui/paper/nest_tip_frame.png",
         "game/assets/ui/paper/panel_bg.png",
         "game/assets/ui/paper/panel_frame.png",
         "game/assets/ui/paper/panel.png",
@@ -464,6 +467,7 @@
         1186,
         1193,
         1113,
+        518854,
         810,
         620,
         478,
@@ -549,6 +553,8 @@
         1099249,
         655386,
         1058743,
+        318453,
+        820513,
         749310,
         404850,
         804840,
@@ -608,7 +614,7 @@
         839032,
         656076
       ],
-      "bytes": 45138718
+      "bytes": 46796538
     }
   ]
 }

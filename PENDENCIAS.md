@@ -139,3 +139,42 @@ Por decisão explícita do usuário em 2026-10-16, o **Grupo A** foi corrigido n
     - **Tabela C2:** inventário completo dos 32 ícones (`game/assets/sprites/icons/`) organizados em lotes de até 10 imagens por rodada (Regra 16).
     - **Tabela C3:** mapeamento de substituição dos 5 atlases pixel-art legados (`game/assets/ui/lore_*.png`).
 
+## 5. Ninho escavável — o que ficou aberto depois do protótipo e o que a rodada de arte fechou (2026-10-21)
+
+O formigueiro deixou de ser menu de salas e virou **grade de terra escavável** (`game/js/nest.js`
+reescrito + `NEST_*` em `game/js/config.js`). A rodada seguinte — **arte, HUD, mobile e balanceamento** —
+foi aplicada e verificada (`npm test` 38/38, `inspect:layout` 122 estados, `inspect:hud`, 59,5 fps na
+cena com a gaveta aberta). O registro completo está em `MEGA_ARQUIVO.md`, „Rodada de ARTE do ninho
+escavável (2026-10-21)“.
+
+**Fechado nesta rodada:**
+
+- **Continuidade do chão** (item 3 da lista antiga): uma folha pintada **uma vez** no rect da grade e
+  amostrada 1:1 pelo tile (`game/assets/sprites/nest/terra.png`, 1326×468) — nada de atlas de tiles que
+  encaixam, e o `nestmap` reprova re-corte fora da proporção da grade.
+- **Ficha do tile** com moldura própria (`paper_nest_tip_frame`/`_bg`, área quieta medida no PNG,
+  `PAPER_QUIET.nest_tip`) em lugar do `panel` da superfície.
+- **Faixas C1.2 / C1.3 / C1.4** saíram do `fillRect` preto e viraram a prancha da casa (barra de topo,
+  duas tiras do rodapé e as faixas do `OLHO LÁ FORA`).
+- **Mobile**: as 7 placas viraram **gaveta `OBRAS`** que abre sobre o campo só no toque e fecha ao
+  escolher; `KeyX` passou a demolir de verdade e o rótulo diz `7 / X` (PC e toque).
+- **Balanceamento**: `capBase 280`, `spoil 0,05` e `refundBuilt 0,5` (demolir obra começada devolve
+  metade; plano não começado devolve tudo) — revalidado em `sim` e `endless`.
+
+**Ainda em aberto:**
+
+1. **Pílulas C1.5** (rodapé do ninho e do PiP) — ficaram fora da aplicação de propósito: o pedido era o
+   chão e as faixas. Entram no próximo lote da Tabela C1.
+2. **Tráfego de túnel no mapa largo** — `trafficGood 6` / `trafficBad 34` (túnel comprido rende 0,55x)
+   ainda não foram medidos nos mapas 4 e 6 com câmaras grandes; a curva existe, o número não foi conferido.
+3. **`extraChamberMult 1.6`** (segunda câmara do mesmo tipo custa +60%) — mantido como estava; a rodada só
+   mexeu no reembolso da obra. Se ampliar continuar parecendo taxa, é aqui que se ajusta.
+4. **Eventos de playtest** do ninho (`ptEvento`) — continuam sem existir; só entram com o formato do modo
+   definido (Regra: evento em ponto discreto, nunca por frame).
+5. **Aparelho físico**: tudo foi verificado em Chromium headless (PC e mobile emulado), não em celular.
+
+**Regressão encontrada JOGANDO (não em teste), para memória:** a carregadora que largava uma obra
+acordava sem trilha desenhada e ficava respirando no lugar — o estoque congelava sem erro algum na
+tela. Corrigido (`nest.js:carrierTick` traça a rota até a boca quando falta trilha) e **virou
+teste** em `game/test/nestdig.mjs` (seção 8b). Lição que vale para a próxima cena: inspeção visual
+com cliques reais pega o que a asserção de estado não vê.

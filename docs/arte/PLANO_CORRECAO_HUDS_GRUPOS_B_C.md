@@ -56,6 +56,15 @@ Nos itens abaixo, as chamadas atuais de `panel()` / `dialogBox()` usam retângul
 
 ---
 
+> **Situação da Tabela C1 (2026-10-21, rodada de arte do ninho escavável).** **C1.2**, **C1.3** e
+> **C1.4** foram aplicadas — mas com uma substituição na receita: a faixa usa a **prancha de madeira
+> (`wood_*` em 3 partes)** em vez de `banner_*`. `tileFor` faz `paperFit` (contain) fora da família
+> madeira, e uma moldura `960×717` numa tira de `960×40` sairia **encolhida** (o que o Grupo B existe
+> para matar). Somaram-se duas linhas que não estavam previstas aqui e também foram aplicadas: a
+> **folha contínua do chão escavável** (`game/assets/sprites/nest/terra.png`, amostrada 1:1 pela grade)
+> e a **moldura própria da ficha do tile** (`paper_nest_tip_frame`/`_bg`, com área quieta medida no PNG).
+> **C1.5** (pílulas das 6 câmaras), **C1.1** e **C1.6 – C1.10** seguem em aberto.
+
 ### Tabela C2 — Inventário dos 32 Ícones de Jogo (`game/assets/sprites/icons/`) para Migração ao Estilo 06
 
 - **Status atual:** **1/32** integrado em produção (`ember.png`, `128×128` RGBA sem anéis); **9/32** com candidatos gerados em revisão (`art-source/f1-correcao/`, listados em `docs/arte/paper-icons-review.json`); **22/32** ainda sem candidato em papel recortado.

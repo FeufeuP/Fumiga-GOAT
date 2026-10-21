@@ -54,6 +54,7 @@ const TESTS = [
   { name: "sim-fruit-combos", file: "sim.mjs", env: { FRUIT_POWERS:"1", FORCE:"6" } },
   { name: "treemap", file: "treemap.mjs", env: { TREEMAP_OUT: path.join(tmpdir(), "arvore-layout.png") } },
   { name: "nestmap", file: "nestmap.mjs", env: { NESTMAP_OUT: path.join(tmpdir(), "formigueiro-layout.png") } },
+  { name: "nest-dig", file: "nestdig.mjs" },
   { name: "attack", file: "attack.mjs" },
   { name: "prophecy", file: "prophecy.mjs" },
   { name: "regressions", file: "regressions.mjs" },

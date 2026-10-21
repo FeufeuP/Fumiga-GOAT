@@ -10,7 +10,7 @@ import { applyPsxFilter } from "./psx_filter.js";
 // FUMIGA — orquestrador V3: PRETITLE -> TITLE -> MODE -> OPTIONS -> RUN + Planície Viva
 // ============================================================================
 import {
-  VIEW_W, VIEW_H, WORLD_W, WORLD_H, PAL, UNITS, START, MAPS, CHAMBERS,
+  VIEW_W, VIEW_H, WORLD_W, WORLD_H, PAL, UNITS, START, MAPS, CHAMBERS, NEST_RULES,
   MUTATIONS, RARITY, HELP_GOAL, HELP_CONTROLS, HELP_CONTROLS_TOUCH, HELP_TIPS, CALM_START, MAX_MUTS, xpForLevel,
   ASC_MAX, ascMods, ascLabel, PROPHECIES, ERA_LINES, META_POWER,
 } from "./config.js";
@@ -59,7 +59,7 @@ import {
 import { uiBegin, uiButtons, button, iconButton, panel, bar, pointInRect, dialogBox, isTouchUI, touchPad, tooltip, lastButton } from "./ui.js";
 import { startTutorial, stopTutorial, updateTutorial, drawTutorial, tutEvent, TUT, tutorialCardRect } from "./tutorial.js";
 import {
-  nest, nestEnter, nestExit, nestUpdate, nestDraw, nestClick, nestHover,
+  nest, nestEnter, nestExit, nestUpdate, nestDraw, nestHover,
   nestSendOut, nestCallBack,
 } from "./nest.js";
 import { rand, clamp, lerp, TAU, fmt } from "./utils.js";
@@ -809,7 +809,9 @@ function worldTick(simDt, run) {
   updateProjectiles(simDt, outside, foes);
   const gained = updateOrbs(simDt, world.anthill, allies.queen && !allies.queen.dead);
   if (gained > 0) {
-    const refMult = 1 + 0.15 * run.chambers.refinery;
+    // CÂMARA DE MEMÓRIA: o que refina é o tanto de tile construído (nest.js),
+    // não um botão de nível — sem refinaria escavada, o multiplicador é 1.
+    const refMult = (run.nestStats && run.nestStats.essMult) || 1 + 0.15 * run.chambers.refinery;
     run.essencePool += Math.round(gained * metaBonus().essMult * refMult);
     tutEvent("essence");
   }
@@ -818,8 +820,38 @@ function worldTick(simDt, run) {
   run.fungusT -= simDt;
   if (run.fungusT <= 0) {
     run.fungusT = 9;
-    const crop = run.chambers.fungus + metaBonus().fungusRate;
+    const crop = ((run.nestStats && run.nestStats.fungusCrop) || (run.nestStats ? 0 : run.chambers.fungus)) + metaBonus().fungusRate;
     if (crop > 0) run.food += crop;
+  }
+
+  // ---- ESTOQUE DA COLÔNIA (ninho escavável): a despensa define o teto e o que
+  // passa dele AZEDA. Sem nenhum tile de despensa escavado, o estoque é só o
+  // oco da entrada (NEST_RULES.capBase) — por isso cavar despensa é a 1ª obra.
+  {
+    const cap = (run.nestStats && run.nestStats.foodCap) || NEST_RULES.capBase;
+    const infMoney = !!(run.testPowers && run.testPowers.infMoney);
+    if (!infMoney && run.food > cap) {
+      run.spoilAcc = (run.spoilAcc || 0) + (run.food - cap) * NEST_RULES.spoil * simDt;
+      if (run.spoilAcc >= 1) {
+        const rot = Math.min(Math.floor(run.spoilAcc), run.food - cap);
+        run.food -= rot; run.spoilAcc -= rot;
+        run.spoiled = (run.spoiled || 0) + rot;
+        run.spoilT = (run.spoilT || 0) - simDt;
+        if (run.spoilT <= 0) {
+          run.spoilT = 6;
+          // só grita no mundo se o formigueiro ESTÁ na tela (o aviso de verdade
+          // mora na barra de dentro, em vermelho) — senão o float nasce fora dela
+          const vr = visibleWorldRect(0);
+          const ax = world.anthill.x, ay = world.anthill.y;
+          if (ax > vr.x0 && ax < vr.x1 && ay - 120 > vr.y0 && ay < vr.y1)
+          floatText(world.anthill.x, world.anthill.y - 120,
+            !!(run.nestStats && run.nestStats.tiles && run.nestStats.tiles.pantry > 0)
+              ? "DESPENSA CHEIA: " + rot + " COMIDA APODRECEU"
+              : "SEM DESPENSA ESCAVADA: A COMIDA APODRECE",
+            { color: "#ff8a96", life: 2.0 });
+        }
+      }
+    } else run.spoilAcc = 0;
   }
 
   while (run.xp >= run.xpNext) {
@@ -1947,13 +1979,11 @@ function drawNestScreen(run) {
   nestHover(mouse.x, mouse.y);
   const action = nestDraw(ctx);
   if (action === "back") { closeNest(run, true); return; }
-  // a BOCA: os botões do rodapé e o clique na sala da entrada mexem na porta
+  // a BOCA: os botões do rodapé mexem na porta. MARCAR OBRA não é clique único:
+  // a cena lê o ponteiro em nestUpdate (nest.js:nestInput), porque "pintar a
+  // terra" precisa do arraste inteiro — no PC e no toque pelo mesmo caminho.
   if (action === "out") nestSendOut(1);
   else if (action === "in") nestCallBack(1);
-  else if (mouse.justDown) {
-    const r = nestClick(mouse.x, mouse.y);
-    if (r === "out") { /* o clique na entrada já soltou uma formiga */ }
-  }
 }
 
 function hudTopSlot() {
