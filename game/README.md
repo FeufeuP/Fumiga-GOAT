@@ -252,7 +252,10 @@ vermelho (combate), verde (coleta), azul (criação) e âmbar (colosso).
 | `WASD` / setas | também movem a câmera |
 | Roda do mouse | zoom |
 | `Espaço` | centraliza no formigueiro |
-| `B` | **entra no formigueiro** (a cena viva de dentro) |
+| `B` | **entra/sai do formigueiro** (a cena viva de dentro) |
+| `1`–`7` (dentro) | escolhe a obra: cavar, despensa, berço, quartel, fungário, memória, demolir |
+| `X` (dentro) | também demole — é a segunda tecla da mesma placa (`7 / X`) |
+| `L` / `P` (dentro) | solta uma formiga pela boca / chama a mais próxima para dentro |
 | `1`–`0` | choca a classe do número (0 = Tecelã) — a Dinoponera nasce só pelo card; a fileira **FORMIGAS** precisa estar aberta |
 | `Q` | abre/fecha a fileira das 11 classes de formigas (grupos por cor) |
 | `F` | convoca a guarda para defender |
@@ -261,23 +264,63 @@ vermelho (combate), verde (coleta), azul (criação) e âmbar (colosso).
 | `M` | liga/desliga som |
 | `Esc` | **pausa** (Continuar / Como jogar / Reiniciar / Sair) |
 
-### Dentro do formigueiro (tecla `B`)
+### Dentro do formigueiro (tecla `B`) — NINHO ESCAVÁVEL
 
-O botão **FORMIGUEIRO**, no canto inferior-direito, entra na colônia — um corte transversal vivo,
-no espírito do *Ant Colony* (pasta `inspiração/`): túneis de terra, câmaras e as formigas
-trabalhando em tempo real.
+O botão **FORMIGUEIRO**, no canto inferior-direito, entra na colônia. O formigueiro não é mais um
+menu de salas fixas: é uma **grade de terra** (34x12 tiles de 26px) que a colônia abre no ritmo do
+trabalho dela, no espírito de *Empires of the Undergrowth* e do *SimAnt* (duas vistas da mesma
+colônia) e com a marcação por arraste do *Ant Colony*.
 
-- **Carregadoras** (operárias e coletoras) pegam comida na **ENTRADA** e levam para a **DESPENSA** —
-  cada entrega rende comida de verdade para a expedição.
-- **Escavadoras**: quando você clica numa câmara, as operárias largam a coleta, vão para a obra e
-  o nível sobe ao fim da escavação (custo pago no início, barra de progresso na câmara).
-- **Curandeiras** cuidam das larvas no **BERÇÁRIO**, que de tempos em tempos gera uma operária
-  nova (mais rápido com o berçário melhorado).
-- A **RAINHA** bota ovos na **CÂMARA REAL**; os ovos viram larvas e as larvas viram formigas.
-- No **QUARTEL** fica a DINOPONERA de folga; **FUNGÁRIO** e **REFINARIA** enchem a sala de
-  fungos e cristais conforme o nível.
-- O mundo lá fora **congela** enquanto você está dentro; o cabeçalho mostra comida, essência,
-  população e quanto as formigas já entregaram. `B` ou `Esc` volta para a colônia.
+O **chão é uma pintura só**: a folha de terra é desenhada uma vez no retângulo da grade e cada tile lê a
+sua região (`game/assets/sprites/nest/terra.png`, cortada na proporção exata da grade) — por isso os
+vizinhos formam superfície contínua, sem emenda para alinhar. O que ainda não foi escavado recebe um
+lavado escuro por cima; o piso aberto fica mais claro. Sem a arte carregada a cena volta aos blocos
+chapados por dureza (nada é obrigatório para o ninho existir).
+
+**Como se joga:**
+
+1. Escolha a obra na barra de baixo (`1` escavar, `2` despensa, `3` berço, `4` quartel,
+   `5` fungário, `6` câmara de memória, `7`/`X` demolir) e **pinte a terra** com o mouse ou o dedo.
+   No celular as sete placas moram numa **gaveta**: a placa `OBRAS` abre as sete sobre o campo e
+   escolher já fecha.
+2. Só dá para marcar um tile **encostado** no que já está aberto — o ninho cresce como túnel, não
+   como catálogo. Rocha-mãe não cava (e é ela que protege o canto do **OLHO LÁ FORA**).
+3. Nada é instantâneo: a escavadora anda até o tile, a dureza do solo define o tempo, e até
+   **3 formigas por obra** aceleram (mais que isso atrapalha). Tecelãs vivas dão +12% cada.
+4. Escavar é de graça em comida e **revela o que está enterrado**: ninhos de sementes (+comida) e
+   veios de cristal (+essência) pagam na hora que o tile abre.
+5. Desfazer obra: plano ainda **não começado devolve tudo**; obra que elas já começaram a levantar
+   devolve **metade** (`NEST_RULES.refundBuilt`). Tirar um tile de câmara construída encolhe a câmara.
+
+**Câmara = área.** O tipo contíguo forma uma câmara; o nível vem do tamanho (3/6/10 tiles para
+despensa, berço e fungário; 4/8/12 para quartel e memória), não de um botão. Duas câmaras do mesmo
+tipo não somam nível — cada uma conta separada, e a segunda custa 60% a mais para abrir. Ampliar a
+que já existe custa só o tile (a primeira pedra, não). Abaixo do mínimo, o que foi construído é
+**piso solto**: não dá bônus nenhum.
+
+**O ninho é o motor econômico da run:**
+
+| O que você cavou | O que passa a valer |
+|---|---|
+| **DESPENSA** | teto do estoque da colônia (`280 + 45/tile`) e bônus de entrega (+4% por tile, até ×1,9). **Sem despensa a comida acima do buraco da entrada AZEDA** (5%/s do excedente — meia-vida ~14 s) |
+| **BERÇO** | +1 de POP a cada 3 tiles e choco mais rápido; é aí que o ovo da Real encosta |
+| **QUARTEL** | cura de quem está dentro (+10%/tile) e +2% de dano de combate por tile |
+| **FUNGÁRIO** | comida por ciclo do mundo (+0,5/tile, multiplicada pelo nível) |
+| **CÂMARA DE MEMÓRIA** | +5% de essência por tile no que o campo deixa para dentro |
+
+**Tráfego.** O túnel é esteira: o rendimento de uma câmara cai conforme ela fica longe da boca
+(`×1,7` a até 6 tiles → `×0,55` no fim do corte). O multiplicador aparece na placa da câmara e na
+ficha do tile — é ele que torna "onde" você cava uma decisão, e não só "o quê".
+
+**A boca continua sendo a boca.** `L` solta uma formiga pela entrada, `P` chama a de fora mais
+perto, e quem está no fundo do ninho **anda até a entrada antes de subir** (sem teleporte). O
+rodízio automático (INSIDE_MAX/ROT_CD) e o **OLHO LÁ FORA** seguem valendo: o mundo lá fora
+**não congela** enquanto você olha para dentro — quem cai na ficha de uma câmara vê exatamente o
+que a janela mostra.
+
+**Nascer é trabalho.** A rainha bota na Câmara Real; uma enfermeira pega o ovo, carrega até o
+berço (o único lugar onde ele choca) e a colônia paga a comida do nascimento. Sem berço escavado,
+o ovo apodrece no fundo e a população congela — sem nenhuma mensagem de erro.
 
 ### HUD da expedição
 
@@ -295,9 +338,15 @@ defender a onda, coletar essência). `T` pula, e a preferência fica salva.
 
 - `js/` — módulos ES (game, units, enemies, waves, world, render, combat, particles,
   tutorial, meta, nest, audio, config, state, ui, font, input, camera, utils, playtest)
-- `js/nest.js` — a cena de dentro do formigueiro (salas, túneis, IA das formigas: carregar,
-  escavar, cuidar das larvas). Os bônus do grupo **CRIAÇÃO** da árvore entram aqui: escavação,
-  berçário, despensa, postura da rainha, custo das câmaras.
+- `js/nest.js` — a cena de dentro do formigueiro: a **grade de terra** (`NEST_GRID`/`NEST_SOIL`),
+  as filas de obra, o BFS de tráfego, as câmaras por área contígua, a IA das formigas (escavar,
+  construir, carregar, levar o ovo da Real ao berço) e o desenho da cena. Os números vivem em
+  `config.js` (`NEST_RULES`, `NEST_BUILD`); os bônus do grupo **CRIAÇÃO** da árvore entram por
+  `mods()` aqui (velocidade de escavação, custo das câmaras, comida entregue).
+- `test/nestdig.mjs` — trava as regras do ninho escavável (determinismo da terra, adjacência,
+  pagamento do veio, câmara por área, custo/devolução, tráfego, POP, a cadeia do ovo).
+- `test/nestmap.mjs` — desenho do corte em PNG + as travas de estrutura (grade, rocha-mãe do
+  OLHO LÁ FORA, nenhuma câmara solta, rótulos das ferramentas).
 - `assets/` — sprites processados e cópia runtime local da Kiwi Soda (`font/KiwiSoda.ttf`)
 - `tools/prepare_assets.sh` — regenera os sprites a partir das fontes
 - `js/playtest.js` — diário de campo **local e sem PII**: sessões, expedições, compras, erros e o

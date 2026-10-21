@@ -37,6 +37,232 @@ repetições, datas, branches, checklists e notas históricas foram preservados.
 > Divergências permanecem visíveis, sem apagar conteúdo. O que efetivamente
 > funciona deve ser confirmado por testes e inspeção no preview.
 
+## Registro — Formigueiro virou NINHO ESCAVÁVEL: protótipo jogável (2026-10-20)
+
+**Pedido:** „quero mudar totalmente como o formigueiro funciona“. Cinco perguntas com opções foram
+respondidas pelo usuário antes de codar (Regra 1): **modelo** = ninho escavável (grade de terra, o
+jogador marca e a colônia abre); **peso** = motor econômico central da run (com impacto total no
+balanceamento); **boca** = fica como está (L/P, rodízio, OLHO LÁ FORA); **câmera/arte** = top-down
+igual ao mundo (mesma câmera, luz e sprites — o que **quita a pendência** „interior em corte
+transversal exige decisão antes de novas peças top-down“); **ritmo** = protótipo jogável → aprovação
+→ arte/HUD/mobile/balanceamento na rodada seguinte. **Nada foi salvo no GitHub**: aguarda o „salve“.
+
+### 1. O que é o ninho agora
+
+`game/js/nest.js` foi **reescrito** (não `nest_v2.js`, Regra 5): a cena é uma **grade 34×12 de terra
+real** (`NEST_GRID`, tile de 26 px em 38,74) com 4 durezas (`NEST_SOIL`) e veios enterrados
+(`NEST_VEIN`: ninho de sementes +comida, cristal +essência, pagos no instante em que o tile abre).
+Marca-se **pintando** (clique ou arraste, no PC e no toque pelo mesmo caminho de input); só vale um
+tile **encostado** no que já está aberto — o ninho cresce como túnel, não como catálogo. Rocha-mãe
+(`NEST_RESERVE`) protege o canto do PiP: a janela „OLHO LÁ FORA“ nunca fica sobre terra escavável
+(há asserção para isso em `test/nestmap.mjs`).
+
+**Câmara = área contínua.** O mesmo tipo grudado forma uma componente; o nível vem do tamanho
+(`NEST_BUILD[id].sizes` = 3/6/10 para despensa/berço/fungário, 4/8/12 para quartel/memória). Abaixo
+do mínimo é **piso solto**, sem bônus nenhum. A primeira pedra de uma câmara custa
+`chamberCost(id,0) × 1,6^(câmaras do mesmo tipo já abertas)`; ampliar a existente custa só o tile
+(`NEST_BUILD[id].tile` com o desconto de `mods().chamberCost`); `X` desfaz e devolve **só** o que
+ainda não começou a ser construído.
+
+**Trabalho, não barra.** A obra anda por corpo: a formiga caminha até o tile, a dureza define o
+tempo (`digRate 0,55/s ÷ hard`, `buildRate 0,85`), até `crewPerTile` 2 na mesma obra (cap `maxDiggers`
+10), e cada Tecelã viva dá +12%. **Tráfego** é o preço do túnel: `1,7 − t·1,15` pela distância BFS até
+a boca (de `trafficGood 6` a `trafficBad 34`; inalcançável = 0,35) — aplicado a cavar, construir,
+entregar e chocar, e mostrado na placa da câmara e na ficha do tile. É isso que transforma „onde“ em
+decisão.
+
+### 2. O ninho é o motor da run (decisão „peso A“)
+
+`nest.js` escreve `run.nestStats` (ninguém mais toca nesse objeto) e `run.chambers.<tipo>` passou a
+ser **o nível da maior câmara escavada** — assim o contrato que `game.js`/`units.js` já tinha
+continuou válido e foi re-significado:
+
+| O que foi cavado | Efeito real, onde é lido |
+|---|---|
+| DESPENSA | `game.js:worldTick` — teto do estoque `220 + 45·tiles` e o excedente **azedando** a 7%/s do excesso (com `APODRECEU` no mundo e a barra em vermelho); `units.js:deposit` — `pantryMult` até ×1,9 |
+| BERÇO | `units.js:popCapTotal` +1 de POP a cada 3 tiles; `hatchTick` mais rápido; o ovo **só choca no berço** e a Real entrega a ele (`nurseTick`) |
+| QUARTEL | cura de quem está dentro (`healMult`) e `fightMult ×dmgMult` em `computeAntStats` |
+| FUNGÁRIO | `worldTick` — comida por ciclo vinda de `fungusCrop` (0,5/tile × nível) |
+| CÂMARA DE MEMÓRIA | `worldTick` — `essMult` no que o campo refina para dentro |
+
+Sem berço cavado a população congela; sem despensa a comida evapora; sem enfermeira o ovo apodrece.
+Nenhum desses casos imprime erro — é o „motor“ escolhido, não um bug, e por isso cada um tem
+asserção em `test/nestdig.mjs`.
+
+### 3. Arquivos tocados
+
+- `game/js/nest.js` — reescrito (1620 linhas): geração determinística por seed+mapa, filas de obra,
+  BFS/tráfego, câmaras por área, IA (escavar/construir/carregar/enfermeira/guarda), boca com fila
+  real, desenho da cena (grade, placas, ficha do tile) e as ferramentas `1`–`7`/`X`.
+- `game/js/config.js` — bloco `NEST_*` (`NEST_GRID`, `NEST_RESERVE`, `NEST_SOIL`, `NEST_VEIN`,
+  `NEST_BUILD` com `btn` curto de botão, `NEST_ROOM_IDS`, `NEST_RULES`); `START.popCap` continua 16
+  (o berço **soma** em cima); linhas novas em `HELP_CONTROLS`/`HELP_CONTROLS_TOUCH`/`HELP_TIPS`.
+- `game/js/game.js` — `worldTick` com teto/azedamento, fungo e memória por tile; `drawNestScreen`
+  **não** trata clique mais (a cena lê o ponteiro em `nestInput`, porque pintar exige arraste);
+  import de `NEST_RULES`.
+- `game/js/units.js` — `popCapTotal` (bônus do berço), `deposit` (`pantryMult`), `hatchTick`
+  (`hatchMult`), `computeAntStats` (`dmgMult`) — todos com **fallback para a fórmula antiga** quando
+  `run.nestStats` ainda não existe, e lendo só o que existe (`(ns && ns.x) || antigo`).
+- `game/test/nestdig.mjs` — **novo** (24 checagens): determinismo, adjacência, veio que paga, câmara
+  por área, custo/devolução, tráfego perto × longe, POP do berço, carga da fungo, cadeia do ovo e a
+  regressão da carregadora sem trilha.
+- `game/test/nestmap.mjs` — reescrito: era um parser de regex sobre `ROOMS`/`EDGES` (não existe mais);
+  agora importa o módulo de verdade, desenha o corte em PNG e trava grade/reserva/adjacência/níveis.
+- `game/test/uitest.mjs` — bloco do ninho migrado para „clicar na terra“: marca despensa com cliques
+  reais, cava, mede entrega, e a tecla `L` agora é testada com o corpo **no fundo do ninho** (a
+  recém-chegada está em cima da boca e saía no mesmo frame — o teste mediria o acaso).
+- `game/js/assets.js` — `ASSET_V` → `20261020-ninho-escavavel-v1`; `make_assets_list` +
+  `sync-native-assets` regerados (295 arquivos, 44,4 MB; APK/instalador sincronizados).
+- `tools/make_diagram_ninho.py` (novo, casa a receita de `make_diagram_rodape.py`) e
+  `slice-box/diagrama-ninho-escavavel.png` (Regra 20, ANTES servido de um `git worktree` do HEAD).
+- `game/README.md` (seção „Dentro do formigueiro“ reescrita + linha de controles) e `PENDENCIAS.md`
+  (seção 5 com o que fica aberto: arte, HUD, textura do solo, ajuste de `spoil`/reembolso/ergonomia).
+
+### 4. Verificações executadas (2026-10-20)
+
+- `npm test` — **38/38 verdes em 85,4 s**, incluindo `nest-dig`, `nestmap`, `uitest` (50,4 s),
+  `endless` (46,7 s), `mobile`, `regressions-browser` (43,4 s), `paper-hud-browser`,
+  `hud-publication-browser` e as 6 variantes de `sim` (nenhuma exceção no caminho quente).
+- `npm run inspect:layout` — **118 estados limpos** (310 s), PC + mobile + FONTE GRANDE, com
+  `mobile NINHO+FONTE` (23 textos) medido: nada sobreposto, vazando ou coberto.
+- `npm run inspect` — **OK**: zero erros de JS, zero 404, zero glifo faltando, 60 fps nos 6 mapas
+  em PC e mobile.
+- Desempenho medido **dentro da cena do ninho** (4 s de rAF por cenário): 60,1 fps calma · 60,1 fps
+  com 26 obras na fila e 8 formigas dentro · 60,1 fps pintando tiles no arraste (pior frame 37,9 ms).
+- Playtest no navegador (Regra 4, cliques reais de mouse/toque): ferramenta pela placa → marcar 3
+  tiles → **despensa nível 1 formada pelo trabalho delas** em ~20 s → entregas +16 de comida em 10 s
+  → teto subindo para 400 e a barra avisando „COMIDA APODRECENDO ACIMA DO ESTOQUE“ quando passou dele
+  → boca com `L`/`P` → demolir sem reembolso (comportamento atual) → `B` fecha e as ondas seguem.
+  No mobile: toque curto e arraste pintam, as 7 placas respondem, o HUD de toque fica escondido.
+- Regressões que só apareceram JOGANDO (e por isso viraram teste ou correção): (a) a carregadora sem
+  trilha respirava no lugar e congelava o estoque — `carrierTick` agora traça a rota até a boca;
+  (b) o rótulo da câmara e o „X CANCELA“ usavam `·` e `×`, que **não têm glifo** na Kiwi Soda — o
+  auditor de layout acusou e os textos desenhados passaram a `-`/`x`; (c) a linha de estatuto do
+  rodapé nascia sob o `fillRect` escuro da faixa e o auditor de layout marcou „encoberto“ — desenhada
+  depois da faixa; (d) o poder `∞` do Modo Teste foi posto **acima** do azedamento (senão
+  `endless.mjs` brigava com a nova regra de estoque).
+
+### 4b. Dois passos de teste endurecidos (a segunda rodada da bateria pegou o que a primeira não via)
+
+O primeiro `npm test` depois do patch de legibilidade veio **vermelho no `uitest`** e o segundo,
+depois de mexer só em teste, veio **vermelho no `regressions`**. Nenhum dos dois era o jogo — os dois
+eram asserções que mediam o acaso — mas os dois ficaram vermelhos por motivo real e foram tratados:
+
+- **`uitest`, fila da boca:** a checagem procurava „quem saiu primeiro„ entre os enfileirados. O
+  rodízio automático da boca enfileira gente sozinho a cada ~4,5 s (`ROT_CD`), então „os novos„ do
+  passo variavam com a carga da máquina (no log: `4 nova(s)` quando o passo só apertou `L` uma vez), e
+  o corpo escolhido podia ser um que morreu no mundo antes de a asserção da posição rodar. Agora o
+  passo **segue a RECRUTA que ele mesmo criou** („quem a tecla L enfileirou foi a mais velha de
+  dentro„), confere que o corpo dela anda (`n.leaving && n.id === recruta.id`), que 230 ms depois
+  ela ainda está no túnel (a fila não teletransporta) e limpa as ondas a cada amostrada do trajeto —
+  porque o assunto ali é a boca, não a luta. Verde em execução isolada (48,8 s) e dentro da bateria.
+- **`regressions` („o mundo mata com a tela do ninho aberta„):** o guerreiro era soltado em cima da
+  rainha com 1 de vida, mas o **alvo é sorteio** (`Math.random`) e havia outras 4 formigas fora: às
+  vezes ele ia caçar e nunca voltava em 5 s de simulação. Medido com uma sonda fora do repositório
+  (200 tentativas do mesmo passo): **HEAD sobrevive 10/200, o ninho escavável 8/200** — flake
+  pré-existente, não regressão deste rework; a taxa é a mesma dentro do ruído. O passo agora põe a
+  rainha como **única** comida ao alcance do bicho (`a.inside = true` nas outras), que é exatamente o
+  que ele quer afirmar — e a sonda passa a dar 200/200.
+
+`ASSET_V` foi para **`20261020-ninho-escavavel-v2`** (com `make_assets_list` + `sync-native-assets`
+regerados, 295 arquivos / 44,4 MB e os dois instaladores conferidos no v2) porque o último patch de
+bytes tocou `game/js/nest.js` depois do v1. Os arquivos `game/test/*.mjs` **não** entram no
+`assets.json` (o filtro do gerador é `.js`/`.css`, e `.mjs` fica fora), então endurecer teste não pede
+bump novo — vale como regra prática para a próxima rodada.
+
+### 5. Limites desta rodada
+
+Protótipo **sem nenhuma arte nova** (Regra 16 adiada de propósito, por decisão do usuário): solo em
+blocos chapados por dureza, placas e ficha com o papel comum, e o chão da cena ainda não entrou na
+Tabela C1 dos HUDs. O balanceamento foi **movido, não revalidado em todas as curvas** — `sim` e os
+6 mapas passam sem exceção, mas `capBase`/`spoil`/`extraChamberMult`/reembolso ficam listados em
+`PENDENCIAS.md` §5 para a passada de ajuste depois da aprovação. Nada foi empurrado nem aberto PR
+(sem o „salve“ do usuário). Verificação em Chromium headless, não em aparelho físico.
+
+## Registro — Rodada de ARTE do ninho escavável: chão contínuo, ficha com moldura, gaveta mobile (2026-10-21)
+
+**Pedido:** „O jogo está aprovado. Siga para rodada de arte/HUD/mobile/balanceamento. O commit + PR virá
+depois que tudo estiver concluído.“ No meio do caminho o usuário ainda apontou duas coisas concretas:
+**„a terra deve ter um sprite que se conecte entre si quando lado a lado“** (o chão não podia parecer
+tabuleiro) e **„o que é essa moldura?“** (a ficha do tile estava caindo no papel genérico do plano).
+
+### 1. As quatro decisões (todas escolhidas pelo usuário, Regra 1)
+
+1. **Arte do HUD:** só a moldura da ficha é pintura nova (1 peça, 2 candidatos); as faixas do ninho e o
+   PiP reaproveitam peças que já existem na casa.
+2. **Chão escavável:** uma **pintura contínua de terra, recortada e amostrada 1:1 pela grade** — a
+   continuidade vem da fonte compartilhada, não de „tile que encaixa“. O atlas de 4 tiles foi **recusado
+   pelo próprio usuário** antes de virar código.
+3. **Balanceamento mais brando:** `capBase 220 → 280`, `spoil 0,07 → 0,05`, **demolir obra começada devolve
+   50%** e o rótulo `7 / X` com a tecla real do demolir existindo nas duas pontas.
+4. **Mobile:** as 7 placas viraram **seletor recolhível** — a placa `OBRAS` abre uma gaveta sobre o campo só
+   no toque.
+
+### 2. Como o chão virou contínuo (e por que é impossível ele deixar de ser)
+
+`nest.js:drawGrid` desenha `IMG.nest_terra` **uma única vez** no retângulo da grade (`GW/GH` = 884×312
+na grade 34×12 @26 px) e deixa cada tile ler a sua REGIÃO — não existe „encaixar A com B“, então não
+existe emenda a alinhar. É o mesmo princípio de `world.js:bakeGround`, que já pinta o terreno do mundo de
+uma vez. Por cima: `SOLID_WASH` escurece o que **ainda não foi escavado** e `OPEN_LIFT` levanta o piso já
+aberto — a *fronteira* da obra tem de ser visível; a emenda que não existe é a do **meio** do piso.
+
+O `nestmap` ganhou trava para isso: a folha é conferida **na proporção exata da grade** (tolerância 2%),
+registrada no `MANIFEST` de `assets.js` **e** listada em `app/assets.json` — um re-corte que esticasse a
+pintura (Regra 22) reprova o teste em vez de chegar no jogo. Sem a arte (`hasSheet` falso) a cena volta aos
+chapados por dureza; nada quebra por falta de PNG. Essa foi a foto „antes“ do diagrama.
+
+### 3. A ficha do tile ganhou identidade própria (`nest_tip`)
+
+`drawTileTip` já chamava `beginPaperHud("nest_tip")`, mas a casa não tinha essa pintura: ela caía no
+`panel` do plano, que é madeira do CÉU — a identidade errada embaixo da terra. Nasceu
+`paper_nest_tip_frame` / `paper_nest_tip_bg` (960×540, par de duas peças, bg cobrindo 100% do buraco do
+frame para não sobrar vão preto), a **altura da caixa passou a ser derivada da proporção do sprite
+carregado** (`256 × fh/fw` = 144, nunca esmagada) e a caixa quieta foi **medida na arte** —
+`PAPER_QUIET.nest_tip = [.303,.243,.723,.757]`, `PAPER_APERTURE = [.201,.222,.805,.785]`, com o
+`paper-hud-browser.mjs` passando a conhecer o estado novo.
+
+### 4. Faixas: C1.2 / C1.3 / C1.4 saíram do `fillRect` preto
+
+Barra de topo e as duas tiras do rodapé viraram a **prancha da casa** (`plank()` → `drawPaper(ctx,"button",…)`,
+3 faixas com tampas de folha nas pontas), e o `OLHO LÁ FORA` recebeu a mesma madeira nas duas faixas de
+texto. A escolha técnica que importa: **`wood_*` (3 faixas), não `banner_*`** — `tileFor` faz `paperFit`
+(contain) fora da família madeira, então a moldura de minimapa (960×717) numa tira de 300×15 sairia
+**encolhida** para ~44 px, exatamente o que o Grupo B existe para matar.
+
+### 5. Mobile: a gaveta `OBRAS` (e o que ela deixou de desenhar)
+
+`isTouchUI()` caiu no rodapé de 7 placas espremidas: agora há uma placa `OBRAS: <obra atual> >` e, só no
+toque, uma gaveta sobre o campo com 4 + 3 placas grandes. Escolher a obra **já fecha** a gaveta. A guarda
+de pintura em `nestInput` devolve o toque que cai na faixa da gaveta para o HUD, senão cada escolha
+abriria um buraco na terra atrás dela. No PC nada mudou (as 7 placas continuam visíveis — lá sobra largura).
+O `uitest` agora percorre os dois caminhos clicando pelo `uiButtons()` real: abrir, escolher `QUARTEL`,
+fechar sozinha, e a guarda de pintura.
+
+### 6. Balanceamento revalidado com número, não com impressão
+
+`capBase 280` (o teto de 220 estourava na 1ª onda), `spoil 0,05` (meia-vida do excedente 9,9 s → 13,9 s),
+`refundBuilt 0,5` novo. Medido: marcar a obra custa 50 e demolir depois de a colônia ter começado devolve
+**25** — a asserção do `nestdig` mede o delta **no clique**, sem passo de simulação no meio, porque entrega
+de carregadora e azedamento movem a comida e entravam na conta (isso era um flake real do teste). No
+navegador, 9000 de comida com teto 280 azedou para 652 em ~60 s de cena: o teto continua sendo a lei, só
+não pune em 10 s. `sim` e `endless` passaram com o novo teto.
+
+### 7. Verificação
+
+`npm test` **38/38** (94,5 s) · `nest-dig` 29 asserções · `nestmap` com as 7 travas novas de arte ·
+`inspect:layout` **122 estados** limpos, incluindo `NINHO-OBRAS` (gaveta aberta) com FONTE GRANDE ·
+`inspect:hud` OK em seis biomas + formigueiro · `inspect` sem erro de JS/404/glifo e 60 fps · FPS da cena
+do ninho **59,5** com a gaveta aberta (o desenho da folha custa um `drawImage` por frame, não um por tile).
+
+### 8. Limites desta rodada
+
+**`ASSET_V` foi para `20261021-ninho-arte-v3`** — e a ordem dos fatores aqui é obrigatória: o teste `pwa`
+compara o `app/assets.json` com os bytes **também dos JS da casca**; gerei as listas no começo da rodada e
+editei `nest.js`/`render.js` depois, o que fez o `pwa` reprovar corretamente. **Regra prática: gerar lista +
+sync depois do último byte de código, e o `pacoteCompleto` de `pwa.mjs` sobe com a razão escrita (295 → 298).**
+As **pílulas C1.5 ficaram fora** (o pedido era o chão e as faixas do ninho) e seguem em `PENDENCIAS.md` §5.
+Verificação em Chromium headless, não em aparelho físico.
+
 ## Registro — Tinta legível nas placas novas + vazamento de tecla no carregamento (2026-10-20)
 ### Publicação — PR #78 (2026-10-20)
 
