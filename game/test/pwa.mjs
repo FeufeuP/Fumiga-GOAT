@@ -195,8 +195,9 @@ for (const rel of PAGINAS) {
 const totalBytes = lista.grupos.reduce((sum, g) => sum + g.bytes, 0);
 assert.ok(totalBytes > 5 * 1024 * 1024 && totalBytes < 200 * 1024 * 1024, "tamanho plausível para o jogo completo");
 // Sobe quando entra asset novo (o painel 3 da Noite Branca trouxe 4 em 2026-10-04;
-// as 4 placas de botão novas × 5 estados trouxeram 20 em 2026-10-19).
-assert.equal(pacoteCompleto.size, 295, "pacote completo: 275 anteriores + 20 PNGs das placas de botão novas (4 variações × 5 estados, 2026-10-19)");
+// as 4 placas de botão novas × 5 estados trouxeram 20 em 2026-10-19; a rodada de
+// arte do ninho trouxe 3 em 2026-10-21: a folha do chão e o par de moldura da ficha).
+assert.equal(pacoteCompleto.size, 298, "pacote completo: 295 anteriores + 3 PNGs do ninho escavável (folha do chão + frame/bg da ficha, 2026-10-21)");
 console.log("ok    pacote único — " + mb(totalBytes) + " · " + pacoteCompleto.size + " arquivos (sem versão parcial)");
 
 console.log("PWA OK — shell completo, sem pacote parcial, cache versionado e nenhum link quebrado");

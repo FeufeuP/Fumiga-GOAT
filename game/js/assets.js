@@ -25,6 +25,12 @@ const MANIFEST = {
   paper_card_bg: "ui/paper/card_bg.png",
   paper_pause_frame: "ui/paper/pause_frame.png",
   paper_pause_bg: "ui/paper/pause_bg.png",
+  // FICHA DO NINHO (2026-10-21, rodada de arte do ninho escavável): a moldura
+  // subterrânea vazada + o papel por dentro dela, derivados pela mesma receita
+  // das outras famílias em tools/prepare_nest_art.py. Enquanto a arte não
+  // carrega, PAPER_FALLBACK resolve nest_tip -> panel (o jogo nunca depende).
+  paper_nest_tip_frame: "ui/paper/nest_tip_frame.png",
+  paper_nest_tip_bg: "ui/paper/nest_tip_bg.png",
   // Placas de madeira dos botões (2026-10-14): 4 variações x 5 estados,
   // artes de estado separadas — ver tools/prepare_wood_buttons.py.
   wood_button_largo_normal: "ui/paper/wood/button_largo_normal.png",
@@ -97,6 +103,10 @@ const MANIFEST = {
   // maçã acinzentada + rótulo/painel, sem símbolo sobre a arte.
   // Os santuario_<mundo>.png (960×540, ~5,1 MB) NÃO entram aqui: loadSantuario()
   // os carrega sob demanda ao abrir o fruto, com retry e cache por bioma.
+  // NINHO ESCAVÁVEL: a FOLHA do chão (nada de tile que repete — cada célula lê a
+  // sua região desta pintura única; ver drawGrid em nest.js). Cortada na proporção
+  // exata da grade e salva em paleta (508 KB em vez dos 2,1 MB do RGB ditherado).
+  nest_terra: "sprites/nest/terra.png",
   // névoa — manto de fog branca dos inimigos (spritesheet 6x48x48)
   fog_mantle: "sprites/fx/fog_mantle.png",
   // formigas
@@ -251,7 +261,7 @@ const WROT = {};         // silhuetas brancas rotacionadas (hit flash)
 // ANTIGA nos mesmos nomes de arquivo (foi assim que o rework dos inimigos da
 // Fase 2 "não apareceu" para quem já tinha jogado antes dele).
 // ---------------------------------------------------------------------------
-export const ASSET_V = "20261019-placas-madeira-v2";
+export const ASSET_V = "20261021-ninho-arte-v3";
 
 /**
  * URL final de um asset do jogo: base certa para a página atual + anti-cache.

@@ -324,8 +324,9 @@ function computeAntStats(typeId) {
   const lv = run ? (run.level || 0) : 0;
   const lvHp = 1 + LEVEL_HP * lv, lvDmg = 1 + LEVEL_DMG * lv;
   const ch = run ? run.chambers : null;
-  const fightMult = ch && (b.role === "fighter" || b.role === "ranged")
-    ? 1 + 0.12 * ch.barracks : 1;
+  const arenaMult = (run && run.nestStats && run.nestStats.dmgMult) || 1;
+  const fightMult = (ch && (b.role === "fighter" || b.role === "ranged"))
+    ? (1 + 0.12 * ch.barracks) * arenaMult : 1;
   const isWorker = b.role === "worker";
   // FASE 4 FINAL: infiniteDash reduz atkCd 70% quando ligado
   let atkCd = b.atkCd / m.fireRate;
@@ -501,7 +502,10 @@ export function unitCost(typeId) {
 }
 
 export function popCapTotal() {
-  return START.popCap + mods().popCap;
+  // NINHO ESCAVÁVEL: o berço construído dentro do formigueiro É o teto de
+  // população (1 vaga a cada 3 tiles). Sem berço escavado, só o básico.
+  const ns = G.run && G.run.nestStats;
+  return START.popCap + mods().popCap + ((ns && ns.popBonus) || 0);
 }
 
 export function popUsed() {
@@ -559,10 +563,12 @@ function hatchTick(dt) {
   if (eggs.length === 0) return;
   const e = eggs[0];
   const nursery = run && run.chambers ? run.chambers.nursery : 0;
+  const brood = (run && run.nestStats && run.nestStats.hatchMult) || 1;
   // FORMIGA-TECELÃ (Oecophylla): a seda das larvas agasalha os ovos -
   // cada Tecelã viva (até 3) acelera a chocagem
   const weavers = Math.min(3, colony.counts.weaver || 0);
-  e.tLeft -= dt * (1 + 0.18 * nursery + 0.08 * weavers * (mods().weaverBoost || 1));
+  // berço escavado acelera o choco da loja também (é o mesmo berço, claro)
+  e.tLeft -= dt * (brood + 0.18 * nursery + 0.08 * weavers * (mods().weaverBoost || 1));
   if (Math.random() < 0.1) {
     const A = world.anthill;
     spawnPart({ x: A.x + rand(-22, 22), y: A.y + rand(-18, 18), life: 0.6, size: 1.8, sizeEnd: 0.4, color: "#ffe9a8", drag: 1 });
@@ -1123,8 +1129,11 @@ function deposit(a, m, run) {
   if (K === "food" || K === "amber") {
     let v = a.carry * (K === "amber" ? 3 : 1);
     v = Math.round(v * m.foodBonus * (K === "food" ? m.muts.foodGather : 1)) + (K === "food" ? m.muts.depositBonus : 0);
-    const pantry = run && run.chambers ? run.chambers.pantry : 0;
-    if (pantry > 0) v = Math.round(v * (1 + 0.15 * pantry));
+    // o que multiplica a entrega é a DESPENSA CONSTRUÍDA (tiles × tráfego), e o
+    // que limita é o estoque: acima do teto da despensa a comida azeda (game.js)
+    const ns = run && run.nestStats;
+    const pm = (ns && ns.pantryMult) || 1 + 0.15 * (run && run.chambers ? run.chambers.pantry : 0);
+    if (pm > 1) v = Math.round(v * pm);
     v = fruitDeposit(a, v);
     if (run) run.food += Math.max(1, Math.round(v * (run.ascFood || 1))); // ASCENSÃO nv14: COLHEITA MAGRA
     // FORMIGA-CORTADEIRA (Atta): as folhas alimentam o fungário - cada

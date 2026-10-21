@@ -686,6 +686,77 @@ export const CHAMBERS = {
   },
 };
 
+// ========================================================= 🏗️ NINHO ESCAVÁVEL
+// PROTÓTIPO (2026-10-20): o formigueiro deixou de ser um menu de salas fixas e
+// virou uma GRADE DE TERRA top-down, na mesma linguagem visual do mundo. Nada
+// aqui é decoração: nada de câmara, nada de bônus. A colônia só tem despensa,
+// berço, quartel, fungário e refinaria onde ELAS abriram espaço e construíram
+// tile por tile — e cada tile longe demais da boca custa mais caro (tráfego).
+// Inspirações: Empires of the Undergrowth (cavar → construir → chocar, câmara
+// = blocos iguais vizinhos), Ant Colony: Wild Forest (o layout É a estratégia)
+// e Microtopia (trilhas e fila de trabalho como esteiras).
+export const NEST_GRID = { tile: 26, x: 38, y: 74, cols: 34, rows: 12 };
+// O canto superior direito é ROCHA-MÃE intocável: é ali que mora a janela
+// "OLHO LÁ FORA", então aqueles tiles nunca são escaváveis.
+export const NEST_RESERVE = { c0: 23, c1: 33, r0: 0, r1: 5 };
+
+// Durezas: "hard" é o multiplicador de tempo de escavação; 0 = não se cava.
+export const NEST_SOIL = [
+  { id: "soft", name: "TERRA SOLTA", hard: 1.0, fill: "#4a3319", edge: "#5d4222" },
+  { id: "firm", name: "TERRA FIRME", hard: 2.3, fill: "#3a2716", edge: "#4a3319" },
+  { id: "root", name: "RAIZ TENAZ", hard: 3.4, fill: "#33240f", edge: "#6b4a24" },
+  { id: "rock", name: "ROCHA-MÃE", hard: 0, fill: "#241a12", edge: "#150e07" },
+];
+// O que a terra esconde: escavar um veio paga a obra na hora.
+export const NEST_VEIN = [
+  { id: "none", name: "", yield: 0, kind: "" },
+  { id: "seed", name: "NÓDEGO DE SEMENTES", yield: 26, kind: "food", color: "#ffd479" },
+  { id: "crystal", name: "VEIO DE ESSÊNCIA", yield: 8, kind: "ess", color: "#c77dff" },
+];
+
+// As cinco obras da colônia. `sizes` = quantos tiles CONTÍGUOS do mesmo tipo
+// formam nível 1 / 2 / 3 (câmara crescia por botão; agora cresce por área).
+// `tile` = custo de cada tile da fileira de obra (desconto "PLANTA ECONÔMICA"
+// da Árvore se aplica a ele também). A primeira pedra de cada nova câmara paga
+// o custo de tabela em CHAMBERS[id].costs[0]; cada câmara extra do mesmo tipo
+// custa +60% (repetir câmara é redundância, não escalada).
+export const NEST_BUILD = {
+  pantry:   { btn: "DESPENSA", tile: { food: 14, ess: 0 }, sizes: [3, 6, 10], icon: "food",    accent: "#ffb347",
+    desc: "GUARDA COMIDA", per: "+45 de estoque e +4% por tile entregue" },
+  nursery:  { btn: "BERÇO", tile: { food: 18, ess: 2 }, sizes: [3, 6, 10], icon: "egg",     accent: "#7fd6a0",
+    desc: "CHOCA OVOS", per: "+1 de POP a cada 3 tiles e choco mais rápido" },
+  barracks: { btn: "QUARTEL", tile: { food: 20, ess: 4 }, sizes: [4, 8, 12], icon: "shield",  accent: "#8fd3ff",
+    desc: "CURA E TREINO", per: "+6% de dano de combate e cura mais rápida" },
+  fungus:   { btn: "FUNGÁRIO", tile: { food: 12, ess: 3 }, sizes: [3, 6, 10], icon: "fungo",   accent: "#c77dff",
+    desc: "COLHEITA CONSTANTE", per: "+0,5 comida por tile a cada ciclo" },
+  refinery: { btn: "MEMÓRIA", tile: { food: 16, ess: 6 }, sizes: [4, 8, 12], icon: "essence", accent: "#e8d5ff",
+    desc: "REFINA O QUE ENTRA", per: "+5% de essência por tile" },
+};
+export const NEST_ROOM_IDS = ["pantry", "nursery", "barracks", "fungus", "refinery"];
+
+export const NEST_RULES = {
+  capBase: 280,        // estoque de comida sem nenhuma despensa escavada (2026-10-21: 220
+                       // estourava na 1ª onda e o azedamento parecia castigo, não escolha)
+  capPerTile: 45,      // ...e quanto cada tile de despensa soma
+  spoil: 0.05,         // fração do EXCEDENTE que apodrece por segundo (era 0,07; meia-vida ~14s)
+  refundBuilt: 0.5,    // demolir tile de câmara COM A OBRA JÁ COMEÇADA devolve esta fração
+  pantryPer: 0.04,     // bônus de entrega por tile de despensa
+  popPerTile: 1 / 3,   // POP dado por tile de berço
+  hatchPerTile: 0.05,  // velocidade de chocagem por tile de berço
+  healPerTile: 0.10,   // cura de quem está dentro, por tile de quartel
+  dmgPerTile: 0.02,    // dano de combate extra por tile de quartel (além do nível)
+  essPerTile: 0.05,    // essência por tile de refinaria
+  fungusPerTile: 0.5,  // comida por ciclo por tile de fungário
+  hatchFood: 12,       // comida que o berço come para chocar uma formiga
+  digRate: 0.55,       // tiles/scavadora-base por segundo (antes de dureza e mods)
+  buildRate: 0.85,     // idem para a obra de construção
+  crewPerTile: 2,      // quantas formigas podem trabalhar no MESMO tile
+  maxDiggers: 10,      // teto de formigas na obra ao mesmo tempo
+  trafficGood: 6,      // até este número de tiles da boca: trabalho rendendo 1,7×
+  trafficBad: 34,      // daqui para fora: rende só 0,55× — tunel comprido cobra caro
+  extraChamberMult: 1.6, // câmara repetida do mesmo tipo custa mais
+};
+
 // Ritmo de ondas
 export const CALM_START = 24;      // paz antes da 1ª onda
 export const CALM_BETWEEN = 24;    // paz entre ondas
@@ -900,6 +971,9 @@ export const HELP_CONTROLS = [
   ["F", "Convocar a guarda ao formigueiro"],
   ["ESPAÇO", "Centralizar no formigueiro"],
   ["1 A 0", "Chocar classes (0 = Tecelã). A Dinoponera é só no card"],
+  ["DENTRO DO NINHO", "1 CAVA - 2 DESPENSA - 3 BERÇO - 4 QUARTEL - 5 FUNGÁRIO - 6 MEMÓRIA - 7 OU X DEMOLE"],
+  ["ARRASTAR NA TERRA", "Pintar a obra: a câmara cresce no tamanho que você marcar"],
+  ["L / P", "Soltar uma formiga pela boca / chamar uma de volta"],
   ["ESC", "Pausar / voltar"],
 ];
 // Controles da VERSÃO MOBILE (camada de toque game/mobile/touch.js)
@@ -914,10 +988,16 @@ export const HELP_CONTROLS_TOUCH = [
   ["OLFATO", "Abra + no HUD e toque em OLFATO"],
   ["BOTÕES NA TELA", "Pausa • Rali • Centro; demais ações no jogo"],
   ["CARDS DA LOJA", "Toque no card para chocar a classe"],
+  ["DENTRO DO NINHO", "OBRAS > abre a gaveta com as 7 ferramentas; arraste na terra para marcar"],
+  ["BOTÕES DA BOCA", "SOLTAR UMA e CHAMAR NA BOCA, na barra de baixo"],
+  ["GAVETA OBRAS", "Ela abre SOBRE o campo e fecha sozinha ao escolher a obra"],
 ];
 export const HELP_TIPS = [
   "MATABELES curam o exército - feridas críticas em dobro.",
   "PRATA é veloz e barata: intercepta invasores e revela o mapa.",
   "Cristais ROXOS dão essência — a moeda da evolução eterna.",
   "Mutações valem na expedição. A ÁRVORE é para sempre.",
+  "NINHO ESCAVÁVEL: a despensa que as formigas cavam é o TETO da comida. Sem ela, o excedente azeda.",
+  "BERÇO CAVADO dá vaga de POP; QUARTEL perto da boca cura mais; túnel comprido rende menos.",
+  "DESFAZER OBRA: plano ainda não começado devolve tudo; obra já em andamento devolve metade.",
 ];

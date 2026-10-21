@@ -124,6 +124,13 @@ for (const inside of [false, true]) {
 }
 // Ataque do mundo real, ocorrido durante worldTick (não só antes do frame).
 let q = start(true); q.hp = 1;
+// Deixa a RAINHA como única comida ao alcance do guerreiro. Escolher alvo é
+// sorteio (`Math.random`) e, com outras formigas por perto, ele ia caçar outra
+// e nunca chegava nela nos 5s de simulação — a asserção abaixo media esse
+// dado e não a regra. O flake é pré-existente ao ninho escavável (~1 em 20 nas
+// duas versões), mas aqui ele tem de medir uma coisa só: o mundo mata por trás
+// da tela do formigueiro.
+for (const a of U.allies) if (a !== q && !a.dead && !a.inside) { a.inside = true; }
 E.spawnEnemy('warrior', q.x, q.y, 1);
 for (let i = 0; i < 100 && G.run.status === 'running'; i++) step(.05);
 assert.equal(G.run.status, 'lost');

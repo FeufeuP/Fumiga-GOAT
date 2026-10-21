@@ -132,6 +132,9 @@ await wait(60); mouse.down = mouse.justDown = false; mouse.justUp = true;
 await wait(40); mouse.justUp = false; await wait(60);
 
 G.run.food = 999;
+// o ninho escavável azeda o que passa do teto de estoque; este passo mede a
+// LOJA (2ª gigante não cobra), então o teto é ignorado só aqui e restaurado no fim
+G.run.nestStats = { foodCap: 1e9, pantryMult: 1, essMult: 1, fungusCrop: 0, tiles: { pantry: 0 } };
 mouse.x = GIANT_X; mouse.y = FOOT_Y + 32; mouse.down = mouse.justDown = true;
 await wait(60);
 mouse.down = mouse.justDown = false; mouse.justUp = true;
@@ -147,8 +150,9 @@ mouse.down = mouse.justDown = false; mouse.justUp = true;
 await wait(40);
 mouse.justUp = false;
 await wait(60);
-expect(G.run.food === 999 && units.eggs.filter(e => e.type === "giant").length === 1,
+expect(G.run.food === 999 && units.eggs.filter(e => e.type === "giant").length === 1, // foodCap 1e9: sem azedamento neste passo
   "só cabe uma gigante por expedição (comida intacta na 2ª tentativa, cobrada: " + foodAfterGiant + ")");
+delete G.run.nestStats;
 const gi = units.spawnAnt("giant", world.anthill.x + 40, world.anthill.y + 40);
 await wait(120);
 expect(gi.bodyR === 240, "corpo da gigante = 20x a soldado (bodyR " + gi.bodyR + ")");
@@ -202,33 +206,128 @@ expect(nestMod.nest.ants.length === units.insideCount(),
 }
 
 G.run.food = 999; G.run.essencePool = 999;
-const rr = nestMod.NEST_ROOMS.find(r => r.id === "pantry");
-mouse.x = rr.x + rr.w / 2; mouse.y = rr.y + rr.h / 2; mouse.down = mouse.justDown = true;
-await wait(60); mouse.down = mouse.justDown = false; mouse.justUp = true;
-await wait(40); mouse.justUp = false; await wait(60);
-expect(!!nestMod.nest.dig && nestMod.nest.dig.id === "pantry",
-  "escavação da despensa começou com as formigas na obra (" + nestMod.nest.ants.filter(n => n.job === "digger").length + " escavando)");
+// ---- NINHO ESCAVÁVEL: "clicar numa sala" acabou. A cena lê o ponteiro na GRADE
+// DE TERRA: o jogador escolhe a obra na barra de baixo e pinta a terra. Aqui o
+// clique é o de verdade (mouse.x/y + justDown), igual ao que o jogador faz.
+const NG = (await import(BASE + "/config.js")).NEST_GRID;
+const N = nestMod.nest;
+const NCOLS = nestMod.NEST_COLS, NROWS = nestMod.NEST_ROWS, NNT = NCOLS * NROWS;
+const centerOf = (i) => ({ x: NG.x + (i % NCOLS) * NG.tile + NG.tile / 2, y: NG.y + ((i / NCOLS) | 0) * NG.tile + NG.tile / 2 });
+const nbI = (i) => [i - 1, i + 1, i - NCOLS, i + NCOLS].filter((jj) => jj >= 0 && jj < NNT && Math.abs((jj % NCOLS) - (i % NCOLS)) <= 1);
+async function clickTile(i) {
+  const pt = centerOf(i);
+  mouse.x = pt.x; mouse.y = pt.y; mouse.down = mouse.justDown = true;
+  await wait(70); mouse.down = mouse.justDown = false; mouse.justUp = true;
+  await wait(40); mouse.justUp = false; await wait(70);
+}
+/** n tiles abertos e grudados, livres — o jeito como a colônia amplia sala */
+function freeRun(n, from) {
+  const free = (i) => i >= 0 && i < NNT && !!N.open_[i] && N.room[i] < 0 && N.plan[i] < 0;
+  let seeds = free(from) ? [from] : nbI(from).filter(free).slice(0, 1);
+  if (!seeds.length) for (let i = 0; i < NNT; i++) if (free(i)) { seeds = [i]; break; }
+  if (!seeds.length) return null;
+  const out = seeds.slice(), seen = new Set(seeds), q = seeds.slice();
+  while (q.length) {
+    const i = q.shift();
+    for (const jj of nbI(i)) {
+      if (seen.has(jj) || !free(jj)) continue;
+      seen.add(jj); out.push(jj); q.push(jj);
+      if (out.length === n) return out;
+    }
+  }
+  return null;
+}
+const cells = freeRun(3, N.hall) || [];
+expect(cells.length === 3, "há 3 tiles abertos contíguos para marcar uma despensa");
+N.tool = "pantry";
+for (const i of cells) await clickTile(i);
+expect(cells.every((i) => N.plan[i] >= 0),
+  "clique na terra com a ferramenta DESPENSA marcou os canteiros (" + N.bldQ.length + " obra(s) na fila)");
+await wait(11000);
+const cmP = N.comps.find((c) => c.type === "pantry");
+expect(!!cmP && G.run.chambers.pantry === 1,
+  "3 tiles contíguos viram DESPENSA NÍVEL 1 pelo trabalho delas (n=" + (cmP ? cmP.n : 0) + ", tráfego x" + (cmP ? cmP.traffic.toFixed(2) : "-") + ")");
+expect(G.run.nestStats && G.run.nestStats.foodCap > (await import(BASE + "/config.js")).NEST_RULES.capBase,
+  "a despensa escavada subiu o teto do estoque: " + (G.run.nestStats ? G.run.nestStats.foodCap : "?"));
 
-const foodDuringDig = G.run.food;
-await wait(7200);
-expect(G.run.chambers.pantry === 1, "despensa ficou pronta depois da escavação (nível " + G.run.chambers.pantry + ", comida na obra: " + foodDuringDig + ")");
+// ---- CAVAR: só o que encosta no aberto pode ser marcado, e a obra é delas
+let digTile = -1;
+for (let i = 0; i < NNT; i++) if (nestMod.nestCanDig(i)) { digTile = i; break; }
+expect(digTile >= 0, "tem terra escavável encostada no que já está aberto");
+N.tool = "dig";
+const dugBefore = N.dug;
+await clickTile(digTile);
+expect(!!N.marked[digTile] && N.digQ.length >= 1, "marcar CAVAR pôs o tile na fila das escavadoras");
+await wait(10000);
+expect(N.open_[digTile] && N.dug > dugBefore,
+  "as formigas abriram o tile marcado (" + N.dug + " tiles escavados nesta run)");
 
-const carrier = nestMod.nest.ants.find(a => a.job === "carrier");
+// ---- O DEMOLIR TEM DUAS PONTAS: o rótulo diz "7 / X", as duas teclas têm de
+// armar a mesma ferramenta (chicote de 2026-10-21: a tecla do demolir estava
+// escrita no HUD mas não existia no código).
+{
+  const toolBefore = N.tool;
+  for (const code of ["KeyX", "Digit7"]) {
+    N.tool = "pantry";
+    pressed[code] = true; await wait(90); pressed[code] = false; await wait(90);
+    expect(N.tool === "erase", code + " arma o DEMOLIR dentro do ninho (o rótulo do HUD é verdade)");
+  }
+  N.tool = toolBefore;
+}
+// ---- MOBILE: as 7 placas não moram mais no rodapé, moram numa GAVETA que abre
+// sobre o campo só no toque. É o que devolve largura ao celular (Regra 9), e o
+// Regra 21 exige que a placa exista como botão de verdade, não como desenho.
+{
+  const nestUI = await import(BASE + "/ui.js");
+  const { touchMode } = await import(BASE + "/input.js");
+  const nestBtns = nestUI.uiButtons;
+  const hit = async (id) => {
+    const b = nestBtns().find((x) => x.id === id);
+    if (!b) return false;
+    mouse.x = b.x + b.w / 2; mouse.y = b.y + b.h / 2; mouse.down = mouse.justDown = true;
+    await wait(90); mouse.down = mouse.justDown = false; mouse.justUp = true;
+    await wait(90); mouse.justUp = false; await wait(90);
+    return true;
+  };
+  const ids = () => nestBtns().map((x) => x.id);
+  touchMode.on = true; await wait(200);
+  expect(ids().includes("nestDrawer"), "no toque há a placa OBRAS (id nestDrawer) no rodapé do ninho");
+  expect(!ids().includes("nestTool_dig"), "com a gaveta fechada as 7 placas NÃO ocupam o rodapé do celular");
+  expect(await hit("nestDrawer"), "a placa OBRAS está clicável");
+  expect(N.drawer === true, "tocar em OBRAS abre a gaveta sobre o campo");
+  await wait(200);
+  expect(ids().filter((x) => x.startsWith("nestTool_")).length === 7,
+    "a gaveta expõe as 7 obras (" + ids().filter((x) => x.startsWith("nestTool_")).length + ")");
+  const antes = N.tool;
+  N.tool = "dig";
+  expect(await hit("nestTool_barracks"), "a placa QUARTEL da gaveta está clicável");
+  expect(N.tool === "barracks" && N.drawer === false,
+    "escolher a obra fecha a gaveta sozinha (tool=" + N.tool + " drawer=" + N.drawer + ")");
+  // a guarda de pintura: com a gaveta aberta, o toque nela NÃO marca terra
+  N.tool = "dig"; N.drawer = true; await wait(200);
+  const qAntes = N.digQ.length + N.marked.filter(Boolean).length;
+  const gb = nestBtns().find((x) => x.id === "nestTool_erase") || { x: 400, y: 300, w: 10, h: 10 };
+  mouse.x = gb.x + gb.w / 2; mouse.y = gb.y + gb.h / 2; mouse.down = mouse.justDown = true;
+  await wait(90); mouse.down = mouse.justDown = false; mouse.justUp = true; await wait(120); mouse.justUp = false;
+  expect(N.digQ.length + N.marked.filter(Boolean).length === qAntes,
+    "tocar dentro da gaveta não marca terra atrás dela (a guarda de pintura segura)");
+  N.drawer = false; touchMode.on = false; N.tool = antes; await wait(200);
+}
+
+const carrier = N.ants.find((a) => a.job === "carrier");
 expect(!!carrier, "há carregadoras trabalhando no formigueiro");
 if (carrier) {
-  const pc = nestMod.NEST_ROOMS.find(r => r.id === "pantry");
-  carrier.carry = 1;
-  carrier.room = "pantry";
-  carrier.route = null;
-  carrier.x = pc.x + pc.w / 2;
-  carrier.y = pc.y + pc.h / 2;
-  const before = nestMod.nest.deliveries;
-  await wait(200);
-  expect(nestMod.nest.deliveries > before,
-    "formigas entregaram comida na despensa (+" + (nestMod.nest.deliveries - before) + ")");
+  carrier.carry = 1; carrier.path = null; carrier.leg = 0;
+  carrier.destCm = cmP || null; carrier.dest = carrier.tile;
+  const p = centerOf(carrier.tile);
+  carrier.x = p.x; carrier.y = p.y;
+  const before = N.deliveries;
+  await wait(220);
+  expect(N.deliveries > before,
+    "formigas entregaram comida na despensa (+" + (N.deliveries - before) + ", multiplicada pelo tamanho e pelo tráfego)");
 }
 await wait(600);
-const busy = nestMod.nest.ants.filter(a => a.route || a.carry).length;
+const busy = N.ants.filter((a) => a.path || a.carry).length;
 expect(busy >= 1, "formigas em movimento dentro do formigueiro (" + busy + " ocupadas)");
 
 // A PORTA AO CONTRÁRIO: L põe uma formiga na FILA da boca — ela ANDA pelos
@@ -251,6 +350,22 @@ expect(busy >= 1, "formigas em movimento dentro do formigueiro (" + busy + " ocu
     if (cand.inside) recruta = cand;
   }
   expect(recruta !== null, "recruta desceu pela boca para o teste de saída");
+  // o rodízio automático da porta já pode ter enfileirado gente nesta altura do
+  // teste (a cena agora passa ~40s dentro, com obras). Limpa a fila para que o
+  // que se mede aqui seja o efeito da tecla L, e nada mais.
+  for (const a of units.allies.inside) { a.exitRequested = false; a.exitReqT = 0; }
+  for (const n of nestMod.nest.ants) { n.leaving = false; n.path = null; n.leg = 0; }
+  // Manda a RECRUTA para o fundo do ninho e faz dela a mais velha de dentro, para
+  // que (a) a tecla L a escolha e (b) a fila tenha TÚNEL para andar — se ela
+  // ficasse em cima da boca, sairia no mesmo frame e nada disso seria medido.
+  const N = nestMod.nest;
+  const nRec = N.ants.find(n => n.id === recruta.id);
+  if (nRec) {
+    const rp = centerOf(N.royal);
+    nRec.tile = N.royal; nRec.x = rp.x; nRec.y = rp.y; nRec.path = null; nRec.leg = 0;
+    recruta.insideT = 999;
+  }
+  expect(!!nRec, "a recruta tem corpo na cena de dentro antes de pedir a saída");
   const flaggedAntes = new Set(units.allies.inside.filter(a => a.exitRequested).map(a => a.id));
   pressed.KeyL = true;
   await wait(80);
@@ -258,32 +373,56 @@ expect(busy >= 1, "formigas em movimento dentro do formigueiro (" + busy + " ocu
   await wait(150);
   const novos = units.allies.inside.filter(a => a.exitRequested && !flaggedAntes.has(a.id));
   expect(novos.length >= 1, "L colocou uma formiga na fila da boca (" + novos.length + " nova(s))");
-  const naFila = nestMod.nest.ants.some(n => n.leaving);
-  expect(naFila, "há corpo andando até a ENTRADA na cena de dentro");
-  const novasAindaDentro = novos.filter(a => units.allies.inside.some(b => b.id === a.id)).length;
-  expect(novasAindaDentro === novos.length, "ninguém teleportou: as formigas novas seguem dentro enquanto caminham");
+  expect(recruta.exitRequested, "a tecla L enfileirou a formiga mais velha de dentro (a recruta)");
+  const naFila = N.ants.some(n => n.leaving && n.id === recruta.id);
+  expect(naFila, "o corpo da recruta anda até a ENTRADA na cena de dentro");
+  expect(recruta.inside, "a fila NÃO teletransporta: 230ms depois do pedido ela ainda está no túnel");
+  // Medimos SEMPRE na recruta — quem este passo criou. O rodízio da boca
+  // enfileira gente sozinho a cada ~4,5s ("N nova(s)" variando com a carga da
+  // máquina), então "quem saiu primeiro" seria medir o acaso, não a fila. E as
+  // ondas continuam vindo lá fora enquanto a cena está aberta (o mundo não
+  // congela mais): limpar os inimigos a cada amostrada deixa de haver morte
+  // no meio do trajeto — que nada tem a ver com a fila da boca.
   let guardOut = 0;
-  const aindaDentro = () => novos.some(a => units.allies.inside.some(b => b.id === a.id));
-  while (aindaDentro() && guardOut < 20000) { await wait(250); guardOut += 250; }
-  const saiuId = novos.map(a => a.id).find(id => !units.allies.inside.some(a => a.id === id));
-  expect(!!saiuId, "a formiga da fila atravessou a boca depois de andar até a ENTRADA");
-  const saiu = units.allies.find(a => a.id === saiuId);
-  expect(!!saiu && !saiu.inside &&
-    Math.hypot(saiu.x - world.anthill.door.x, saiu.y - world.anthill.door.y) < 200,
+  while (recruta.inside && !recruta.dead && guardOut < 20000) {
+    en.clearFoes();
+    await wait(200);
+    guardOut += 200;
+  }
+  expect(!recruta.inside, "a recruta atravessou a boca depois de andar até a ENTRADA (" + guardOut + "ms de túnel)");
+  expect(!recruta.dead && !recruta.dying, "a recruta chegou viva: ninguém morre dentro do túnel da fila");
+  expect(Math.hypot(recruta.x - world.anthill.door.x, recruta.y - world.anthill.door.y) < 200,
     "quem saiu brotou no mundo junto à boca do formigueiro");
-  expect(saiu && !nestMod.nest.ants.some(n => n.id === saiu.id),
-    "quem saiu não tem mais corpo na cena de dentro");
+  expect(!N.ants.some(n => n.id === recruta.id), "quem saiu não tem mais corpo na cena de dentro");
 }
 
 {
+  const cfgN = await import(BASE + "/config.js");
   const antes = units.allies.filter(a => !a.dead).length;
-  G.run.chambers.nursery = Math.max(1, G.run.chambers.nursery);
-  nestMod.nest.growT = 0.01;
-  await wait(400);
+  const popStart = units.popCapTotal();
+  G.run.food = 4000;
+  const berco = freeRun(3, N.hall) || [];
+  expect(berco.length === 3, "dá para emendar um BERÇO no corte (3 tiles livres e grudados)");
+  N.tool = "nursery";
+  for (const i of berco) await clickTile(i);
+  const limite = Date.now() + 18000;
+  while (Date.now() < limite && !(N.stats && N.stats.tiles.nursery >= 3)) await wait(200);
+  expect(N.stats.tiles.nursery >= 3 && N.stats.popBonus >= 1,
+    "berço escavado: " + N.stats.tiles.nursery + " tiles, POP " + popStart + " -> " + units.popCapTotal() +
+    " (a vaga vem do berço aberto, não de um botão)");
+  // o ovo é levado pela enfermeira; aqui ele já chega no berço para a cena ser curta
+  const rc = centerOf(N.royal);
+  N.eggs.push({ t: 0, x: rc.x, y: rc.y, at: N.royal, carried: true });
+  N.growT = 0.01;
+  const foodN = G.run.food;
+  const limite2 = Date.now() + 6000;
+  while (Date.now() < limite2 && units.allies.filter(a => !a.dead).length === antes) await wait(120);
   const novas = units.allies.filter(a => !a.dead && a.type === "worker");
   const perto = novas.some(a => Math.hypot(a.x - world.anthill.x, a.y - world.anthill.y) < 200);
   expect(units.allies.filter(a => !a.dead).length > antes && perto,
-    "nova operária nasceu no berçário e apareceu junto ao formigueiro no mundo");
+    "nova operária nasceu no berço cavado e apareceu junto ao formigueiro no mundo");
+  expect(G.run.food <= foodN, "nascer no berço custa comida de verdade (" + cfgN.NEST_RULES.hatchFood + " por formiga)");
+  N.tool = "dig";
 }
 
 pressed.Escape = true;
