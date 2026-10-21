@@ -254,7 +254,24 @@ não pune em 10 s. `sim` e `endless` passaram com o novo teto.
 `inspect:hud` OK em seis biomas + formigueiro · `inspect` sem erro de JS/404/glifo e 60 fps · FPS da cena
 do ninho **59,5** com a gaveta aberta (o desenho da folha custa um `drawImage` por frame, não um por tile).
 
-### 8. Limites desta rodada
+### 8. Reconciliação com a `main` (o PR abriu conflitando, e não era o formigueiro)
+
+Entre o meu último commit e a abertura do PR, a `main` recebeu o **PR #80** (cards da fileira de
+formigas: `SHOP_CARD` 30×64 → 44×64, `pitch` 36 → 50, tooltip 264×134). A história da `main` foi
+**recriada por aquela sessão** (o merge dela não tem a minha base como ancestral), então o GitHub
+marcou o PR como `CONFLICTING` sem nem olhar conteúdo. Ensaiado em worktree descartável antes de
+tocar na branch: **um único arquivo em conflito, e ele é gerado** — `app/assets.json`. Resolvido do
+jeito certo, **regenerando** em cada commit do rebase (`make_assets_list` + `sync-native-assets`),
+nunca escolhendo lado à mão.
+
+Depois do rebase, verificação completa no tree junto: `npm test` 38/38, `inspect:layout` 122 estados
+(incluindo `NINHO-OBRAS` com FONTE GRANDE sobre os cards novos), `inspect:hud` 59,5 fps, `inspect`
+limpo a 60 fps. `git diff origin/main HEAD -- game/js/game.js` não toca em nenhum número do #80: os
+dois trabalhos coexistem. **Lição para a próxima sessão: rebasar em cima da `main` ANTES de abrir o
+PR, e conferir com `git merge-tree`/worktree — `CONFLICTING` pode ser história não aparentada, não
+briga de código.**
+
+### 9. Limites desta rodada
 
 **`ASSET_V` foi para `20261021-ninho-arte-v3`** — e a ordem dos fatores aqui é obrigatória: o teste `pwa`
 compara o `app/assets.json` com os bytes **também dos JS da casca**; gerei as listas no começo da rodada e
