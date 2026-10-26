@@ -20,6 +20,9 @@
     "playtest": "node tools/playtest.mjs",
     "serve": "node game/test/lib/server.mjs 8000",
     "setup": "bash tools/setup-dev.sh",
+ "setup:pixel": "bash tools/setup-pixel.sh",
+ "pixelize": "tools/python-pixel tools/pixelize.py --tudo",
+ "pixelize:check": "node game/test/pixelize.mjs",
     "prepare:native": "node tools/sync-native-assets.mjs",
     "package:android": "bash tools/build-android.sh",
     "package:windows": "npm --prefix installers/windows run dist:win"

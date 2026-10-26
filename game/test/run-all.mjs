@@ -43,6 +43,7 @@ const TESTS = [
   { name: "hud-publication", file: "hud-publication.mjs" },
   { name: "art-pixel", file: "art-pixel.mjs" },
   { name: "pixel-frame", file: "pixel-frame.mjs" },
+  { name: "pixelize", file: "pixelize.mjs" },
   { name: "stuck", file: "stuck.mjs" },
   { name: "title-parallax", file: "title-parallax.mjs" },
   { name: "cutscene-art", file: "cutscene-art.mjs" },

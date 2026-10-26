@@ -762,7 +762,7 @@ Pedido explícito “Parta direto para F1”: supera a recomendação de termina
 
 **Finalidade:** permitir retomar a criação de imagens sem depender da memória desta conversa, sem rediscutir decisões já tomadas e sem confundir arquivos históricos com entregas atuais. Este guia reúne o estado vigente; os registros abaixo permanecem como histórico. Foi acrescentado a pedido do usuário: “Certifique-se de que tudo está bem descrito dentro do MEGA ARQUIVO, para que um novo chat consiga entender e criar estas imagens com excelência.”
 
-**Navegação neste próprio MEGA:** [decisão e estado](#arte-estado-vigente) · [aparência e detalhe](#arte-acabamento) · [camadas e contratos](#arte-camadas) · [prompt completo vigente](#prompt-mestre-vigente) · [ficha e exemplos](#arte-fichas-exemplos) · [referências e recuperação](#arte-acervo-drive) · [execução e aprovação](#arte-producao) · [checklist](#arte-aceite) · [próxima etapa](#arte-proximo-passo) · [F0b no runtime](#arte-f0b-runtime) · [histórico dos dez estilos v2](#acervo-estilos-v2) · [manual de flores v3](#flores-v3) · [integridade dos seis documentos](#registro-de-integridade).
+**Navegação neste próprio MEGA:** [decisão e estado](#arte-estado-vigente) · [aparência e detalhe](#arte-acabamento) · [camadas e contratos](#arte-camadas) · [prompt completo vigente](#prompt-mestre-vigente) · [ficha e exemplos](#arte-fichas-exemplos) · [referências e recuperação](#arte-acervo-drive) · [execução e aprovação](#arte-producao) · [checklist](#arte-aceite) · [próxima etapa](#arte-proximo-passo) · [F0b no runtime](#arte-f0b-runtime) · [F0b-2 pipeline](#arte-f0b2-pipeline) · [histórico dos dez estilos v2](#acervo-estilos-v2) · [manual de flores v3](#flores-v3) · [integridade dos seis documentos](#registro-de-integridade).
 
 ### Como começar sem depender do chat anterior
 
@@ -783,7 +783,7 @@ Pedido explícito “Parta direto para F1”: supera a recomendação de termina
 |---|---|
 | Técnica oficial | **PIXEL CELESTE — pixel art nativa estilo Celeste.** Canvas de jogo 320×180 ampliado ×3, tiles de 8×8, 16 cores de cena por bioma, sem anti-aliasing, sem gradiente e sem preto puro de cena. Não pedir novamente qual dos dez estilos deve ser oficial: o papel recortado (06) e o low-poly (08) são histórico. |
 | Prompt ativo | **`FUMIGA-PIXEL-CELESTE-v1`**, integral neste MEGA no [bloco canônico](#prompt-mestre-vigente) e em `docs/arte/ESTILO_OFICIAL.md`. O antigo `FUMIGA-PAPEL-v4-CHROMA` permanece integral em [`docs/arte/historico/ESTILO_OFICIAL-v4-PAPEL.md`](docs/arte/historico/ESTILO_OFICIAL-v4-PAPEL.md) e abaixo, como histórico. Mudança de direção exige aprovação explícita e versão anterior preservada. |
-| Plano de fases | [`docs/arte/FASES_PIXEL_CELESTE.md`](docs/arte/FASES_PIXEL_CELESTE.md): F0a e **F0b feitas** (2026-10-26); **F0b-2** (pipeline de pixelização dos assets atuais) é a próxima ação real; F0c, F1–F9 pendentes; F5d e F8 bloqueadas. |
+| Plano de fases | [`docs/arte/FASES_PIXEL_CELESTE.md`](docs/arte/FASES_PIXEL_CELESTE.md): F0a, **F0b** e **F0b-2 feitas** (2026-10-26); **F0c** (piloto da Planície) é a próxima ação real; F0c, F1–F9 pendentes; F5d e F8 bloqueadas. |
 | Contratos e paleta | [`docs/arte/paleta-celeste.json`](docs/arte/paleta-celeste.json) e [`docs/arte/contratos-pixel.json`](docs/arte/contratos-pixel.json); tamanho nativo = `round(unidades_de_mundo / 3)`. |
 | Chroma nas novas gerações | Fonte de toda imagem: fundo sólido verde/azul (azul se a peça tem verde; verde se tem azul), inclusive HUD, terreno e ilustração; derivado recortado/composto antes do jogo. Sem efeito retroativo. |
 | Escopo visual | Todo o conjunto: terrenos, personagens, fauna, vegetação, flores, recursos, construções, árvore/maçãs/santuários, UI/ícones, menus, carregamentos e cutscenes. O mundo é pixel 320×180; a UI usa arte em grade de 3 px no canvas cheio, sem suavização. |
@@ -997,7 +997,7 @@ Validar em tamanho real, estado ativo/inativo e fonte normal/grande antes da int
 <a id="arte-proximo-passo"></a>
 ### 8. Próxima etapa real e mapa do trabalho restante
 
-**Atualização em 2026-10-26:** a F0b (frame pixel) **já foi entregue no runtime** — registro completo em [8.1 F0b no runtime](#arte-f0b-runtime). A próxima ação real passou a ser **F0b-2 (pipeline de pixelização)** e depois **F0c (piloto da Planície)**. O texto abaixo descreve o piloto como ele foi planejado e continua valendo como especificação do F0c.
+**Atualização em 2026-10-26:** a F0b (frame pixel) **já foi entregue no runtime** — registro completo em [8.1 F0b no runtime](#arte-f0b-runtime). A **F0b-2 (pipeline de pixelização)** também já foi entregue — registro em [8.1b](#arte-f0b2-pipeline). A próxima ação real passou a ser **F0c (piloto da Planície)**. O texto abaixo descreve o piloto como ele foi planejado e continua valendo como especificação do F0c.
 
 **Próxima validação recomendada:** piloto da Planície aplicando o acabamento detalhado, com base trabalhada, passadas de decoração/elementos aprovadas separadamente e prévia composta. O objetivo é demonstrar riqueza sem vazio **e** leitura de gameplay; não gerar outra comparação com low-poly, nem repetir dez estilos já decididos. Definir o lote concreto antes de produzir.
 
@@ -1088,9 +1088,70 @@ ok    chão assado: 1072x800 px de buffer (grade de tiles 8x8)
 
 **O que NÃO foi feito / pendências conhecidas:** nenhum sprite foi trocado — as formigas continuam com a arte antiga, agora rebaixada ao tamanho nativo e fora da paleta do bioma (é o trabalho do F0b-2); a névoa ainda usa o véu em grade de 32 px com blocos que não fecham na grade de 3 px (F2); os sprites de formiga seguem com 26 a 725 cores distintas por casta, muito acima das 16 de cena do contrato.
 
-**Próxima ação e decisão que ainda precisa do usuário:** **F0b-2 — pipeline de pixelização** dos assets atuais (sem regenerar arte), preparando o terreno para F0c (piloto da Planície). Aprovação visual desta F0b pelo usuário ainda está pendente; foi pedida a leitura do diagrama ANTES→DEPOIS.
+**Próxima ação e decisão que ainda precisa do usuário:** **F0c — piloto da Planície** (rainha, cortadeira, larva, cristal e base 8×8), agora que o pipeline existe e trava sozinho tudo que chegar fora da paleta. Aprovação visual desta F0b pelo usuário ainda está pendente; foi pedida a leitura do diagrama ANTES→DEPOIS.
 
 Regra 12: esta seção é o registro canônico da F0b. `tools/check_art_handoff.mjs` e `game/test/art-pixel.mjs` foram atualizados para exigir a F0b concluída; `docs/arte/direcao-vigente.json` registra o escopo implementado e que o frame não é opção.
+
+<a id="arte-f0b2-pipeline"></a>
+### 8.1b F0b-2 — Pipeline de pixelização (entregue em 2026-10-26)
+
+**O que é:** a ferramenta que transforma a fonte gerada (alta resolução, fundo
+de chroma) na arte nativa que entra no jogo. Roda **fora do runtime** — é
+produção, nunca é chamada durante a partida (Regra 5). Sem ela, nenhuma arte
+gerada entra no jogo (era exatamente a trava do plano).
+
+**Arquivos:** `tools/pixelize.py` (os cinco passos), `tools/setup-pixel.sh`
+(venv com Pillow em `~/.cache/fumiga-pixel`, fora do Git),
+`tools/diagram_pixelize_f0b2.py` (prova visual e diagrama),
+`docs/arte/provas-f0b-2/fichas.json` (as três fichas), derivados e relatórios
+na mesma pasta, `game/test/pixelize.mjs` (guarda, entrou no `test:quick`).
+
+**As três provas (aceite cumprido):**
+
+| Peça | Categoria | Nativo | Cores (todas da paleta) | Opacos / Transp. |
+|---|---|---|---|---|
+| Formiga-cortadeira | casta (mundo) | 15×15 | 11 | 115 / 110 |
+| Pedra | prop (mundo) | 21×21 | 8 | 345 / 96 |
+| Placa de aviso | painel (HUD) | 96×48 | 8 | 3.734 / 874 |
+
+Validação nas três: **alfa binário, 0 cor fora da paleta, alfa real, nenhum
+preto puro.** Prova visual em `docs/arte/provas-f0b-2/prova-320x180.png`
+(buffer 320×180 ampliado 3×, com canto em 1:1) e diagrama ANTES→DEPOIS em
+`docs/arte/diagrama-f0b2-pipeline-2026-10-26.png`.
+
+**Achados que mudaram a ferramenta (e valem para as próximas gerações):**
+
+1. **O chroma gerado quase nunca é a chave pura.** As três fontes vieram com
+   fundo `#1750e1`, `#48a1f2` e `#04f905`. Recortar pela chave teórica não
+   recorta nada. A ferramenta **mede a cor real nas quinas**; a família
+   declarada na ficha virou aviso, não verdade.
+2. **A família sai do canal dominante,** não da distância ponderada: o verde
+   pesa 6× na métrica do runtime, então um azul-claro ficava "mais perto" do
+   verde e o despill mexeria no canal errado.
+3. **O recorte é por inundação pelas bordas,** para não apagar o verde e o
+   azul que a peça tem por dentro (folha da cortadeira, musgo da pedra).
+4. **Nenhuma das três fontes tinha grade de pixel** (confiança 65%, 67% e 73%,
+   contra 90% exigidos) — o prompt-mestre pede blocos duros, o gerador entregou
+   arte lisa. A ferramenta reduz por **média de área** e avisa; com grade,
+   usaria a maioria (a cor desenhada).
+5. **Consequência para F0c:** pedra e painel leem bem no tamanho nativo; a
+   **cortadeira de 15 px não lê** — pernas finas e detalhe somem na redução.
+   Casta pequena exige fonte com blocos duros e silhueta simples, ou desenho
+   nativo.
+6. **Encaixe `conter` ou `cortar`, nunca esticar** — Regra 22 vale também para
+   o pipeline. A placa saiu 1010×414 da fonte (2,44:1) e entrou em 96×48 (2:1)
+   centralizada, sem deformar.
+
+**Guarda automática:** `game/test/pixelize.mjs` reconfere cada derivado contra
+`docs/arte/paleta-celeste.json` (nenhuma cor fora, contagem conferida, alfa
+binário, tamanho igual ao da ficha, preview na escala inteira ×3) e confere que
+a métrica de quantização do pipeline é literalmente a do runtime
+(`dr²*3 + dg²*6 + db²`, sem dither). Entrou no `npm run test:quick` (34 testes).
+
+**Limites:** nenhuma das três peças entra no jogo por esta rodada — elas provam
+a ferramenta. A fonte em alta resolução fica em `art-source/f0b-2/` (fora do
+Git, Regra 5) e o SHA-256 dela fica no relatório para reencontrar o original no
+Drive (Regra 13).
 
 ### Auditoria deste guia de continuidade
 

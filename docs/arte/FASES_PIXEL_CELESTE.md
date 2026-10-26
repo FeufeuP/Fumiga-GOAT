@@ -19,7 +19,7 @@
 |---|---|---|---|---|
 | **F0a** | Direção, prompt-mestre, paleta, contratos e este plano | decisão de 2026-10-26 | documentos verificáveis (`node game/test/art-pixel.mjs`) | ✅ 2026-10-26 |
 | **F0b** | Frame pixel 320×180 + ×3 + zoom inteiro + autotile 8×8 | F0a | 60 FPS, sem shimmer, HUD intacto, PC/mobile | ✅ 2026-10-26 |
-| **F0b-2** | Pipeline de pixelização (fonte grande → nativo) | F0a | 3 provas com paleta exata e sem AA | ⏳ |
+| **F0b-2** | Pipeline de pixelização (fonte grande → nativo) | F0a | 3 provas com paleta exata e sem AA | ✅ 2026-10-26 |
 | **F0c** | Piloto: rainha, cortadeira, larva, cristal, base da Planície 8×8 | F0b, F0b-2 | leitura em 13–63 px, mock no jogo, aceite | ⏳ |
 | **F1** | UI/HUD/ícones + decisão de fonte pixel | F0c | texto legível, Regras 21/22, toque | ⏳ |
 | **F2** | 12 castas, rainha, névoa, cristais, comida, VFX | F1 | toda casta reconhecível; status legível | ⏳ |
@@ -104,9 +104,11 @@
 
 **Assado das castas (F0b-2, medido no navegador):** as 18 castas assam 1 frame cada, em caixa justa (`corpo + 2 px` de margem, sem a diagonal da rotação), com ampliação inteira de 1× no buffer — a gigante, 4× (o truque de assar 1/5 e ampliar na hora, agora com fator arredondado para inteiro, o que antes dependia de um número mágico em `ANT_SIZES.giant`).
 
+**Decisão 7 (2026-10-26, pedido literal "as formigas por enquanto só precisam de um frame cada"):** as 18 castas assam **1 frame** em vez das 24 rotações. Efeito colateral aceito: as formigas não viram mais para a direção em que andam — todas apontam para a direita (frame 0). Volta em F0c/F2, com quadros por direção.
+
 ---
 
-## F0b-2 — Pipeline de pixelização ⏳
+## F0b-2 — Pipeline de pixelização ✅ 2026-10-26
 
 **Objetivo:** transformar a fonte gerada (alta resolução, chroma) em **arte nativa** rigorosa.
 
@@ -119,6 +121,58 @@
 5. exporta `nativo.png` + `preview-3x.png` + relatório JSON (dimensões, cores usadas, hashes).
 
 **Aceite:** três peças de prova (uma casta, um prop, um painel) com contagem de cores conferida e revisão visual em 320×180. Sem isso, nenhuma arte gerada entra no jogo.
+
+### Entregue em 2026-10-26
+
+`tools/pixelize.py` + `tools/setup-pixel.sh` (cria a venv com Pillow em
+`~/.cache/fumiga-pixel`, fora do Git — mesma ideia do `setup-dev.sh`) +
+`tools/diagram_pixelize_f0b2.py` (prova visual e diagrama). Fichas em
+`docs/arte/provas-f0b-2/fichas.json`; derivados e relatórios na mesma pasta.
+Guarda automática em `game/test/pixelize.mjs` (entra no `npm run test:quick`):
+reconfere cada derivado contra `paleta-celeste.json` e não deixa nenhuma peça
+chegar com cor fora da paleta, alfa semitransparente ou tamanho errado.
+
+| Peça | Nativo | Cores | Opacos / Transp. | Fonte |
+|------|--------|-------|------------------|-------|
+| Cortadeira (casta) | 15×15 | 11 | 115 / 110 | lisa, sem grade |
+| Pedra (prop) | 21×21 | 8 | 345 / 96 | lisa, sem grade |
+| Placa de aviso (painel) | 96×48 | 8 | 3.734 / 874 | lisa, sem grade |
+
+Validação: **alfa binário, 0 cor fora da paleta, alfa real, nenhum preto puro**
+nas três. Prova visual em `docs/arte/provas-f0b-2/prova-320x180.png` e
+diagrama em `docs/arte/diagrama-f0b2-pipeline-2026-10-26.png`.
+
+### O que a ferramenta mediu que o plano não previa
+
+1. **O chroma gerado quase nunca é o `#00FF00`/`#0000FF` puro.** As três
+   fontes vieram com fundo `#1750e1`, `#48a1f2` e `#04f905` — "quase" a chave.
+   Recortar pela chave teórica não recorta nada (a pedra perdeu 100% do fundo
+   nesse teste). A ferramenta passou a **medir a cor real nas quinas** e a
+   tratar a família declarada na ficha como aviso, não como verdade.
+2. **A família não pode ser decidida pela distância ponderada.** O verde pesa
+   6× na métrica do runtime, então o azul-claro `#48a1f2` ficava "mais perto" do
+   verde e o despill mexeria no canal errado. Passou a sair do canal dominante.
+3. **O recorte é por inundação pelas bordas.** Chave global apagaria a folha
+   verde da cortadeira e o musgo da pedra; inundando de fora para dentro, só o
+   fundo que encosta na moldura sai.
+4. **Nenhuma das três fontes tem grade de pixel.** O prompt-mestre pede
+   "blocos de pixel grandes", mas as três saíram lisas (confiança máxima de
+   bloco: 65%, 67% e 73%, contra os 90% exigidos). A ferramenta então reduz por
+   **média de área** em vez de maioria — média preserva o volume de uma fonte
+   lisa; maioria numa fonte lisa escolhe uma cor ao acaso.
+5. **Consequência para F0c:** a pedra e o painel leem bem no tamanho nativo; a
+   cortadeira de 15 px **não lê** — a fonte tem pernas finas e detalhe que
+   somem na redução. Gerar casta pequena exige pedir explicitamente blocos
+   duros e silhueta simples, ou desenhar nativo.
+
+**Decisão 8 (2026-10-26):** o encaixe é `conter` (a peça cabe inteira,
+centralizada, o resto fica transparente) ou `cortar`, **nunca esticar** —
+Regra 22 vale também para o pipeline: HUD deformado é bug, não ajuste.
+
+**Decisão 9 (2026-10-26):** a métrica de quantização da ferramenta é
+literalmente a do runtime (`dr²*3 + dg²*6 + db²`, sem dither), e
+`game/test/pixelize.mjs` confere isso nos dois arquivos. O que o pipeline
+aprova é o que o jogo mostra.
 
 ---
 
@@ -247,13 +301,13 @@ Rainha ancestral de névoa, castelo/ninho, arena, coração, efeitos e final. **
 ## Caminho crítico recomendado
 
 ```
-F0a (feito) → F0b (frame, feito) → F0b-2 (pixelização) → F0c (piloto) → F1 (UI)
+F0a (feito) → F0b (frame, feito) → F0b-2 (pixelização, feito) → F0c (piloto) → F1 (UI)
    → F2 (castas/VFX) → F3a/F3b/F3c (árvore, santuários, flores)
    → F4 (chefes) → F5a/F5b/F5c (menus, loading, Noite Branca)
    → F6 (inimigos/terrenos/props) → F7 (ninho) → F8 (só se autorizado) → F9 (distribuição)
 ```
 
-**Próxima ação real:** F0b-2. O frame já está no jogo; falta o pipeline que transforma a fonte gerada (alta resolução, chroma) em arte nativa rigorosa — sem ele, nenhuma arte gerada entra no jogo.
+**Próxima ação real:** F0c (piloto de arte nativa). O frame E o pipeline estão no jogo: a ferramenta existe, foi provada em três peças e a checagem automática (`game/test/pixelize.mjs`) trava qualquer arte que chegue fora da paleta. O que falta é gerar a arte boa — as três provas mostraram que a fonte precisa sair com blocos de pixel duros (ver abaixo).
 
 ## Verificação desta rodada
 

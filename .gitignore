@@ -51,6 +51,9 @@ game/assets/parallax/menu/_orig/
 # reproduzível por tools/make_pwa_icons.sh.
 art-source/
 
+# ponteiro gerado pelo tools/setup-pixel.sh para o Python com Pillow
+tools/python-pixel
+
 # builds nativos (pacotes completos gerados fora do Git)
 .signing/
 installers/android/.gradle/

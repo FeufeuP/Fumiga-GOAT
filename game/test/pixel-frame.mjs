@@ -10,6 +10,8 @@
 // Não prova nitidez, FPS nem leitura visual: isso é inspeção no navegador.
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
+import { execFileSync } from "node:child_process";
+import { fileURLToPath } from "node:url";
 
 // ------------------------------------------------------------------ stubs ---
 const gradProxy = { addColorStop() {} };
@@ -168,6 +170,12 @@ assert.deepEqual([...new Set(videoItems)].sort(),
 const paletaDocs = JSON.parse(read("docs/arte/paleta-celeste.json"));
 const paletaJogo = JSON.parse(read("game/assets/paleta-celeste.json"));
 assert.deepEqual(paletaJogo, paletaDocs, "a cópia do pacote é idêntica à paleta normativa");
+// A comparação acima é a mesma que a ferramenta faz — e a ferramenta é quem
+// regenera a cópia. Conferir as duas coisas: se alguém mudar o sync e ele
+// parar de copiar, a igualdade acima continua valendo por acidente.
+execFileSync(process.execPath, ["tools/sync_paleta.mjs", "--check"],
+  { cwd: fileURLToPath(new URL("../../", import.meta.url)), stdio: "pipe" });
+console.log("ok    paleta normativa — docs/arte/paleta-celeste.json é a fonte e tools/sync_paleta.mjs --check passa");
 assert.deepEqual(soCores(px.PALETA_CELESTE), soCores(paletaDocs.biomas),
   "a paleta de segurança do runtime é igual à normativa");
 assert.equal(px.paletaFonte, "seguranca", "antes de ler, vale a paleta de segurança");

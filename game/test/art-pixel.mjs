@@ -135,8 +135,13 @@ for (const linha of linhaResumo) {
   assert(/✅|⏳|🔁|🔒/.test(linha), "cada fase tem status explícito");
 }
 assert(phases.includes("F0a") && phases.includes("✅ 2026-10-26"), "F0a concluída nesta data");
-assert(phases.includes("Próxima ação real:** F0b-2"), "próxima ação é o pipeline de pixelização F0b-2");
+assert(phases.includes("Próxima ação real:** F0c"), "próxima ação é o piloto de arte nativa F0c");
 assert(phases.includes("F0b — Frame pixel (a base técnica) ✅"), "F0b concluída com data");
+assert(phases.includes("F0b-2 — Pipeline de pixelização ✅"), "F0b-2 concluída com data");
+for (const trecho of ["tools/pixelize.py", "game/test/pixelize.mjs", "provas-f0b-2",
+  "média de área", "inundação pelas bordas", "canal dominante"]) {
+  assert(phases.includes(trecho), `F0b-2 documenta: ${trecho}`);
+}
 assert(phases.includes("🔒"), "fases bloqueadas visíveis");
 for (const etiqueta of ["Porta", "Aceite", "Regras transversais", "Caminho crítico"]) {
   assert(phases.includes(etiqueta), `plano traz ${etiqueta}`);
@@ -174,5 +179,5 @@ assert.equal(audit.prompt, "FUMIGA-PIXEL-CELESTE-v1", "auditoria confirma o prom
 assert.equal(audit.fases, FASES.length, "auditoria confirma as fases");
 
 console.log(`ok    direção pixel Celeste — ${biomas.length - 1} biomas, ${castas.length} castas, ${celulas} células de chefe`);
-console.log(`ok    ${FASES.length} fases documentadas (F0a→F9), F0a e F0b concluídas, próxima F0b-2`);
+console.log(`ok    ${FASES.length} fases documentadas (F0a→F9), F0a, F0b e F0b-2 concluídas, próxima F0c`);
 console.log("ART-PIXEL ÍNTEGRO — documentação coerente com a decisão de 2026-10-26");

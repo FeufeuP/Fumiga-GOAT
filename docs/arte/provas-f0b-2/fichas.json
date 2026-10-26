@@ -1,0 +1,176 @@
+{
+  "versao": "FUMIGA-PIXEL-CELESTE-v1",
+  "fase": "F0b-2 — Pipeline de pixelização",
+  "data": "2026-10-26",
+  "nota": "Três peças de prova do pipeline: uma casta, um prop e um painel. Nenhuma entra no jogo — elas existem para provar que a ferramenta (tools/pixelize.py) entrega arte nativa validada. A integração é a fase F0c.",
+  "pecas": [
+    {
+      "id": "cortadeira",
+      "titulo": "Formiga-cortadeira (Atta cephalotes)",
+      "categoria": "sprite de casta — mundo do jogo",
+      "bioma": "planicie",
+      "funcao": "unidade coletora do jogador",
+
+      "assunto": "Uma formiga-cortadeira sozinha, em pose neutra voltada para a direita, carregando um fragmento de folha verde recortada sobre o corpo.",
+      "estado": "pose neutra, parada; sem animação",
+      "estagio": "fonte de alta resolução para redução (esta peça é prova do pipeline)",
+
+      "camera": "ortográfica estritamente de cima (top-down), sem horizonte e sem isometria",
+
+      "nativo": [15, 15],
+      "nativo_calculo": "mundo 45 / 3 = 15",
+      "margem": "1 px de cada lado — a formiga ocupa ~13x13 dentro do quadro",
+      "ancora": "centro do quadro",
+
+      "grade": "sprite isolado, pivô inteiro no centro, alinhado à grade de 8x8 do terreno",
+      "paleta": "Planície do Amanhecer (oliva e âmbar) — 4 a 6 cores próprias: tinta marrom-escura no contorno, corpo marrom-terra médio, luz âmbar no topo do gáster, folha verde-oliva em dois passos, sombra fria marrom-acinzentada",
+      "compartilhado": false,
+      "contorno": "1 px de tinta escura",
+      "sombra": "sombra de contato de 1 px deslocada para baixo-direita; luz dura do alto à esquerda",
+      "quadros": 1,
+      "fps": null,
+
+      "fundo_fonte": "azul puro #0000FF — a peça tem folha verde, então nunca fundo verde",
+      "fundo_derivado": "alfa real",
+      "chroma": "azul",
+      "opaca": false,
+
+      "destino": "assado nativo de 15x15 px consumido pelo bake de castas (game/js/assets.js)",
+      "orcamento": "15x15 RGBA, ~1 KB",
+      "aprovacao": "F0c — esta rodada só aprova o pipeline",
+
+      "obrigatorio": [
+        "seis patas ligadas ao tórax",
+        "duas antenas",
+        "corpo segmentado em cabeça, tórax e gáster",
+        "fragmento de folha proporcional ao inseto",
+        "silhueta reconhecível em 15 px"
+      ],
+      "proibido": [
+        "bipedia, rosto humano, mãos humanas, roupas humanoides",
+        "texto, logotipo, moldura, cenário ao redor",
+        "sombra projetada sobre o fundo",
+        "anti-aliasing, meio-tom, desfoque, gradiente suave, preto puro"
+      ],
+
+      "pixelizacao": {
+        "reducao": "detecção do bloco da fonte + redução por célula (cobertura > 50% define o alfa; maioria define a cor; desempate na cor mais escura para o contorno de 1 px sobreviver)",
+        "quantizacao": "vizinho-mais-próximo na paleta do bioma, SEM dither, métrica dr²*3 + dg²*6 + db² (igual ao runtime)",
+        "validacao": "alfa binário (0 ou 255), 0 cor fora da paleta (tolerância 0), alfa real, nenhum preto puro"
+      },
+
+      "fonte": "art-source/f0b-2/cortadeira-fonte.png"
+    },
+    {
+      "id": "pedra",
+      "titulo": "Pedra de cenário da Planície",
+      "categoria": "prop de mundo — decoração e obstáculo visual",
+      "bioma": "planicie",
+      "funcao": "prop de terreno, passada separada do mapa-base (Regra 19)",
+
+      "assunto": "Uma pedra arredondada de topo, maciça e baixa, vista de cima, com mancha de musgo verde-oliva na face voltada para baixo e duas ou três fissuras escuras no topo.",
+      "estado": "estática; sem animação",
+      "estagio": "fonte de alta resolução para redução (esta peça é prova do pipeline)",
+
+      "camera": "vista de cima (top-down), sem horizonte e sem isometria",
+
+      "nativo": [21, 21],
+      "nativo_calculo": "mundo 64 / 3 = 21 (prop desenhado com img.width * escala na tela)",
+      "margem": "1 px de cada lado — a pedra ocupa ~19x19 dentro do quadro",
+      "ancora": "base central do quadro",
+
+      "grade": "sprite isolado, pivô inteiro na base central",
+      "paleta": "Planície do Amanhecer — topo cinza-terroso claro, lateral em sombra marrom-acinzentado frio, base marrom-escura, musgo verde-oliva em dois passos, 1 px de luz na aresta superior",
+      "compartilhado": false,
+      "contorno": "1 px de tinta escura",
+      "sombra": "sombra de contato de 1 px deslocada para baixo-direita; luz dura do alto à esquerda",
+      "quadros": 1,
+      "fps": null,
+
+      "fundo_fonte": "azul puro #0000FF — a peça tem musgo verde, então nunca fundo verde",
+      "fundo_derivado": "alfa real",
+      "chroma": "azul",
+      "opaca": false,
+
+      "destino": "sprite de prop assado em 21x21 px, desenhado no buffer de 320x180",
+      "orcamento": "21x21 RGBA, ~1,5 KB",
+      "aprovacao": "F6 (props e terrenos) — esta rodada só aprova o pipeline",
+
+      "obrigatorio": [
+        "silhueta irregular de pedra com quinas chanfradas",
+        "agrupamentos de 2 a 4 pixels de luz e sombra, nunca textura uniforme",
+        "topo mais claro que a base"
+      ],
+      "proibido": [
+        "grama ou chão sob a pedra",
+        "outras pedras, cenário ao redor",
+        "sombra projetada sobre o fundo",
+        "anti-aliasing, meio-tom, desfoque, gradiente suave, preto puro"
+      ],
+
+      "pixelizacao": {
+        "reducao": "detecção do bloco da fonte + redução por célula (cobertura > 50% define o alfa; maioria define a cor; desempate na cor mais escura)",
+        "quantizacao": "vizinho-mais-próximo na paleta do bioma, SEM dither, métrica dr²*3 + dg²*6 + db² (igual ao runtime)",
+        "validacao": "alfa binário (0 ou 255), 0 cor fora da paleta (tolerância 0), alfa real, nenhum preto puro"
+      },
+
+      "fonte": "art-source/f0b-2/pedra-fonte.png"
+    },
+    {
+      "id": "painel",
+      "titulo": "Placa de aviso do HUD",
+      "categoria": "painel de HUD — fora do mundo jogável (exceção de ilustração autorizada)",
+      "bioma": "planicie",
+      "funcao": "placa com área central de papel liso reservada para texto (Regras 21 e 22)",
+
+      "assunto": "Uma placa retangular de papel creme com moldura de madeira escura, vista frontal e chapada, com quatro nós de madeira nos cantos e uma pequena dobra de papel no canto inferior direito. O centro é uma área retangular de papel liso, limpa e vazia, reservada para texto.",
+      "estado": "estática; sem animação e sem estado (hover/pressionado são peças próprias)",
+      "estagio": "fonte de alta resolução para redução (esta peça é prova do pipeline)",
+
+      "camera": "vista frontal chapada — exceção de ilustração autorizada para peças de HUD",
+
+      "nativo": [96, 48],
+      "nativo_calculo": "HUD na grade de 3 px do canvas cheio: 288x144 px de tela / 3 = 96x48",
+      "margem": "moldura de 4 px; a área de papel liso ocupa o retângulo central com margem uniforme",
+      "ancora": "centro do quadro",
+
+      "grade": "peça isolada, proporção exata de 2:1 (largura = 2 x altura), pivô no centro",
+      "paleta": "Planície do Amanhecer + grupo compartilhado (papel_claro, tinta, âmbar) — moldura marrom de madeira em dois passos, papel creme claro na área central, sombra quente marrom-clara",
+      "compartilhado": true,
+      "contorno": "1 px de tinta escura",
+      "sombra": "sombra de 1 a 2 px deslocada para baixo-direita; luz do alto à esquerda",
+      "quadros": 1,
+      "fps": null,
+
+      "fundo_fonte": "verde puro #00FF00 — a peça é creme e marrom, sem traços verdes",
+      "fundo_derivado": "alfa real",
+      "chroma": "verde",
+      "opaca": false,
+
+      "destino": "peça de HUD desenhada no canvas cheio na grade de 3 px (F1 decide se a UI entra no buffer)",
+      "orcamento": "96x48 RGBA, ~4 KB",
+      "aprovacao": "F1 (HUD/UI nativa) — esta rodada só aprova o pipeline",
+
+      "obrigatorio": [
+        "proporção exata de 2:1",
+        "área central de papel liso perfeitamente limpa e retangular",
+        "moldura de espessura constante",
+        "quatro nós nos cantos"
+      ],
+      "proibido": [
+        "TEXTO DE QUALQUER TIPO na área central ou em qualquer lugar",
+        "letras, números, logotipo, marca-d'água, ícones, botões, barras",
+        "cenário ao redor, sombra projetada sobre o fundo",
+        "anti-aliasing, meio-tom, desfoque, gradiente suave, preto puro"
+      ],
+
+      "pixelizacao": {
+        "reducao": "detecção do bloco da fonte + redução por célula (cobertura > 50% define o alfa; maioria define a cor; desempate na cor mais escura)",
+        "quantizacao": "vizinho-mais-próximo na paleta do bioma + compartilhado, SEM dither, métrica dr²*3 + dg²*6 + db² (igual ao runtime)",
+        "validacao": "alfa binário (0 ou 255), 0 cor fora da paleta (tolerância 0), alfa real, nenhum preto puro"
+      },
+
+      "fonte": "art-source/f0b-2/painel-fonte.png"
+    }
+  ]
+}

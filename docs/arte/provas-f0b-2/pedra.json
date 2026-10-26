@@ -1,0 +1,76 @@
+{
+  "id": "pedra",
+  "titulo": "Pedra de cenário da Planície",
+  "categoria": "prop de mundo — decoração e obstáculo visual",
+  "bioma": "planicie",
+  "fonte": {
+    "arquivo": "art-source/f0b-2/pedra-fonte.png",
+    "dimensoes": [
+      1536,
+      1536
+    ],
+    "sha256": "64be7d9264749b06b9ec519c6db4242a0337835a225ed6f06bccb06504196482"
+  },
+  "chroma": {
+    "familia": "azul",
+    "cor_medida": "#48a1f2",
+    "tolerancia": 61,
+    "metodo": "inundação pelas bordas (preserva detalhe da cor da chave no interior da peça)",
+    "pixels_recortados": 1109042,
+    "pixels_da_chave_preservados_no_interior": 0,
+    "pixels_com_spill_corrigido": 9799
+  },
+  "caixa_conteudo": [
+    146,
+    165,
+    1418,
+    1374
+  ],
+  "grade": {
+    "bloco_px": 0,
+    "confianca": 0.6747,
+    "tem_grade": false,
+    "metodo_reducao": "média de área",
+    "encaixe": "conter",
+    "desenho_efetivo": [
+      21,
+      20
+    ]
+  },
+  "nativo": {
+    "dimensoes": [
+      21,
+      21
+    ],
+    "arquivo": "docs/arte/provas-f0b-2/pedra-nativo.png",
+    "sha256": "1a117de8084180c978e9fb08831682f43ee1bfb91c2d261dddb372a05558f75e",
+    "cores_usadas": [
+      "#c98d3a",
+      "#4c6640",
+      "#6b8a52",
+      "#3a5030",
+      "#2c3d24",
+      "#28351d",
+      "#5a8547",
+      "#ffd479"
+    ],
+    "contagem_de_cores": 8,
+    "pixels_opacos": 345,
+    "pixels_transparentes": 96
+  },
+  "quantizacao": {
+    "paleta": "docs/arte/paleta-celeste.json",
+    "compartilhado": false,
+    "cores_na_paleta": 19,
+    "dither": false,
+    "metrica": "dr^2*3 + dg^2*6 + db^2 (igual ao quantizeToPalette do runtime)",
+    "pixels_ajustados": 345,
+    "distancia_media": 8212.2,
+    "distancia_maxima": 18322
+  },
+  "validacao": {
+    "ok": true,
+    "problemas": []
+  },
+  "preview_3x": "docs/arte/provas-f0b-2/pedra-preview-3x.png"
+}
