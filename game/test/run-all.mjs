@@ -42,6 +42,7 @@ const TESTS = [
   { name: "assets", file: "assets.mjs" },
   { name: "hud-publication", file: "hud-publication.mjs" },
   { name: "art-pixel", file: "art-pixel.mjs" },
+  { name: "pixel-frame", file: "pixel-frame.mjs" },
   { name: "stuck", file: "stuck.mjs" },
   { name: "title-parallax", file: "title-parallax.mjs" },
   { name: "cutscene-art", file: "cutscene-art.mjs" },
@@ -69,6 +70,7 @@ const TESTS = [
   { name: "paper-hud-browser", file: "paper-hud-browser.mjs", slow: true, browser: true },
   { name: "hud-publication-browser", file: "hud-publication-browser.mjs", slow: true, browser: true },
   { name: "psx-filter-browser", file: "psx-filter-browser.mjs", slow: true, browser: true },
+  { name: "pixel-frame-browser", file: "pixel-frame-browser.mjs", slow: true, browser: true },
 ];
 
 const args = process.argv.slice(2);

@@ -14,25 +14,41 @@
   "decisoes": {
     "estilo": "full — pixel Celeste é o estilo oficial de todo o jogo",
     "paleta": "hibrida — rampas do Celeste sobre o pastel terroso aprovado em 2026-10-08",
-    "tecnica": "buffer 320x180 + upscale x3 nearest",
-    "escopo_rodada": "docs — só documentação nesta rodada"
+    "tecnica": "buffer 320x180 + upscale x3 nearest + encaixe do canvas em degraus de 1/3",
+    "escopo_rodada": "docs — só documentação nesta rodada",
+    "video_padrao": "filtro PS1 e scanlines desligados por padrão (continuam em OPÇÕES → VÍDEO)"
   },
   "frame": {
-    "buffer": [320, 180],
+    "buffer": [
+      320,
+      180
+    ],
     "escala": 3,
-    "canvas": [960, 540],
+    "canvas": [
+      960,
+      540
+    ],
     "tile": 8,
-    "zoom_inteiro": [1, 2, 3]
+    "zoom_inteiro": [
+      1,
+      2,
+      3
+    ]
   },
   "direcao_aprovada": true,
-  "refinamento_implementado_no_jogo": false,
-  "escopo_implementacao": "nenhum: direção documentada; runtime e assets seguem os antigos até F0b/F0c",
-  "proxima_validacao": "F0b — frame pixel 320x180 com zoom inteiro, medido em PC e mobile",
+  "refinamento_implementado_no_jogo": true,
+  "escopo_implementacao": "F0b implementada em 2026-10-26: buffer de baixa resolução + composição em game/js/pixel_celeste.js, zoom inteiro 1x/2x/3x com sangria na câmera (camera.js, mobile/touch.js), encaixe do canvas em degraus de 1/3 (main.js:fit), vinheta em máscara de 1 px (render.js) e chão em autotile 8x8 assado por bioma (world.js). O frame NÃO é opção: não existe e não deve existir botão de liga/desliga; é o estilo do jogo inteiro. Nenhum asset foi substituído — o rework de sprites continua sendo F0b-2/F1 em diante.",
+  "proxima_validacao": "F0b-2 — pipeline de pixelização (fonte grande em chroma -> nativo), com 3 provas de paleta exata e sem AA",
   "registro_implementacao": "docs/arte/FASES_PIXEL_CELESTE.md",
   "regra_fundo_gerado": "2026-10-10 mantida: toda fonte gerada/editada em chroma uniforme verde #00FF00 ou azul #0000FF; azul se a peça tem verde, verde se a peça tem azul; recortar, pixelizar e recompor antes de integrar",
   "observacoes": [
     "papel recortado v1-v4 preservado em docs/arte/historico/",
     "a UI continua em alta resolução (mundo UI do Celeste); levá-la ao buffer 320x180 é decisão própria do F1",
-    "roxo/azul-escuro seguem rejeitados como base; azul-acinzentado do bioma Gelo é cor de material"
+    "roxo/azul-escuro seguem rejeitados como base; azul-acinzentado do bioma Gelo é cor de material",
+    "decisão do usuário em 2026-10-26: o frame NÃO é opção de vídeo — \"não é uma opção, é o estilo do jogo inteiro, não pode ser desativado ou ativado\"; por isso não existe chave em OPÇÕES → VÍDEO nem no save",
+    "F0b entregue em 2026-10-26: buffer 324x184 (320x180 + 2 px de sangria), câmera lisa devolvendo o resto fracionário como deslocamento inteiro de tela (técnica Saint11/Celeste), terreno em autotile 8x8 preso na paleta do bioma e vinheta em máscara de 1 px com dither",
+    "a arte antiga segue sendo a desenhada: com o frame no lugar, ela aparece rebaixada a 1/3 até as peças nativas das fases F0c/F1/F2 entrarem",
+    "decisão de 2026-10-26 (inspeção): o encaixe do canvas na janela passou a crescer em degraus de 1/3, porque o pixel do frame mede 3 px de canvas — sem isso ele vira ora 4 px ora 5 px no monitor e o mundo tremelia ao caminhar. Custo aceito: canvas ~8% menor no celular",
+    "decisão de 2026-10-26 (inspeção): FILTRO PS1 e SCANLINES passaram a nascer DESLIGADOS. Os dois são pintados por cima do canvas e desfaziam o frame (blocos 3x3 uniformes caíam de 100% no canvas para 1% na tela). As opções continuam em OPÇÕES → VÍDEO e saves antigos recebem o novo padrão uma única vez, pela marca save.pixelFrame"
   ]
 }

@@ -32,7 +32,15 @@ function fit() {
   if (document.getElementById("touch-hud") && w >= h && (w - VIEW_W * s) / 2 < 74) {
     s = Math.min((w - 148) / VIEW_W, h / VIEW_H);
   }
+  // PIXEL CELESTE (F0b): o canvas é ampliado por `s` pelo navegador, então o
+  // pixel do frame só chega inteiro na tela quando `3 * s` é inteiro — o frame
+  // tem 3 px de canvas por pixel de arte. Escala fracionária solta (1,42×, p.ex.)
+  // daria blocos de 4 px e 5 px alternados e o mundo tremelia ao caminhar.
+  // Daí o degrau de 1/3: perde-se no máximo 1/3 de passo de tamanho e o pixel
+  // continua quadrado e uniforme em qualquer janela. Acima de 2.1 a escala
+  // inteira anterior continua valendo (maior, e também múltipla de 1/3).
   if (s >= 2.1) s = Math.floor(s);
+  else s = Math.max(1 / 3, Math.floor(s * 3) / 3);
   canvas.style.width = Math.floor(VIEW_W * s) + "px";
   canvas.style.height = Math.floor(VIEW_H * s) + "px";
   // a cobertura de scanlines acompanha o canvas pixel a pixel

@@ -762,7 +762,7 @@ Pedido explícito “Parta direto para F1”: supera a recomendação de termina
 
 **Finalidade:** permitir retomar a criação de imagens sem depender da memória desta conversa, sem rediscutir decisões já tomadas e sem confundir arquivos históricos com entregas atuais. Este guia reúne o estado vigente; os registros abaixo permanecem como histórico. Foi acrescentado a pedido do usuário: “Certifique-se de que tudo está bem descrito dentro do MEGA ARQUIVO, para que um novo chat consiga entender e criar estas imagens com excelência.”
 
-**Navegação neste próprio MEGA:** [decisão e estado](#arte-estado-vigente) · [aparência e detalhe](#arte-acabamento) · [camadas e contratos](#arte-camadas) · [prompt completo vigente](#prompt-mestre-vigente) · [ficha e exemplos](#arte-fichas-exemplos) · [referências e recuperação](#arte-acervo-drive) · [execução e aprovação](#arte-producao) · [checklist](#arte-aceite) · [próxima etapa](#arte-proximo-passo) · [histórico dos dez estilos v2](#acervo-estilos-v2) · [manual de flores v3](#flores-v3) · [integridade dos seis documentos](#registro-de-integridade).
+**Navegação neste próprio MEGA:** [decisão e estado](#arte-estado-vigente) · [aparência e detalhe](#arte-acabamento) · [camadas e contratos](#arte-camadas) · [prompt completo vigente](#prompt-mestre-vigente) · [ficha e exemplos](#arte-fichas-exemplos) · [referências e recuperação](#arte-acervo-drive) · [execução e aprovação](#arte-producao) · [checklist](#arte-aceite) · [próxima etapa](#arte-proximo-passo) · [F0b no runtime](#arte-f0b-runtime) · [histórico dos dez estilos v2](#acervo-estilos-v2) · [manual de flores v3](#flores-v3) · [integridade dos seis documentos](#registro-de-integridade).
 
 ### Como começar sem depender do chat anterior
 
@@ -783,7 +783,7 @@ Pedido explícito “Parta direto para F1”: supera a recomendação de termina
 |---|---|
 | Técnica oficial | **PIXEL CELESTE — pixel art nativa estilo Celeste.** Canvas de jogo 320×180 ampliado ×3, tiles de 8×8, 16 cores de cena por bioma, sem anti-aliasing, sem gradiente e sem preto puro de cena. Não pedir novamente qual dos dez estilos deve ser oficial: o papel recortado (06) e o low-poly (08) são histórico. |
 | Prompt ativo | **`FUMIGA-PIXEL-CELESTE-v1`**, integral neste MEGA no [bloco canônico](#prompt-mestre-vigente) e em `docs/arte/ESTILO_OFICIAL.md`. O antigo `FUMIGA-PAPEL-v4-CHROMA` permanece integral em [`docs/arte/historico/ESTILO_OFICIAL-v4-PAPEL.md`](docs/arte/historico/ESTILO_OFICIAL-v4-PAPEL.md) e abaixo, como histórico. Mudança de direção exige aprovação explícita e versão anterior preservada. |
-| Plano de fases | [`docs/arte/FASES_PIXEL_CELESTE.md`](docs/arte/FASES_PIXEL_CELESTE.md): F0a feito; **F0b** é a próxima ação real; F5d e F8 bloqueadas. |
+| Plano de fases | [`docs/arte/FASES_PIXEL_CELESTE.md`](docs/arte/FASES_PIXEL_CELESTE.md): F0a e **F0b feitas** (2026-10-26); **F0b-2** (pipeline de pixelização dos assets atuais) é a próxima ação real; F0c, F1–F9 pendentes; F5d e F8 bloqueadas. |
 | Contratos e paleta | [`docs/arte/paleta-celeste.json`](docs/arte/paleta-celeste.json) e [`docs/arte/contratos-pixel.json`](docs/arte/contratos-pixel.json); tamanho nativo = `round(unidades_de_mundo / 3)`. |
 | Chroma nas novas gerações | Fonte de toda imagem: fundo sólido verde/azul (azul se a peça tem verde; verde se tem azul), inclusive HUD, terreno e ilustração; derivado recortado/composto antes do jogo. Sem efeito retroativo. |
 | Escopo visual | Todo o conjunto: terrenos, personagens, fauna, vegetação, flores, recursos, construções, árvore/maçãs/santuários, UI/ícones, menus, carregamentos e cutscenes. O mundo é pixel 320×180; a UI usa arte em grade de 3 px no canvas cheio, sem suavização. |
@@ -793,7 +793,7 @@ Pedido explícito “Parta direto para F1”: supera a recomendação de termina
 | Comparação de cenários 06/08 | Duas bases limpas da Planície com o mesmo desenho geral, salvas no Drive. O 08 é estudo histórico. O 06 é estudo de terreno, **não o cenário final nem seu nível final de preenchimento**. |
 | Versões que não se confundem | “Rodada v2” é o segundo conjunto de imagens. A cena 06 e a base 06 usaram `FUMIGA-PAPEL-v1`; os demais estilos e a base 08 usaram instruções específicas de comparação, não o prompt de papel. “Prompt v2-DETALHADO” é o refinamento posterior. Não atribuir o novo prompt retroativamente aos PNGs antigos. |
 | Aprovação visual | A técnica (pixel Celeste), a paleta híbrida e o frame 320×180 estão decididos pelo usuário em 2026-10-26. Isso não aprova automaticamente anatomia, atlas, animação, tamanho nativo de cada peça ou integração: cada fase tem porta de aprovação própria, com duas ou mais opções lado a lado. |
-| Jogo e migração | **Nenhuma arte de produção foi substituída e nenhum runtime foi alterado.** O jogo continua com os assets antigos até F0b (frame) e F0c (piloto). F1–F9 pendentes; não anunciar o rework como concluído. |
+| Jogo e migração | **Nenhuma arte de produção foi substituída.** O runtime mudou: a F0b entregou o frame pixel (buffer 320×180 ×3, zoom inteiro 1×/2×/3× e chão em autotile 8×8) em 2026-10-26 — detalhes em [F0b no runtime](#arte-f0b-runtime). Os **sprites continuam os antigos**; o rework de arte começa em F0b-2/F1. Não anunciar o rework como concluído. |
 
 ### Precedência: não repetir decisões superadas
 
@@ -997,6 +997,8 @@ Validar em tamanho real, estado ativo/inativo e fonte normal/grande antes da int
 <a id="arte-proximo-passo"></a>
 ### 8. Próxima etapa real e mapa do trabalho restante
 
+**Atualização em 2026-10-26:** a F0b (frame pixel) **já foi entregue no runtime** — registro completo em [8.1 F0b no runtime](#arte-f0b-runtime). A próxima ação real passou a ser **F0b-2 (pipeline de pixelização)** e depois **F0c (piloto da Planície)**. O texto abaixo descreve o piloto como ele foi planejado e continua valendo como especificação do F0c.
+
 **Próxima validação recomendada:** piloto da Planície aplicando o acabamento detalhado, com base trabalhada, passadas de decoração/elementos aprovadas separadamente e prévia composta. O objetivo é demonstrar riqueza sem vazio **e** leitura de gameplay; não gerar outra comparação com low-poly, nem repetir dez estilos já decididos. Definir o lote concreto antes de produzir.
 
 O piloto F0b também precisa de Rainha, Cortadeira, larva e cristal separados, alfa/escala e mock com HUD atual. As bases de terreno anteriores são insumos de estudo, não conclusão desse piloto. Reaproveitar o que for aprovado e registrar o que ainda não foi validado.
@@ -1017,6 +1019,72 @@ Testes executados e resultados reais; o que não foi testado:
 Backup: pasta, IDs, tamanhos/checksums conferidos, originais preservados:
 Próxima ação e decisão que ainda precisa do usuário:
 ```
+
+<a id="arte-f0b-runtime"></a>
+### 8.1 F0b no runtime (2026-10-26) — o frame pixel entregue no jogo
+
+Registro obrigatório da entrega, no formato pedido acima.
+
+**Pedido/decisão e escopo autorizado:** executar a fase **F0b** de `docs/arte/FASES_PIXEL_CELESTE.md`. Quatro decisões explícitas do usuário nesta rodada:
+
+1. **Escopo B — frame + autotile 8×8:** além do frame (buffer, zoom, sangria da câmera), o chão de todos os seis biomas passa a ser assado em grade de tiles de 8 px (`world.js:bakeGround`), com infill escuro, borda de 1 px e 2–3 variantes de borda por tile.
+2. **Câmera B — zoom inteiro + câmera suave (sangria Celeste/Saint11):** níveis **1× / 2× / 3×**; a sobra fracionária da câmera volta como deslocamento inteiro na tela (buffer com ~2 px de sangria), para o scroll continuar suave sem o pixel dançar.
+3. **O frame NÃO é opção.** Perguntado se `VÍDEO → PIXEL CELESTE` deveria nascer ligado ou desligado, o usuário rejeitou a premissa: *“não é uma opção, é o estilo do jogo inteiro, não pode ser desativado ou ativado”*. **A linha “Opção de vídeo” da F0b está cancelada**: não existe e não deve existir botão, nem campo de save. Quem reabrir esse assunto está contrariando decisão vigente.
+4. **Vinheta A — máscara de 1 px:** o gradiente radial suave foi substituído por máscara de dither de 1 px (Regra 6: sem gradiente dentro do buffer).
+5. **Degrau de 1/3 no encaixe do canvas** (decidido durante a inspeção): o pixel do frame mede 3 px de canvas, então `fit()` passou a crescer em degraus de 1/3 (`s = floor(s*3)/3`) — só assim o pixel chega quadrado e do mesmo tamanho ao monitor. Antes, a escala era livre (1,422× numa janela de 1366×768) e o bloco aparecia ora 4 px ora 5 px: o mundo tremelia ao caminhar. **Custo aceito pelo usuário:** no celular o canvas passa de 693×390 para 640×360 (~8% menor, mais tarja preta).
+6. **FILTRO PS1 e SCANLINES passaram a nascer DESLIGADOS** (decidido durante a inspeção). Motivo medido: os dois são pintados POR CIMA do canvas e desfazem o frame — a uniformidade dos blocos 3×3 do mundo cai de **100% (no canvas do jogo) para 1% (na tela)**. As duas opções **continuam existindo** em OPÇÕES → VÍDEO, e quem religar não é incomodado: saves anteriores a 2026-10-26 recebem o novo padrão **uma única vez**, pela marca `save.pixelFrame` (`state.js:loadSave`).
+
+**Versão do prompt:** `FUMIGA-PIXEL-CELESTE-v1`, inalterado. Nenhuma imagem foi gerada nesta rodada.
+
+**Arquivos (runtime alterado; nenhum asset foi substituído):**
+
+| Arquivo | Papel na F0b |
+|---|---|
+| `game/js/pixel_celeste.js` | **novo.** Constantes do frame (320×180, ×3, tile 8), espelho da paleta, `beginBuffer`/`endBuffer`, escada de zoom inteiro, vinheta em dither e `quantizeToPalette`. |
+| `game/js/main.js` | bootstrap do buffer e upscale inteiro no `#game`. |
+| `game/js/camera.js` | `cam.zoom` inteiro (1..3), `quantizeZoom()`, `zoomCam` pela escada, sangria de ~2 px. |
+| `game/js/render.js` | chão em escala inteira, `drawRun` → `drawRunInto` (wrapper de buffer), vinheta em dither, PiP no mesmo buffer. |
+| `game/js/world.js` | `bakeGround` reescrito: autotile 8×8, infill, borda de 1 px e 2–3 variantes por bioma. |
+| `game/js/fog.js` | dentro do buffer, o véu de névoa desenha com `imageSmoothingEnabled = false`. |
+| `game/mobile/touch.js` | pinch passa por `quantizeZoom`; **nenhum input novo** (Regra 9). |
+| `game/js/main.js:fit()` | encaixe do canvas na janela em degraus de 1/3 (decisão 5). |
+| `game/js/state.js` | padrões de fábrica `psx: 0` e `scanline: false`; marca `pixelFrame` e migração única (decisão 6). |
+| `game/js/psx_filter.js` | `PSX_DEFAULT = 0` — destino de qualquer valor inválido do save. |
+| `app/assets.json` | regenerado (`node tools/make_assets_list.mjs`); pacote PWA passou a 299 arquivos. |
+
+**Dimensões e contratos:** buffer 320×180 ampliado ×3; tile 8×8 = 24 unidades de mundo; `nativo = round(mundo/3)`; chão assado a 1072×800 px de buffer. Contratos em `docs/arte/contratos-pixel.json`.
+
+**Inspeção visual (Regra 3/4):** `npm run inspect` (11 telas × PC/mobile, sendo 6 mapas de RUN) → **33 capturas** em `/tmp/fumiga-inspect`, sem erro de JS, 404 ou glifo faltando; `game/test/pixel-frame-browser.mjs` (Playwright/Chromium 153 headless, via `tools/setup-dev.sh`) em três perfis: PC 960×540, mobile 844×390 e PC 1366×768.
+
+Comparação ANTES→DEPOIS: [`docs/arte/diagrama-f0b-frame-pixel-2026-10-26.png`](docs/arte/diagrama-f0b-frame-pixel-2026-10-26.png) — frame cheio lado a lado mais recorte de 160×90 ampliado ×3; e [`docs/arte/diagrama-f0b-filtro-ps1-2026-10-26.png`](docs/arte/diagrama-f0b-filtro-ps1-2026-10-26.png) — o conflito com o filtro PS1.
+
+| Medição | Antes (`81fc1f26`) | Depois (F0b) |
+|---|---|---|
+| Blocos 3×3 uniformes na faixa de mundo (tela, canvas 1:1) | 3,1% | **100,0%** |
+| Blocos 3×3 na tela com o canvas a 4/3 (janela 1280×720) | — | 86,9% (o resto é conteúdo em resolução cheia: formigas, partículas — F0b-2) |
+| CPU por quadro no RUN (inspeção headless) | 6–9 ms | **2,5–3,2 ms** |
+| FPS nos seis mapas, PC e mobile | 59–60 | **60** |
+
+**Testes executados e resultados reais:**
+
+```text
+ok    pixel-frame: FRAME PIXEL CELESTE OK — F0b (buffer, zoom inteiro e autotile 8x8) no runtime
+ok    pc:      100.0% blocos 3x3 uniformes · 2016 cores · 60 fps · canvas 960x540 (pixel x3 na tela)
+ok    mobile:  100.0% blocos 3x3 uniformes · 2021 cores · 60 fps · canvas 640x360 (pixel x2 na tela)
+ok    pc-1366: 100.0% blocos 3x3 uniformes · 2107 cores · 60 fps · canvas 1280x720 (pixel x4 na tela)
+ok    chão assado: 1072x800 px de buffer (grade de tiles 8x8)
+✓ TODOS OS 33 TESTES PASSARAM — 12.5s (em série seriam 49.3s)
+```
+
+`game/test/pixel-frame.mjs` e `game/test/pixel-frame-browser.mjs` são novos e entraram em `game/test/run-all.mjs` (o segundo como `slow` + `browser`). A inspeção mediu a uniformidade dos blocos 3×3 numa região só do mundo (`x:300,y:170,w:600,h:240`) com espera de 7000 ms: antes disso, a amostra pegava HUD em alta resolução e o banner de evento ainda visível em 1,8 s, o que produzia falso negativo — não era defeito do frame.
+
+**Guardas de decisão:** `game/test/pixel-frame.mjs` também trava as decisões desta fase no teste rápido — o frame não pode virar opção de vídeo (nada de `PIXEL CELESTE` em `game.js`/`ui.js`, nenhuma chave `pixelCeleste` no save), o PS1 e as scanlines têm de nascer desligados, e o save antigo tem de migrar uma vez só.
+
+**O que NÃO foi feito / pendências conhecidas:** a paleta dentro de `pixel_celeste.js` ainda é espelho em JS (ler de `paleta-celeste.json` com `await` no `bootAll`); as 24 rotações pré-assadas das formigas seguem no tamanho antigo e precisam ser re-assadas em tamanho nativo (F0b-2); a chave de cache da névoa em `lore_hud.js` (485–501) ainda não inclui o sub-deslocamento da sangria; nenhum sprite foi trocado.
+
+**Próxima ação e decisão que ainda precisa do usuário:** **F0b-2 — pipeline de pixelização** dos assets atuais (sem regenerar arte), preparando o terreno para F0c (piloto da Planície). Aprovação visual desta F0b pelo usuário ainda está pendente; foi pedida a leitura do diagrama ANTES→DEPOIS.
+
+Regra 12: esta seção é o registro canônico da F0b. `tools/check_art_handoff.mjs` e `game/test/art-pixel.mjs` foram atualizados para exigir a F0b concluída; `docs/arte/direcao-vigente.json` registra o escopo implementado e que o frame não é opção.
 
 ### Auditoria deste guia de continuidade
 

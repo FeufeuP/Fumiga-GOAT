@@ -1,19 +1,31 @@
 // ============================================================================
 // FUMIGA-GOAT — câmera com zoom e shake
+//
+// F0b (2026-10-26): o zoom do mundo é INTEIRO (1x, 2x, 3x no buffer de
+// 320x180). Zoom fracionário fazia o pixel tremer: o sprite caía em meio pixel
+// de arte e o vizinho-mais-próximo sortearia outra linha a cada quadro. A
+// posição continua contínua por baixo — a suavidade vem da composição do
+// buffer, que devolve o resto fracionário como deslocamento inteiro de tela.
 // ============================================================================
 import { VIEW_W, VIEW_H, WORLD_W, WORLD_H } from "./config.js";
 import { clamp, rand, TAU } from "./utils.js";
 import { G } from "./state.js";
+import { ZOOM_LEVELS, ZOOM_DEFAULT, nearestZoom, stepZoom } from "./pixel_celeste.js";
 
 export const cam = {
   x: WORLD_W / 2, y: WORLD_H / 2,
-  zoom: 1.15, minZoom: 0.55, maxZoom: 2.0,
+  zoom: ZOOM_DEFAULT, minZoom: ZOOM_LEVELS[0], maxZoom: ZOOM_LEVELS[ZOOM_LEVELS.length - 1],
   trauma: 0, offsetX: 0, offsetY: 0,
 };
 
 export function camReset() {
   cam.x = WORLD_W / 2; cam.y = WORLD_H / 2;
-  cam.zoom = 1.15; cam.trauma = 0; cam.offsetX = cam.offsetY = 0;
+  cam.zoom = ZOOM_DEFAULT; cam.trauma = 0; cam.offsetX = cam.offsetY = 0;
+}
+
+/** Prende um zoom contínuo (roda do mouse, pinça) na escada permitida. */
+export function quantizeZoom(z) {
+  return clamp(nearestZoom(z), cam.minZoom, cam.maxZoom);
 }
 
 export function shake(amount) { cam.trauma = Math.min(1.2, cam.trauma + amount); }
@@ -39,7 +51,8 @@ export function updateCam(dt, moveX, moveY) {
 
 export function zoomCam(dir, mx, my) {
   const before = screenToWorld(mx, my);
-  cam.zoom = clamp(cam.zoom * (dir > 0 ? 0.867 : 1.153), cam.minZoom, cam.maxZoom);
+  // F0b: um degrau inteiro por giro da roda, ancorado no cursor como antes.
+  cam.zoom = stepZoom(cam.zoom, dir);
   const after = screenToWorld(mx, my);
   cam.x += before.x - after.x;
   cam.y += before.y - after.y;

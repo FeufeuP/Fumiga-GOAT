@@ -37,8 +37,9 @@ const contracts = readJson("docs/arte/contratos-pixel.json");
 assert.equal(direction.estilo, "pixel-celeste", "estilo oficial é pixel Celeste");
 assert.equal(direction.prompt_mestre, "FUMIGA-PIXEL-CELESTE-v1", "prompt vigente");
 assert.equal(direction.direcao_aprovada, true, "decisão do usuário registrada");
-assert.equal(direction.refinamento_implementado_no_jogo, false, "arte nova ainda não integrada");
-assert(direction.escopo_implementacao.startsWith("nenhum"), "rodada não alterou o jogo");
+assert.equal(direction.refinamento_implementado_no_jogo, true, "o frame F0b está no jogo");
+assert(direction.escopo_implementacao.startsWith("F0b implementada em 2026-10-26"), "escopo da F0b registrado");
+assert(!/VÍDEO → PIXEL CELESTE/.test(direction.escopo_implementacao), "o frame não é opção de vídeo");
 assert(direction.decisao_usuario.includes("idêntico ao pixel de celeste"), "pedido literal preservado");
 assert.equal(direction.decisoes.estilo.split(" —")[0], "full", "estilo aplicado ao jogo inteiro");
 assert.equal(direction.decisoes.paleta.split(" —")[0], "hibrida", "paleta híbrida escolhida");
@@ -134,7 +135,8 @@ for (const linha of linhaResumo) {
   assert(/✅|⏳|🔁|🔒/.test(linha), "cada fase tem status explícito");
 }
 assert(phases.includes("F0a") && phases.includes("✅ 2026-10-26"), "F0a concluída nesta data");
-assert(phases.includes("Próxima ação real:** F0b"), "próxima ação é o frame F0b");
+assert(phases.includes("Próxima ação real:** F0b-2"), "próxima ação é o pipeline de pixelização F0b-2");
+assert(phases.includes("F0b — Frame pixel (a base técnica) ✅"), "F0b concluída com data");
 assert(phases.includes("🔒"), "fases bloqueadas visíveis");
 for (const etiqueta of ["Porta", "Aceite", "Regras transversais", "Caminho crítico"]) {
   assert(phases.includes(etiqueta), `plano traz ${etiqueta}`);
@@ -172,5 +174,5 @@ assert.equal(audit.prompt, "FUMIGA-PIXEL-CELESTE-v1", "auditoria confirma o prom
 assert.equal(audit.fases, FASES.length, "auditoria confirma as fases");
 
 console.log(`ok    direção pixel Celeste — ${biomas.length - 1} biomas, ${castas.length} castas, ${celulas} células de chefe`);
-console.log(`ok    ${FASES.length} fases documentadas (F0a→F9), F0a concluída, próxima F0b`);
+console.log(`ok    ${FASES.length} fases documentadas (F0a→F9), F0a e F0b concluídas, próxima F0b-2`);
 console.log("ART-PIXEL ÍNTEGRO — documentação coerente com a decisão de 2026-10-26");
