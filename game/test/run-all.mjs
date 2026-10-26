@@ -41,6 +41,7 @@ const TESTS = [
   { name: "layout", file: "layout.mjs" },
   { name: "assets", file: "assets.mjs" },
   { name: "hud-publication", file: "hud-publication.mjs" },
+  { name: "art-pixel", file: "art-pixel.mjs" },
   { name: "stuck", file: "stuck.mjs" },
   { name: "title-parallax", file: "title-parallax.mjs" },
   { name: "cutscene-art", file: "cutscene-art.mjs" },

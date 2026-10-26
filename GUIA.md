@@ -49,7 +49,7 @@
 
 - **Ler:** regras 1 e 2, já dentro da leitura integral; decisões do assunto no MEGA.
 - **Responder:** quais dados já estão definidos e quais exigem confirmação. Pesquisar antes das perguntas de implementação, conforme as regras, e apresentar opções somente para decisões ainda abertas.
-- Não rediscutir o estilo oficial 06 — papel recortado detalhado — sem pedido de mudança. Não preencher preços, espécies, dimensões, câmera, quantidade de peças ou contratos novos por suposição. Distinguir sugestão do chat de escolha do usuário.
+- **Estilo oficial desde 2026-10-26: PIXEL CELESTE** — pixel art nativa estilo Celeste (`FUMIGA-PIXEL-CELESTE-v1`): canvas de jogo 320×180 ×3, tiles 8×8, 16 cores de cena por bioma, sem anti-aliasing nem gradiente. Não rediscutir essa escolha sem pedido de mudança; o papel recortado (06) é histórico. Não preencher preços, espécies, dimensões, câmera, quantidade de peças ou contratos novos por suposição. Distinguir sugestão do chat de escolha do usuário.
 
 ### 06. Quais assuntos o pedido toca, inclusive indiretamente?
 
@@ -61,7 +61,7 @@
 
 ### 07. O pedido envolve criar, editar, comparar ou integrar imagens?
 
-**Se sim, ler:** [MEGA — continuidade artística](MEGA_ARQUIVO.md#continuidade-artistica), [prompt-mestre integral](MEGA_ARQUIVO.md#prompt-mestre-vigente), [fichas e exemplos](MEGA_ARQUIVO.md#arte-fichas-exemplos), [guia de estilo](docs/arte/ESTILO_OFICIAL.md) e [direção vigente](docs/arte/direcao-vigente.json).
+**Se sim, ler:** [MEGA — continuidade artística](MEGA_ARQUIVO.md#continuidade-artistica), [prompt-mestre integral](MEGA_ARQUIVO.md#prompt-mestre-vigente), [fichas e exemplos](MEGA_ARQUIVO.md#arte-fichas-exemplos), [guia de estilo](docs/arte/ESTILO_OFICIAL.md), [direção vigente](docs/arte/direcao-vigente.json), [paleta oficial](docs/arte/paleta-celeste.json), [contratos nativos](docs/arte/contratos-pixel.json) e [todas as fases](docs/arte/FASES_PIXEL_CELESTE.md). **A direção vigente é PIXEL CELESTE** (320×180, tiles 8×8, 16 cores por bioma); o papel recortado v1–v4 é histórico.
 
 **Responder:** categoria da peça, técnica vigente, versão do prompt, referências disponíveis, quantidade autorizada, dimensão/estado, forma de apresentação e aceite. Para toda nova imagem, anotar a cor do fundo técnico de chroma da fonte (azul se a peça tiver verde; verde se tiver azul), e o destino do derivado recortado/composto; não confundir com fundo final do jogo. Para integração, consultar também o [plano de reestilização](DOCUMENTO_REESTILIZACAO_VISUAL.md), seções 5–6, o [inventário de imagens](docs/arte/inventario-imagens.csv) e o consumidor real em [assets.js](game/js/assets.js) / [render.js](game/js/render.js) ou no módulo específico. Não tratar conceito como sprite pronto nem manifesto como prova de que algo é desenhado.
 

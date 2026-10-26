@@ -1,0 +1,123 @@
+{
+  "versao": "FUMIGA-PIXEL-CELESTE-v1",
+  "data": "2026-10-26",
+  "fonte_normativa": "docs/arte/ESTILO_OFICIAL.md",
+  "base_tecnica": "Celeste (EXOK, 2018): 320x180, tiles 8x8, 12-18 cores por area, rampas com hue-shift",
+  "frame": {
+    "buffer_w": 320,
+    "buffer_h": 180,
+    "escala_inteira": 3,
+    "canvas_w": 960,
+    "canvas_h": 540,
+    "tile_px": 8,
+    "tile_unidades_mundo": 24,
+    "zoom_permitido": [1, 2, 3],
+    "observacao": "1 px de arte = 3 px de canvas = 3 unidades de mundo no zoom 1"
+  },
+  "regras": {
+    "cores_de_cena_por_bioma": 16,
+    "cores_de_fundo_por_bioma": 3,
+    "passos_de_rampa": 4,
+    "hue_shift": "sombra mais fria e menos saturada; luz mais quente e saturada",
+    "preto_puro": "proibido como cor de cena; so no contorno de aliado/perigo/coletavel",
+    "anti_aliasing": "proibido",
+    "gradiente_suave": "proibido; volume por rampa de 3-4 passos e recorte de borda",
+    "dithering": "opcional e pontual, no maximo um padrao por bioma",
+    "contorno": "1 px; aliados, inimigos e perigos usam tinta escura; terreno usa luz de borda",
+    "sombra_de_contato": "1 px, deslocada 1 px para baixo-direita, nunca borrada",
+    "luz": "alta a esquerda, dura, sem penumbra",
+    "nevoa": "branco-osso em 3 passos; nunca cobre silhueta de ameaca"
+  },
+  "compartilhado": {
+    "tinta": "#14100c",
+    "papel_claro": "#f7f1e4",
+    "nevoa": ["#f2ead9", "#d8cfbc", "#b8ae99"],
+    "perigo": ["#ff4d5a", "#a32e46", "#5e1b29"],
+    "aliado": ["#7fd6a0", "#37e6c8"],
+    "ambar": ["#ffd479", "#ffb347", "#ff7a3d"],
+    "essencia": ["#c9a3ff", "#8f6fd6"],
+    "texto": ["#f7f1e4", "#d8cfbc", "#8a7f6c"]
+  },
+  "biomas": {
+    "planicie": {
+      "nome": "Planície do Amanhecer",
+      "fundo": ["#141a10", "#1d2616", "#28351d"],
+      "infill": "#1b2517",
+      "terreno": ["#22301c", "#2c3d24", "#3a5030", "#4c6640"],
+      "borda": "#6b8a52",
+      "musgo": ["#2f4a2e", "#42663a", "#5a8547"],
+      "trilha": "#141c10",
+      "acento": ["#ffd479", "#ff9a5c", "#c98d3a"],
+      "vegetacao": ["#5c9c4c", "#4e8a45", "#3f7a3c"]
+    },
+    "floresta": {
+      "nome": "Floresta de Musgo",
+      "fundo": ["#0c1410", "#132019", "#1a2b20"],
+      "infill": "#101a13",
+      "terreno": ["#16261b", "#1c3022", "#243c2b", "#2f4c36"],
+      "borda": "#4f7a58",
+      "musgo": ["#27452f", "#31573a", "#3f6e46"],
+      "trilha": "#0d1710",
+      "acento": ["#bfffa8", "#37e6c8", "#7fd6ff"],
+      "vegetacao": ["#356b45", "#2a5637", "#41824f"]
+    },
+    "pantano": {
+      "nome": "Pântano Pútrido",
+      "fundo": ["#0a1211", "#111c1a", "#182623"],
+      "infill": "#101d1a",
+      "terreno": ["#16261f", "#1c2f27", "#233a30", "#2c4739"],
+      "borda": "#466e58",
+      "musgo": ["#26463a", "#2f5546", "#3b6a54"],
+      "trilha": "#0c1714",
+      "acento": ["#7fd6ff", "#a8e0c0", "#8fa35a"],
+      "vegetacao": ["#2f6b4e", "#3f7a5e", "#4e9a6a"]
+    },
+    "deserto": {
+      "nome": "Deserto Calcinado",
+      "fundo": ["#1a130b", "#241a10", "#2f2214"],
+      "infill": "#241a10",
+      "terreno": ["#332617", "#41321f", "#51402a", "#634e33"],
+      "borda": "#8a6a3f",
+      "musgo": ["#5c4a2c", "#6b532f", "#7a6236"],
+      "trilha": "#1c140b",
+      "acento": ["#ffd479", "#ff9a5c", "#e0a34a"],
+      "vegetacao": ["#96753e", "#a8874a", "#7a6236"]
+    },
+    "outono": {
+      "nome": "Bosque Dourado",
+      "fundo": ["#150e08", "#1e150d", "#281c12"],
+      "infill": "#1e140c",
+      "terreno": ["#2a2016", "#382a1e", "#463526", "#57422f"],
+      "borda": "#8a5a33",
+      "musgo": ["#4e3d24", "#5c4626", "#6b5028"],
+      "trilha": "#170f08",
+      "acento": ["#ff9a5c", "#ffd479", "#c0703a"],
+      "vegetacao": ["#b06a2e", "#c07a33", "#8a5628"]
+    },
+    "gelo": {
+      "nome": "Pico Congelado",
+      "fundo": ["#10141c", "#171d27", "#1e2632"],
+      "infill": "#1a202c",
+      "terreno": ["#242c3a", "#2c3646", "#364254", "#435064"],
+      "borda": "#7c8ca8",
+      "musgo": ["#3a4458", "#4a5470", "#5c6680"],
+      "trilha": "#151b26",
+      "acento": ["#e8f4ff", "#7fd6ff", "#a8b4cc"],
+      "vegetacao": ["#6a7896", "#8a99b8", "#a8b4cc"],
+      "excecao": "azul-acinzentado de gelo é a cor local do bioma; não é a base roxa/azul-escura rejeitada em 2026-10-08"
+    },
+    "palida": {
+      "nome": "Ninho da Pálida (SELADO)",
+      "status": "nao_autorizado",
+      "fundo": ["#14121a", "#1b1822", "#242130"],
+      "infill": "#1c1a24",
+      "terreno": ["#262430", "#2f2c3a", "#3a3644", "#474150"],
+      "borda": "#8f8798",
+      "musgo": ["#3f3a48", "#4c4656", "#5c5566"],
+      "trilha": "#131118",
+      "acento": ["#f2ead9", "#d8cfbc", "#8f8798"],
+      "vegetacao": ["#4a4452", "#5c5566", "#6e6678"],
+      "aviso": "reservado para F8; não gerar nem integrar sem pedido próprio"
+    }
+  }
+}

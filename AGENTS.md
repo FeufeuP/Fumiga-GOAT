@@ -4,11 +4,10 @@
 > **por inteiro**, do começo ao fim, e usar [`GUIA.md`](GUIA.md) para responder às perguntas
 > de encaminhamento e localizar os arquivos/seções complementares. Este resumo não substitui as regras.
 
-> **Direção artística vigente — 2026-10-08:** estilo **06 — papel recortado detalhado**, confirmado pelo usuário; sem aparência vazia/minimalista. Paleta atual pastel terrosa; HUD com madeira, folhas e vinhas, sem base roxa/azul-escura.
-> Para novas artes, gerar TODA fonte com fundo sólido verde/azul de chroma (azul se a peça tiver verde; verde se tiver azul), recortando/recompondo o derivado antes de integrar. Usar [`FUMIGA-PAPEL-v4-CHROMA`](docs/arte/ESTILO_OFICIAL.md). Referências a pixel art/Dead Cells
-> abaixo descrevem o histórico e as artes ainda instaladas, não a técnica obrigatória das próximas peças.
-> Migração por lotes, sem substituir assets automaticamente. 2026-10-09: HUDs e brasa parcialmente integrados por pedido explícito; ver docs/arte/HUD_PUBLICACAO.md. Não é o rework completo.
-> HUD: usar a própria arte mostrada; não reinterpretar em desenhos simplificados. Ver `docs/arte/F1_HUD_VIVO.md`.
+> **Direção artística vigente — 2026-10-26: PIXEL CELESTE.** O usuário decidiu que o “novo pixel” deve ser *“idêntico ao pixel de celeste”*: pixel art nativa com **canvas de jogo 320×180 ampliado ×3**, tiles de **8×8**, **16 cores de cena por bioma** em rampas com hue-shift, sem anti-aliasing, sem gradiente e sem preto puro de cena. Prompt-mestre [`FUMIGA-PIXEL-CELESTE-v1`](docs/arte/ESTILO_OFICIAL.md); paleta em [`docs/arte/paleta-celeste.json`](docs/arte/paleta-celeste.json); tamanhos nativos em [`docs/arte/contratos-pixel.json`](docs/arte/contratos-pixel.json); **todas as fases F0a–F9** em [`docs/arte/FASES_PIXEL_CELESTE.md`](docs/arte/FASES_PIXEL_CELESTE.md).
+> Toda fonte gerada continua saindo em fundo sólido verde/azul de chroma (azul se a peça tiver verde; verde se tiver azul) e passa por recorte + **pixelização para o tamanho nativo** antes de integrar.
+> O papel recortado (06) e seus prompts v1–v4 são **histórico** em [`docs/arte/historico/ESTILO_OFICIAL-v4-PAPEL.md`](docs/arte/historico/ESTILO_OFICIAL-v4-PAPEL.md), junto com a arte ainda instalada. Migração por lotes, com aceite por fase; nada é substituído automaticamente. **Nenhum asset foi migrado e o runtime não mudou ainda** — a próxima ação real é a fase **F0b** (frame 320×180).
+> HUD: as Regras 21/22 continuam valendo (sprite inteiro, escala uniforme, texto na área permitida); a arte do HUD atual é a vigente até a fase F1. Cadência das flores preservada: **PARADA 1** e **PARADA 2**.
 
 Leia isto **antes** de mexer no código. É o resumo operacional; as regras obrigatórias
 continuam em [`REGRAS_DE_TRABALHO.md`](REGRAS_DE_TRABALHO.md) (fluxo: ler regras integrais → ler o MEGA → responder GUIA → pesquisar →
