@@ -3,7 +3,8 @@
 > **Antes de qualquer pedido:** ler [as regras por inteiro](REGRAS_DE_TRABALHO.md) e responder
 > o [GUIA de encaminhamento](GUIA.md). As rotas e resumos não dispensam a leitura integral.
 
-> **Estado artístico vigente — 2026-10-16:** estilo 06 papel recortado **detalhado** confirmado (`FUMIGA-PAPEL-v4-CHROMA`);
+> **Estado artístico vigente — 2026-10-26: PIXEL CELESTE** (`FUMIGA-PIXEL-CELESTE-v1`). Decisão do usuário: *“quero que o novo pixel seja idêntico ao pixel de celeste”* — canvas de jogo 320×180 ampliado ×3, tiles 8×8, 16 cores de cena por bioma, sem anti-aliasing/gradiente. Plano completo em [`docs/arte/FASES_PIXEL_CELESTE.md`](docs/arte/FASES_PIXEL_CELESTE.md): **F0a concluída; F0b (frame pixel) é a próxima pendência real**; nenhum asset migrado e runtime inalterado. O texto abaixo descreve o período anterior em papel recortado e permanece como histórico:
+> **Histórico — 2026-10-16:** estilo 06 papel recortado **detalhado** (`FUMIGA-PAPEL-v4-CHROMA`);
 > **Grupo A dos HUDs** reestruturado em **2 peças (`*_frame.png` moldura vazada + `*_bg.png` fundo de papel)** com **ordem estrita de camadas `1º Fundo > 2º Texto (clipado no papel) > 3º Moldura`** (`beginPaperHud` / `endPaperHud` / `deferPaperFrame` / `flushPaperFrames`), vigas internas finas + folhas/vinhas/musgo grandes externos e 100% dos textos, barras e sub-botões dentro de `paperQuiet`.
 > O roteamento dos **8 novos HUDs distintos por local** (`expanded`, `tutorial`, `boss`, `event`, `transition`, `nest_tip`, `tree_detail`, `header`) já está ativo no código e seus prompts/especificações para a próxima etapa de geração estão documentados em [`docs/arte/PLANO_HUDS_DISTINTOS_E_CAMADAS.md`](docs/arte/PLANO_HUDS_DISTINTOS_E_CAMADAS.md).
 > Os dados técnicos de correção do **Grupo B** e as tabelas completas de migração do **Grupo C** estão documentados em [`docs/arte/PLANO_CORRECAO_HUDS_GRUPOS_B_C.md`](docs/arte/PLANO_CORRECAO_HUDS_GRUPOS_B_C.md) para execução nas próximas etapas.

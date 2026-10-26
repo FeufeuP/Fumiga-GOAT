@@ -1,4 +1,6 @@
-# Ordem de implementação — papel recortado detalhado
+# Ordem de implementação — papel recortado detalhado (HISTÓRICO)
+
+> **Superado em 2026-10-26.** A direção vigente é **PIXEL CELESTE** (pixel art nativa estilo Celeste, `FUMIGA-PIXEL-CELESTE-v1`). O plano de fases ativo é **`docs/arte/FASES_PIXEL_CELESTE.md`** (F0a–F9, com status, entregáveis e portas de aprovação), e o guia ativo é `docs/arte/ESTILO_OFICIAL.md`. Este arquivo continua válido como **inventário de consumidores e histórico** da direção 06: as contagens de assets por família e as lacunas de contrato abaixo seguem úteis para as fases do pixel, mas nada aqui autoriza produzir arte em papel recortado.
 
 **2026-10-08.** Usuário: “Certo curti o estilo visual, agora me apresente a lista e ordem de implementação de todos os aseets do jogo”. Aceite do visual do piloto registrado; não é autorização para integrar tudo nem dispensa correções técnicas. Nenhum runtime alterado nesta entrega.
 

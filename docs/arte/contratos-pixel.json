@@ -1,0 +1,91 @@
+{
+  "versao": "FUMIGA-PIXEL-CELESTE-v1",
+  "data": "2026-10-26",
+  "fonte_normativa": "docs/arte/ESTILO_OFICIAL.md",
+  "calculo_nativo": "nativo = round(unidades_de_mundo / 3); o desenho usa nativo x 3 x zoom_inteiro",
+  "frame": {
+    "buffer_w": 320,
+    "buffer_h": 180,
+    "escala": 3,
+    "canvas": [960, 540],
+    "tile": 8,
+    "tile_unidades_mundo": 24,
+    "zoom_buffer_permitido": [1, 2, 3],
+    "zoom_padrao": 1,
+    "ancoragem": "pivô em pixels inteiros do buffer; posição final arredondada",
+    "rotacoes_de_formiga": 24,
+    "flash": "troca de paleta, nunca alpha"
+  },
+  "castas": {
+    "queen":      { "mundo": 189, "nativo": 63, "nota": "gaster âmbar, diadema de fungo/seda" },
+    "worker":     { "mundo": 45,  "nativo": 15, "nota": "Cortadeira" },
+    "soldier":    { "mundo": 64,  "nativo": 21, "nota": "Bala" },
+    "trapjaw":    { "mundo": 40,  "nativo": 13, "nota": "Arpão" },
+    "spitter":    { "mundo": 58,  "nativo": 19, "nota": "Acrobata" },
+    "bomber":     { "mundo": 61,  "nativo": 20, "nota": "Fogo" },
+    "tank":       { "mundo": 72,  "nativo": 24, "nota": "Cefalote" },
+    "gatherer":   { "mundo": 45,  "nativo": 15, "nota": "Pote-de-Mel" },
+    "scout":      { "mundo": 48,  "nativo": 16, "nota": "Prata" },
+    "healer":     { "mundo": 53,  "nativo": 18, "nota": "Matabele" },
+    "weaver":     { "mundo": 45,  "nativo": 15, "nota": "Tecelã" },
+    "giant":      { "mundo": 326, "nativo": 109, "nota": "Dinoponera; escala 20x preservada, arte própria" }
+  },
+  "inimigos": {
+    "e_runner":  { "mundo": 40, "nativo": 13 },
+    "e_swarm":   { "mundo": 45, "nativo": 15 },
+    "e_warrior": { "mundo": 64, "nativo": 21 },
+    "e_spitter": { "mundo": 61, "nativo": 20 },
+    "e_reaper":  { "mundo": 58, "nativo": 19 }
+  },
+  "chefes": {
+    "celula_mundo_atual": 64,
+    "celula_nativa": 22,
+    "celula_mundo_nova": 66,
+    "linhas": ["baixo", "esquerda", "direita", "cima"],
+    "folhas_por_especie": 5,
+    "estados": ["idle", "walk", "run", "hurt", "death"],
+    "quadros": {
+      "boar":   { "idle": 4, "walk": 6, "run": 5, "hurt": 4, "death": 6 },
+      "fox":    { "idle": 4, "walk": 6, "run": 6, "hurt": 4, "death": 6 },
+      "hare":   { "idle": 4, "walk": 5, "run": 6, "hurt": 4, "death": 6 },
+      "deer":   { "idle": 4, "walk": 6, "run": 6, "hurt": 4, "death": 7 },
+      "grouse": { "idle": 4, "walk": 6, "run": 6, "hurt": 4, "death": 6 }
+    },
+    "boar_attack": "sem consumidor em BOSS_ANIMS; não produzir até decidir uso"
+  },
+  "ui": {
+    "modelo": "UI em alta resolução (mundo UI do Celeste), arte autoral em grade de 3 px",
+    "painel_hud": { "canvas": [270, 144], "nativo": [90, 48], "area_de_papel": "mantida por paperQuiet; recalcular no F1" },
+    "icones": { "count": 32, "nativo": [16, 16], "aplicacao_menor": [12, 12] },
+    "fonte": "KiwiSoda mantida nesta versão; fonte pixel só com autorização própria"
+  },
+  "ilustracoes": {
+    "santuario": { "canvas": [960, 540], "nativo": [320, 180], "exato": true },
+    "loading": { "canvas": [960, 540], "nativo": [320, 180], "exato": true },
+    "title_camada": { "canvas": [960, 540], "nativo": [320, 180], "exato": true, "margem_parallax_px_nativos": 42 },
+    "noite_branca": { "canvas": [320, 180], "nativo": [320, 180], "exato": true, "camadas_por_painel": 4 },
+    "maca": { "canvas": [960, 960], "nativo": [320, 320], "exato": true },
+    "arvore": { "canvas": [960, 540], "nativo": [320, 180], "exato": true }
+  },
+  "flores": {
+    "folha_regular": { "canvas": [768, 576], "celula_canvas": 192, "celula_nativa": 64 },
+    "folha_suprema": { "canvas": [1152, 192], "celula_canvas": 192, "celula_nativa": 64 },
+    "estados_regulares": 4,
+    "estados_suprema": 6,
+    "cadencia": "9 vivos -> PARADA 1 -> 3 mortos + 6 fases da Suprema -> PARADA 2"
+  },
+  "mundo": {
+    "world_w": 3200,
+    "world_h": 2400,
+    "chao_buffer": [1067, 800],
+    "chao_atual_meia_res": [1600, 1200],
+    "nevoa_manto": { "quadros": 6, "celula_canvas": 48, "celula_nativa": 16 },
+    "nota": "o chão é assado uma vez no buffer; nenhum pixel é processado por quadro"
+  },
+  "orcamento": {
+    "memoria_buffer": "320x180 RGBA = 230.400 bytes por buffer",
+    "por_frame": "1 drawImage de redução + 1 de ampliação (GPU)",
+    "proibido": "loop de pós-processamento por pixel em tempo de jogo",
+    "meta_fps": 60
+  }
+}

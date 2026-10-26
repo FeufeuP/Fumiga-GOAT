@@ -7,10 +7,10 @@
 > **Todo pedido, independentemente do assunto:** ler [`REGRAS_DE_TRABALHO.md`](REGRAS_DE_TRABALHO.md) **por inteiro**.
 > Usar [`GUIA.md`](GUIA.md) como roteiro de perguntas para localizar arquivos/seções; ele não substitui as regras nem a leitura do MEGA.
 > **Novo chat / criação de imagens:** começar pelo [guia de continuidade artística](#continuidade-artistica).
-> Direção vigente: **06 — papel recortado detalhado**, prompt **`FUMIGA-PAPEL-v4-CHROMA`**; toda nova fonte gerada usa fundo verde/azul de chroma.
-> As bases limpas anteriores não representam a densidade do cenário final; HUDs e brasa têm integração parcial, não o rework completo.
+> **Direção vigente (2026-10-26): PIXEL CELESTE** — pixel art nativa estilo Celeste, prompt **`FUMIGA-PIXEL-CELESTE-v1`**, canvas de jogo **320×180** ampliado ×3, tiles **8×8**, 16 cores por bioma. Toda nova fonte gerada usa fundo verde/azul de chroma e passa por pixelização antes de integrar.
+> Plano de fases: [`docs/arte/FASES_PIXEL_CELESTE.md`](docs/arte/FASES_PIXEL_CELESTE.md). Guia ativo: [`docs/arte/ESTILO_OFICIAL.md`](docs/arte/ESTILO_OFICIAL.md).
 
-> **Paleta vigente:** pastel terroso (terra/madeira castanha, laranja-âmbar, folhas/vinhas verdes). Roxo/azul-escuro rejeitados como base. Técnica de papel recortado preservada. F1 parcialmente integrado e ainda em revisão; F0 adiado.
+> **Paleta vigente:** rampas do Celeste (hue-shift, sombra fria/luz quente) sobre o pastel terroso aprovado em 2026-10-08 — marrom-terra, âmbar e verde-oliva. Roxo/azul-escuro rejeitados como base; azul-acinzentado só no bioma Gelo. O papel recortado (06) e seus prompts v1–v4 ficam **históricos** em [`docs/arte/historico/ESTILO_OFICIAL-v4-PAPEL.md`](docs/arte/historico/ESTILO_OFICIAL-v4-PAPEL.md). Nenhum asset foi migrado ainda: o jogo segue com a arte antiga até F0b/F0c.
 
 ## Como consultar este arquivo
 
@@ -36,6 +36,49 @@ repetições, datas, branches, checklists e notas históricas foram preservados.
 > comprovação do estado atual do código nem em limites da sessão atual.
 > Divergências permanecem visíveis, sem apagar conteúdo. O que efetivamente
 > funciona deve ser confirmado por testes e inspeção no preview.
+
+## Registro — Nova direção artística: PIXEL CELESTE (2026-10-26)
+
+**Pedido:** “continue a implementação do novo estilo artístico do jogo, cite todas as fases de implementação. quero que o novo pixel seja idêntico ao pixel de celeste. Leia o GUIA.”
+
+**Decisões do usuário (Regra 1, quatro perguntas com opções nesta sessão):**
+
+| Pergunta | Escolha |
+|---|---|
+| Estilo oficial | **full** — pixel Celeste passa a ser o estilo oficial de todo o jogo; papel recortado vira histórico |
+| Paleta | **híbrida** — rampas do Celeste (12–18 cores, hue-shift) sobre o pastel terroso aprovado em 2026-10-08 |
+| Técnica | **buffer 320×180 + upscale ×3 nearest** |
+| Escopo desta rodada | **docs** — só documentação; nenhum código ou arte alterados |
+
+**Por que “idêntico ao pixel de Celeste” tem assinatura técnica:** canvas de jogo 320×180 com escala inteira (3× = 960×540, exatamente o canvas atual); tiles de 8×8; interior sólido escuro (**infill**) com 1 px de luz no topo e 1 px escuro na base, aresta nunca perfeitamente reta e pixels transparentes quebrando o contorno; 12–18 cores por área em rampas de 3–4 passos com hue-shift, sem preto puro de cena, sem anti-aliasing e sem gradiente; três mundos de densidade separados (jogo em pixel, UI em alta resolução, mapa), que nunca se misturam; o quadro inteiro passa pelo buffer baixo, por isso rotação, partículas e névoa ficam pixeladas automaticamente. Fontes: [Aran P. Ink — Celeste Tilesets](https://aran.ink/posts/celeste-tilesets), [Saint11 — Consistency](https://saint11.art/blog/consistency/), [Saint11 — Basic Color Theory](https://saint11.art/pixel_art_articles/article6/), [Noel Berry sobre o cabelo/320×180](https://www.reddit.com/r/gamedev/comments/9a0cfr/how_is_the_hair_in_celeste_made/), [Noel Berry — Lighting](https://medium.com/@NoelFB/remaking-celestes-lighting-3478d6f10bf), [Adafruit — Pixel Art Fundamentals](https://learn.adafruit.com/makecode-arcade-pixel-art-sprites/pixel-art-fundamentals).
+
+**Produzido nesta rodada (somente documentação):**
+
+- [`docs/arte/ESTILO_OFICIAL.md`](docs/arte/ESTILO_OFICIAL.md) reescrito para o estilo PIXEL CELESTE, com o prompt-mestre canônico `FUMIGA-PIXEL-CELESTE-v1`, ficha de peça em px nativos e critério de aprovação.
+- [`docs/arte/FASES_PIXEL_CELESTE.md`](docs/arte/FASES_PIXEL_CELESTE.md) — **todas as fases F0a, F0b, F0b-2, F0c, F1, F2, F3a, F3b, F3c, F4, F5a, F5b, F5c, F5d, F6, F7, F8, F9**, com entregáveis, dependências, portas de aprovação, riscos técnicos e status.
+- [`docs/arte/paleta-celeste.json`](docs/arte/paleta-celeste.json) — 16 cores de cena + 3 de fundo por bioma (6 biomas) e Pálida **selada**; regras de rampa, contorno, sombra, névoa e proibições.
+- [`docs/arte/contratos-pixel.json`](docs/arte/contratos-pixel.json) — tamanho nativo por família (`nativo = round(mundo/3)`): castas de 13 a 109 px, chefes em células 22×22 com as 516 células preservadas, UI 90×48, ícones 16×16, flores em célula de 64 px, ilustrações 320×180, chão em buffer 1067×800 e orçamento de quadro.
+- [`docs/arte/direcao-vigente.json`](docs/arte/direcao-vigente.json) atualizado (estilo `pixel-celeste`, prompt novo, anterior preservado).
+- [`docs/arte/historico/ESTILO_OFICIAL-v4-PAPEL.md`](docs/arte/historico/ESTILO_OFICIAL-v4-PAPEL.md) — cópia **byte a byte** do guia de papel anterior (`f78525a6ab93137c36de45f9c7596eebe052b93428afbf430f227be21635edc4`).
+- **Regra 6** reescrita para a técnica pixel (mantendo chroma obrigatório, 2+ opções, teto de 10 imagens e otimização) e passo 4 do fluxo atualizado.
+- Verificação automática: `game/test/art-pixel.mjs` (direção, prompt idêntico guia↔MEGA, paleta, contratos e lista de fases) e `tools/check_art_handoff.mjs` atualizado para a nova direção, ainda preservando os prompts v1–v4 do papel.
+
+**Fronteira entre aprovado e pendente**
+
+| Item | Estado |
+|---|---|
+| Técnica e paleta | **Decididas pelo usuário** (2026-10-26) e documentadas |
+| Prompt-mestre | **Vigente**, idêntico no guia e neste MEGA; v4 do papel preservado |
+| Runtime | **Não alterado** — nenhum buffer, zoom, filtro ou módulo novo nesta rodada |
+| Assets | **Nenhum substituído, gerado ou apagado**; `game/assets/` segue igual |
+| UI | Continua em alta resolução (mundo UI do Celeste); levá-la ao buffer é decisão do F1 |
+| Fases | F0a concluída; **F0b é a próxima ação real**; F5d e F8 bloqueadas |
+
+**Regra 14 e desempenho:** o frame custa 230.400 bytes de buffer e dois `drawImage` por quadro; qualquer detalhe estático é assado uma vez e é proibido pós-processar pixel a pixel em tempo de jogo. Nada novo acessível pelo TITLE foi criado, então a fila do `preload.js` não mudou.
+
+**Limites desta rodada:** sem geração de imagem, sem upload no Drive, sem alteração de runtime, sem testes de navegador e sem push/PR/merge. A verificação é documental e por teste de Node puro.
+
+**Próximo passo:** F0b — implementar o buffer 320×180, o zoom inteiro e o autotile 8×8, medindo FPS e legibilidade em PC e mobile antes de qualquer lote de arte.
 
 ## Registro — Formigueiro virou NINHO ESCAVÁVEL: protótipo jogável (2026-10-20)
 
@@ -734,25 +777,28 @@ Pedido explícito “Parta direto para F1”: supera a recomendação de termina
 <a id="arte-estado-vigente"></a>
 ### 1. Decisão vigente e fronteira entre aprovado e pendente
 
-> **Decisão explícita do usuário:** “Certo, decidi que o estilo oficial será o 6 papel recortado, porem quero que seja tudo bem detalhado para não passar um ar de vazio.”
+> **Decisão explícita do usuário (vigente, 2026-10-26):** “quero que o novo pixel seja idêntico ao pixel de celeste” — pixel art nativa com canvas de jogo 320×180, tiles 8×8, paleta curta com hue-shift e escala inteira. As decisões complementares desta rodada foram: estilo aplicado ao jogo inteiro, paleta híbrida (rampas do Celeste sobre o pastel terroso de 2026-10-08) e técnica de buffer 320×180 com upscale ×3. O registro abaixo, escrito para o papel recortado, permanece como **histórico** e não deve orientar novas gerações.
 
 | Item | Estado que o próximo chat deve respeitar |
 |---|---|
-| Técnica oficial | **06 — papel recortado artesanal, detalhado e harmonioso.** Não minimalista, não pixel art, não low-poly. Não pedir novamente qual dos dez estilos deve ser oficial. |
-| Prompt ativo | **`FUMIGA-PAPEL-v4-CHROMA`**, integral neste MEGA no [bloco canônico](#prompt-mestre-vigente). Não reescrever silenciosamente; mudança de direção exige aprovação explícita e versão anterior preservada. |
+| Técnica oficial | **PIXEL CELESTE — pixel art nativa estilo Celeste.** Canvas de jogo 320×180 ampliado ×3, tiles de 8×8, 16 cores de cena por bioma, sem anti-aliasing, sem gradiente e sem preto puro de cena. Não pedir novamente qual dos dez estilos deve ser oficial: o papel recortado (06) e o low-poly (08) são histórico. |
+| Prompt ativo | **`FUMIGA-PIXEL-CELESTE-v1`**, integral neste MEGA no [bloco canônico](#prompt-mestre-vigente) e em `docs/arte/ESTILO_OFICIAL.md`. O antigo `FUMIGA-PAPEL-v4-CHROMA` permanece integral em [`docs/arte/historico/ESTILO_OFICIAL-v4-PAPEL.md`](docs/arte/historico/ESTILO_OFICIAL-v4-PAPEL.md) e abaixo, como histórico. Mudança de direção exige aprovação explícita e versão anterior preservada. |
+| Plano de fases | [`docs/arte/FASES_PIXEL_CELESTE.md`](docs/arte/FASES_PIXEL_CELESTE.md): F0a feito; **F0b** é a próxima ação real; F5d e F8 bloqueadas. |
+| Contratos e paleta | [`docs/arte/paleta-celeste.json`](docs/arte/paleta-celeste.json) e [`docs/arte/contratos-pixel.json`](docs/arte/contratos-pixel.json); tamanho nativo = `round(unidades_de_mundo / 3)`. |
 | Chroma nas novas gerações | Fonte de toda imagem: fundo sólido verde/azul (azul se a peça tem verde; verde se tem azul), inclusive HUD, terreno e ilustração; derivado recortado/composto antes do jogo. Sem efeito retroativo. |
-| Escopo visual | Todo o conjunto: terrenos, personagens, fauna, vegetação, flores, recursos, construções, árvore/maçãs/santuários, UI/ícones, menus, carregamentos e cutscenes. O tipo de detalhe se adapta à função e ao tamanho. |
-| Acabamento | Riqueza orgânica, material tátil e recortes trabalhados, sem grandes áreas com aparência de rascunho vazio; a ação continua legível. |
+| Escopo visual | Todo o conjunto: terrenos, personagens, fauna, vegetação, flores, recursos, construções, árvore/maçãs/santuários, UI/ícones, menus, carregamentos e cutscenes. O mundo é pixel 320×180; a UI usa arte em grade de 3 px no canvas cheio, sem suavização. |
+| Acabamento | Silhueta e leitura no tamanho nativo acima de tudo: formas massudas, rampas de 3–4 passos, borda de 1 px, infill escuro e sombra de contato de 1 px. Sem anti-aliasing, gradiente, ruído ou pixel semitransparente; a cena ganha riqueza por camadas aprovadas, não por detalhe fino que desaparece na redução. |
 | Rodada original de dez imagens (v1) | PNGs não recuperados; metadados e hashes históricos preservados. Não usar outra imagem sob esses hashes nem dizer que foram restaurados. |
 | Nova rodada de dez imagens (v2) | Dez PNGs + PDF + ZIP + manifesto salvos e conferidos no Drive na entrega respectiva. A cena 06 v2 é referência de técnica/paleta, **não demonstra por si só todo o acabamento detalhado exigido depois**. |
 | Comparação de cenários 06/08 | Duas bases limpas da Planície com o mesmo desenho geral, salvas no Drive. O 08 é estudo histórico. O 06 é estudo de terreno, **não o cenário final nem seu nível final de preenchimento**. |
 | Versões que não se confundem | “Rodada v2” é o segundo conjunto de imagens. A cena 06 e a base 06 usaram `FUMIGA-PAPEL-v1`; os demais estilos e a base 08 usaram instruções específicas de comparação, não o prompt de papel. “Prompt v2-DETALHADO” é o refinamento posterior. Não atribuir o novo prompt retroativamente aos PNGs antigos. |
-| Aprovação visual | A técnica e a exigência de detalhe estão aprovadas. Isso não aprova automaticamente cada anatomia, ornamento, atlas ou implementação. A composição detalhada e as peças finais ainda precisam de revisão/aceite. |
-| Jogo e migração | **Nenhuma arte de produção foi substituída nesta sequência de estudos.** O jogo continua com os assets antigos. Piloto F0b e integração F1–F9 pendentes; não anunciar o rework como concluído. |
+| Aprovação visual | A técnica (pixel Celeste), a paleta híbrida e o frame 320×180 estão decididos pelo usuário em 2026-10-26. Isso não aprova automaticamente anatomia, atlas, animação, tamanho nativo de cada peça ou integração: cada fase tem porta de aprovação própria, com duas ou mais opções lado a lado. |
+| Jogo e migração | **Nenhuma arte de produção foi substituída e nenhum runtime foi alterado.** O jogo continua com os assets antigos até F0b (frame) e F0c (piloto). F1–F9 pendentes; não anunciar o rework como concluído. |
 
 ### Precedência: não repetir decisões superadas
 
-- Exigências antigas de pixel art/Dead Cells são histórico para as artes instaladas. Para as próximas peças vale papel recortado detalhado.
+- **Vigente desde 2026-10-26:** para as próximas peças vale **pixel art nativa estilo Celeste** (`FUMIGA-PIXEL-CELESTE-v1`). O papel recortado detalhado (`FUMIGA-PAPEL-v4-CHROMA`) e as menções antigas a pixel art/Dead Cells descrevem a arte instalada e o histórico; não orientam gerações novas.
+- **“Sem vazio” no pixel não é “encher de detalhe”:** o Celeste usa espaço negativo de propósito. A riqueza vem de camadas de decoração/props aprovadas e de bordas bem desenhadas, mantendo caminhos e ameaças legíveis.
 - `FUMIGA-PAPEL-v1` permanece para auditar gerações passadas, não para abrir novas gerações.
 - “Base limpa” significa ausência de decoração embutida, **não** autorização para entregar um mundo final vazio.
 - Pedidos anteriores de reanexar os PNGs v1 não bloqueiam a retomada: a nova rodada foi autorizada e as referências v2 foram salvas/recuperadas do Drive.
@@ -763,6 +809,8 @@ Pedido explícito “Parta direto para F1”: supera a recomendação de termina
 
 <a id="arte-acabamento"></a>
 ### 2. Tradução prática de “bem detalhado, sem vazio”
+
+> **Atenção (2026-10-26):** este trecho descreve o **papel recortado** e permanece como histórico. Na técnica vigente (PIXEL CELESTE), “sem vazio” significa camadas aprovadas de decoração e props somadas a bordas bem desenhadas, mantendo espaço negativo intencional e leitura no tamanho nativo. Referência: `docs/arte/ESTILO_OFICIAL.md` e `docs/arte/FASES_PIXEL_CELESTE.md`.
 
 **Material:** papel colorido fosco, camadas rasas, bordas de tesoura ligeiramente irregulares, fibras finas, variações sutis de pigmento/espessura e sombras curtas de contato. O volume deve parecer construído com papel, não argila, plástico, metal realista, pintura lisa ou malha low-poly. Manter bordas nítidas em escala real; não usar contorno preto grosso de cartoon como substituto dos recortes.
 
@@ -996,6 +1044,24 @@ A auditoria protege a consistência da memória; não garante automaticamente a 
 **Prompt-mestre atualizado com autorização expressa (revisão pastel de 2026-10-08):** `FUMIGA-PAPEL-v3-PASTEL-ORGANICO`. Texto anterior `FUMIGA-PAPEL-v1` preservado nos registros anteriores e no guia integral `docs/arte/historico/ESTILO_OFICIAL-v1.md`. Guia ativo `docs/arte/ESTILO_OFICIAL.md`; decisão atual em `docs/arte/direcao-vigente.json`. Esta versão de prompt é distinta da numeração da rodada v2 de imagens, que continua historicamente associada ao prompt v1.
 
 <a id="prompt-mestre-vigente"></a>
+**Vigente desde 2026-10-26 — PIXEL CELESTE.** O bloco abaixo é o prompt-mestre canônico do FUMIGA (`FUMIGA-PIXEL-CELESTE-v1`), byte a byte igual a `docs/arte/ESTILO_OFICIAL.md`. Ele substitui o papel recortado; o v4 continua logo depois como histórico e não deve ser usado em gerações novas. Tamanho nativo por peça em `docs/arte/contratos-pixel.json`; paleta em `docs/arte/paleta-celeste.json`; fases em `docs/arte/FASES_PIXEL_CELESTE.md`.
+
+<!-- INICIO PROMPT FUMIGA-PIXEL-CELESTE-v1 -->
+Crie uma única peça visual original para FUMIGA — Colônia Eterna em pixel art nativa no estilo técnico do Celeste, com canvas de jogo de 320×180 pixels e grade de 8×8 pixels. Desenhe pensando na resolução final pequena: cada pixel é uma decisão. Formas massudas e legíveis, silhueta reconhecível em tamanho nativo, sem detalhe que desapareça na redução. Use paleta curta de 12 a 18 cores no total, em rampas de 3 a 4 passos com hue-shift: sombras mais frias e menos saturadas, luzes mais quentes e mais saturadas. Proíba anti-aliasing, meio-tom, desfoque, gradiente suave, ruído fotográfico, textura pintada e qualquer pixel semitransparente nas bordas. Proíba também preto puro como cor de cena: use tinta escura levemente colorida. O contorno, quando existir, tem exatamente 1 pixel e é uma cor escura da própria paleta.
+
+O terreno segue a construção do Celeste: interior sólido escuro compartilhado (infill), 1 pixel de luz na aresta superior, 1 pixel escuro na aresta inferior, quinas chanfradas e alguns pixels transparentes que quebram o contorno; a linha da borda nunca é perfeitamente reta. Trabalhe com agrupamentos de 2 a 4 pixels, não com textura uniforme. Personagens, criaturas, itens e recursos têm contorno de 1 pixel de tinta escura, sombra de contato de 1 pixel deslocada para baixo-direita, luz dura vindo do alto à esquerda e no máximo 4 a 6 cores próprias por sprite.
+
+Mantenha a identidade do FUMIGA na paleta pastel terrosa: marrom de terra e madeira, papel creme e areia, laranja que lembre âmbar, verdes de folhas e vinhas como sálvia, oliva clara e musgo suave. Cada bioma tem a sua paleta de 16 cores derivada das rampas aprovadas — Planície oliva e âmbar, Floresta verde profundo, Pântano verde-água, Deserto areia e ocre, Outono laranja queimado, Gelo azul-acinzentado pálido. Não use roxo ou azul-escuro como base, sombra ou acento dominante; o azul técnico do chroma não pertence à paleta da peça. A Névoa é branco-osso em três passos e nunca esconde a silhueta de uma ameaça.
+
+Respeite a anatomia animal: formigas com seis patas ligadas ao tórax, duas antenas, corpo segmentado em cabeça, tórax e gáster; ferramentas e acessórios proporcionais ao inseto. A Rainha Silenciosa tem gáster âmbar e diadema orgânico de fungo e seda, nunca coroa metálica humana. Proíba bipedia humana, rosto humano, mãos humanas e roupas humanoides. Vista ortográfica estritamente de cima, sem horizonte e sem isometria, para tudo que existe dentro do mundo jogável; somente ilustrações de menu, carregamento, árvore de habilidades e maçãs podem usar outro enquadramento, explicitado na ficha. Não altere câmera, escala relativa, âncora, hitbox ou lore para caber na composição.
+
+Produza a arte sem texto, logotipo, marca-d'água, moldura ou interface embutida. Sprite ou camada isolada: a peça sozinha, sem cenário ao redor, sem repetição em grade e sem colagem de alternativas. Mapa-base: terreno completo e limpo, sem flores, árvores, arbustos, pedras, buracos, rachaduras ou construções — decoração e construção são peças separadas aprovadas. A ficha técnica define formato, tamanho nativo, estado, quadros e partes a entregar; não invente personagens, mecânicas ou mudanças de lore. Entregue em alta resolução apenas como fonte para redução: blocos de pixel grandes, alinhados a uma grade inteira, com arestas duras e sem suavização, para que a redução para o tamanho nativo preserve exatamente a grade.
+
+Em TODA imagem gerada ou editada, qualquer que seja a categoria (sprite, tile, terreno, cenário, ilustração, HUD ou ícone), coloque a peça sobre um fundo técnico de chroma key uniforme, sólido e opaco: verde puro #00FF00 ou azul puro #0000FF. Se a peça tiver traços verdes, escolha fundo AZUL; se tiver traços azuis, escolha fundo VERDE. Se tiver as duas cores, escolha a que mais se distingue da silhueta e dos detalhes, verificando o recorte manualmente; não elimine cores essenciais da peça. Reserve a cor de chroma apenas para o fundo, sem gradientes, textura, cenário, xadrez, halos ou sombras projetadas sobre ele, e deixe margem de fundo visível em toda a volta da peça. Esse fundo é SOMENTE da fonte gerada: preservar o original e remover o chroma com cuidado (inclusive spill nas bordas), revisar detalhes vazados e exportar o derivado com alfa real quando o consumidor exigir transparência, ou compor sobre o fundo final apropriado quando exigir imagem opaca. Nunca publicar verde/azul técnico no jogo.
+<!-- FIM PROMPT FUMIGA-PIXEL-CELESTE-v1 -->
+
+**Histórico — não usar em gerações novas.** O prompt `FUMIGA-PAPEL-v4-CHROMA` (2026-10-10) permanece integral abaixo, junto com os v3 e v2, para auditoria das imagens já produzidas. A exigência de chroma na fonte gerada continua valendo para qualquer geração, inclusive pixel.
+
 **Revisão técnica de 2026-10-10:** v4 mantém a paleta pastel e exige fundo de chroma em toda nova fonte gerada. A menção ao v3 imediatamente acima registra a decisão histórica de 2026-10-08; não indica o prompt vigente. O v3 completo, inclusive sua instrução histórica de alfa/terreno, permanece abaixo para auditoria; não deve ser usado em gerações novas.
 <!-- INICIO PROMPT FUMIGA-PAPEL-v4-CHROMA -->
 Crie uma única peça visual original para FUMIGA — Colônia Eterna no estilo oficial 06 de papel recortado artesanal, agora com acabamento rico e altamente detalhado, conforme a decisão explícita do usuário. A direção não é minimalista nem deve transmitir vazio ou aspecto de protótipo. Construa formas com camadas rasas de papel colorido, bordas de tesoura ligeiramente irregulares, fibras sutis e superfícies predominantemente foscas. O volume vem da sobreposição e de sombras de contato curtas e suaves; não de pixels aparentes, plástico, argila, metal realista ou modelagem low-poly. Use silhuetas reconhecíveis em tamanho pequeno, com recortes internos trabalhados e detalhes próprios da peça, com separação clara de personagem, recurso, ameaça e fundo. Evite contornos pretos grossos de cartoon: a borda cortada e o contraste entre papéis definem as formas.
@@ -3498,32 +3564,25 @@ Ao final de cada tarefa, apresentar um **checklist de conferência** com este fo
 
 ---
 
-## Regra 6 — Imagens em alta resolução, papel recortado detalhado e harmônico 🎨
+## Regra 6 — Pixel art nativa estilo Celeste, com paleta FUMIGA 🎨
 
-> **Sempre criar imagens de alta resolução, mantendo o estilo oficial de papel recortado de maneira harmoniosa.** (escolha explícita do usuário: “Estilo 6 papel recortado”, 2026-10-08; substitui a exigência anterior de pixel art para novas artes)
+> **Toda arte nova do jogo é pixel art nativa no estilo técnico do Celeste: canvas de jogo 320×180, grade de 8×8 px, paleta curta com hue-shift e escala inteira.** (decisão explícita do usuário, 2026-10-26: *“quero que o novo pixel seja idêntico ao pixel de celeste”*; substitui o papel recortado de 2026-10-08, preservado em [`docs/arte/historico/ESTILO_OFICIAL-v4-PAPEL.md`](docs/arte/historico/ESTILO_OFICIAL-v4-PAPEL.md))
 
-- Toda imagem criada para o jogo (sprites, ícones, cenários, UI, capas) deve ser gerada em
-  **alta resolução** e depois adequada ao tamanho de uso — nunca arte borrada ou subdimensionada.
-- **Estilo obrigatório para novas artes: papel recortado detalhado, não minimalista**, conforme o prompt-mestre
-  `FUMIGA-PAPEL-v4-CHROMA` em [`docs/arte/ESTILO_OFICIAL.md`](docs/arte/ESTILO_OFICIAL.md) e no MEGA.
-  Camadas rasas trabalhadas, fibras, recortes médios e finos, variações de material e sombras de contato;
-  paleta pastel terrosa (marrom, laranja-âmbar e verde), HUD com madeira/folhas/vinhas
-  e leitura clara em tamanho pequeno. Roxo/azul-escuro deixam de ser a base das novas artes. Arte antiga permanece até
-  a migração aprovada por lote; escolher o estilo não aprova todos os detalhes do conceito.
-- **Nova regra explícita de 2026-10-10 — chroma key em TODA imagem gerada/editada:** usar fundo técnico sólido, uniforme e opaco verde `#00FF00` ou azul `#0000FF` na fonte, sem exceção para sprites, ícones, HUD, terrenos, mapas-base, cenários ou ilustrações. Se a peça tiver traços verdes, fundo azul; se tiver traços azuis, fundo verde. Se tiver ambos, usar a cor que mais separe os detalhes e conferir recorte manual. O fundo não pode ter gradiente/textura, sombra ou invasão das bordas da peça. Não confundir esse fundo temporário com paleta artística nem com o asset final: preservar a fonte, remover chroma/contaminação de borda e validar o derivado (alfa real ou composição opaca apropriada ao consumidor) antes de integrar. Imagens antigas não são alteradas retroativamente. Seguir a ficha e o prompt v4.
-- **Refinamento explícito de 2026-10-08:** tudo deve ser bem detalhado, sem transmitir vazio.
-  Base limpa não é cenário final: compor riqueza com decoração/construções em camadas
-  separadas (Regra 19), mantendo caminhos, texto e ameaças legíveis. Não trocar vazio
-  por ruído visual nem sacrificar desempenho; validar o resultado composto no piloto.
-- Antes de gerar, observar a referência 06 aprovada e os contratos dos sprites/atlas
-  existentes (`game/assets/`) para **combinar paleta, escala, sombreamento e silhueta**.
-  Não impor pixels aparentes à nova arte nem alterar filtros globais sem validar o piloto.
+- **Estilo obrigatório:** prompt-mestre `FUMIGA-PIXEL-CELESTE-v1` em [`docs/arte/ESTILO_OFICIAL.md`](docs/arte/ESTILO_OFICIAL.md) e no MEGA, mais a paleta em [`docs/arte/paleta-celeste.json`](docs/arte/paleta-celeste.json) e os contratos em [`docs/arte/contratos-pixel.json`](docs/arte/contratos-pixel.json). As fases completas estão em [`docs/arte/FASES_PIXEL_CELESTE.md`](docs/arte/FASES_PIXEL_CELESTE.md).
+- **Assinatura técnica obrigatória:** buffer de jogo 320×180 ampliado em múltiplos inteiros (×3 = 960×540); tiles de 8×8; interior sólido escuro (**infill**) com 1 px de luz no topo e 1 px escuro na base; contorno de exatamente 1 px em personagens, inimigos e perigos; sombra de contato de 1 px; luz dura vindo do alto à esquerda. **Proibido** anti-aliasing, gradiente suave, desfoque, meio-tom nas bordas e preto puro como cor de cena.
+- **Paleta:** 16 cores de cena + 3 de fundo por bioma, em rampas de 3–4 passos com hue-shift (sombra mais fria, luz mais quente). A base é a paleta pastel terrosa aprovada em 2026-10-08 — marrom-terra, âmbar e verde-oliva. Roxo/azul-escuro continuam **rejeitados como base**; o azul-acinzentado do bioma Gelo é cor de material, não volta da paleta antiga.
+- **Tamanho nativo sempre calculado:** `nativo = round(unidades_de_mundo / 3)`; o desenho usa `nativo × 3 × zoom_inteiro`. Zoom fracionário no mundo é proibido. Nada de gerar sprite em tamanho arbitrário “e reduzir depois” sem passar pelo pipeline de pixelização.
+- **Mundos de densidade separados (modelo Celeste):** o mundo do jogo é pixel 320×180; a UI/HUD/menus usam arte em grade de 3 px desenhada no canvas cheio, sem suavização. Levar a UI para dentro do buffer 320×180 é decisão própria do F1, com fonte pixel e nova medição da área permitida (Regras 21 e 22 continuam valendo em qualquer caso).
+- **Arte antiga permanece até a migração aprovada por lote.** Escolher o estilo não aprova anatomia, atlas, animação ou integração; cada fase tem porta de aprovação própria. As cores por bioma substituem as antigas sem recoloração automática de PNG existente.
+- **Croma na fonte:** toda imagem gerada/editada continua saindo em fundo técnico de chroma, e o derivado passa por recorte, **pixelização para o tamanho nativo** e revisão de bordas antes de entrar no jogo.
+- **Nova regra explícita de 2026-10-10 — chroma key em TODA imagem gerada/editada:** usar fundo técnico sólido, uniforme e opaco verde `#00FF00` ou azul `#0000FF` na fonte, sem exceção para sprites, ícones, HUD, terrenos, mapas-base, cenários ou ilustrações. Se a peça tiver traços verdes, fundo azul; se tiver traços azuis, fundo verde. Se tiver ambos, usar a cor que mais separe os detalhes e conferir recorte manual. O fundo não pode ter gradiente/textura, sombra ou invasão das bordas da peça. Não confundir esse fundo temporário com paleta artística nem com o asset final: preservar a fonte, remover chroma/contaminação de borda e validar o derivado (alfa real ou composição opaca apropriada ao consumidor) antes de integrar. Imagens antigas não são alteradas retroativamente. Seguir a ficha e o prompt vigente.
+- **Base limpa não é cenário final (Regra 19):** terreno, decoração e construções são passadas separadas, aprovadas uma a uma. Não trocar vazio por ruído nem encher a base de decorativos.
 - **Sempre mostrar 2 ou mais opções da mesma imagem para o usuário escolher** (ex.:
   `offer_options` do `generate_image`): nenhuma arte entra no jogo por decisão só do agente —
-  o usuário aprova comparando alternativas lado a lado. Vale para geração nova, recriação
+  o usuário aprova comparando alternativas lado a lado, **no tamanho nativo e ampliado**. Vale para geração nova, recriação
   ("recrie 100%") e edição de arte existente; a escolhida ainda passa pela Regra 10. Se o usuário pedir explicitamente uma rodada
   sem opções extras, respeitar essa escolha e manter a aprovação visual antes da integração.
-- Imagens entram otimizadas (Regra 5): tamanho certo para o uso, sem peso desnecessário.
+- Imagens entram otimizadas (Regra 5): tamanho nativo certo para o uso, sem peso desnecessário e sem pós-processamento por pixel em tempo de jogo.
 
 ---
 
@@ -3774,7 +3833,7 @@ Ao final de cada tarefa, apresentar um **checklist de conferência** com este fo
 1. PESQUISAR  → inspirações em jogos indies na Web (Regra 2)
 2. PERGUNTAR  → opções de implementação (Regra 1)
 3. IMPLEMENTAR → seguindo as escolhas do usuário, otimização (Regra 5) e Regra 14 (tela de carregamento só na troca de mundo; o que sai do TITLE é pré-carregado), com sprites no formato original e todo texto centralizado na área permitida do seu HUD (Regras 21 e 22 — texto quebra/encolhe/abrevia na área permitida; sprite nunca deforma/fatía/estica)
-4. ARTE       → imagens em alta resolução, papel recortado detalhado e harmônico (Regra 6) + humanização moderada (Regra 8) + top-down no mundo do jogo (Regra 17) + mapas-base limpos (Regra 19), em rodadas de no máx. 10 imagens (Regra 16), com fonte em fundo verde/azul de chroma (Regra 6), sempre partindo do prompt-mestre de estilo (Regra 18)
+4. ARTE       → pixel art nativa estilo Celeste (320×180, tiles 8×8, paleta de 16 cores por bioma) (Regra 6) + humanização moderada (Regra 8) + top-down no mundo do jogo (Regra 17) + mapas-base limpos (Regra 19), em rodadas de no máx. 10 imagens (Regra 16), com fonte em fundo verde/azul de chroma (Regra 6) e pixelização para o tamanho nativo antes de integrar, sempre partindo do prompt-mestre de estilo (Regra 18)
 5. MOSTRAR    → exibir toda arte gerada para aprovação visual (Regra 10)
 5b. DIAGRAMA  → gerar e abrir o diagrama da mudança (ANTES→DEPOIS, ou escopo em painéis) para o usuário avaliar e dar feedback (Regra 20)
 6. ADAPTAR    → mobile: todo input novo vira gesto/botão de toque (Regra 9)
@@ -5430,7 +5489,7 @@ parte dos blocos originais.
 
 | Arquivo original | Bytes preservados | SHA-256 |
 |---|---:|---|
-| `REGRAS_DE_TRABALHO.md` | 31966 | `85655a14ceb57807df14d6f55cc7febeff205d3ea7b021b1dcf5b334b1fdadb0` |
+| `REGRAS_DE_TRABALHO.md` | 33378 | `41f1c6efb2fd7b3e0ad4ce3478574a38e8252998ef353efb7e49e8e074ef97fd` |
 | `LORE.md` | 15056 | `42075fe4334601f1a74834388c0155342b2a8a6c21e51afa6020e34a5260f493` |
 | `DOCUMENTO_MEGA_ATUALIZACAO_LORE_TOTAL.md` | 30473 | `c642dd06d14e527bba6566458afa5293f697b0a3b981ef6301f6fafdfb9e856e` |
 | `DOCUMENTO_DECISOES_MEGA_ATUALIZACAO.md` | 8179 | `2b05240cd9fef9fb33d8a08768164f60202437c886c1c5b83f250ee9cbb58637` |

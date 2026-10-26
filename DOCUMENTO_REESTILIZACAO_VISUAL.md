@@ -1,7 +1,13 @@
 # FUMIGA — estudo de estilos, inventário e plano de reestilização
 
 **Data:** 2026-10-08 · **Base auditada:** `53c9f572656113fbc5ddfad77877c6dec3b6c091`\
-**Status atual:** estilo **06 — papel recortado detalhado** confirmado pelo usuário em 2026-10-08; prompt-mestre vigente `FUMIGA-PAPEL-v4-CHROMA`. Acabamento rico, sem aparência vazia ou minimalista. Inventário concluído; plano de integração proposto; piloto **pendente**. Nenhum asset de produção foi substituído.
+> ## Atualização de 2026-10-26 — direção vigente: PIXEL CELESTE
+>
+> O usuário decidiu que o novo estilo do jogo é **pixel art nativa idêntica à técnica do Celeste**: prompt-mestre **`FUMIGA-PIXEL-CELESTE-v1`**, canvas de jogo 320×180 ampliado ×3, tiles de 8×8, 16 cores de cena por bioma com hue-shift, sem anti-aliasing, sem gradiente e sem preto puro de cena. Paleta híbrida (rampas do Celeste sobre o pastel terroso de 2026-10-08) em [`docs/arte/paleta-celeste.json`](docs/arte/paleta-celeste.json); tamanhos nativos em [`docs/arte/contratos-pixel.json`](docs/arte/contratos-pixel.json); **plano vigente de fases em [`docs/arte/FASES_PIXEL_CELESTE.md`](docs/arte/FASES_PIXEL_CELESTE.md)** — a tabela F0–F9 da seção 5 abaixo descreve o ciclo anterior, em papel, e permanece como histórico.
+>
+> **Status atual (pixel):** F0a concluída (direção, prompt, paleta, contratos e fases documentados). Nenhum asset substituído e runtime inalterado; a próxima ação é a fase **F0b** (frame 320×180). O papel recortado v1–v4 está preservado em [`docs/arte/historico/ESTILO_OFICIAL-v4-PAPEL.md`](docs/arte/historico/ESTILO_OFICIAL-v4-PAPEL.md).
+
+**Status histórico (papel, 2026-10-08):** estilo **06 — papel recortado detalhado** confirmado pelo usuário em 2026-10-08; prompt então vigente `FUMIGA-PAPEL-v4-CHROMA`. Acabamento rico, sem aparência vazia ou minimalista. Inventário concluído; plano de integração proposto; piloto **pendente**. Nenhum asset de produção foi substituído.
 
 **Guia vigente:** [`docs/arte/ESTILO_OFICIAL.md`](docs/arte/ESTILO_OFICIAL.md). A seleção de estilo está concluída; dimensões finais, recortes, sombras em movimento e aprovação das peças serão validados no piloto.
 
