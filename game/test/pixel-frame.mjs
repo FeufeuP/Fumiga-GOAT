@@ -147,11 +147,18 @@ assert(worldSrc.includes("quantizeToPalette("), "o chão termina preso na paleta
 assert(worldSrc.includes("paletteColors(biome.id)"), "a paleta do chão é a do bioma");
 assert(worldSrc.includes("MAT_RAISE"), "o autotile conhece o relevo de cada material");
 
-// o frame NÃO é chave de opção: decisão do usuário em 2026-10-26
+// o frame NÃO é chave de opção: decisão do usuário em 2026-10-26.
+// Procura o item de menu em si (label/id), não a menção ao estilo — comentário
+// que cita PIXEL CELESTE é documentação, botão que oferece ligar/desligar não.
 for (const [nome, src] of [["game.js", read("game/js/game.js")], ["ui.js", read("game/js/ui.js")]]) {
-  assert(!/PIXEL CELESTE/.test(src), `${nome}: o frame não virou opção de vídeo`);
+  assert(!/label:\s*["\[]?\s*PIXEL CELESTE/i.test(src), `${nome}: o frame não virou item de menu`);
+  assert(!/id:\s*"vid_(pixel|celeste)/i.test(src), `${nome}: sem chave de vídeo para o frame`);
 }
 assert(!read("game/js/state.js").includes("pixelCeleste"), "nenhuma chave de save liga/desliga o frame");
+const videoItems = read("game/js/game.js").match(/id: "vid_[a-z]+"/g) || [];
+assert.deepEqual([...new Set(videoItems)].sort(),
+  ['id: "vid_particles"', 'id: "vid_psx"', 'id: "vid_scanline"', 'id: "vid_screenshake"'].sort(),
+  "o menu VÍDEO continua com as quatro opções de sempre (sem PIXEL CELESTE)");
 
 // ------------------------------------------------------- paleta normativa ----
 // A fonte da verdade é docs/arte/paleta-celeste.json. O pacote do jogo carrega

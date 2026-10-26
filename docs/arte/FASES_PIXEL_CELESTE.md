@@ -70,6 +70,7 @@
 | Formigas | `game/js/assets.js` + `config.js:ANT_NATIVE` | **um frame por casta**, assado no tamanho NATIVO (`round(mundo/3)`) e ampliado por um passo **inteiro** de buffer — 1 px do assado = 1 px do buffer |
 | Paleta em runtime | `pixel_celeste.js` ← `game/assets/paleta-celeste.json` | lida no boot, antes de assar o chão; se o fetch falhar vale o literal de segurança (conferido igual ao JSON por teste) |
 | Overlay de feromônio | `lore_hud.js` | acompanha o deslocamento do frame (`frameShift()`), senão sai até 3 px fora do mundo |
+| Retângulo de seleção | `game.js` | mesma correção: é desenhado por cima do buffer, em resolução cheia |
 
 **Decisões do usuário nesta fase**
 
