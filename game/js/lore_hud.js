@@ -1,3 +1,4 @@
+import { frameShift } from "./pixel_celeste.js";
 import { drawPaper, drawPaperBar } from "./paper_hud.js";
 import { G, metaBonus } from "./state.js";
 import { drawText, layoutBox } from "./font.js";
@@ -473,20 +474,26 @@ function fogStamp(index) {
   c.fillStyle = g; c.fillRect(0,0,32,32); fogCache[index] = cv; return cv;
 }
 
-let fogLayer, fogTime = -Infinity, fogX, fogY, fogZoom, fogOX, fogOY;
+let fogLayer, fogTime = -Infinity, fogX, fogY, fogZoom, fogOX, fogOY, fogTX, fogTY;
 export function drawPheromoneOverlay(ctx, cam, VIEW_W, VIEW_H, worldToScreen, foodTrailAt, dangerAt, time) {
   const contrast = metaBonus().fruitSeePalida ? 1.25 : 1;
   const step = 32, foodStamp = fogStamp(0), dangerStamp = fogStamp(1);
+  // PIXEL CELESTE: o mundo composto anda de -1 a +1 px em volta de uma base
+  // constante (a sangria devolve o resto da câmera como deslocamento inteiro).
+  // Sem esse turno, os blobs de feromônio saem até 3 px fora do rastro real.
+  const turno = frameShift();
   if (!fogLayer) fogLayer = document.createElement("canvas");
   if (fogLayer.width !== VIEW_W/2 || fogLayer.height !== VIEW_H/2) {
     fogLayer.width=VIEW_W/2; fogLayer.height=VIEW_H/2; fogTime=-Infinity;
   }
   // 30 Hz sensorial, 60 Hz de composição. Pan/zoom/shake invalidam de imediato.
-  if (time < fogTime || time-fogTime >= 1/30 || cam.x!==fogX || cam.y!==fogY || cam.zoom!==fogZoom || cam.offsetX!==fogOX || cam.offsetY!==fogOY) {
+  if (time < fogTime || time-fogTime >= 1/30 || cam.x!==fogX || cam.y!==fogY || cam.zoom!==fogZoom
+      || cam.offsetX!==fogOX || cam.offsetY!==fogOY || turno.x!==fogTX || turno.y!==fogTY) {
     const c=fogLayer.getContext("2d"); c.clearRect(0,0,fogLayer.width,fogLayer.height);
     for (let sx=0; sx<VIEW_W+step; sx+=step) for (let sy=0; sy<VIEW_H+step; sy+=step) {
-      const wx=cam.x+(sx-VIEW_W/2-(cam.offsetX||0))/cam.zoom;
-      const wy=cam.y+(sy-VIEW_H/2-(cam.offsetY||0))/cam.zoom;
+      // amostra o mundo na posição de tela JÁ deslocada pelo turno do frame
+      const wx=cam.x+((sx-turno.x)-VIEW_W/2-(cam.offsetX||0))/cam.zoom;
+      const wy=cam.y+((sy-turno.y)-VIEW_H/2-(cam.offsetY||0))/cam.zoom;
       const food=foodTrailAt(wx,wy), danger=dangerAt(wx,wy);
       if (food>0.08) {
         c.globalAlpha=Math.min(0.65,food*1.2)*contrast; c.drawImage(foodStamp,sx/2-16,sy/2-16,32,32);
@@ -499,6 +506,7 @@ export function drawPheromoneOverlay(ctx, cam, VIEW_W, VIEW_H, worldToScreen, fo
       }
     }
     fogTime=time; fogX=cam.x; fogY=cam.y; fogZoom=cam.zoom; fogOX=cam.offsetX; fogOY=cam.offsetY;
+    fogTX=turno.x; fogTY=turno.y;
   }
   ctx.save();
   ctx.fillStyle="rgba(10,8,16,0.35)"; ctx.fillRect(0,0,VIEW_W,VIEW_H);

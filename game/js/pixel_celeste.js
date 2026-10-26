@@ -22,13 +22,15 @@
 // por pixel em tempo de jogo — o que é estático (chão, vinheta) é assado uma
 // vez, fora do loop (Regra 5).
 // ============================================================================
-import { VIEW_W, VIEW_H } from "./config.js";
+import { VIEW_W, VIEW_H, PIXEL_SCALE } from "./config.js";
 
 /** Largura/altura do buffer de jogo, em pixels nativos de arte. */
 export const BUFFER_W = 320;
 export const BUFFER_H = 180;
-/** Ampliação inteira do buffer para o canvas (320x180 -> 960x540). */
-export const SCALE = 3;
+/** Ampliação inteira do buffer para o canvas (320x180 -> 960x540).
+ *  O número mora em config.js (PIXEL_SCALE) porque os tamanhos nativos de
+ *  assado das formigas são derivados dele e config.js não importa ninguém. */
+export const SCALE = PIXEL_SCALE;
 /** Sangria do buffer (Saint11): cobre o deslocamento fracionário da câmera. */
 export const BLEED = 2;
 /** Tile de terreno, em pixels do buffer (8x8, como no Celeste). */
@@ -44,10 +46,16 @@ export const ZOOM_DEFAULT = 1;
 export const PIP_SCALE = 2;
 
 // ------------------------------------------------------------------ paleta --
-// Espelho de execução de docs/arte/paleta-celeste.json. O JSON continua sendo
-// a fonte normativa; game/test/pixel-frame.mjs confere os dois, do mesmo jeito
-// que test/assets.mjs confere ANT_SIZES contra config.js.
-export const PALETA_CELESTE = {
+// A fonte NORMATIVA é docs/arte/paleta-celeste.json, copiada para
+// game/assets/paleta-celeste.json por tools/sync_paleta.mjs e LIDA EM TEMPO DE
+// EXECUÇÃO por loadPaletteUrl() (chamada no boot, antes de assar o chão).
+//
+// O literal abaixo é só a REDE DE SEGURANÇA offline: se o fetch falhar (PWA
+// recém-instalada, pacote nativo com cache furado, teste headless sem rede), o
+// jogo assa o chão com estas cores em vez de travar. Ele é conferido contra o
+// JSON por game/test/pixel-frame.mjs, do mesmo jeito que test/assets.mjs
+// confere ANT_SIZES contra config.js — então não pode divergir em silêncio.
+const PALETA_FALLBACK = {
   planicie: {
     fundo: ["#141a10", "#1d2616", "#28351d"],
     infill: "#1b2517",
@@ -120,6 +128,70 @@ export const PALETA_CELESTE = {
   },
 };
 
+/**
+ * Paleta em uso. Começa na rede de segurança e é trocada pelo JSON normativo
+ * assim que o boot consegue lê-lo. É `let` de propósito: os módulos que
+ * importam PALETA_CELESTE recebem a ligação viva e veem a troca.
+ */
+export let PALETA_CELESTE = PALETA_FALLBACK;
+
+/**
+ * De onde veio a paleta em uso: "json" (a normativa, lida do pacote) ou
+ * "seguranca" (o literal deste arquivo, quando o fetch falhou). Existe para o
+ * teste de navegador poder provar que a leitura acontece de verdade — paleta
+ * certa vinda do lugar errado é exatamente o tipo de bug que ninguém vê.
+ */
+export let paletaFonte = "seguranca";
+
+/** Forma de um bioma na paleta: 16 cores de cena + 3 de fundo. */
+const BIOMA_KEYS = ["fundo", "infill", "terreno", "borda", "musgo", "trilha", "acento", "vegetacao"];
+const HEX = /^#[0-9a-f]{6}$/;
+
+/**
+ * Troca a paleta em uso por um objeto já parseado. Valida antes de aceitar:
+ * JSON adulterado ou truncado NÃO derruba o boot, simplesmente é recusado e a
+ * paleta anterior continua valendo.
+ * @returns true se aceitou.
+ */
+export function loadPalette(json) {
+  if (!json || typeof json !== "object") return false;
+  const biomas = json.biomas;
+  if (!biomas || typeof biomas !== "object") return false;
+  if (!biomas.planicie) return false;                 // sem a Planície não há fallback
+  for (const [id, b] of Object.entries(biomas)) {
+    if (!b || typeof b !== "object") return false;
+    for (const k of BIOMA_KEYS) if (!(k in b)) return false;
+    const cores = [b.infill, b.borda, b.trilha, ...b.fundo, ...b.terreno,
+      ...b.musgo, ...b.acento, ...b.vegetacao];
+    if (cores.length !== 19) return false;            // 16 de cena + 3 de fundo
+    if (!cores.every((c) => typeof c === "string" && HEX.test(c))) return false;
+  }
+  PALETA_CELESTE = biomas;
+  paletaFonte = "json";
+  return true;
+}
+
+/**
+ * Lê a paleta normativa do pacote do jogo. Nunca lança e nunca derruba o boot:
+ * falhou (sem fetch, 404, JSON inválido, timeout), o jogo segue com a paleta de
+ * segurança e o teste de assets acusa a divergência.
+ * @param {string} url caminho do JSON dentro do pacote
+ * @param {number} timeoutMs prazo — o boot não pode ficar pendurado
+ */
+export async function loadPaletteUrl(url = "assets/paleta-celeste.json", timeoutMs = 8000) {
+  if (typeof fetch !== "function") return false;
+  try {
+    const ctrl = typeof AbortController === "function" ? new AbortController() : null;
+    const timer = ctrl ? setTimeout(() => ctrl.abort(), timeoutMs) : 0;
+    const res = await fetch(url, { cache: "force-cache", signal: ctrl ? ctrl.signal : undefined });
+    if (timer) clearTimeout(timer);
+    if (!res || !res.ok) return false;
+    return loadPalette(await res.json());
+  } catch (e) {
+    return false;      // sem rede / abortado / JSON inválido: usa a segurança
+  }
+}
+
 /** Paleta de um bioma; cai na Planície se o id não existir. */
 export function paletteFor(biomeId) {
   return PALETA_CELESTE[biomeId] || PALETA_CELESTE.planicie;
@@ -188,12 +260,27 @@ export function endWorld(ctx, dx, dy, up, sw, sh, cxScreen, cyScreen) {
   // o que sobrou do arredondamento volta como deslocamento inteiro de tela
   const subX = Math.round(-(wantX - sx) * up);
   const subY = Math.round(-(wantY - sy) * up);
+  // -up: o pixel de sangria entra à esquerda/acima do quadro pedido
+  turnoX = subX - up;
+  turnoY = subY - up;
   const prev = ctx.imageSmoothingEnabled;
   ctx.imageSmoothingEnabled = false;
   ctx.drawImage(buf, sx - 1, sy - 1, sw + 2, sh + 2,
     dx + subX - up, dy + subY - up, (sw + 2) * up, (sh + 2) * up);
   ctx.imageSmoothingEnabled = prev;
 }
+
+/**
+ * Deslocamento EXTRA que a composição aplicou por cima da posição pedida.
+ *
+ * A sangria devolve o resto fracionário da câmera como um deslocamento inteiro
+ * de tela, então o mundo composto não cai exatamente onde a matemática de tela
+ * (960x540) diz: ele anda de -1 a +1 px em volta de uma base constante. Quem
+ * desenha POR CIMA do buffer em resolução cheia (o HUD, o overlay de feromônio)
+ * precisa desse número para não ficar 3 px fora do mundo.
+ */
+let turnoX = 0, turnoY = 0;
+export function frameShift() { return { x: turnoX, y: turnoY }; }
 
 /** Passada do mundo da expedição: câmera do RUN, tela cheia. */
 export function beginRunView(camX, camY, zoom, offX = 0, offY = 0) {

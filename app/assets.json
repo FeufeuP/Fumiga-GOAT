@@ -76,13 +76,13 @@
         7089,
         2993,
         1576,
-        26005,
+        29390,
         11449,
         21721,
         3295,
         4559,
         8208,
-        59466,
+        60322,
         23041,
         14561,
         38797,
@@ -93,15 +93,15 @@
         155457,
         4785,
         27441,
-        23553,
+        24062,
         13052,
-        13193,
+        14227,
         53985,
         1342,
-        72575,
+        72743,
         22256,
         15085,
-        12159,
+        16270,
         14081,
         4494,
         16680,
@@ -123,7 +123,7 @@
         11046,
         899
       ],
-      "bytes": 1483085
+      "bytes": 1493148
     },
     {
       "id": "assets",
@@ -144,6 +144,7 @@
         "game/assets/font/KiwiSoda.ttf",
         "game/assets/loading/loading_floresta.png",
         "game/assets/loading/loading_planicie.png",
+        "game/assets/paleta-celeste.json",
         "game/assets/parallax/menu/layer1_foreground_vines.png",
         "game/assets/parallax/menu/layer2_main_grass_ruins_anthill.png",
         "game/assets/parallax/menu/layer3_mountains_silhouette.png",
@@ -388,6 +389,7 @@
         49292,
         1777165,
         7533004,
+        4747,
         426677,
         1018788,
         420365,
@@ -616,7 +618,7 @@
         839032,
         656076
       ],
-      "bytes": 46796538
+      "bytes": 46801285
     }
   ]
 }

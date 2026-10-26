@@ -219,26 +219,44 @@ const fallbackAbsent = [...FONT_FALLBACK_CHARS].filter(ch => !FONT_CHARS.include
 if (fallbackAbsent.length) problems.push("fallbacks de símbolo fora da lista de texto: " + fallbackAbsent.join(" "));
 
 // ------------------------------------------- escala da FORMIGA GIGANTE --------
-// A gigante é assada em 247 (pad = 5x o da soldado, escolhido na ARTE real) e
-// ampliada no desenho com fator inteiro — sai 20x a soldado com blocos de
-// pixel uniformes. O layout.mjs roda com sprites falsos de 64x64, então só
-// aqui dá para conferir isso contra os PNGs de verdade.
-function padOf(pngPath, out) {
-  const b = fs.readFileSync(path.join(ROOT, pngPath));
-  const w0 = b.readUInt32BE(16), h0 = b.readUInt32BE(20);
-  const sc = out / Math.max(w0, h0);
-  const w = Math.round(w0 * sc), h = Math.round(h0 * sc);
-  return Math.ceil(Math.hypot(w, h)) + 2;
-}
-const { ANT_SIZES } = await import("../js/config.js");
-const GIANT_BAKE = ANT_SIZES.giant;                        // fonte única: config.js
-const pSold = padOf("assets/sprites/ants/soldier.png", ANT_SIZES.soldier);
-const pGiant = padOf("assets/sprites/ants/soldier.png", GIANT_BAKE);
-const factor = (pSold * GIANT_SCALE) / pGiant;
-const scaleOk = pGiant === 5 * pSold && Number.isInteger(factor);
+// PIXEL CELESTE (F0b-2): a gigante é assada no tamanho NATIVO (1/5 do tamanho
+// em que é desenhada) e ampliada na hora com um passo INTEIRO de buffer. O que
+// importa não é mais o pad ser 5x o da soldado — é a AMPLIAÇÃO ser inteira,
+// senão o pixel do sprite cai em meio pixel e a gigante tremeluz. A geometria
+// vem de bakeGeom (assets.js), a mesma função do assado de verdade: nada de
+// segunda cópia da conta. O layout.mjs roda com sprites falsos de 64x64, então
+// só aqui dá para conferir contra os PNGs de verdade.
+const { ANT_SIZES, ANT_NATIVE, PIXEL_SCALE } = await import("../js/config.js");
+const { bakeGeom, ANT_ANGLES } = await import("../js/assets.js");
+const pngDims = (rel) => {
+  const b = fs.readFileSync(path.join(ROOT, rel));
+  return [b.readUInt32BE(16), b.readUInt32BE(20)];
+};
+const [sw0, sh0] = pngDims("assets/sprites/ants/soldier.png");
+const gSold = bakeGeom(sw0, sh0, ANT_NATIVE.soldier, ANT_ANGLES);
+const gGiant = bakeGeom(sw0, sh0, ANT_NATIVE.giant, ANT_ANGLES);
+const alvo = gSold.body * PIXEL_SCALE * GIANT_SCALE;       // corpo da soldado desenhado x20
+const k = Math.max(1, Math.round(alvo / (PIXEL_SCALE * gGiant.body)));
+const razao = (gGiant.body * k * PIXEL_SCALE) / (gSold.body * PIXEL_SCALE);
+const scaleOk = Number.isInteger(k) && Math.abs(razao - GIANT_SCALE) <= GIANT_SCALE * 0.15;
 console.log((scaleOk ? "ok   " : "ERRO ") +
-  `escala da GIGANTE (${GIANT_SCALE}x a soldado: assado ${pGiant} = 5x${pSold}, fator de desenho ${factor})`);
-if (!scaleOk) problems.push(`assado da gigante desalinhado: pad ${pGiant} x soldado ${pSold} — ajuste ANT_SIZES.giant em main.js`);
+  `escala da GIGANTE (${GIANT_SCALE}x a soldado: assado nativo ${gGiant.pad}px, ampliação ${k}x inteira, sai ${razao.toFixed(1)}x)`);
+if (!scaleOk) problems.push(`assado da gigante desalinhado: ampliação ${k}x dá ${razao.toFixed(1)}x a soldado — ajuste ANT_NATIVE.giant`);
+
+// ---------------------------------- assado nativo e um frame por formiga ------
+// Cada casta é assada no tamanho NATIVO (round(mundo/3)) e ampliada por um
+// passo inteiro: é o que garante 1 px do assado = 1 px do buffer. Qualquer
+// volta ao assado em px de tela (ou à ampliação fracionária) cai aqui.
+for (const [k2, mundo] of Object.entries(ANT_SIZES)) {
+  const nativo = ANT_NATIVE[k2];
+  if (nativo !== Math.max(1, Math.round(mundo / PIXEL_SCALE))) {
+    problems.push(`${k2}: nativo ${nativo} != round(${mundo}/${PIXEL_SCALE})`);
+  }
+}
+const nativosOk = Object.keys(ANT_SIZES).every((k2) => ANT_NATIVE[k2] === Math.max(1, Math.round(ANT_SIZES[k2] / PIXEL_SCALE)));
+console.log((nativosOk ? "ok   " : "ERRO ") +
+  `assado NATIVO das ${Object.keys(ANT_SIZES).length} castas (round(mundo/${PIXEL_SCALE})), ampliação inteira de ${PIXEL_SCALE}x`);
+if (!nativosOk) problems.push("tamanho nativo de assado divergiu do contrato nativo = mundo/3");
 
 // Os sete fundos existem em 960×540, mas nenhum entra no boot: carregamento
 // por fruto, promessa compartilhada/cache por bioma e retry com a versão do asset.

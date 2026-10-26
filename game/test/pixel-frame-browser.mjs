@@ -77,7 +77,7 @@ for (const perfil of PERFIS) {
   const errs = [];
   watchPage(page, errs);
   await page.goto(BASE + perfil.path + "?debug&limpo&hud=0&tela=RUN&mapa=1&seed=4242&invencivel");
-  await importGameModules(page, { state: "state.js", pixel: "pixel_celeste.js", cam: "camera.js" });
+  await importGameModules(page, { state: "state.js", pixel: "pixel_celeste.js", cam: "camera.js", assets: "assets.js" });
   await page.waitForFunction(() => window.FUMIGA && window.FUMIGA.pronto, null, { timeout: 60000, polling: 100 });
   // 7 s: o banner de evento (HUD, em alta resolução) some antes da amostragem,
   // senão ele aparece dentro da região e derruba a contagem dos blocos 3x3.
@@ -91,12 +91,24 @@ for (const perfil of PERFIS) {
     zoom: MOD.cam.cam.zoom,
     niveis: MOD.pixel.ZOOM_LEVELS,
     emMundo: MOD.pixel.pixelWorldPass(),
+    paleta: MOD.pixel.paletaFonte,
+    formiga: (() => {
+      const b = MOD.assets.bakeRot("worker", 15, MOD.assets.ANT_ANGLES);
+      return { quadros: b.frames.length, size: b.size, body: b.body, up: (b.drawScale || 1) / MOD.pixel.SCALE };
+    })(),
   }));
   assert.deepEqual(frame.bufer, [320, 180], `${perfil.id}: buffer 320x180`);
   assert.equal(frame.escala, 3, `${perfil.id}: ampliação x3`);
   assert.equal(frame.tile, 8, `${perfil.id}: tile 8x8`);
   assert(frame.niveis.includes(frame.zoom), `${perfil.id}: zoom ${frame.zoom} é um nível inteiro permitido`);
   assert.equal(frame.emMundo, false, `${perfil.id}: a passada de mundo fecha (sem vazamento)`);
+  assert.equal(frame.paleta, "json",
+    `${perfil.id}: a paleta veio do paleta-celeste.json do pacote (não do literal de segurança)`);
+  // F0b-2: a formiga assa UM frame, no tamanho nativo, e é ampliada por inteiro
+  assert.equal(frame.formiga.quadros, 1, `${perfil.id}: a operária tem um frame só`);
+  assert.equal(frame.formiga.size, frame.formiga.body + 2, `${perfil.id}: caixa justa (sem a diagonal da rotação)`);
+  assert(Number.isInteger(frame.formiga.up) && frame.formiga.up >= 1,
+    `${perfil.id}: a ampliação da formiga no buffer é inteira (${frame.formiga.up}x)`);
 
   // 1b. o canvas também tem de crescer em degraus de 1/3 na TELA: o pixel do
   //     frame mede 3 px de canvas, então só é quadrado e uniforme no monitor

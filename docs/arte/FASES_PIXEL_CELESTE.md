@@ -67,6 +67,9 @@
 | Mobile | `game/mobile/touch.js` | a pinça quantiza na escada inteira; nada novo de input |
 | Encaixe na tela | `game/js/main.js:fit()` | o canvas cresce em degraus de **1/3** (`s = floor(s*3)/3`), porque o pixel do frame mede 3 px de canvas: só assim ele chega inteiro ao monitor |
 | PS1 e scanlines | `game/js/state.js`, `game/js/psx_filter.js` | nascem **desligados** (eram o padrão) — ver decisão 3 abaixo |
+| Formigas | `game/js/assets.js` + `config.js:ANT_NATIVE` | **um frame por casta**, assado no tamanho NATIVO (`round(mundo/3)`) e ampliado por um passo **inteiro** de buffer — 1 px do assado = 1 px do buffer |
+| Paleta em runtime | `pixel_celeste.js` ← `game/assets/paleta-celeste.json` | lida no boot, antes de assar o chão; se o fetch falhar vale o literal de segurança (conferido igual ao JSON por teste) |
+| Overlay de feromônio | `lore_hud.js` | acompanha o deslocamento do frame (`frameShift()`), senão sai até 3 px fora do mundo |
 
 **Decisões do usuário nesta fase**
 
@@ -76,6 +79,7 @@
 4. **Vinheta A — máscara de dither de 1 px**, no lugar do gradiente radial.
 5. **Degrau de 1/3 no encaixe do canvas** (2026-10-26, decidido na inspeção): o pixel do frame tem de ser quadrado e do mesmo tamanho em qualquer janela. Custo aceito: no celular o canvas passa de 693×390 para 640×360, ~8% menor, com mais tarja.
 6. **Filtro PS1 e SCANLINES desligados por padrão** (2026-10-26, decidido na inspeção): os dois são pintados POR CIMA do canvas e desfaziam o frame — a uniformidade dos blocos 3×3 caía de 100% (no canvas) para 1% (na tela). As duas opções **continuam existindo** em OPÇÕES → VÍDEO, e saves anteriores recebem o novo padrão **uma única vez** (marca `save.pixelFrame`).
+7. **As formigas só precisam de um frame cada** (2026-10-26): *“as formigas por enquanto só precisam de um frame cada”*. Os 24 ângulos sumiram para as 18 castas — a 15×15 px, girar o sprite em 24 passos produz silhueta lambida, não pixel art; o Celeste não gira, tem quadros por direção, e isso é F0c/F2. Os chefes (`rotMode`) mantêm os 24: são sprites grandes e a rotação ainda lê bem neles.
 
 **Riscos técnicos conhecidos — como ficaram**
 
@@ -96,6 +100,8 @@
 | FPS nos seis mapas, PC e mobile | 59–60 | **60** |
 
 **Diagramas:** [`diagrama-f0b-frame-pixel-2026-10-26.png`](diagrama-f0b-frame-pixel-2026-10-26.png) (ANTES → DEPOIS) e [`diagrama-f0b-filtro-ps1-2026-10-26.png`](diagrama-f0b-filtro-ps1-2026-10-26.png) (o conflito com o filtro PS1).
+
+**Assado das castas (F0b-2, medido no navegador):** as 18 castas assam 1 frame cada, em caixa justa (`corpo + 2 px` de margem, sem a diagonal da rotação), com ampliação inteira de 1× no buffer — a gigante, 4× (o truque de assar 1/5 e ampliar na hora, agora com fator arredondado para inteiro, o que antes dependia de um número mágico em `ANT_SIZES.giant`).
 
 ---
 

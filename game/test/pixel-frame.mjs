@@ -153,6 +153,51 @@ for (const [nome, src] of [["game.js", read("game/js/game.js")], ["ui.js", read(
 }
 assert(!read("game/js/state.js").includes("pixelCeleste"), "nenhuma chave de save liga/desliga o frame");
 
+// ------------------------------------------------------- paleta normativa ----
+// A fonte da verdade é docs/arte/paleta-celeste.json. O pacote do jogo carrega
+// uma cópia gerada por tools/sync_paleta.mjs e o runtime a lê no boot. Se a
+// cópia divergir, ou se o JSON vier corrompido, o boot não pode quebrar: a
+// paleta de segurança de pixel_celeste.js continua valendo.
+const paletaDocs = JSON.parse(read("docs/arte/paleta-celeste.json"));
+const paletaJogo = JSON.parse(read("game/assets/paleta-celeste.json"));
+assert.deepEqual(paletaJogo, paletaDocs, "a cópia do pacote é idêntica à paleta normativa");
+assert.deepEqual(soCores(px.PALETA_CELESTE), soCores(paletaDocs.biomas),
+  "a paleta de segurança do runtime é igual à normativa");
+assert.equal(px.paletaFonte, "seguranca", "antes de ler, vale a paleta de segurança");
+assert.equal(px.loadPalette(paletaJogo), true, "o JSON do pacote é aceito pelo runtime");
+assert.equal(px.paletaFonte, "json", "depois de lido, a origem é o JSON");
+assert.deepEqual(soCores(px.PALETA_CELESTE), soCores(paletaJogo.biomas),
+  "depois de lido, o runtime usa o JSON, não o literal");
+const planicieOk = paletaJogo.biomas.planicie;
+for (const ruim of [
+  null, undefined, 42, {},
+  { biomas: null }, { biomas: {} },                                  // sem a Planície
+  { biomas: { planicie: null } },
+  { biomas: { planicie: { ...planicieOk, borda: "azul" } } },        // cor inválida
+  { biomas: { planicie: { ...planicieOk, acento: ["#ffffff"] } } },  // 17 em vez de 19
+]) {
+  assert.equal(px.loadPalette(ruim), false, `JSON inválido é recusado: ${JSON.stringify(ruim)?.slice(0, 40)}`);
+}
+assert.deepEqual(soCores(px.PALETA_CELESTE), soCores(paletaJogo.biomas),
+  "a paleta válida continua no lugar depois das recusas");
+
+// ------------------------------------- formigas: um frame, tamanho nativo ----
+// Decisão do usuário (2026-10-26): "as formigas por enquanto só precisam de um
+// frame cada". Assadas no tamanho NATIVO (o do buffer) e ampliadas por um passo
+// INTEIRO — é o que faz 1 px do assado cair em 1 px do buffer.
+const { ANT_NATIVE, PIXEL_SCALE } = await import("../js/config.js");
+const { ANT_ANGLES } = await import("../js/assets.js");
+assert.equal(ANT_ANGLES, 1, "as formigas assam um frame cada (não 24 rotações)");
+assert.equal(PIXEL_SCALE, px.SCALE, "a ampliação do frame é a mesma em config.js e no módulo");
+for (const [k, mundo] of Object.entries(ANT_SIZES)) {
+  assert.equal(ANT_NATIVE[k], Math.round(mundo / PIXEL_SCALE), `${k}: assado nativo = round(${mundo}/${PIXEL_SCALE})`);
+}
+const mainSrc = read("game/js/main.js");
+assert(mainSrc.includes("Object.entries(ANT_NATIVE)"), "o boot assa as formigas no tamanho nativo");
+assert(mainSrc.includes("ANT_ANGLES"), "o boot assa um frame por formiga");
+assert(mainSrc.includes("setRotScale(k, 1)"), "1 px de assado = 1 px de buffer na ampliação");
+assert(mainSrc.includes('loadPaletteUrl(assetUrl("paleta-celeste.json"))'), "o boot lê a paleta do pacote");
+
 // -------------------------------------------- o frame nasce visível (VÍDEO) --
 // Decisão do usuário (2026-10-26): o filtro PS1 e as scanlines são pintados POR
 // CIMA do canvas e desfazem o frame pixel — os blocos 3x3 do mundo caem de 100%
@@ -184,6 +229,18 @@ assert.equal(st.G.save.settings.psx, 1, "quem religou o PS1 não é mais incomod
 assert.equal(st.G.save.settings.scanline, true, "quem religou as scanlines não é mais incomodado");
 globalThis.localStorage = localStorageAntigo;
 
+// ------------------------------- quem desenha por cima do buffer (HUD) -------
+// A sangria devolve o resto da câmera como deslocamento INTEIRO de tela: o
+// mundo composto não cai exatamente onde a matemática de tela diz. Quem desenha
+// em resolução cheia POR CIMA do buffer tem de saber disso, senão sai até 3 px
+// fora do mundo (o overlay de feromônio era o único caso).
+const vazio = px.frameShift();
+assert.deepEqual({ x: vazio.x, y: vazio.y }, { x: 0, y: 0 }, "sem composição, o deslocamento é zero");
+const lore = read("game/js/lore_hud.js");
+assert(lore.includes("frameShift()"), "o overlay de feromônio lê o deslocamento do frame");
+assert(/turno\.x!==fogTX/.test(lore), "a chave de cache do overlay inclui o deslocamento");
+assert(/sx-turno\.x/.test(lore), "o overlay amostra o mundo na posição já deslocada");
+
 // ------------------------------------------------------------ composição ----
 // A matemática da sangria: a translação do buffer é inteira e o resto volta
 // como deslocamento INTEIRO de tela (nunca fracionário).
@@ -200,4 +257,5 @@ console.log("ok    frame 320x180 x3, tile 8x8, zoom 1x/2x/3x e paleta idêntica 
 console.log("ok    chão assado em grade de tiles 8x8 nos 6 biomas, preso na paleta");
 console.log("ok    vinheta em máscara de 1 px, névoa sem suavização e PiP no mesmo buffer");
 console.log("ok    PS1 e scanlines nascem desligados e saves antigos migram uma vez");
+console.log("ok    paleta lida de paleta-celeste.json (com rede de segurança) e formigas em 1 frame nativo");
 console.log("FRAME PIXEL CELESTE OK — F0b (buffer, zoom inteiro e autotile 8x8) no runtime");

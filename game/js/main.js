@@ -2,9 +2,9 @@
 // FUMIGA-GOAT — bootstrap: carregamento, loop principal, redimensionamento V2
 // Agora começa em PRETITLE com título animado
 // ============================================================================
-import { VIEW_W, VIEW_H, PAL, GIANT_SCALE, ANT_SIZES, GATHERER_SIZE } from "./config.js";
+import { VIEW_W, VIEW_H, PAL, GIANT_SCALE, ANT_NATIVE, GATHERER_SIZE, PIXEL_SCALE } from "./config.js";
 import { G, loadSave } from "./state.js";
-import { loadAll, bakeRot, dupSprite, setRotDrawScale, LOAD, ASSET_V } from "./assets.js";
+import { loadAll, bakeRot, dupSprite, setRotScale, setRotDrawScale, ANT_ANGLES, assetUrl, LOAD, ASSET_V } from "./assets.js";
 // PLAYTEST: diário local de campo (sessão, expedições, erros). Nunca envia nada.
 import { ptInstalar, ptSessao } from "./playtest.js";
 import { loadFonts, fontCSS } from "./font.js";
@@ -18,6 +18,7 @@ import { preloadLoadingScreens } from "./loading_screen.js";
 // 4x4 + 15 bits num canvas separado (#psx). Sem modelagem 3D e sem tocar nos
 // pixels do #game. Ver o cabeçalho de js/psx_filter.js.
 import { initPsxFilter, resizePsxFilter, drawPsxFilter, notaQuadroPsx } from "./psx_filter.js";
+import { loadPaletteUrl } from "./pixel_celeste.js";
 
 const canvas = document.getElementById("game");
 const ctx = canvas.getContext("2d");
@@ -256,16 +257,31 @@ async function bootAll() {
   await loadFonts();
   await loadAll((p) => { progress = p * 0.9; lastProgressAt = performance.now(); });
   await loadLoreHUD();
+  // PIXEL CELESTE (F0b-2): a paleta normativa mora em paleta-celeste.json (cópia
+  // gerada de docs/arte/ por tools/sync_paleta.mjs). Tem de ser lida ANTES de
+  // assar o chão, porque o assado prende o terreno nessas cores. Falhou o fetch?
+  // O jogo segue com a paleta de segurança de pixel_celeste.js: o boot nunca
+  // pode travar por causa de um arquivo só.
+  await loadPaletteUrl(assetUrl("paleta-celeste.json"));
   phase = "ASSANDO PIXELS";
   await nextFrame();
   // DINOPONERA: a colosso é a FORMIGA-BALA tingida de violeta profundo,
   // DINOPONERA: a arte da soldado com as MESMAS cores originais (sem tinteamento),
   // assada no tamanho 5x e ampliada na hora (ver setRotDrawScale)
   dupSprite("soldier", "giant");
-  for (const [k, s] of Object.entries(ANT_SIZES)) bakeRot(k, s);
+  // PIXEL CELESTE (F0b-2): as formigas são assadas no tamanho NATIVO (o do
+  // buffer de 320x180) e com UM FRAME cada — ver ANT_ANGLES em assets.js. O
+  // setRotScale(1) diz que 1 px do assado = 1 px do buffer na ampliação x3.
+  // Antes eram 24 rotações em px de tela, reduzidas 3x ao entrar no buffer:
+  // era essa redução que fazia o sprite tremeluzir ao andar.
+  for (const [k, s] of Object.entries(ANT_NATIVE)) {
+    bakeRot(k, s, ANT_ANGLES);
+    setRotScale(k, 1);
+  }
   setRotDrawScale("giant", "soldier", GIANT_SCALE);
   // MEL: a POTE-DE-MEL tem sprite próprio (gaster dourado inchado)
-  bakeRot("gatherer", GATHERER_SIZE);
+  bakeRot("gatherer", Math.max(1, Math.round(GATHERER_SIZE / PIXEL_SCALE)), ANT_ANGLES);
+  setRotScale("gatherer", 1);
   bakeBossSheets();
   progress = 1;
   boot();

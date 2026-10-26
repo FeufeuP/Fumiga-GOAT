@@ -198,7 +198,7 @@ assert.ok(totalBytes > 5 * 1024 * 1024 && totalBytes < 200 * 1024 * 1024, "taman
 // as 4 placas de botão novas × 5 estados trouxeram 20 em 2026-10-19; a rodada de
 // arte do ninho trouxe 3 em 2026-10-21: a folha do chão e o par de moldura da
 // ficha; o frame pixel da F0b trouxe game/js/pixel_celeste.js em 2026-10-26).
-assert.equal(pacoteCompleto.size, 299, "pacote completo: 295 anteriores + 3 PNGs do ninho escavável + pixel_celeste.js da F0b (2026-10-26)");
+assert.equal(pacoteCompleto.size, 300, "pacote completo: 295 anteriores + 3 PNGs do ninho escavável + pixel_celeste.js da F0b + paleta-celeste.json da F0b-2 (2026-10-26)");
 console.log("ok    pacote único — " + mb(totalBytes) + " · " + pacoteCompleto.size + " arquivos (sem versão parcial)");
 
 console.log("PWA OK — shell completo, sem pacote parcial, cache versionado e nenhum link quebrado");
