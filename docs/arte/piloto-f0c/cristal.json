@@ -1,0 +1,84 @@
+{
+  "id": "cristal",
+  "titulo": "Cristal de memória (veio de essência)",
+  "categoria": "prop de mundo — recurso coletável",
+  "bioma": "planicie",
+  "fonte": {
+    "arquivo": "art-source/f0c/cristal-fonte.png",
+    "dimensoes": [
+      2048,
+      2048
+    ],
+    "sha256": "b698f8fee8c126d96ffa4443225eb32ddceacffdbe0fff8bf23931e0c7ce754e"
+  },
+  "chroma": {
+    "familia": "azul",
+    "cor_medida": "#1951ec",
+    "tolerancia": 59,
+    "metodo": "inundação pelas bordas (preserva detalhe da cor da chave no interior da peça)",
+    "pixels_recortados": 3390497,
+    "pixels_da_chave_preservados_no_interior": 15,
+    "pixels_com_spill_corrigido": 6571
+  },
+  "caixa_conteudo": [
+    664,
+    384,
+    1432,
+    1679
+  ],
+  "grade": {
+    "bloco_px": 0,
+    "confianca": 0.6476,
+    "tem_grade": false,
+    "metodo_reducao": "média de área",
+    "encaixe": "conter",
+    "desenho_efetivo": [
+      9,
+      16
+    ]
+  },
+  "nativo": {
+    "dimensoes": [
+      16,
+      16
+    ],
+    "arquivo": "docs/arte/piloto-f0c/cristal-nativo.png",
+    "sha256": "c6e86a2f5cd1fd1b4ff8598b064b6441557983d8f1384d07dd412e3adbd534ed",
+    "cores_usadas": [
+      "#28351d",
+      "#5e1b29",
+      "#14100c",
+      "#a32e46",
+      "#8a7f6c",
+      "#8f6fd6",
+      "#c9a3ff"
+    ],
+    "contagem_de_cores": 7,
+    "pixels_opacos": 150,
+    "pixels_transparentes": 106
+  },
+  "quantizacao": {
+    "paleta": "docs/arte/paleta-celeste.json",
+    "compartilhado": true,
+    "rampa": {
+      "antes": 13,
+      "depois": 6,
+      "orcamento": 6
+    },
+    "contorno": {
+      "feito": true,
+      "px": 32
+    },
+    "cores_na_paleta": 37,
+    "dither": false,
+    "metrica": "dr^2*3 + dg^2*6 + db^2 (igual ao quantizeToPalette do runtime)",
+    "pixels_ajustados": 118,
+    "distancia_media": 8622.1,
+    "distancia_maxima": 23557
+  },
+  "validacao": {
+    "ok": true,
+    "problemas": []
+  },
+  "preview_3x": "docs/arte/piloto-f0c/cristal-preview-3x.png"
+}

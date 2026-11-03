@@ -78,7 +78,7 @@ def rgb_para_hex(c):
     return "#%02x%02x%02x" % c
 
 
-def carregar_paleta(caminho, bioma, compartilhado=False):
+def carregar_paleta(caminho, bioma, compartilhado=False, contorno=False):
     """As 19 cores do bioma (16 de cena + 3 de fundo), como o runtime monta.
 
     Peças que usam as tintas compartilhadas (HUD, texto, contorno de aliado)
@@ -99,6 +99,12 @@ def carregar_paleta(caminho, bioma, compartilhado=False):
     if compartilhado:
         for v in doc["compartilhado"].values():
             cores.extend(v if isinstance(v, list) else [v])
+    elif contorno:
+        # O contorno de 1 px usa a tinta compartilhada — ela existe exatamente
+        # para isso — sem abrir a porta para o resto do grupo: as cores de
+        # perigo contaminaram a larva quando a paleta inteira entrou.
+        tinta = doc["compartilhado"]["tinta"]
+        cores.extend(tinta if isinstance(tinta, list) else [tinta])
     return [hex_para_rgb(c) for c in cores], b
 
 
@@ -418,6 +424,98 @@ def quantizar(grade, pal):
     return fora, dmax, (dsoma / n if n else 0.0), n
 
 
+# ------------------------------------------------- contorno e rampa curta --
+def aplicar_contorno(grade, tinta):
+    """Contorno de 1 px de tinta escura por fora da silhueta.
+
+    O contrato (Regra 6) pede contorno de 1 px em personagens, inimigos e
+    perigos — e é ele, não o detalhe interno, que faz a peça ser lida em 15 px.
+    Uma fonte lisa reduzida por média de área não tem contorno: a borda
+    derrete no fundo. Então o pipeline desenha o contorno, por fora da peça.
+    """
+    h, w = len(grade), len(grade[0])
+    saida = [linha[:] for linha in grade]
+    n = 0
+    for y in range(h):
+        for x in range(w):
+            if grade[y][x][3] != 0:
+                continue
+            if ((x > 0 and grade[y][x - 1][3]) or (x < w - 1 and grade[y][x + 1][3])
+                    or (y > 0 and grade[y - 1][x][3]) or (y < h - 1 and grade[y + 1][x][3])):
+                saida[y][x] = (tinta[0], tinta[1], tinta[2], 255)
+                n += 1
+    return saida, n
+
+
+def reduzir_cores(grade, pal, k):
+    """Enxuga a peça para no máximo k cores da paleta (medoides gulosos).
+
+    Reduzir uma fonte lisa por média de área espalha a peça por dezenas de
+    matizes vizinhos — a larva chegou a 17 cores contra 5 de orçamento. A
+    seleção gulosa escolhe as k cores da paleta que mais reduzem a distância
+    total ponderada e manda cada pixel para a mais próxima delas. É
+    determinístico e barato: a paleta tem 19 a 37 entradas.
+    """
+    hist = Counter()
+    for linha in grade:
+        for p in linha:
+            if p[3]:
+                hist[p[:3]] += 1
+    return grade, _aplicar_medoides([grade], hist, pal, k)
+
+
+def reduzir_cores_folha(grades, pal, k):
+    """A mesma redução, mas com a rampa escolhida entre TODOS os tiles.
+
+    Uma folha de terreno com rampas sorteadas tile por tile vira xadrez: o
+    infill de um tile não casa com a borda do vizinho. A Celeste resolve com
+    uma paleta única por tileset, então os medoides são eleitos sobre o
+    histograma somado dos 40 tiles e aplicados a todos eles.
+    """
+    hist = Counter()
+    for grade in grades:
+        for linha in grade:
+            for p in linha:
+                if p[3]:
+                    hist[p[:3]] += 1
+    return grades, _aplicar_medoides(grades, hist, pal, k)
+
+
+def _aplicar_medoides(grades, hist, pal, k):
+    if not hist or len(hist) <= k:
+        return len(hist)
+    cores = list(hist)
+    sel = [max(cores, key=lambda c: hist[c])]
+    custo = {c: dist_paleta(c, sel[0]) for c in cores}
+    while len(sel) < k:
+        ganho_max, escolhida = 0, None
+        for cand in pal:
+            if cand in sel:
+                continue
+            ganho = 0
+            for c in cores:
+                d = dist_paleta(c, cand)
+                if d < custo[c]:
+                    ganho += (custo[c] - d) * hist[c]
+            if ganho > ganho_max:
+                ganho_max, escolhida = ganho, cand
+        if escolhida is None:
+            break
+        sel.append(escolhida)
+        for c in cores:
+            d = dist_paleta(c, escolhida)
+            if d < custo[c]:
+                custo[c] = d
+    mapa = {c: min(sel, key=lambda s: dist_paleta(c, s)) for c in cores}
+    for grade in grades:
+        for linha in grade:
+            for i, p in enumerate(linha):
+                if p[3]:
+                    m = mapa[p[:3]]
+                    linha[i] = (m[0], m[1], m[2], 255)
+    return len(set(mapa.values()))
+
+
 # -------------------------------------------------------------------- saída --
 def grade_para_imagem(grade):
     h = len(grade)
@@ -532,13 +630,30 @@ def processar(ficha, args):
     # ── 3. quantização ───────────────────────────────────────────────────────
     pal, bioma = carregar_paleta(os.path.join(ROOT, PALETA),
                                  ficha.get("bioma", "planicie"),
-                                 ficha.get("compartilhado", False))
+                                 ficha.get("compartilhado", False),
+                                 ficha.get("contorno", False))
     fora, dmax, dmedia, n = quantizar(grade, pal)
     print("  quantizado em %d cores (%s%s): %d/%d px ajustados, "
           "distância média %.0f, máxima %.0f"
           % (len(pal), ficha.get("bioma", "planicie"),
              " + compartilhado" if ficha.get("compartilhado") else "",
              fora, n, dmedia, dmax))
+
+    # ── 3b. rampa curta ──────────────────────────────────────────────────────
+    k = ficha.get("cores", {}).get("cores_max", 6)
+    antes = len(Counter(p[:3] for linha in grade for p in linha if p[3]))
+    grade, depois = reduzir_cores(grade, pal, k)
+    print("  rampa: %d → %d cores próprias (orçamento %d)" % (antes, depois, k))
+
+    # ── 3c. contorno ─────────────────────────────────────────────────────────
+    contorno = ficha.get("contorno", False)
+    n_contorno = 0
+    if contorno:
+        with open(os.path.join(ROOT, PALETA), encoding="utf-8") as f:
+            tinta = hex_para_rgb(json.load(f)["compartilhado"]["tinta"])
+        grade, n_contorno = aplicar_contorno(grade, tinta)
+        print("  contorno: %d px de tinta %s por fora da silhueta"
+              % (n_contorno, rgb_para_hex(tinta)))
 
     # ── 4. validação ─────────────────────────────────────────────────────────
     nativo = grade_para_imagem(grade)
@@ -605,6 +720,8 @@ def processar(ficha, args):
         "quantizacao": {
             "paleta": "docs/arte/paleta-celeste.json",
             "compartilhado": bool(ficha.get("compartilhado")),
+            "rampa": {"antes": antes, "depois": depois, "orcamento": k},
+            "contorno": {"feito": bool(contorno), "px": n_contorno},
             "cores_na_paleta": len(pal),
             "dither": False,
             "metrica": "dr^2*3 + dg^2*6 + db^2 (igual ao quantizeToPalette do runtime)",
@@ -625,6 +742,230 @@ def processar(ficha, args):
     return rel
 
 
+# -------------------------------------------------------------------- folha --
+LADOS = (("norte", 1), ("leste", 2), ("sul", 4), ("oeste", 8))
+
+
+def lados_abertos(grade):
+    """Quais das 4 bordas do tile encostam no vazio — é a chave do autotile.
+
+    Um lado é 'aberto' quando a maioria dos seus 8 px de borda é transparente:
+    é ali que o terreno termina e que o jogo precisa desenhar borda em vez de
+    infill. O código de 4 bits (N=1, L=2, S=4, O=8) é o índice da tabela que
+    `bakeGround` vai consultar.
+    """
+    h, w = len(grade), len(grade[0])
+    abertos = []
+    for nome, bit in LADOS:
+        if nome == "norte":
+            fila = [grade[0][x][3] for x in range(w)]
+        elif nome == "sul":
+            fila = [grade[h - 1][x][3] for x in range(w)]
+        elif nome == "oeste":
+            fila = [grade[y][0][3] for y in range(h)]
+        else:
+            fila = [grade[y][w - 1][3] for y in range(h)]
+        if sum(1 for a in fila if a == 0) * 2 > len(fila):
+            abertos.append(nome)
+    return abertos
+
+
+def processar_folha(ficha, args):
+    """Fatia uma folha de terreno em tiles de 8x8 e monta a tabela de autotile.
+
+    Ao contrário das peças avulsas, aqui o chroma recorta a folha INTEIRA de
+    uma vez (o fundo é um só) e só depois a folha é fatiada em células. Cada
+    célula é reduzida a 8x8 pelo mesmo critério das outras peças, a rampa é
+    eleita uma única vez para os 40 tiles e cada tile sai classificado pelos
+    lados que encostam no vazio.
+    """
+    pid = ficha["id"]
+    print("─" * 70)
+    print("FOLHA %s — %s" % (pid, ficha.get("titulo", "")))
+    fonte_path = os.path.join(ROOT, ficha["fonte"])
+    im = Image.open(fonte_path).convert("RGBA")
+    print("  fonte: %s (%dx%d)" % (ficha["fonte"], im.width, im.height))
+
+    # ── 1. chroma ────────────────────────────────────────────────────────────
+    familia, chave, tol = detectar_chroma(im)
+    esperado = ficha.get("chroma", "auto")
+    if esperado in ("verde", "azul") and esperado != familia:
+        print("  AVISO: a ficha espera chroma %s, a fonte veio %s (%s)"
+              % (esperado, familia, rgb_para_hex(chave)))
+    tol = ficha.get("chroma_tol", tol)
+    canal = 1 if familia == "verde" else 2
+    px_fonte = im.load()
+    lim = tol * tol * 3
+    marcados = sum(1 for i in range(im.width * im.height)
+                   if dist_paleta(px_fonte[i % im.width, i // im.width][:3], chave) <= lim)
+    mascara = inundar_chroma(im, chave, tol)
+    removidos = sum(mascara)
+    spill = despill(im, mascara, canal)
+    aplicar_alfa(im, mascara)
+    print("  chroma %s %s (tol %d): %d px de fundo recortados, %d da chave "
+          "preservados dentro da folha, %d com spill"
+          % (familia, rgb_para_hex(chave), tol, removidos, marcados - removidos, spill))
+
+    # ── 2. fatiar ────────────────────────────────────────────────────────────
+    layout = ficha["layout"]
+    cols, rows = layout["colunas"], layout["linhas"]
+    tw, th = ficha["nativo"][0], ficha["nativo"][1]
+    bx0, by0, bx1, by1 = caixa_conteudo(im)
+    cw, chh = (bx1 - bx0) / cols, (by1 - by0) / rows
+    print("  folha: %d×%d = %d tiles de %dx%d px (célula de %.0fx%.0f na fonte)"
+          % (cols, rows, cols * rows, tw, th, cw, chh))
+
+    grades, vazios = [], 0
+    for r in range(rows):
+        for c in range(cols):
+            x0 = bx0 + int(round(c * cw)); x1 = bx0 + int(round((c + 1) * cw))
+            y0 = by0 + int(round(r * chh)); y1 = by0 + int(round((r + 1) * chh))
+            sub = im.crop((x0, y0, x1, y1))
+            cb = caixa_conteudo(sub)
+            if cb is None or cb[2] - cb[0] < 2 or cb[3] - cb[1] < 2:
+                grades.append([[(0, 0, 0, 0)] * tw for _ in range(th)])
+                vazios += 1
+                continue
+            g, metodo, _ = reduzir(sub, cb, tw, th, 0, "conter")
+            grades.append(g)
+    if vazios:
+        print("  aviso: %d célula(s) saíram vazias — a fonte não desenhou ali" % vazios)
+
+    # ── 3. quantização + rampa compartilhada ─────────────────────────────────
+    pal, bioma = carregar_paleta(os.path.join(ROOT, PALETA),
+                                 ficha.get("bioma", "planicie"),
+                                 ficha.get("compartilhado", False),
+                                 ficha.get("contorno", False))
+    fora = dmax = dmedia = n = 0
+    for g in grades:
+        f, dm, dmd, nn = quantizar(g, pal)
+        fora += f; dmax = max(dmax, dm); dmedia += dmd * nn; n += nn
+    k = ficha["cores_max"]
+    antes = len({p[:3] for g in grades for linha in g for p in linha if p[3]})
+    grades, depois = reduzir_cores_folha(grades, pal, k)
+    print("  quantizado em %d cores (%s): %d/%d px ajustados, distância média %.0f"
+          % (len(pal), ficha.get("bioma", "planicie"), fora, n, dmedia / max(1, n)))
+    print("  rampa compartilhada: %d → %d cores próprias (orçamento %d)" % (antes, depois, k))
+
+    # ── 4. classificação e validação ─────────────────────────────────────────
+    problemas, alfas_totais, tiles = [], Counter(), []
+    for i, g in enumerate(grades):
+        probs, alfas = validar(g, pal, False)
+        for pr in probs:
+            problemas.append("tile %d: %s" % (i, pr))
+        alfas_totais += alfas
+        abertos = lados_abertos(g)
+        bit = sum(b for nome, b in LADOS if nome in abertos)
+        tiles.append({
+            "indice": i,
+            "linha": i // cols,
+            "coluna": i % cols,
+            "lados_abertos": abertos,
+            "codigo_autotile": bit,
+            "pixels_opacos": alfas.get(255, 0),
+            "preenchimento": round(alfas.get(255, 0) / (tw * th), 3),
+        })
+    tabela = {}
+    for t_ in tiles:
+        tabela.setdefault(t_["codigo_autotile"], []).append(t_["indice"])
+    if len({len(g) for g in grades}) != 1 or len({len(g[0]) for g in grades}) != 1:
+        problemas.append("tiles de tamanhos diferentes na mesma folha")
+
+    cores = Counter(p[:3] for g in grades for linha in g for p in linha if p[3])
+    print("  autotile: %d dos 16 casos cobertos; %d tiles de infill (código 0)"
+          % (len(tabela), len(tabela.get(0, []))))
+    print("  cores usadas: %d %s" % (len(cores), [rgb_para_hex(c) for c in sorted(cores, key=lambda c: -cores[c])]))
+    print("  alfa: %d opacos, %d transparentes" % (alfas_totais.get(255, 0), alfas_totais.get(0, 0)))
+    if problemas:
+        for pr in problemas[:20]:
+            print("  ✗ " + pr)
+    else:
+        print("  ✓ validação: alfa binário, 0 cor fora da paleta, %d tiles todos em %dx%d"
+              % (len(grades), tw, th))
+
+    # ── 5. exportação ────────────────────────────────────────────────────────
+    saida_dir = os.path.join(ROOT, args.saida) if args.saida else os.path.join(
+        ROOT, os.path.dirname(FICHAS_PADRAO))
+    os.makedirs(saida_dir, exist_ok=True)
+    base = os.path.join(saida_dir, pid)
+
+    folha = Image.new("RGBA", (cols * tw, rows * th), (0, 0, 0, 0))
+    for i, g in enumerate(grades):
+        folha.paste(grade_para_imagem(g), ((i % cols) * tw, (i // cols) * th))
+    folha.save(base + "-nativo.png")
+    fundo = hex_para_rgb(bioma["fundo"][1])
+    for fator in (3, 8):
+        prev = Image.new("RGB", (folha.width * fator, folha.height * fator), fundo)
+        tri = ampliar(folha, fator)
+        prev.paste(tri, (0, 0), tri)
+        prev.save(base + "-preview-%dx.png" % fator)
+
+    rel = {
+        "id": pid,
+        "titulo": ficha.get("titulo", ""),
+        "categoria": ficha.get("categoria", ""),
+        "bioma": ficha.get("bioma", "planicie"),
+        "fonte": {
+            "arquivo": ficha["fonte"],
+            "dimensoes": [im.width, im.height],
+            "sha256": sha256_arquivo(fonte_path),
+        },
+        "chroma": {
+            "familia": familia,
+            "cor_medida": rgb_para_hex(chave),
+            "tolerancia": tol,
+            "metodo": "inundação pelas bordas",
+            "pixels_recortados": removidos,
+            "pixels_com_spill_corrigido": spill,
+        },
+        "caixa_conteudo": [bx0, by0, bx1, by1],
+        "folha": {
+            "colunas": cols, "linhas": rows, "total": len(grades),
+            "tile": [tw, th],
+            "celula_na_fonte": [round(cw), round(chh)],
+            "celulas_vazias": vazios,
+            "metodo_reducao": metodo,
+        },
+        "nativo": {
+            "dimensoes": [folha.width, folha.height],
+            "arquivo": os.path.relpath(base + "-nativo.png", ROOT),
+            "sha256": sha256_png(folha),
+            "cores_usadas": [rgb_para_hex(c) for c in sorted(cores, key=lambda c: -cores[c])],
+            "contagem_de_cores": len(cores),
+            "pixels_opacos": alfas_totais.get(255, 0),
+            "pixels_transparentes": alfas_totais.get(0, 0),
+        },
+        "quantizacao": {
+            "paleta": "docs/arte/paleta-celeste.json",
+            "compartilhado": bool(ficha.get("compartilhado")),
+            "rampa": {"antes": antes, "depois": depois, "orcamento": k,
+                      "compartilhada_entre_tiles": True},
+            "contorno": {"feito": False, "px": 0},
+            "cores_na_paleta": len(pal),
+            "dither": False,
+            "metrica": "dr^2*3 + dg^2*6 + db^2 (igual ao quantizeToPalette do runtime)",
+            "pixels_ajustados": fora,
+        },
+        "autotile": {
+            "codigo": "bit 1=norte, 2=leste, 4=sul, 8=oeste; 0 = infill",
+            "casos_cobertos": len(tabela),
+            "tabela": {str(c): v for c, v in sorted(tabela.items())},
+            "tiles": tiles,
+        },
+        "validacao": {"ok": not problemas, "problemas": problemas},
+        "preview_3x": os.path.relpath(base + "-preview-3x.png", ROOT),
+        "preview_8x": os.path.relpath(base + "-preview-8x.png", ROOT),
+    }
+    with open(base + ".json", "w", encoding="utf-8") as f:
+        json.dump(rel, f, ensure_ascii=False, indent=2)
+        f.write("\n")
+
+    print("  → %s" % rel["nativo"]["arquivo"])
+    print("  → %s" % rel["preview_8x"])
+    print("  → %s" % os.path.relpath(base + ".json", ROOT))
+    return rel
+
+
 def main():
     ap = argparse.ArgumentParser(description="Pipeline de pixelização FUMIGA (F0b-2)")
     ap.add_argument("--fichas", default=FICHAS_PADRAO, help="JSON com as fichas das peças")
@@ -641,11 +982,12 @@ def main():
         if not fichas:
             raise SystemExit("peça %r não está nas fichas" % args.peca)
 
-    relatorios = [processar(ficha, args) for ficha in fichas]
+    relatorios = [processar_folha(ficha, args) if ficha.get("layout")
+                   else processar(ficha, args) for ficha in fichas]
 
     print("═" * 70)
     reprovadas = [r["id"] for r in relatorios if not r["validacao"]["ok"]]
-    lisas = [r["id"] for r in relatorios if not r["grade"]["tem_grade"]]
+    lisas = [r["id"] for r in relatorios if not r.get("grade", {}).get("tem_grade", False)]
     if reprovadas:
         print("✗ REPROVADAS: %s — nenhuma arte gerada entra no jogo sem validação."
               % ", ".join(reprovadas))

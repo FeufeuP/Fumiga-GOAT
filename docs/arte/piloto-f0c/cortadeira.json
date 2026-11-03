@@ -1,0 +1,84 @@
+{
+  "id": "cortadeira",
+  "titulo": "Formiga-cortadeira (Atta cephalotes)",
+  "categoria": "sprite de casta — mundo do jogo",
+  "bioma": "planicie",
+  "fonte": {
+    "arquivo": "art-source/f0c/cortadeira-fonte.png",
+    "dimensoes": [
+      1600,
+      1600
+    ],
+    "sha256": "5ec824ea10697fd821b309705d9c637fabf695088779bcb018bb3c0526761272"
+  },
+  "chroma": {
+    "familia": "azul",
+    "cor_medida": "#0247e3",
+    "tolerancia": 40,
+    "metodo": "inundação pelas bordas (preserva detalhe da cor da chave no interior da peça)",
+    "pixels_recortados": 1311767,
+    "pixels_da_chave_preservados_no_interior": 404,
+    "pixels_com_spill_corrigido": 12350
+  },
+  "caixa_conteudo": [
+    99,
+    143,
+    1534,
+    1406
+  ],
+  "grade": {
+    "bloco_px": 0,
+    "confianca": 0.659,
+    "tem_grade": false,
+    "metodo_reducao": "média de área",
+    "encaixe": "conter",
+    "desenho_efetivo": [
+      15,
+      13
+    ]
+  },
+  "nativo": {
+    "dimensoes": [
+      15,
+      15
+    ],
+    "arquivo": "docs/arte/piloto-f0c/cortadeira-nativo.png",
+    "sha256": "71b179b1411be45cd4d7f79bc9e3ba82e9e6559d169aa48af7f1d1db09d45374",
+    "cores_usadas": [
+      "#14100c",
+      "#4c6640",
+      "#3a5030",
+      "#1b2517",
+      "#2c3d24",
+      "#22301c",
+      "#c98d3a"
+    ],
+    "contagem_de_cores": 7,
+    "pixels_opacos": 177,
+    "pixels_transparentes": 48
+  },
+  "quantizacao": {
+    "paleta": "docs/arte/paleta-celeste.json",
+    "compartilhado": false,
+    "rampa": {
+      "antes": 9,
+      "depois": 6,
+      "orcamento": 6
+    },
+    "contorno": {
+      "feito": true,
+      "px": 40
+    },
+    "cores_na_paleta": 20,
+    "dither": false,
+    "metrica": "dr^2*3 + dg^2*6 + db^2 (igual ao quantizeToPalette do runtime)",
+    "pixels_ajustados": 137,
+    "distancia_media": 7264.2,
+    "distancia_maxima": 19287
+  },
+  "validacao": {
+    "ok": true,
+    "problemas": []
+  },
+  "preview_3x": "docs/arte/piloto-f0c/cortadeira-preview-3x.png"
+}
