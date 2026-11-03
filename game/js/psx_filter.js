@@ -19,6 +19,13 @@
 // A resolução interna só cai para meia resolução no rebaixamento automático de
 // desempenho (aparelho sem GPU / quadro acima de 22 ms), nunca por escolha.
 //
+// PIXEL CELESTE (F0b, 2026-10-26): o filtro passou a nascer DESLIGADO. Ele é
+// pintado POR CIMA do canvas e desfaz o frame pixel — medindo os blocos 3x3 do
+// mundo, a uniformidade cai de 100% (no canvas do jogo) para 1% (na tela). O
+// estilo do jogo é o pixel Celeste; o PS1 continua sendo uma opção de VÍDEO
+// para quem quiser, mas não é mais o padrão. Ver loadSave() em state.js: saves
+// anteriores a esta data recebem o novo padrão uma única vez.
+//
 // Como entra no jogo: NADA é redesenhado, reassado ou tingido — o canvas do jogo
 // (#game) continua recebendo os MESMOS pixels de sempre (todos os testes de pixel
 // seguem lendo os mesmos bytes). O filtro sai num canvas separado (#psx), por cima
@@ -50,8 +57,13 @@ export const PSX_OPTS = [
   { label: "DESLIGADO", color: "#5a4f78", dither: 0,    steps: 255, contrast: 1,    scale: 1 },
   { label: "LIGADO",    color: "#c77dff", dither: 0.13, steps: 12,  contrast: 1.16, scale: 1 },
 ];
-/** Nível padrão de fábrica (filtro LIGADO na intensidade máxima). */
-export const PSX_DEFAULT = 1;
+/**
+ * Nível padrão de fábrica — e também o destino de qualquer valor inválido que
+ * venha de um save adulterado. Era LIGADO até 2026-10-26, quando a F0b mediu o
+ * estrago: o filtro é pintado sobre o canvas e derruba os blocos 3x3 do frame
+ * pixel de 100% para 1%. O padrão agora é DESLIGADO, igual a state.js.
+ */
+export const PSX_DEFAULT = 0;
 
 // Estado do módulo -----------------------------------------------------------
 let el = null;               // canvas #psx (por cima do #game)

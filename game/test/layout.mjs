@@ -218,13 +218,19 @@ const { allies } = await import(BASE + "units.js");
 await loadFonts();
 await loadAll();
 // mesmo "bake" do boot real (main.js): sprites girados e sheets de chefe
-const { bakeRot, dupSprite, setRotDrawScale, rotDrawSize } = await import(BASE + "assets.js");
-const { GIANT_SCALE, ANT_SIZES, GATHERER_SIZE } = await import(BASE + "config.js");
+const { bakeRot, dupSprite, setRotScale, setRotDrawScale, ANT_ANGLES, rotDrawSize } = await import(BASE + "assets.js");
+const { GIANT_SCALE, ANT_NATIVE, GATHERER_SIZE, PIXEL_SCALE } = await import(BASE + "config.js");
 const { bakeBossSheets } = await import(BASE + "render.js");
 dupSprite("soldier", "giant");
-for (const [k, s] of Object.entries(ANT_SIZES)) bakeRot(k, s);
+// mesmo "bake" do boot real (main.js, F0b-2): tamanho NATIVO e UM FRAME por
+// formiga, ampliadas por um passo inteiro de buffer.
+for (const [k, s] of Object.entries(ANT_NATIVE)) {
+  bakeRot(k, s, ANT_ANGLES);
+  setRotScale(k, 1);
+}
 setRotDrawScale("giant", "soldier", GIANT_SCALE);
-bakeRot("gatherer", GATHERER_SIZE);
+bakeRot("gatherer", Math.max(1, Math.round(GATHERER_SIZE / PIXEL_SCALE)), ANT_ANGLES);
+setRotScale("gatherer", 1);
 bakeBossSheets();
 boot();
 G.save.tutorial = 1;
@@ -245,14 +251,17 @@ function frame() {
 
 const problems = new Map();   // chave lógica -> mensagem (dedup)
 
-// A GIGANTE precisa sair do forno exatamente GIANT_SCALE vezes a soldado: o
-// assado é 5x menor (memória) e o fator de desenho compensa.
+// A GIGANTE precisa sair do forno ~GIANT_SCALE vezes a soldado: o assado é
+// ~5x menor (memória) e o fator de desenho compensa. PIXEL CELESTE (F0b-2): o
+// fator é arredondado para um passo INTEIRO de ampliação do buffer, então a
+// razão exata pode variar alguns por cento — o que NÃO pode é a ampliação ser
+// fracionária, porque aí o pixel do sprite cai em meio pixel e tremeluz.
 const giantPx = rotDrawSize("giant"), soldierPx = rotDrawSize("soldier");
 const ratio = soldierPx ? giantPx / soldierPx : 0;
 console.log("escala: soldado " + soldierPx + "px desenhados, gigante " + giantPx +
   "px (" + ratio.toFixed(2) + "x, alvo " + GIANT_SCALE + "x)");
-if (Math.abs(ratio - GIANT_SCALE) > 0.01) {
-  problems.set("escala|gigante", "escala da gigante: " + ratio.toFixed(2) + "x (esperado " + GIANT_SCALE + "x)");
+if (Math.abs(ratio - GIANT_SCALE) > GIANT_SCALE * 0.15) {
+  problems.set("escala|gigante", "escala da gigante: " + ratio.toFixed(2) + "x (esperado ~" + GIANT_SCALE + "x)");
 }
 const coverage = [];          // quantos textos cada cenário auditou
 const note = (label, kind, key, msg) => {

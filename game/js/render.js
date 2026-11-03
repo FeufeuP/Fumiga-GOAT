@@ -17,20 +17,13 @@ import { fogDraw, fogVisible } from "./fog.js";
 import { SFX } from "./audio.js";
 import { mouse } from "./input.js";
 import { drawAllyAura } from "./lore_vfx.js";
+// F0b — frame PIXEL CELESTE: buffer 320x180 x3, tiles 8x8, vinheta em dither.
+import {
+  BUFFER_W, BUFFER_H, SCALE, TILE, WORLD_PER_PX, PIP_SCALE,
+  beginWorld, endWorld, beginRunView, endRunView, bakeVignetteMask,
+} from "./pixel_celeste.js";
 
-let vignette = null;
-
-function bakeVignette() {
-  vignette = document.createElement("canvas");
-  vignette.width = VIEW_W; vignette.height = VIEW_H;
-  const c = vignette.getContext("2d");
-  const g = c.createRadialGradient(VIEW_W / 2, VIEW_H / 2, VIEW_H * 0.36, VIEW_W / 2, VIEW_H / 2, VIEW_H * 0.82);
-  g.addColorStop(0, "rgba(8,6,14,0)");
-  g.addColorStop(0.75, "rgba(8,6,14,0.38)");
-  g.addColorStop(1, "rgba(5,4,10,0.72)");
-  c.fillStyle = g;
-  c.fillRect(0, 0, VIEW_W, VIEW_H);
-}
+function vignetteMask() { return bakeVignetteMask(); }
 
 // versões brancas do ninho (flash de dano)
 const NEST_WHITE = {};
@@ -73,7 +66,13 @@ function drawWorldCore(ctx, w2s, vis, zoom, box, dt) {
   const inView = (x, y, m) => x > vis.x0 - m && x < vis.x1 + m && y > vis.y0 - m && y < vis.y1 + m;
   const origin = w2s(0, 0);
   ctx.imageSmoothingEnabled = false;
-  ctx.drawImage(world.ground, origin.x, origin.y, WORLD_W * zoom, WORLD_H * zoom);
+  // F0b: o chão é assado em pixels do buffer (1 px = WORLD_PER_PX unidades).
+  // Esticá-lo na largura exata do mundo daria escala fracionária (3200/1067) e
+  // o pixel tremeria; a largura nativa x a ampliação inteira mantém a grade.
+  if (world.ground) {
+    ctx.drawImage(world.ground, origin.x, origin.y,
+      world.ground.width * WORLD_PER_PX * zoom, world.ground.height * WORLD_PER_PX * zoom);
+  }
 
   drawDecals(ctx, w2s);
   drawTrails(ctx, w2s);
@@ -225,7 +224,7 @@ function drawWorldCore(ctx, w2s, vis, zoom, box, dt) {
 // segunda câmera centrada na boca do ninho. Enquanto o jogador está no lado de
 // dentro, é aqui que ele vê as ondas chegando, as formigas trabalhando e a
 // fila entrando e saindo pela boca.
-export const PIP = { w: 300, h: 170, zoom: 0.62 };
+export const PIP = { w: 300, h: 170, zoom: 1 };
 
 export function drawOutsideEye(ctx, x, y, w = PIP.w, h = PIP.h) {
   if (!world.def) return;
@@ -233,21 +232,27 @@ export function drawOutsideEye(ctx, x, y, w = PIP.w, h = PIP.h) {
   const z = PIP.zoom;
   const prevZoom = cam.zoom;
   cam.zoom = z;
-  const ox = x + w / 2, oy = y + h / 2;
-  const w2s = (wx, wy) => ({ x: ox + (wx - A.x) * z, y: oy + (wy - A.y) * z });
-  const hw = (w / 2) / z, hh = (h / 2) / z;
-  const vis = { x0: A.x - hw, y0: A.y - hh, x1: A.x + hw, y1: A.y + hh };
+  // F0b: a janela reaproveita o MESMO buffer do mundo. O recorte é ampliado
+  // por PIP_SCALE (inteiro) e 1 px de buffer = 3 unidades de mundo, o que
+  // deixa o enquadramento quase igual ao antigo (450x255 em vez de 484x274).
+  const sw = Math.round(w / PIP_SCALE), sh = Math.round(h / PIP_SCALE);
+  const vw = sw * SCALE, vh = sh * SCALE;      // área visível em "px de tela"
+  const cxV = vw / 2, cyV = vh / 2;
+  const w2s = (wx, wy) => ({ x: wx * z + (cxV - A.x * z), y: wy * z + (cyV - A.y * z) });
+  const vis = { x0: A.x - cxV / z, y0: A.y - cyV / z, x1: A.x + cxV / z, y1: A.y + cyV / z };
 
   ctx.save();
   ctx.beginPath(); ctx.rect(x, y, w, h); ctx.clip();
   ctx.fillStyle = "#0d0a14";
   ctx.fillRect(x, y, w, h);
+  const b = beginWorld(z, cxV - A.x * z, cyV - A.y * z);
   pipMode = true;
   try {
-    drawWorldCore(ctx, w2s, vis, z, { x, y, w, h }, 0);
+    drawWorldCore(b || ctx, w2s, vis, z, { x: 0, y: 0, w: vw, h: vh }, 0);
   } finally {
     pipMode = false;
   }
+  if (b) endWorld(ctx, x, y, PIP_SCALE, sw, sh, cxV, cyV);
   ctx.restore();
   cam.zoom = prevZoom;
 
@@ -290,8 +295,23 @@ export function drawOutsideEye(ctx, x, y, w = PIP.w, h = PIP.h) {
 }
 
 // ===================================================================== RUN ==
+/**
+ * F0b: o mundo da expedição é desenhado dentro do buffer 320x180 e composto
+ * no canvas com ampliação inteira x3. Todo o corpo abaixo continua falando em
+ * coordenadas de tela (960x540) — a transformação do buffer faz a redução,
+ * então nada de gameplay, câmera ou culling precisa mudar.
+ */
 export function drawRun(ctx, dt) {
-  if (!vignette) bakeVignette();
+  const b = beginRunView(cam.x, cam.y, cam.zoom, cam.offsetX, cam.offsetY);
+  if (b) {
+    drawRunInto(b, dt);
+    endRunView(ctx);
+    return;
+  }
+  drawRunInto(ctx, dt);            // sem canvas (teste headless): caminho antigo
+}
+
+function drawRunInto(ctx, dt) {
   const w2s = (x, y) => worldToScreen(x, y);
   const vis = visibleWorldRect(80);
   const box = { x: 0, y: 0, w: VIEW_W, h: VIEW_H };
@@ -310,7 +330,10 @@ export function drawRun(ctx, dt) {
   if (R2.x < VIEW_W) ctx.fillRect(R2.x, 0, VIEW_W - R2.x, VIEW_H);
   if (R2.y < VIEW_H) ctx.fillRect(0, R2.y, VIEW_W, VIEW_H - R2.y);
 
-  ctx.drawImage(vignette, 0, 0);
+  // Vinheta em máscara de 1 px com dither (F0b): a versão antiga era um
+  // gradiente radial borrado, proibido dentro do buffer (Regra 6). Aqui cada
+  // pixel decide, pela matriz de Bayer 4x4, um de cinco degraus de tinta.
+  ctx.drawImage(vignetteMask(), 0, 0, VIEW_W, VIEW_H);
 
   const q = allies.queen;
   if (q && !q.dead && q.hp < q.maxHp * 0.3) {

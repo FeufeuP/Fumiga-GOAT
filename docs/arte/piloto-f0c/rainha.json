@@ -1,0 +1,82 @@
+{
+  "id": "rainha",
+  "titulo": "Rainha Silenciosa",
+  "categoria": "sprite de casta — mundo do jogo",
+  "bioma": "planicie",
+  "fonte": {
+    "arquivo": "art-source/f0c/rainha-fonte.png",
+    "dimensoes": [
+      1024,
+      1024
+    ],
+    "sha256": "745a9a6607f8d8d564b5ef6547621f2a8fa63f32d26e67fcea1c435678d88159"
+  },
+  "chroma": {
+    "familia": "azul",
+    "cor_medida": "#1d58d4",
+    "tolerancia": 40,
+    "metodo": "inundação pelas bordas (preserva detalhe da cor da chave no interior da peça)",
+    "pixels_recortados": 867625,
+    "pixels_da_chave_preservados_no_interior": 599,
+    "pixels_com_spill_corrigido": 5152
+  },
+  "caixa_conteudo": [
+    101,
+    316,
+    923,
+    707
+  ],
+  "grade": {
+    "bloco_px": 0,
+    "confianca": 0.7271,
+    "tem_grade": false,
+    "metodo_reducao": "média de área",
+    "encaixe": "conter",
+    "desenho_efetivo": [
+      63,
+      30
+    ]
+  },
+  "nativo": {
+    "dimensoes": [
+      63,
+      63
+    ],
+    "arquivo": "docs/arte/piloto-f0c/rainha-nativo.png",
+    "sha256": "dc1b2fe6616e763ff8fad86fcf49ddd320924036c7164c8ae1ae3c58610fa97f",
+    "cores_usadas": [
+      "#c98d3a",
+      "#14100c",
+      "#6b8a52",
+      "#4c6640",
+      "#42663a"
+    ],
+    "contagem_de_cores": 5,
+    "pixels_opacos": 1288,
+    "pixels_transparentes": 2681
+  },
+  "quantizacao": {
+    "paleta": "docs/arte/paleta-celeste.json",
+    "compartilhado": false,
+    "rampa": {
+      "antes": 4,
+      "depois": 4,
+      "orcamento": 6
+    },
+    "contorno": {
+      "feito": true,
+      "px": 227
+    },
+    "cores_na_paleta": 20,
+    "dither": false,
+    "metrica": "dr^2*3 + dg^2*6 + db^2 (igual ao quantizeToPalette do runtime)",
+    "pixels_ajustados": 1061,
+    "distancia_media": 1309.3,
+    "distancia_maxima": 24300
+  },
+  "validacao": {
+    "ok": true,
+    "problemas": []
+  },
+  "preview_3x": "docs/arte/piloto-f0c/rainha-preview-3x.png"
+}

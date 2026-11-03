@@ -42,6 +42,14 @@ export const PAL = {
 // o assado (main.js) e o desenho (render.js) se ajustam sozinhos.
 export const GIANT_SCALE = 20;
 
+/**
+ * Ampliação do frame pixel: 1 px do buffer vira 3 px de tela (320x180 ->
+ * 960x540). Vive aqui, e não em pixel_celeste.js, porque config.js não pode
+ * importar nada (todo mundo importa config) — pixel_celeste reexporta como
+ * SCALE. É a mesma conta do contrato: nativo = round(mundo / 3).
+ */
+export const PIXEL_SCALE = 3;
+
 // ---------------------------------------------------------------------------
 // TAMANHO DE ASSADO dos sprites de formiga (em pixels do sprite girado).
 // Fonte única: main.js assa com estes números e os testes (assets.mjs,
@@ -62,6 +70,17 @@ export const ANT_SIZES = {
 };
 /** A POTE-DE-MEL tem sprite próprio — assa no mesmo tamanho da operária. */
 export const GATHERER_SIZE = ANT_SIZES.worker;
+
+/**
+ * Tamanho NATIVO de assado de cada casta, em pixels do BUFFER (não de tela).
+ * PIXEL CELESTE (F0b): a formiga é assada no tamanho em que ela cai no buffer
+ * de 320x180 e desenhada ampliada PIXEL_SCALE vezes. Antes ela era assada em
+ * px de tela e reduzia 3x ao entrar no buffer — daí o shimmer. A conta é a do
+ * contrato: nativo = round(mundo / 3).
+ */
+export const ANT_NATIVE = Object.fromEntries(
+  Object.entries(ANT_SIZES).map(([k, mundo]) => [k, Math.max(1, Math.round(mundo / PIXEL_SCALE))]));
+
 
 export const UNITS = {
   // ── COLETA/EXPLORAÇÃO ──────────────────────────────────────────────────

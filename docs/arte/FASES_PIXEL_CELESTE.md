@@ -2,7 +2,7 @@
 
 **Criado em:** 2026-10-26 · **Direção:** pixel art nativa estilo Celeste (`FUMIGA-PIXEL-CELESTE-v1`)\
 **Fonte normativa do estilo:** [`ESTILO_OFICIAL.md`](ESTILO_OFICIAL.md) · **Paleta:** [`paleta-celeste.json`](paleta-celeste.json) · **Contratos:** [`contratos-pixel.json`](contratos-pixel.json)\
-**Escopo desta rodada:** **somente documentação.** Nenhum runtime, asset, save, preço ou balanceamento foi alterado.
+**Escopo desta rodada (2026-10-26):** F0a foi documentação; **F0b já é código** — o frame pixel (buffer 320×180 ×3, zoom inteiro e autotile 8×8) está no runtime. Nenhum asset foi substituído, nenhum save, preço ou balanceamento mudou.
 
 > Este documento substitui, como plano vigente, a ordem em papel recortado de [`ORDEM_IMPLEMENTACAO.md`](ORDEM_IMPLEMENTACAO.md) e a seção 5 de [`../../DOCUMENTO_REESTILIZACAO_VISUAL.md`](../../DOCUMENTO_REESTILIZACAO_VISUAL.md). Os dois continuam válidos como **histórico** da direção 06 e como inventário de consumidores — não como autorização vigente.
 
@@ -18,8 +18,8 @@
 | Fase | Entrega | Depende de | Porta para avançar | Status |
 |---|---|---|---|---|
 | **F0a** | Direção, prompt-mestre, paleta, contratos e este plano | decisão de 2026-10-26 | documentos verificáveis (`node game/test/art-pixel.mjs`) | ✅ 2026-10-26 |
-| **F0b** | Frame pixel 320×180 + ×3 + zoom inteiro + opção em VÍDEO | F0a | 60 FPS, sem shimmer, HUD intacto, PC/mobile | ⏳ próxima |
-| **F0b-2** | Pipeline de pixelização (fonte grande → nativo) | F0a | 3 provas com paleta exata e sem AA | ⏳ |
+| **F0b** | Frame pixel 320×180 + ×3 + zoom inteiro + autotile 8×8 | F0a | 60 FPS, sem shimmer, HUD intacto, PC/mobile | ✅ 2026-10-26 |
+| **F0b-2** | Pipeline de pixelização (fonte grande → nativo) | F0a | 3 provas com paleta exata e sem AA | ✅ 2026-10-26 |
 | **F0c** | Piloto: rainha, cortadeira, larva, cristal, base da Planície 8×8 | F0b, F0b-2 | leitura em 13–63 px, mock no jogo, aceite | ⏳ |
 | **F1** | UI/HUD/ícones + decisão de fonte pixel | F0c | texto legível, Regras 21/22, toque | ⏳ |
 | **F2** | 12 castas, rainha, névoa, cristais, comida, VFX | F1 | toda casta reconhecível; status legível | ⏳ |
@@ -48,34 +48,67 @@
 
 ---
 
-## F0b — Frame pixel (a base técnica) ⏳
+## F0b — Frame pixel (a base técnica) ✅ 2026-10-26
 
 **Objetivo:** o jogo desenhar o mundo num buffer de 320×180 e ampliá-lo ×3, exatamente como o Celeste, sem tocar em gameplay, saves ou colisões.
 
-**Entregáveis de código**
+**Entregues**
 
 | Item | Onde | Detalhe |
 |---|---|---|
-| Buffer e composição | novo `game/js/pixel_celeste.js` | canvas 320×180, `imageSmoothingEnabled=false`, `begin()/end(ctx)` |
-| Ampliação | `game/js/main.js` / `game.js` | mundo → buffer → ×3 na tela, UI por cima no canvas cheio |
-| Snap de câmera | `game/js/camera.js` | zoom quantizado (1×, 2×, 3× no buffer); posições arredondadas |
-| Opção de vídeo | `game/js/ui.js`, `game/js/state.js` | `VÍDEO → PIXEL CELESTE` ligado/desligado, persistido no save |
-| Terreno 8×8 | `game/js/world.js:bakeGround` | autotile com infill, borda de 1 px, 2–3 variantes |
-| Paleta | `pixel_celeste.js` ← `paleta-celeste.json` | lock por bioma, sem pós-processar pixel a pixel por quadro |
-| Mobile | `game/mobile/touch.js` | nada novo de input; só confirmar nitidez e FPS |
+| Buffer e composição | novo `game/js/pixel_celeste.js` | canvas 324×184 (320×180 + 2 px de sangria), `imageSmoothingEnabled=false`, `beginWorld()/endWorld()` |
+| Ampliação | `game/js/render.js` (`drawRun`) | mundo → buffer → ×3 na tela; a UI continua por cima, no canvas cheio |
+| Zoom inteiro | `game/js/camera.js` | escada 1×/2×/3×, padrão 1×; a roda anda um degrau e a pinça quantiza |
+| Câmera lisa | `pixel_celeste.js` | translação do buffer arredondada em px; o resto fracionário volta na composição como deslocamento **inteiro** de tela (técnica da *bleed area* do Saint11/Celeste) |
+| Terreno 8×8 | `game/js/world.js:bakeGround` | autotile com infill, 1 px de luz no topo, 1 px escuro na base, aresta quebrada e 3 variantes de miolo |
+| Paleta | `pixel_celeste.js` ← `paleta-celeste.json` | lock por bioma no assado do chão; `game/test/pixel-frame.mjs` confere os dois |
+| Vinheta | `pixel_celeste.js:bakeVignetteMask` | máscara de 1 px com dither Bayer 4×4, no lugar do gradiente radial borrado |
+| Névoa | `game/js/fog.js` | dentro da passada de mundo, borda dura (sem suavização) |
+| Mobile | `game/mobile/touch.js` | a pinça quantiza na escada inteira; nada novo de input |
+| Encaixe na tela | `game/js/main.js:fit()` | o canvas cresce em degraus de **1/3** (`s = floor(s*3)/3`), porque o pixel do frame mede 3 px de canvas: só assim ele chega inteiro ao monitor |
+| PS1 e scanlines | `game/js/state.js`, `game/js/psx_filter.js` | nascem **desligados** (eram o padrão) — ver decisão 3 abaixo |
+| Formigas | `game/js/assets.js` + `config.js:ANT_NATIVE` | **um frame por casta**, assado no tamanho NATIVO (`round(mundo/3)`) e ampliado por um passo **inteiro** de buffer — 1 px do assado = 1 px do buffer |
+| Paleta em runtime | `pixel_celeste.js` ← `game/assets/paleta-celeste.json` | lida no boot, antes de assar o chão; se o fetch falhar vale o literal de segurança (conferido igual ao JSON por teste) |
+| Overlay de feromônio | `lore_hud.js` | acompanha o deslocamento do frame (`frameShift()`), senão sai até 3 px fora do mundo |
+| Retângulo de seleção | `game.js` | mesma correção: é desenhado por cima do buffer, em resolução cheia |
 
-**Riscos técnicos conhecidos**
+**Decisões do usuário nesta fase**
 
-1. **Zoom fracionário** (hoje 1,15 com passos de 0,867) gera pixel tremendo. Solução: quantizar para 1×/2×/3× no buffer.
-2. **Rotação de sprite** já é assada em 24 ângulos; ela precisa ser assada no **tamanho nativo**, não no tamanho atual.
-3. **PIP “OLHO LÁ FORA”** do ninho já desenha o mundo a 1/3 — deve reaproveitar o mesmo buffer.
-4. **Nenhum gradiente/AA** pode entrar no buffer; a vinheta atual é borrada e precisa virar máscara de 1 px ou sair.
+1. **Escopo B — frame + autotile 8×8.** O chão dos seis biomas muda nesta mesma entrega.
+2. **Câmera B — zoom inteiro + câmera lisa (sangria Celeste/Saint11).** Mais código, aceito explicitamente.
+3. *“não é uma opção, é o estilo do jogo inteiro, não pode ser desativado ou ativado”* — o frame **não** virou chave em OPÇÕES → VÍDEO nem no save. Vale para toda partida, no PC e no mobile. **(A linha “Opção de vídeo” da especificação original está cancelada.)**
+4. **Vinheta A — máscara de dither de 1 px**, no lugar do gradiente radial.
+5. **Degrau de 1/3 no encaixe do canvas** (2026-10-26, decidido na inspeção): o pixel do frame tem de ser quadrado e do mesmo tamanho em qualquer janela. Custo aceito: no celular o canvas passa de 693×390 para 640×360, ~8% menor, com mais tarja.
+6. **Filtro PS1 e SCANLINES desligados por padrão** (2026-10-26, decidido na inspeção): os dois são pintados POR CIMA do canvas e desfaziam o frame — a uniformidade dos blocos 3×3 caía de 100% (no canvas) para 1% (na tela). As duas opções **continuam existindo** em OPÇÕES → VÍDEO, e saves anteriores recebem o novo padrão **uma única vez** (marca `save.pixelFrame`).
+7. **As formigas só precisam de um frame cada** (2026-10-26): *“as formigas por enquanto só precisam de um frame cada”*. Os 24 ângulos sumiram para as 18 castas — a 15×15 px, girar o sprite em 24 passos produz silhueta lambida, não pixel art; o Celeste não gira, tem quadros por direção, e isso é F0c/F2. Os chefes (`rotMode`) mantêm os 24: são sprites grandes e a rotação ainda lê bem neles.
 
-**Aceite:** 60 FPS no RUN em PC e mobile headless; nenhum shimmer ao andar; HUD, textos e toque idênticos; `npm run test:quick` verde; inspeção com captura em tamanho nativo e ampliado.
+**Riscos técnicos conhecidos — como ficaram**
+
+1. **Zoom fracionário** (era 1,15 com passos de 0,867) → resolvido: quantizado para 1×/2×/3×. Efeito colateral assumido: o jogador não afasta mais além de 1× (vê 960×540 unidades de mundo) e o padrão mostra ~13% mais mundo do que antes.
+2. **Rotação de sprite** já é assada em 24 ângulos; o tamanho de assado de `ANT_SIZES` já é o nativo no zoom 1 (`45 → 15 px`, `189 → 63 px`), então **nada** precisou ser reassado.
+3. **PIP “OLHO LÁ FORA”** do ninho → reaproveita o mesmo buffer: recorte de 150×85 px do buffer ampliado ×2 na janela (450×255 unidades de mundo, praticamente o enquadramento antigo de 484×274).
+4. **Vinheta borrada** → virou máscara de 1 px com dither. Continuam pendentes para F2 os outros gradientes de VFX (brilho de essência, pulso do ninho).
+
+**Aceite cumprido:** 60 FPS no RUN nos seis mapas, PC e mobile; **100% dos blocos 3×3** da região de mundo uniformes nos três perfis (PC 960×540, mobile 844×390 e PC 1366×768); HUD, textos e toque intactos; `npm run test:quick` verde (33 testes); `npm run inspect` verde (33 capturas, sem erro de JS/404/glifo).
+
+**Medições reais**
+
+| Onde | Antes (`81fc1f26`) | Depois (F0b) |
+|---|---|---|
+| Blocos 3×3 uniformes na faixa de mundo (tela, canvas 1:1) | 3,1% | **100,0%** |
+| Blocos 3×3 na tela com canvas a 4/3 (janela 1280×720) | — | 86,9% (o resto é conteúdo em resolução cheia: formigas, partículas — F0b-2) |
+| CPU por quadro no RUN (inspecão headless) | 6–9 ms | **2,5–3,2 ms** |
+| FPS nos seis mapas, PC e mobile | 59–60 | **60** |
+
+**Diagramas:** [`diagrama-f0b-frame-pixel-2026-10-26.png`](diagrama-f0b-frame-pixel-2026-10-26.png) (ANTES → DEPOIS) e [`diagrama-f0b-filtro-ps1-2026-10-26.png`](diagrama-f0b-filtro-ps1-2026-10-26.png) (o conflito com o filtro PS1).
+
+**Assado das castas (F0b-2, medido no navegador):** as 18 castas assam 1 frame cada, em caixa justa (`corpo + 2 px` de margem, sem a diagonal da rotação), com ampliação inteira de 1× no buffer — a gigante, 4× (o truque de assar 1/5 e ampliar na hora, agora com fator arredondado para inteiro, o que antes dependia de um número mágico em `ANT_SIZES.giant`).
+
+**Decisão 7 (2026-10-26, pedido literal "as formigas por enquanto só precisam de um frame cada"):** as 18 castas assam **1 frame** em vez das 24 rotações. Efeito colateral aceito: as formigas não viram mais para a direção em que andam — todas apontam para a direita (frame 0). Volta em F0c/F2, com quadros por direção.
 
 ---
 
-## F0b-2 — Pipeline de pixelização ⏳
+## F0b-2 — Pipeline de pixelização ✅ 2026-10-26
 
 **Objetivo:** transformar a fonte gerada (alta resolução, chroma) em **arte nativa** rigorosa.
 
@@ -88,6 +121,58 @@
 5. exporta `nativo.png` + `preview-3x.png` + relatório JSON (dimensões, cores usadas, hashes).
 
 **Aceite:** três peças de prova (uma casta, um prop, um painel) com contagem de cores conferida e revisão visual em 320×180. Sem isso, nenhuma arte gerada entra no jogo.
+
+### Entregue em 2026-10-26
+
+`tools/pixelize.py` + `tools/setup-pixel.sh` (cria a venv com Pillow em
+`~/.cache/fumiga-pixel`, fora do Git — mesma ideia do `setup-dev.sh`) +
+`tools/diagram_pixelize_f0b2.py` (prova visual e diagrama). Fichas em
+`docs/arte/provas-f0b-2/fichas.json`; derivados e relatórios na mesma pasta.
+Guarda automática em `game/test/pixelize.mjs` (entra no `npm run test:quick`):
+reconfere cada derivado contra `paleta-celeste.json` e não deixa nenhuma peça
+chegar com cor fora da paleta, alfa semitransparente ou tamanho errado.
+
+| Peça | Nativo | Cores | Opacos / Transp. | Fonte |
+|------|--------|-------|------------------|-------|
+| Cortadeira (casta) | 15×15 | 11 | 115 / 110 | lisa, sem grade |
+| Pedra (prop) | 21×21 | 8 | 345 / 96 | lisa, sem grade |
+| Placa de aviso (painel) | 96×48 | 8 | 3.734 / 874 | lisa, sem grade |
+
+Validação: **alfa binário, 0 cor fora da paleta, alfa real, nenhum preto puro**
+nas três. Prova visual em `docs/arte/provas-f0b-2/prova-320x180.png` e
+diagrama em `docs/arte/diagrama-f0b2-pipeline-2026-10-26.png`.
+
+### O que a ferramenta mediu que o plano não previa
+
+1. **O chroma gerado quase nunca é o `#00FF00`/`#0000FF` puro.** As três
+   fontes vieram com fundo `#1750e1`, `#48a1f2` e `#04f905` — "quase" a chave.
+   Recortar pela chave teórica não recorta nada (a pedra perdeu 100% do fundo
+   nesse teste). A ferramenta passou a **medir a cor real nas quinas** e a
+   tratar a família declarada na ficha como aviso, não como verdade.
+2. **A família não pode ser decidida pela distância ponderada.** O verde pesa
+   6× na métrica do runtime, então o azul-claro `#48a1f2` ficava "mais perto" do
+   verde e o despill mexeria no canal errado. Passou a sair do canal dominante.
+3. **O recorte é por inundação pelas bordas.** Chave global apagaria a folha
+   verde da cortadeira e o musgo da pedra; inundando de fora para dentro, só o
+   fundo que encosta na moldura sai.
+4. **Nenhuma das três fontes tem grade de pixel.** O prompt-mestre pede
+   "blocos de pixel grandes", mas as três saíram lisas (confiança máxima de
+   bloco: 65%, 67% e 73%, contra os 90% exigidos). A ferramenta então reduz por
+   **média de área** em vez de maioria — média preserva o volume de uma fonte
+   lisa; maioria numa fonte lisa escolhe uma cor ao acaso.
+5. **Consequência para F0c:** a pedra e o painel leem bem no tamanho nativo; a
+   cortadeira de 15 px **não lê** — a fonte tem pernas finas e detalhe que
+   somem na redução. Gerar casta pequena exige pedir explicitamente blocos
+   duros e silhueta simples, ou desenhar nativo.
+
+**Decisão 8 (2026-10-26):** o encaixe é `conter` (a peça cabe inteira,
+centralizada, o resto fica transparente) ou `cortar`, **nunca esticar** —
+Regra 22 vale também para o pipeline: HUD deformado é bug, não ajuste.
+
+**Decisão 9 (2026-10-26):** a métrica de quantização da ferramenta é
+literalmente a do runtime (`dr²*3 + dg²*6 + db²`, sem dither), e
+`game/test/pixelize.mjs` confere isso nos dois arquivos. O que o pipeline
+aprova é o que o jogo mostra.
 
 ---
 
@@ -216,19 +301,21 @@ Rainha ancestral de névoa, castelo/ninho, arena, coração, efeitos e final. **
 ## Caminho crítico recomendado
 
 ```
-F0a (feito) → F0b (frame) → F0b-2 (pixelização) → F0c (piloto) → F1 (UI)
+F0a (feito) → F0b (frame, feito) → F0b-2 (pixelização, feito) → F0c (piloto) → F1 (UI)
    → F2 (castas/VFX) → F3a/F3b/F3c (árvore, santuários, flores)
    → F4 (chefes) → F5a/F5b/F5c (menus, loading, Noite Branca)
    → F6 (inimigos/terrenos/props) → F7 (ninho) → F8 (só se autorizado) → F9 (distribuição)
 ```
 
-**Próxima ação real:** F0b. Ela é técnica, não depende de arte nova e é o que torna o resto possível — sem o buffer e o zoom inteiro, nenhuma peça nativa aparece com o pixel certo.
+**Próxima ação real:** F0c (piloto de arte nativa). O frame E o pipeline estão no jogo: a ferramenta existe, foi provada em três peças e a checagem automática (`game/test/pixelize.mjs`) trava qualquer arte que chegue fora da paleta. O que falta é gerar a arte boa — as três provas mostraram que a fonte precisa sair com blocos de pixel duros (ver abaixo).
 
 ## Verificação desta rodada
 
 ```bash
 node game/test/art-pixel.mjs      # direção, paleta, contratos e fases
+node game/test/pixel-frame.mjs    # frame: buffer, zoom inteiro, paleta e chão 8x8
 node tools/check_art_handoff.mjs  # prompt canônico no guia + MEGA e histórico preservado
 node game/test/docs.mjs           # integridade dos seis documentos incorporados
 npm run test:quick                # bateria rápida do jogo (sem navegador)
+npm run inspect                   # PC + mobile no navegador (inclui pixel-frame-browser)
 ```

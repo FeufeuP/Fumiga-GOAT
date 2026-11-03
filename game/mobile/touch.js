@@ -19,7 +19,7 @@
 import { VIEW_W, VIEW_H } from "../js/config.js";
 import { mouse, pressed, touchMode, enableTouchMode } from "../js/input.js";
 import { G } from "../js/state.js";
-import { cam, screenToWorld, panCam } from "../js/camera.js";
+import { cam, screenToWorld, panCam, quantizeZoom } from "../js/camera.js";
 import { clamp } from "../js/utils.js";
 import { isPaused } from "../js/game.js";
 import { isLoadingActive } from "../js/loading_screen.js";
@@ -190,9 +190,11 @@ function onPointerMove(e) {
         }
         mouse.x = mid.x; mouse.y = mid.y;
       } else if (G.screen === "RUN") {
-        // Zoom contínuo ancorado no ponto médio + pan pelo deslocamento dele.
+        // Zoom ancorado no ponto médio + pan pelo deslocamento dele. F0b: a
+        // pinça continua contínua no dedo, mas o zoom do mundo é quantizado
+        // na escada inteira (1x/2x/3x) — o pixel não pode cair em meio ponto.
         const before = screenToWorld(g.prevMid.x, g.prevMid.y);
-        cam.zoom = clamp(cam.zoom * (dist / g.prevDist), cam.minZoom, cam.maxZoom);
+        cam.zoom = quantizeZoom(cam.zoom * (dist / g.prevDist));
         const after = screenToWorld(mid.x, mid.y);
         cam.x += before.x - after.x;
         cam.y += before.y - after.y;

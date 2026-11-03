@@ -1,0 +1,286 @@
+{
+  "versao": "FUMIGA-PIXEL-CELESTE-v1",
+  "fase": "F0c — Piloto de arte nativa",
+  "data": "2026-10-26",
+  "bioma": "planicie",
+  "nota": "As cinco peças do aceite da F0c. Decisões desta rodada: a Cortadeira fica em UM FRAME (vale a decisão de 2026-10-26, as 24 rotações ficam para F2); a base da Planície é uma FOLHA DE TILES estilo Celeste que o bake de F0b passa a consumir; e as cinco peças são INTEGRADAS no jogo nesta rodada.",
+  "regra_de_tamanho": "DECISAO DO USUARIO 2026-11-03: NAO ha tamanho fixo por personagem. O unico requisito e que tudo caia na MESMA GRADE de pixels — 1 px nativo = 1 px do buffer de 320x180 = 3 unidades de mundo. O tamanho de cada peca e escolhido pelo que faz a silhueta ler no tamanho nativo, e NAO por round(mundo/3).",
+  "aceite_original": "silhueta legível no tamanho nativo; mesma paleta nos 5; mock no jogo com o HUD atual e com o HUD da F1; 24 rotações da Cortadeira sem corte; aprovação visual do usuário antes de qualquer lote.",
+  "aceite_ajustado": "as 24 rotações saem do aceite por decisão do usuário (1 frame); o mock com o HUD da F1 fica bloqueado até a F1 existir — vale o mock com o HUD atual. | TAMANHO: substituido — 'silhueta legivel no tamanho nativo' continua valendo, mas o tamanho nativo agora e uma DECISAO DE ARTE, nao uma consequencia de ANT_SIZES.",
+  "pecas": [
+    {
+      "id": "rainha",
+      "titulo": "Rainha Silenciosa",
+      "categoria": "sprite de casta — mundo do jogo",
+      "bioma": "planicie",
+      "funcao": "unidade de comando da colônia; a maior peça do piloto",
+      "assunto": "Uma formiga-rainha gigante sozinha, vista de cima, voltada para a direita: gáster grande e segmentado em âmbar, tórax marrom-terra, cabeça com duas antenas curvas e um diadema ORGÂNICO de fungo e seda (nunca coroa de metal).",
+      "estado": "pose neutra, parada; sem animação",
+      "estagio": "fonte de alta resolução para redução pelo pipeline (tools/pixelize.py)",
+      "camera": "ortográfica estritamente de cima (top-down), sem horizonte e sem isometria",
+      "nativo": [
+        63,
+        63
+      ],
+      "nativo_calculo": "mundo 189 / 3 = 63",
+      "margem": "1 px de cada lado; a rainha ocupa ~60x50 dentro do quadro",
+      "ancora": "centro do quadro",
+      "consumidor": "game/js/assets.js (bake de castas) → ANT_NATIVE.queen",
+      "grade": "sprite isolado, pivô inteiro no centro",
+      "paleta": "Planície — gáster âmbar em rampa de 3 passos, tórax marrom-terra, tinta marrom-escura no contorno, diadema em creme e oliva",
+      "compartilhado": false,
+      "sombra": "sombra de contato de 1 px deslocada para baixo-direita; luz dura do alto à esquerda",
+      "quadros": 1,
+      "fps": null,
+      "cores_max": 6,
+      "contorno": true,
+      "contorno_txt": "1 px de tinta escura",
+      "fundo_fonte": "azul puro #0000FF — o diadema tem fungo verde",
+      "fundo_derivado": "alfa real",
+      "chroma": "azul",
+      "opaca": false,
+      "ajuste": "conter",
+      "obrigatorio": [
+        "seis patas ligadas ao tórax",
+        "duas antenas",
+        "corpo em cabeça, tórax e gáster, com o gáster bem maior",
+        "diadema de fungo e seda, orgânico — nunca coroa metálica",
+        "silhueta reconhecível em 63 px: é a maior peça do jogo, pode ter detalhe"
+      ],
+      "proibido": [
+        "bipedia, rosto humano, mãos humanas, roupas humanoides",
+        "coroa de metal, joia, tiara humana",
+        "texto, logotipo, moldura, cenário ao redor",
+        "sombra projetada sobre o fundo",
+        "anti-aliasing, meio-tom, desfoque, gradiente suave, preto puro"
+      ],
+      "pixelizacao": {
+        "reducao": "detecção do bloco da fonte; maioria com desempate na cor mais escura quando há grade, média de área quando não há",
+        "quantizacao": "vizinho-mais-próximo na paleta do bioma, sem dither",
+        "validacao": "alfa binário, 0 cor fora da paleta, alfa real"
+      },
+      "fonte": "art-source/f0c/rainha-fonte.png"
+    },
+    {
+      "id": "cortadeira",
+      "titulo": "Formiga-cortadeira (Atta cephalotes)",
+      "categoria": "sprite de casta — mundo do jogo",
+      "bioma": "planicie",
+      "funcao": "unidade coletora do jogador; a menor peça do piloto e a mais difícil",
+      "assunto": "Uma formiga-cortadeira sozinha, vista de cima, voltada para a direita, carregando um fragmento de folha verde recortada sobre o corpo.",
+      "estado": "pose neutra, parada; UM ÚNICO FRAME (decisão do usuário 2026-10-26)",
+      "estagio": "fonte de alta resolução para redução pelo pipeline",
+      "camera": "ortográfica estritamente de cima (top-down), sem horizonte e sem isometria",
+      "nativo": [
+        21,
+        21
+      ],
+      "nativo_calculo": "escolhido para a silhueta ler: em 15 px as tres massas do corpo nao se separavam nem com contorno. NAO e round(mundo/3) — decisao do usuario em 2026-11-03: o unico requisito e a grade de pixels comum (1 px nativo = 1 px de buffer). 21 px = 63 unidades de mundo; o corpo da operaria e 45, entao o sprite transborda o corpo em 1.4x (normal: sprite maior que hitbox).",
+      "margem": "1 px de cada lado; a formiga ocupa ~13x13 dentro do quadro",
+      "ancora": "centro do quadro",
+      "consumidor": "game/js/assets.js (bake de castas) → ANT_NATIVE.worker",
+      "grade": "sprite isolado, pivô inteiro no centro",
+      "paleta": "Planície — corpo marrom-terra, luz âmbar no topo, folha verde-oliva em dois passos, tinta marrom-escura no contorno",
+      "compartilhado": false,
+      "sombra": "sombra de contato de 1 px deslocada para baixo-direita; luz dura do alto à esquerda",
+      "quadros": 1,
+      "fps": null,
+      "cores_max": 6,
+      "contorno": true,
+      "contorno_txt": "1 px de tinta escura",
+      "fundo_fonte": "azul puro #0000FF — a peça tem folha verde",
+      "fundo_derivado": "alfa real",
+      "chroma": "azul",
+      "opaca": false,
+      "ajuste": "conter",
+      "licao_da_f0b_2": "a prova da F0b-2 mostrou que uma fonte detalhada não lê em 15 px: pernas finas e detalhe somem na redução. Esta peça precisa de silhueta MASSUDA — pernas de 1 px, corpo compacto, sem detalhe interno que desapareça.",
+      "obrigatorio": [
+        "silhueta massuda: corpo compacto ocupando quase todo o quadro",
+        "pernas de 1 px, curtas, coladas ao corpo — nada de pernas compridas e finas",
+        "duas antenas curtas",
+        "corpo em cabeça, tórax e gáster, lidos de relance",
+        "folha verde recortada, proporcional e simplificada",
+        "no máximo 2 formas internas separadas: o resto não sobrevive a 15 px"
+      ],
+      "proibido": [
+        "detalhe fino que só aparece ampliado",
+        "mais de duas formas internas separadas",
+        "bipedia, rosto humano, mãos humanas",
+        "texto, logotipo, moldura, cenário ao redor",
+        "sombra projetada sobre o fundo",
+        "anti-aliasing, meio-tom, desfoque, gradiente suave, preto puro"
+      ],
+      "pixelizacao": {
+        "reducao": "detecção do bloco da fonte; maioria com desempate na cor mais escura quando há grade, média de área quando não há",
+        "quantizacao": "vizinho-mais-próximo na paleta do bioma, sem dither",
+        "validacao": "alfa binário, 0 cor fora da paleta, alfa real"
+      },
+      "fonte": "art-source/f0c/cortadeira-fonte.png"
+    },
+    {
+      "id": "larva",
+      "titulo": "Larva da colônia (berçário)",
+      "categoria": "criatura do formigueiro — tela do NINHO",
+      "bioma": "planicie",
+      "funcao": "criação no berçário; hoje é desenho procedural em game/js/nest.js",
+      "assunto": "Uma larva de formiga sozinha, vista de cima: corpo oval e segmentado em creme-quente, curvo como uma vírgula, com a cabeça mais escura numa ponta e 3 a 4 dobras suaves marcando os segmentos.",
+      "estado": "estática; sem animação (o balanço é feito por código)",
+      "estagio": "fonte de alta resolução para redução pelo pipeline",
+      "camera": "vista de cima, exceção de ilustração autorizada: a tela do NINHO é uma tela, não o mundo",
+      "nativo": [
+        24,
+        24
+      ],
+      "nativo_calculo": "tela do NINHO na grade de 3 px: 72 px de tela / 3 = 24",
+      "margem": "1 px de cada lado; a larva ocupa ~22x14 dentro do quadro",
+      "ancora": "centro do quadro",
+      "consumidor": "game/js/nest.js (berçário) — substitui a elipse procedural",
+      "grade": "sprite isolado, pivô inteiro no centro",
+      "paleta": "Planície + compartilhado — corpo creme-papel em rampa de 3 passos, dobras em sombra quente, cabeça marrom-clara, tinta marrom-escura no contorno",
+      "compartilhado": true,
+      "sombra": "sombra de contato de 1 px deslocada para baixo-direita; luz dura do alto à esquerda",
+      "quadros": 1,
+      "fps": null,
+      "cores_max": 5,
+      "contorno": true,
+      "contorno_txt": "1 px de tinta escura",
+      "fundo_fonte": "verde puro #00FF00 — a larva é creme e marrom, sem traços verdes",
+      "fundo_derivado": "alfa real",
+      "chroma": "verde",
+      "opaca": false,
+      "ajuste": "conter",
+      "obrigatorio": [
+        "corpo oval curvo, em formato de vírgula",
+        "3 a 4 dobras marcando os segmentos",
+        "cabeça mais escura numa das pontas",
+        "silhueta que se distinga de um ovo: é larva, não ovo"
+      ],
+      "proibido": [
+        "olhos, boca, rosto",
+        "patas (larva de formiga não tem)",
+        "casca de ovo, chão, ninho ao redor",
+        "texto, logotipo, moldura",
+        "anti-aliasing, meio-tom, desfoque, gradiente suave, preto puro"
+      ],
+      "pixelizacao": {
+        "reducao": "detecção do bloco da fonte; maioria com desempate na cor mais escura quando há grade, média de área quando não há",
+        "quantizacao": "vizinho-mais-próximo na paleta do bioma + compartilhado, sem dither",
+        "validacao": "alfa binário, 0 cor fora da paleta, alfa real"
+      },
+      "fonte": "art-source/f0c/larva-fonte.png"
+    },
+    {
+      "id": "cristal",
+      "titulo": "Cristal de memória (veio de essência)",
+      "categoria": "prop de mundo — recurso coletável",
+      "bioma": "planicie",
+      "funcao": "nó de essência do mapa; hoje é só um brilho de gradiente radial em game/js/render.js",
+      "assunto": "Um cristal de memória sozinho: um prisma hexagonal de essência, visto de cima, com luz interna em três passos, uma face mais clara voltada para o alto à esquerda e a base apoiada num pequeno pedestal de pedra.",
+      "estado": "estático; sem animação (o pulso é feito por código)",
+      "estagio": "fonte de alta resolução para redução pelo pipeline",
+      "camera": "vista de cima (top-down), sem horizonte e sem isometria",
+      "nativo": [
+        24,
+        24
+      ],
+      "nativo_calculo": "escolhido pelo mesmo motivo: em 16 px a base nao separava do corpo. 24 px = 72 unidades de mundo; o no de essencia tem raio 26 (52 unidades = 17 px), entao o cristal aparece 1.4x maior que o no — proposital, o cristal e o que se ve.",
+      "margem": "1 px de cada lado; o cristal ocupa ~14x14 dentro do quadro",
+      "ancora": "base central do quadro",
+      "consumidor": "game/js/render.js (nó de essência) — substitui o gradiente radial",
+      "grade": "sprite isolado, pivô inteiro na base central",
+      "paleta": "Planície + compartilhado — essência violeta em rampa de 3 passos (#8f6fd6 e #c9a3ff do grupo compartilhado), pedestal em cinza-terroso, tinta marrom-escura no contorno",
+      "compartilhado": true,
+      "sombra": "sombra de contato de 1 px deslocada para baixo-direita; luz dura do alto à esquerda",
+      "quadros": 1,
+      "fps": null,
+      "cores_max": 6,
+      "contorno": true,
+      "contorno_txt": "1 px de tinta escura",
+      "fundo_fonte": "azul puro #0000FF — o cristal é violeta com faces azuladas",
+      "fundo_derivado": "alfa real",
+      "chroma": "azul",
+      "opaca": false,
+      "ajuste": "conter",
+      "obrigatorio": [
+        "prisma hexagonal, lido de cima",
+        "luz interna em três passos, sem gradiente suave",
+        "face mais clara voltada para o alto à esquerda",
+        "base num pedestal curto de pedra",
+        "silhueta pontuda que se distinga de uma pedra redonda"
+      ],
+      "proibido": [
+        "brilho desfocado, halo, glow suave (isso é VFX de código, não arte)",
+        "transparência dentro do cristal",
+        "chão, grama ou cenário ao redor",
+        "texto, logotipo, moldura",
+        "anti-aliasing, meio-tom, desfoque, gradiente suave, preto puro"
+      ],
+      "pixelizacao": {
+        "reducao": "detecção do bloco da fonte; maioria com desempate na cor mais escura quando há grade, média de área quando não há",
+        "quantizacao": "vizinho-mais-próximo na paleta do bioma + compartilhado, sem dither",
+        "validacao": "alfa binário, 0 cor fora da paleta, alfa real"
+      },
+      "fonte": "art-source/f0c/cristal-fonte.png"
+    },
+    {
+      "id": "base",
+      "titulo": "Folha de tiles da Planície (8x8)",
+      "categoria": "folha de terreno — mundo do jogo",
+      "bioma": "planicie",
+      "funcao": "conjunto de tiles 8x8 que o bake de F0b passa a consumir no lugar do desenho procedural",
+      "assunto": "Uma FOLHA DE TILES, não uma cena: fileiras e colunas de quadrados separados por uma fina régua de fundo, cada quadrado de 8x8 pixels lógicos contendo UM tile de grama da Planície. A folha cobre todos os casos de borda: tiles de interior cheio, tiles de borda reta nos quatro lados, cantos externos, cantos internos e quinas chanfradas.",
+      "estado": "estática; sem animação",
+      "estagio": "fonte de alta resolução para redução e RECORTE pelo pipeline",
+      "camera": "vista de cima (top-down), sem horizonte e sem isometria",
+      "nativo": [
+        8,
+        8
+      ],
+      "nativo_calculo": "tile de terreno: 8 px de buffer = 24 unidades de mundo (contrato vigente)",
+      "margem": "cada tile é desenhado inteiro dentro da sua célula de 8x8",
+      "ancora": "canto superior esquerdo de cada tile",
+      "consumidor": "game/js/world.js (bakeGround) — folha fatiada em tiles pelo pipeline",
+      "grade": "folha em grade; o pipeline fatia em células e classifica cada tile pelos lados que encostam no vazio",
+      "paleta": "Planície — infill escuro compartilhado, 1 tom médio de grama, 1 a 2 tons claros de luz na borda superior, 1 a 2 tons escuros na borda inferior; no máximo 3 a 5 cores no total da folha",
+      "compartilhado": false,
+      "sombra": "1 px escuro na borda inferior de cada tile; 1 px de luz na borda superior",
+      "quadros": 1,
+      "fps": null,
+      "cores_max": 5,
+      "contorno": false,
+      "contorno_txt": "não há contorno de tinta: o terreno usa luz de borda, não linha",
+      "fundo_fonte": "verde puro #00FF00 — a grama da Planície é oliva escura, distinta do verde técnico",
+      "fundo_derivado": "alfa real",
+      "chroma": "verde",
+      "opaca": false,
+      "layout": {
+        "colunas": 8,
+        "linhas": 5,
+        "total": 40,
+        "observacao": "a ordem dos casos dentro da folha NÃO precisa ser fixa: o pipeline classifica cada tile pelos lados que encostam no vazio e monta a tabela de autotile sozinho"
+      },
+      "obrigatorio": [
+        "cada tile desenhado com blocos de pixel grandes e arestas duras",
+        "interior sólido escuro (infill), igual em todos os tiles de interior",
+        "1 px de luz na aresta superior, 1 px escuro na aresta inferior",
+        "bordas NUNCA perfeitamente retas: quinas chanfradas e alguns pixels transparentes quebrando o contorno",
+        "agrupamentos de 2 a 4 pixels de luz e sombra, nunca textura uniforme",
+        "régua de fundo visível entre os tiles, para o recorte separar cada um"
+      ],
+      "proibido": [
+        "cena contínua em vez de folha (isso é mapa-base, e mapa-base é outra passada)",
+        "flores, árvores, pedras, buracos, rachaduras ou construções (Regra 19)",
+        "tiles colados uns nos outros sem separação",
+        "texto, números, etiquetas, moldura",
+        "anti-aliasing, meio-tom, desfoque, gradiente suave, preto puro"
+      ],
+      "pixelizacao": {
+        "reducao": "recorte da folha em células de 8x8 lógicos, depois redução de cada célula pelo mesmo critério das outras peças",
+        "quantizacao": "vizinho-mais-próximo na paleta do bioma, sem dither",
+        "validacao": "alfa binário, 0 cor fora da paleta, todos os tiles no mesmo tamanho, folha exportada em escala inteira"
+      },
+      "fonte": "art-source/f0c/base-fonte.png",
+      "recorte_global": true
+    }
+  ]
+}

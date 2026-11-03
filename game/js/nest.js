@@ -36,7 +36,7 @@ import {
   NEST_GRID, NEST_RESERVE, NEST_SOIL, NEST_VEIN, NEST_BUILD, NEST_ROOM_IDS, NEST_RULES,
 } from "./config.js";
 import { G, mods } from "./state.js";
-import { IMG, rotFrame, rotDrawSize } from "./assets.js";
+import { IMG, rotFrame, rotNativeSize } from "./assets.js";
 import { drawOutsideEye, PIP } from "./render.js";
 import { drawText, textWidth, fitTextBlock, fontScale, layoutBox } from "./font.js";
 import { paperQuiet, beginPaperHud, endPaperHud, drawPaper, paperReady } from "./paper_hud.js";
@@ -502,7 +502,6 @@ function makeNestAnt(a) {
     leaving: false, leaveT: 0,
   };
   // o colosso não passa nos túneis: fica de folga onde estiver
-  if (n.job === "colossus") n.scale = 105 / Math.max(1, rotDrawSize("giant") || 105);
   return n;
 }
 
@@ -1377,9 +1376,12 @@ function drawChamberVfx(ctx, cm, time, x0, y0, w, h) {
 function drawNestAnt(ctx, n) {
   const sprite = n.sprite || n.type;
   const frame = rotFrame(sprite, n.angle);
-  const full = rotDrawSize(sprite) || frame.width;
-  const sc = n.job === "colossus" ? n.scale : 0.42;
-  const size = full * sc;
+  // PIXEL CELESTE (F0b-2): o tamanho sai do assado NATIVO multiplicado por um
+  // passo INTEIRO — 2x para a formiga comum, 1x para o colosso (que já é
+  // assado grande). Antes era `rotDrawSize * 0.42`, um fator fracionário que
+  // reduzia o sprite e borrava a silhueta.
+  const k = n.job === "colossus" ? 1 : 2;
+  const size = (rotNativeSize(sprite) || frame.width) * k;
   const wob = Math.sin(n.bob) * (n.path ? 1.2 : 0.6);
   ctx.save();
   ctx.globalAlpha = 0.95;

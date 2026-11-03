@@ -1,0 +1,79 @@
+{
+  "id": "cortadeira",
+  "titulo": "Formiga-cortadeira (Atta cephalotes)",
+  "categoria": "sprite de casta — mundo do jogo",
+  "bioma": "planicie",
+  "fonte": {
+    "arquivo": "art-source/f0b-2/cortadeira-fonte.png",
+    "dimensoes": [
+      2048,
+      2048
+    ],
+    "sha256": "8c82edea779c3b985f57f7240361cd833bd771dae12e7b574ca83f19ca9d8127"
+  },
+  "chroma": {
+    "familia": "azul",
+    "cor_medida": "#1750e1",
+    "tolerancia": 40,
+    "metodo": "inundação pelas bordas (preserva detalhe da cor da chave no interior da peça)",
+    "pixels_recortados": 3250735,
+    "pixels_da_chave_preservados_no_interior": 0,
+    "pixels_com_spill_corrigido": 12420
+  },
+  "caixa_conteudo": [
+    376,
+    544,
+    1767,
+    1621
+  ],
+  "grade": {
+    "bloco_px": 0,
+    "confianca": 0.652,
+    "tem_grade": false,
+    "metodo_reducao": "média de área",
+    "encaixe": "conter",
+    "desenho_efetivo": [
+      15,
+      12
+    ]
+  },
+  "nativo": {
+    "dimensoes": [
+      15,
+      15
+    ],
+    "arquivo": "docs/arte/provas-f0b-2/cortadeira-nativo.png",
+    "sha256": "bf0acff644bf19715a084760f0a4f8ccc97d4a53e7d9189fb18b508153cabab8",
+    "cores_usadas": [
+      "#28351d",
+      "#2c3d24",
+      "#3a5030",
+      "#4c6640",
+      "#c98d3a",
+      "#1d2616",
+      "#6b8a52",
+      "#5a8547",
+      "#ffd479",
+      "#ff9a5c",
+      "#22301c"
+    ],
+    "contagem_de_cores": 11,
+    "pixels_opacos": 115,
+    "pixels_transparentes": 110
+  },
+  "quantizacao": {
+    "paleta": "docs/arte/paleta-celeste.json",
+    "compartilhado": false,
+    "cores_na_paleta": 19,
+    "dither": false,
+    "metrica": "dr^2*3 + dg^2*6 + db^2 (igual ao quantizeToPalette do runtime)",
+    "pixels_ajustados": 115,
+    "distancia_media": 8103.0,
+    "distancia_maxima": 24604
+  },
+  "validacao": {
+    "ok": true,
+    "problemas": []
+  },
+  "preview_3x": "docs/arte/provas-f0b-2/cortadeira-preview-3x.png"
+}

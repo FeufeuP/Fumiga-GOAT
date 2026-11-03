@@ -97,10 +97,25 @@ try {
       await importGameModules(page, { psx: "psx_filter.js", state: "state.js", ui: "ui.js" });
       await page.waitForTimeout(700);
 
-      const info = await page.evaluate(async () => (await M("psx_filter.js")).psxInfo());
+      // PIXEL CELESTE (F0b, 2026-10-26): o primeiro boot de um jogador novo abre
+      // com o filtro DESLIGADO — o padrão do jogo é o frame pixel limpo, porque
+      // o PS1 cobre o canvas e desfaz a grade de 3x3. O filtro continua existindo
+      // e é ligado a seguir para este teste medir exatamente o que ele faz.
+      const fabrica = await page.evaluate(async () => (await M("psx_filter.js")).psxInfo());
+      assert.equal(fabrica.level, 0, perfil + ": padrão de fábrica é o DESLIGADO");
+      assert.equal(fabrica.ativo, false, perfil + ": filtro desligado no primeiro boot");
+      assert.equal(fabrica.params, null, perfil + ": desligado não reporta parâmetros");
+      const info = await page.evaluate(async () => {
+        const { G } = await M("state.js");
+        const { applyPsxFilter, psxInfo } = await M("psx_filter.js");
+        G.save.settings.psx = 1;
+        applyPsxFilter();
+        return psxInfo();
+      });
+      await page.waitForTimeout(300);
       assert.equal(info.mode, rota, perfil + ": rota de execução do filtro");
-      assert.equal(info.level, 1, perfil + ": estado padrão é o LIGADO");
-      assert.equal(info.ativo, true, perfil + ": filtro ligado por padrão");
+      assert.equal(info.level, 1, perfil + ": religado, o filtro sobe para o LIGADO");
+      assert.equal(info.ativo, true, perfil + ": filtro visível quando religado");
       // O buffer PODE estar em meia resolução por desempenho: a rota cpu sempre
       // começa assim, e a rota webgl também quando o renderizador é por software
       // (o sandbox e emuladores usam SwiftShader). Em GPU de verdade é 960x540.
@@ -168,8 +183,8 @@ try {
       // — nunca em um nível que não existe mais.
       const fora = await nivel(3);
       await page.waitForTimeout(200);
-      assert.equal(fora.level, 1, perfil + ": valor fora da faixa cai no padrão de fábrica (LIGADO)");
-      assert.equal(fora.ativo, true, perfil + ": valor fora da faixa mantém o filtro visível");
+      assert.equal(fora.level, 0, perfil + ": valor fora da faixa cai no padrão de fábrica (DESLIGADO)");
+      assert.equal(fora.ativo, false, perfil + ": valor fora da faixa não inventa um nível");
       const ligado = await nivel(1);
       await page.waitForTimeout(200);
       assert.equal(ligado.ativo, true, perfil + ": LIGADO fica visível");

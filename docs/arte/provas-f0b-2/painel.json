@@ -1,0 +1,76 @@
+{
+  "id": "painel",
+  "titulo": "Placa de aviso do HUD",
+  "categoria": "painel de HUD — fora do mundo jogável (exceção de ilustração autorizada)",
+  "bioma": "planicie",
+  "fonte": {
+    "arquivo": "art-source/f0b-2/painel-fonte.png",
+    "dimensoes": [
+      1774,
+      887
+    ],
+    "sha256": "f24fe56f5df741ec9aac0a4b6980912bd7c5fb31e2b939e37be0b01dd17aa74a"
+  },
+  "chroma": {
+    "familia": "verde",
+    "cor_medida": "#04f905",
+    "tolerancia": 46,
+    "metodo": "inundação pelas bordas (preserva detalhe da cor da chave no interior da peça)",
+    "pixels_recortados": 1156844,
+    "pixels_da_chave_preservados_no_interior": 0,
+    "pixels_com_spill_corrigido": 3061
+  },
+  "caixa_conteudo": [
+    387,
+    238,
+    1397,
+    652
+  ],
+  "grade": {
+    "bloco_px": 0,
+    "confianca": 0.7283,
+    "tem_grade": false,
+    "metodo_reducao": "média de área",
+    "encaixe": "conter",
+    "desenho_efetivo": [
+      96,
+      39
+    ]
+  },
+  "nativo": {
+    "dimensoes": [
+      96,
+      48
+    ],
+    "arquivo": "docs/arte/provas-f0b-2/painel-nativo.png",
+    "sha256": "82e4beed7bfca5634c1c1aaa9cae2f99f1931781ad093425be4e1fc3e02cbf45",
+    "cores_usadas": [
+      "#f2ead9",
+      "#a32e46",
+      "#5e1b29",
+      "#d8cfbc",
+      "#1d2616",
+      "#b8ae99",
+      "#c98d3a",
+      "#8a7f6c"
+    ],
+    "contagem_de_cores": 8,
+    "pixels_opacos": 3734,
+    "pixels_transparentes": 874
+  },
+  "quantizacao": {
+    "paleta": "docs/arte/paleta-celeste.json",
+    "compartilhado": true,
+    "cores_na_paleta": 37,
+    "dither": false,
+    "metrica": "dr^2*3 + dg^2*6 + db^2 (igual ao quantizeToPalette do runtime)",
+    "pixels_ajustados": 3734,
+    "distancia_media": 2300.7,
+    "distancia_maxima": 14962
+  },
+  "validacao": {
+    "ok": true,
+    "problemas": []
+  },
+  "preview_3x": "docs/arte/provas-f0b-2/painel-preview-3x.png"
+}

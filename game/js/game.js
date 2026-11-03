@@ -49,6 +49,7 @@ import {
 import { enterTree, updateTree, drawTree, treeClick, treeBack } from "./meta.js";
 import { startTitlePreload, pumpPreload } from "./preload.js";
 import { colony, foodTrailAt, dangerAt } from "./brain.js";
+import { frameShift } from "./pixel_celeste.js";
 import { BIOME_HUD, drawBiomeTexture, drawGasterBar, drawPheromoneOverlay, drawPheromoneLegend, drawFoodIcon, drawEssenceCrystal, drawTrailAnt, trailProgress, drawTreeRings, drawScentMinimap, drawWoodBanner, drawKitIcon, hudBiome } from "./lore_hud.js";
 import { startCutscene, updateCutscene, drawCutscene, handleCutsceneInput, isCutsceneActive, startLoadingCutscene, getCutsceneDefs } from "./cutscenes.js";
 import {
@@ -2545,7 +2546,12 @@ function drawHUD() {
   }
 
   if (sel.active && sel.moved) {
+    // PIXEL CELESTE: o retângulo de seleção é desenhado em resolução cheia, POR
+    // CIMA do buffer — tem de acompanhar o deslocamento que a sangria devolveu
+    // na composição, senão a caixa sai até 3 px fora das formigas que ela marca.
+    const turnoSel = frameShift();
     const a = worldToScreen(sel.x0, sel.y0), b = worldToScreen(sel.x1, sel.y1);
+    a.x += turnoSel.x; a.y += turnoSel.y; b.x += turnoSel.x; b.y += turnoSel.y;
     ctx.strokeStyle = bh.border;
     ctx.fillStyle = bh.foodColor;
     ctx.globalAlpha = 0.12;

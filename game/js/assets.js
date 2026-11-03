@@ -1,6 +1,7 @@
 // ============================================================================
 // FUMIGA-GOAT — carregamento e "baking" de sprites
 // ============================================================================
+import { PIXEL_SCALE } from "./config.js";
 
 const MANIFEST = {
   paper_panel: "ui/paper/panel.png",
@@ -391,7 +392,39 @@ export async function loadAll(onProgress) {
 
 // --------------------------------------------------------------- rotações ---
 // Formigas são top-down: pré-renderizamos 24 ângulos para girar com nitidez.
+// Os chefes (rotMode) continuam usando os 24 — são sprites grandes, a rotação
+// ainda lê bem neles.
 const ROT_ANGLES = 24;
+
+/**
+ * PIXEL CELESTE (F0b-2, 2026-10-26): AS FORMIGAS passaram a ser assadas com UM
+ * SÓ FRAME cada. Dois motivos, os dois medidos:
+ *   • o tamanho nativo de uma operária é 15x15 px — girar um sprite desse
+ *     tamanho em 24 passos produz silhueta lambida, não pixel art. O Celeste
+ *     não gira: tem quadros desenhados por direção, e é isso que F0c/F2 entrega.
+ *   • assar 1 frame viabiliza assar no tamanho NATIVO (o do buffer), que é o
+ *     que mata o shimmer: antes a formiga era assada em px de tela e reduzia 3x
+ *     ao entrar no buffer.
+ * O frame único sai na orientação do índice 0 (formiga apontando para a
+ * direita, ângulo 0), então voltar a ter N quadros no futuro não muda nada.
+ */
+export const ANT_ANGLES = 1;
+
+/**
+ * Geometria do assado, pura (sem DOM) — o teste assets.mjs usa ESTA função
+ * para conferir a escala da gigante contra os PNGs de verdade, em vez de
+ * manter uma segunda cópia da conta que pode divergir em silêncio.
+ */
+export function bakeGeom(w0, h0, outSize, angles = ROT_ANGLES) {
+  const scale = outSize / Math.max(w0, h0);
+  const w = Math.round(w0 * scale), h = Math.round(h0 * scale);
+  // espessura do contorno cresce junto com o sprite (1px a cada ~28px assados)
+  const o = Math.max(1, Math.round(scale * 0.9));
+  // girando, a caixa precisa da diagonal; com um frame só, basta a silhueta
+  // mais a margem do contorno de cada lado.
+  const pad = angles > 1 ? Math.ceil(Math.hypot(w, h)) + 2 : Math.max(w, h) + 2 * o;
+  return { scale, w, h, o, pad, body: Math.max(w, h) };
+}
 
 // ------------------------------------------------------ acabamento visual ---
 // Cores ORIGINAIS do sprite, pixel a pixel: NENHUM retoque de cor (sem contraste,
@@ -428,17 +461,13 @@ function finishSprite(key) {
   return f;
 }
 
-export function bakeRot(key, outSize) {
+export function bakeRot(key, outSize, angles = ROT_ANGLES) {
   if (ROT[key]) return ROT[key];
   const F = finishSprite(key);
   const img = F.body;
-  const scale = outSize / Math.max(img.width, img.height);
-  const w = Math.round(img.width * scale), h = Math.round(img.height * scale);
-  const pad = Math.ceil(Math.hypot(w, h)) + 2;
-  // espessura do contorno cresce junto com o sprite (1px a cada ~28px assados)
-  const o = Math.max(1, Math.round(scale * 0.9));
+  const { w, h, o, pad, body } = bakeGeom(img.width, img.height, outSize, angles);
   const frames = [];
-  for (let i = 0; i < ROT_ANGLES; i++) {
+  for (let i = 0; i < angles; i++) {
     const cv = document.createElement("canvas");
     cv.width = cv.height = pad;
     const c = cv.getContext("2d");
@@ -451,7 +480,7 @@ export function bakeRot(key, outSize) {
     c.drawImage(img, -w / 2, -h / 2, w, h);
     frames.push(cv);
   }
-  ROT[key] = { frames, size: pad };
+  ROT[key] = { frames, size: pad, body, angles };
   WROT[key] = bakeWhiteOf(frames);
   return ROT[key];
 }
@@ -489,9 +518,18 @@ export function dupSprite(srcKey, dstKey) {
  */
 export function setRotDrawScale(key, refKey, times) {
   const f = ROT[key], r = ROT[refKey];
-  if (!f || !r || !f.size) return 0;
-  f.drawScale = (r.size * times) / f.size;
-  return f.drawScale;
+  if (!f || !r || !f.body || !r.body) return 0;
+  // A FORMIGA GIGANTE é assada pequena (1/5 do tamanho em que é desenhada) para
+  // não custar centenas de MB de canvas, e ampliada na hora — o truque já
+  // existia. O que mudou: antes a conta exigia que o pad da gigante fosse
+  // exatamente 5x o da soldado (número mágico em ANT_SIZES.giant, que quebrava
+  // de silêncio ao mudar qualquer tamanho de assado). Agora o alvo é `times`
+  // vezes o CORPO desenhado da referência e o fator é arredondado para um
+  // passo INTEIRO de buffer — o tamanho pode variar ~4%, mas a ampliação nunca
+  // é fracionária, que é o que importa para o pixel não borrar.
+  const alvo = rotBodySize(refKey) * times;
+  const passo = PIXEL_SCALE * f.body;
+  return setRotScale(key, Math.max(1, Math.round(alvo / passo)));
 }
 
 /** Tamanho desenhado do frame assado de `key`, em px de tela com zoom 1. */
@@ -500,18 +538,49 @@ export function rotDrawSize(key) {
   return r ? r.size * (r.drawScale || 1) : 0;
 }
 
+/** Tamanho do assado em px NATIVOS (do buffer) — o pad, sem fator de desenho. */
+export function rotNativeSize(key) {
+  return ROT[key] ? ROT[key].size : 0;
+}
+
+/** Tamanho desenhado do CORPO, sem a margem do contorno (px de tela, zoom 1). */
+export function rotBodySize(key) {
+  const r = ROT[key];
+  return r ? (r.body || r.size) * (r.drawScale || 1) : 0;
+}
+
+/**
+ * Ampliação do assado na HORA DE DESENHAR, em passos INTEIROS do buffer.
+ *
+ * PIXEL CELESTE (F0b-2): os sprites de formiga são assados no tamanho nativo
+ * (o do buffer de 320x180) e desenhados `k * PIXEL_SCALE` vezes maiores. Como
+ * `k` é inteiro, 1 px do assado cai em exatamente `k` px do buffer: nunca há
+ * redução nem ampliação fracionária, que é a origem do shimmer.
+ */
+export function setRotScale(key, k = 1) {
+  const f = ROT[key];
+  if (!f) return 0;
+  f.drawScale = Math.max(1, Math.round(k)) * PIXEL_SCALE;
+  return f.drawScale;
+}
+
+/** Índice do frame para um ângulo, respeitando quantos o assado tem. */
+function frameIndex(b, angle) {
+  const n = b.angles || ROT_ANGLES;
+  if (n <= 1) return 0;                       // formiga: um frame só (F0b-2)
+  let i = Math.round((angle / (Math.PI * 2)) * n) % n;
+  if (i < 0) i += n;
+  return i;
+}
+
 export function rotFrame(key, angle) {
   const b = bakeRot(key, ROT[key] ? ROT[key].size : 64);
-  let i = Math.round((angle / (Math.PI * 2)) * ROT_ANGLES) % ROT_ANGLES;
-  if (i < 0) i += ROT_ANGLES;
-  return b.frames[i];
+  return b.frames[frameIndex(b, angle)];
 }
 
 export function whiteRotFrame(key, angle) {
-  bakeRot(key, 64);
-  let i = Math.round((angle / (Math.PI * 2)) * ROT_ANGLES) % ROT_ANGLES;
-  if (i < 0) i += ROT_ANGLES;
-  return WROT[key].frames[i];
+  const b = bakeRot(key, ROT[key] ? ROT[key].size : 64, ROT[key] ? ROT[key].angles : ROT_ANGLES);
+  return WROT[key].frames[frameIndex(b, angle)];
 }
 
 export function rotSize(key) { return ROT[key] ? ROT[key].size : 64; }

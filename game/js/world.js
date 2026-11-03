@@ -3,10 +3,14 @@
 // colisões. Cada mapa tem paleta e conjunto de adereços próprios (config.MAPS)
 // ============================================================================
 import { WORLD_W, WORLD_H, PAL, MAPS } from "./config.js";
-import { mulberry32, rand, TAU, clamp } from "./utils.js";
+import { mulberry32, TAU, clamp } from "./utils.js";
 import { SpatialGrid } from "./utils.js";
 import { IMG } from "./assets.js";
 import { G } from "./state.js";
+// F0b — frame PIXEL CELESTE: paleta por bioma, tile 8x8 e chão no buffer.
+import {
+  TILE, TILE_WORLD, WORLD_PER_PX, paletteFor, paletteColors, quantizeToPalette,
+} from "./pixel_celeste.js";
 
 export const world = {
   seed: 0,
@@ -313,263 +317,273 @@ function bakePileSprite(rng) {
 }
 
 // ----------------------------------------------------------- chão assado ----
+// F0b (2026-10-26): o chão é assado em PIXELS DO BUFFER (1 px = WORLD_PER_PX
+// unidades de mundo) e montado por AUTOTILE de 8x8, com a assinatura do
+// Celeste descrita no guia de estilo: interior sólido (infill), 1 px de luz no
+// topo, 1 px escuro na base, aresta nunca perfeitamente reta e 2-3 variantes
+// de miolo sorteadas por tile. Tudo em fillRect de 1 px — sem gradiente e sem
+// anti-aliasing — e o assado termina PRESO NA PALETA do bioma (16 cores de
+// cena + 3 de fundo). Nada disso roda por quadro: é assado uma vez por mapa.
+const MAT_SOLO = 0, MAT_MUSGO = 1, MAT_TRILHA = 2, MAT_ACENTO = 3;
+/** Relevo de cada material: -1 cavado (caminho), 0 raso (terra), +1 elevado. */
+const MAT_RAISE = [0, 1, -1, 1];
+
+// Variantes de miolo: pixels soltos dentro do tile que quebram o chapado do
+// infill. Tras variantes, escolhidas por hash — nunca por sorteio por quadro.
+const MIOLO = [
+  [[2, 3], [5, 5], [3, 6], [6, 1]],
+  [[1, 5], [6, 2], [4, 4], [2, 7]],
+  [[3, 2], [6, 6], [1, 3], [5, 7]],
+];
+
+/** Hash determinístico do tile: mesma semente, mesma aresta e mesmo miolo. */
+function tileHash(tx, ty) {
+  let h = (tx * 73856093) ^ (ty * 19349663);
+  h = Math.imul(h ^ (h >>> 13), 1274126177);
+  return (h ^ (h >>> 16)) >>> 0;
+}
+
+/** Estampa uma elipse (em unidades de mundo) sobre a grade de materiais. */
+function stampGround(mat, tone, COLS, ROWS, wx, wy, rwx, rwy, material, tom) {
+  const cx = wx / TILE_WORLD, cy = wy / TILE_WORLD;
+  const rx = Math.max(0.34, rwx / TILE_WORLD), ry = Math.max(0.34, rwy / TILE_WORLD);
+  const x0 = Math.max(0, Math.floor(cx - rx)), x1 = Math.min(COLS - 1, Math.ceil(cx + rx));
+  const y0 = Math.max(0, Math.floor(cy - ry)), y1 = Math.min(ROWS - 1, Math.ceil(cy + ry));
+  for (let y = y0; y <= y1; y++) {
+    for (let x = x0; x <= x1; x++) {
+      const dx = (x + 0.5 - cx) / rx, dy = (y + 0.5 - cy) / ry;
+      if (dx * dx + dy * dy > 1) continue;
+      const i = y * COLS + x;
+      if (material >= 0) mat[i] = material;
+      if (tom >= 0) tone[i] = tom;
+    }
+  }
+}
+
 function bakeGround(rng) {
-  const G2 = biome.ground;
+  const P = paletteFor(biome.id);
+  const COLS = Math.ceil(WORLD_W / TILE_WORLD);
+  const ROWS = Math.ceil(WORLD_H / TILE_WORLD);
   const cv = document.createElement("canvas");
-  const S = 0.5; // metade da resolução
-  cv.width = WORLD_W * S; cv.height = WORLD_H * S;
+  cv.width = COLS * TILE; cv.height = ROWS * TILE;
   const c = cv.getContext("2d");
   c.imageSmoothingEnabled = false;
   const W = cv.width, H = cv.height;
-
-  // base: gradiente vertical sutil de sombra
-  const grad = c.createLinearGradient(0, 0, 0, H);
-  grad.addColorStop(0, G2.top);
-  grad.addColorStop(0.5, G2.mid);
-  grad.addColorStop(1, G2.bot);
-  c.fillStyle = grad;
-  c.fillRect(0, 0, W, H);
-
-  // manchas grandes de solo
-  for (let i = 0; i < 240; i++) {
-    const x = rng() * W, y = rng() * H, r = 20 + rng() * 90;
-    c.fillStyle = G2.soils[(rng() * G2.soils.length) | 0];
-    c.globalAlpha = 0.16 + rng() * 0.22;
-    c.beginPath(); c.ellipse(x, y, r, r * (0.5 + rng() * 0.6), rng() * TAU, 0, TAU); c.fill();
-  }
-  c.globalAlpha = 1;
-
-  // clareiras musgosas (acento estilo Dead Cells)
-  for (let i = 0; i < 90; i++) {
-    const x = rng() * W, y = rng() * H, r = 14 + rng() * 46;
-    c.fillStyle = G2.moss[(rng() * G2.moss.length) | 0];
-    c.globalAlpha = 0.14 + rng() * 0.16;
-    c.beginPath(); c.ellipse(x, y, r, r * 0.6, rng() * TAU, 0, TAU); c.fill();
-  }
-  c.globalAlpha = 1;
-
-  // faixas de feromônio batidas (caminhos de formiga) do formigueiro
   const A = world.anthill;
-  c.strokeStyle = G2.trail;
+
+  const mat = new Uint8Array(COLS * ROWS);
+  const tone = new Uint8Array(COLS * ROWS);
+  tone.fill(1);
+  const stamp = (wx, wy, rx, ry, m, t) =>
+    stampGround(mat, tone, COLS, ROWS, wx, wy, rx, ry, m, t);
+
+  // 1. manchas grandes de solo: sobem ou descem um degrau na rampa do bioma
+  for (let i = 0; i < 90; i++) {
+    const r = 60 + rng() * 260;
+    stamp(rng() * WORLD_W, rng() * WORLD_H, r, r * (0.5 + rng() * 0.6), -1, rng() < 0.5 ? 0 : 2);
+  }
+  // 2. clareiras musgosas — tapete elevado sobre a terra
+  for (let i = 0; i < 60; i++) {
+    const r = 40 + rng() * 160;
+    stamp(rng() * WORLD_W, rng() * WORLD_H, r, r * 0.6, MAT_MUSGO, -1);
+  }
+  // 3. faixas batidas de feromônio saindo do formigueiro (cavadas no chão)
   for (let i = 0; i < 7; i++) {
     const a = (i / 7) * TAU + rng();
-    c.globalAlpha = 0.5;
-    c.lineWidth = 6 + rng() * 8;
-    c.beginPath();
-    c.moveTo(A.x * S, A.y * S);
-    const mx = (A.x + Math.cos(a) * 700) * S, my = (A.y + Math.sin(a) * 700) * S;
-    const ex = (A.x + Math.cos(a) * 1500) * S, ey = (A.y + Math.sin(a) * 1500) * S;
-    c.quadraticCurveTo(mx + (rng() - 0.5) * 300, my + (rng() - 0.5) * 300, ex, ey);
-    c.stroke();
+    const mx = A.x + Math.cos(a) * 700 + (rng() - 0.5) * 300;
+    const my = A.y + Math.sin(a) * 700 + (rng() - 0.5) * 300;
+    const ex = A.x + Math.cos(a) * 1500, ey = A.y + Math.sin(a) * 1500;
+    for (let k = 0; k <= 48; k++) {
+      const t = k / 48, u = 1 - t;
+      const px = u * u * A.x + 2 * u * t * mx + t * t * ex;
+      const py = u * u * A.y + 2 * u * t * my + t * t * ey;
+      stamp(px, py, 14 + rng() * 10, 14 + rng() * 10, MAT_TRILHA, -1);
+    }
   }
-  c.globalAlpha = 1;
+  // 4. cratera pisada em volta do formigueiro
+  stamp(A.x, A.y, 170, 170, MAT_TRILHA, -1);
+  // 5. estilo próprio do bioma (água parada, dunas, folhas, neve...)
+  groundFlourish(stamp, rng);
 
-  // cratera suja em volta do formigueiro
-  const ax = A.x * S, ay = A.y * S;
-  const cr = c.createRadialGradient(ax, ay, 10, ax, ay, 170 * S);
-  cr.addColorStop(0, shade(G2.trail, 0.0));
-  cr.addColorStop(0.6, G2.trail + "");
-  cr.addColorStop(1, "rgba(0,0,0,0)");
-  c.fillStyle = cr;
-  c.beginPath(); c.arc(ax, ay, 170 * S, 0, TAU); c.fill();
-  for (let i = 0; i < 26; i++) {
-    const a = rng() * TAU, d = (110 + rng() * 80) * S;
-    c.fillStyle = G2.soils[(rng() * G2.soils.length) | 0];
-    c.globalAlpha = 0.5;
-    c.fillRect(ax + Math.cos(a) * d - 1.5, ay + Math.sin(a) * d - 1.5, 3 + rng() * 3, 2 + rng() * 2);
+  // ------------------------------------------------------------- autotile ---
+  for (let ty = 0; ty < ROWS; ty++) {
+    for (let tx = 0; tx < COLS; tx++) {
+      const i = ty * COLS + tx;
+      const m = mat[i];
+      const X = tx * TILE, Y = ty * TILE;
+      const h = tileHash(tx, ty);
+      let fill, luz, sombra;
+      if (m === MAT_MUSGO) { fill = P.musgo[1]; luz = P.musgo[2]; sombra = P.musgo[0]; }
+      else if (m === MAT_TRILHA) { fill = P.trilha; luz = P.trilha; sombra = P.infill; }
+      else if (m === MAT_ACENTO) { fill = P.vegetacao[1]; luz = P.vegetacao[2]; sombra = P.vegetacao[0]; }
+      else {
+        const t = tone[i];
+        fill = P.terreno[t]; luz = P.borda; sombra = t > 0 ? P.terreno[t - 1] : P.infill;
+      }
+      c.fillStyle = fill;
+      c.fillRect(X, Y, TILE, TILE);
+
+      // miolo: uma das variantes quebra o chapado do infill
+      if (m !== MAT_TRILHA) {
+        const v = MIOLO[h % MIOLO.length];
+        c.fillStyle = ((h >>> 8) & 1) ? luz : sombra;
+        for (let k = 0; k < v.length; k++) {
+          if (((h >>> (k * 2 + 2)) & 3) === 0) continue;
+          c.fillRect(X + v[k][0], Y + v[k][1], 1, 1);
+        }
+      }
+
+      // luz e sombra de borda: 1 px, duras, com a aresta quebrada por 1 px
+      const raise = MAT_RAISE[m];
+      const up = ty > 0 ? MAT_RAISE[mat[i - COLS]] : raise;
+      const dn = ty < ROWS - 1 ? MAT_RAISE[mat[i + COLS]] : raise;
+      const lf = tx > 0 ? MAT_RAISE[mat[i - 1]] : raise;
+      const rt = tx < COLS - 1 ? MAT_RAISE[mat[i + 1]] : raise;
+      const n8 = (h >>> 12) & 7;
+      if (raise > up) {                       // topo iluminado (luz alta)
+        c.fillStyle = luz; c.fillRect(X, Y, TILE, 1);
+        c.fillStyle = fill; c.fillRect(X + n8, Y, 1, 1);
+      }
+      if (raise > dn) {                       // base na sombra
+        c.fillStyle = sombra; c.fillRect(X, Y + TILE - 1, TILE, 1);
+        c.fillStyle = fill; c.fillRect(X + ((n8 + 3) & 7), Y + TILE - 1, 1, 1);
+      }
+      if (raise > lf) {                       // luz vem da esquerda
+        c.fillStyle = luz; c.fillRect(X, Y, 1, TILE);
+        c.fillStyle = fill; c.fillRect(X, Y + ((n8 + 5) & 7), 1, 1);
+      }
+      if (raise > rt) {
+        c.fillStyle = sombra; c.fillRect(X + TILE - 1, Y, 1, TILE);
+        c.fillStyle = fill; c.fillRect(X + TILE - 1, Y + ((n8 + 1) & 7), 1, 1);
+      }
+    }
   }
-  c.globalAlpha = 1;
 
-  // grãos de solo (speckle)
-  for (let i = 0; i < 11000; i++) {
-    c.fillStyle = G2.speck[(rng() * G2.speck.length) | 0];
-    c.globalAlpha = 0.25 + rng() * 0.45;
-    const sz = rng() < 0.85 ? 1 : 2;
-    c.fillRect(rng() * W, rng() * H, sz, sz);
+  // 6. grãos de solo, tufos e flores — sempre pixels de 1x1, nunca suavizados
+  const specks = Math.round(W * H / 210);
+  for (let i = 0; i < specks; i++) {
+    c.fillStyle = rng() < 0.5 ? P.terreno[3] : P.infill;
+    c.fillRect((rng() * W) | 0, (rng() * H) | 0, 1, 1);
   }
-  c.globalAlpha = 1;
-
-  // tufozinhos + flores de pixel (vida no bioma)
-  for (let i = 0; i < 700; i++) {
-    const x = rng() * W, y = rng() * H;
-    c.fillStyle = G2.tuft[(rng() * G2.tuft.length) | 0];
-    c.globalAlpha = 0.5 + rng() * 0.4;
+  const tufts = Math.round(W * H / 2700);
+  for (let i = 0; i < tufts; i++) {
+    const x = (rng() * W) | 0, y = (rng() * H) | 0;
+    c.fillStyle = P.vegetacao[(rng() * P.vegetacao.length) | 0];
     c.fillRect(x, y, 1, 2);
     c.fillRect(x + 2, y, 1, 2);
     c.fillRect(x + 1, y - 1, 1, 2);
     if (rng() < 0.13) {
-      c.fillStyle = G2.flowers[(rng() * G2.flowers.length) | 0];
+      c.fillStyle = P.acento[(rng() * P.acento.length) | 0];
       c.fillRect(x + 1, y - 3, 2, 2);
     }
   }
-  c.globalAlpha = 1;
 
-  // sombras assadas: coladas no pé de cada elemento (nada mais "flutuando")
+  // 7. sombras assadas: elipse por varredura, dura, com a borda em xadrez.
+  // Coladas no pé de cada elemento — nada mais "flutuando".
+  c.fillStyle = P.infill;
   for (const p of world.props) {
     if (p.noShadow || !p.collR) continue;
-    c.fillStyle = "#0c0912";
-    c.globalAlpha = 0.36;
-    c.beginPath();
-    c.ellipse(p.x * S + 2 * S * p.scale, p.y * S + 4 * S * p.scale,
-      p.collR * 1.5 * S * p.scale, p.collR * 0.78 * S * p.scale, 0, 0, TAU);
-    c.fill();
+    const cx = (p.x + 2 * p.scale) / WORLD_PER_PX, cy = (p.y + 4 * p.scale) / WORLD_PER_PX;
+    const rx = (p.collR * 1.5 * p.scale) / WORLD_PER_PX, ry = (p.collR * 0.78 * p.scale) / WORLD_PER_PX;
+    if (rx < 0.5 || ry < 0.5) continue;
+    const y0 = Math.max(0, Math.floor(cy - ry)), y1 = Math.min(H - 1, Math.ceil(cy + ry));
+    for (let y = y0; y <= y1; y++) {
+      const dy = (y + 0.5 - cy) / ry;
+      if (dy * dy > 1) continue;
+      const dx = Math.sqrt(1 - dy * dy) * rx;
+      const xa = Math.max(0, Math.round(cx - dx)), xb = Math.min(W - 1, Math.round(cx + dx));
+      if (xa > xb) continue;
+      if (Math.abs(dy) < 0.55) { c.fillRect(xa, y, xb - xa + 1, 1); continue; }
+      for (let x = xa + (((y + xa) & 1) ? 1 : 0); x <= xb; x += 2) c.fillRect(x, y, 1, 1);
+    }
   }
-  c.globalAlpha = 1;
 
-  // ------------------------------------------------ estilo próprio do bioma -
-  groundFlourish(c, W, H, S, rng);
+  // 8. borda externa mais escura: quatro faixas duras, sem traço borrado
+  const bw = Math.max(2, Math.round(35 / WORLD_PER_PX));
+  c.fillStyle = P.fundo[0];
+  c.fillRect(0, 0, W, bw); c.fillRect(0, H - bw, W, bw);
+  c.fillRect(0, 0, bw, H); c.fillRect(W - bw, 0, bw, H);
 
-  // borda externa do mapa mais escura (escuridão além da colônia)
-  c.globalAlpha = 0.5;
-  c.strokeStyle = "#0a0810";
-  c.lineWidth = 70 * S;
-  c.strokeRect(0, 0, W, H);
-  c.globalAlpha = 1;
+  // 9. batedeira final: prende tudo na paleta do bioma e mata o meio-tom
+  quantizeToPalette(c, W, H, paletteColors(biome.id));
 
   world.ground = cv;
 }
 
-// Enfeites de chão distintos por bioma (estilo pintado de Dead Cells)
-function groundFlourish(c, W, H, S, rng) {
-  const id = biome.id;
-  switch (id) {
-    case "planicie": {
-      // manchas de cascalho clarinho + maciços de trevo
+// Enfeites de chão por bioma: cada um estampa MATERIAIS na grade, nunca
+// pixels — o desenho em si é trabalho do autotile (Regra 19: o acabamento do
+// terreno é uma coisa, o decorativo é outra).
+function groundFlourish(stamp, rng) {
+  switch (biome.id) {
+    case "planicie": {     // cascalho clarinho + maciços de trevo
       for (let i = 0; i < 40; i++) {
-        const x = rng() * W, y = rng() * H, r = (10 + rng() * 26);
-        c.fillStyle = "rgba(200,220,160,0.10)";
-        c.beginPath(); c.ellipse(x, y, r, r * 0.5, rng() * TAU, 0, TAU); c.fill();
+        const r = 20 + rng() * 55;
+        stamp(rng() * WORLD_W, rng() * WORLD_H, r, r * 0.5, MAT_ACENTO, -1);
       }
-      for (let i = 0; i < 90; i++) {
-        const x = rng() * W, y = rng() * H;
-        c.fillStyle = ["#4f9550", "#5ca85a"][(rng() * 2) | 0];
-        c.globalAlpha = 0.75;
-        for (let k = 0; k < 3; k++) {
-          const a = (k / 3) * TAU + rng();
-          c.fillRect(x + Math.cos(a) * 2.4, y + Math.sin(a) * 2.4, 2, 2);
-        }
-        if (rng() < 0.3) { c.fillStyle = "#fff2c8"; c.fillRect(x, y - 3, 1, 1); }
-      }
-      c.globalAlpha = 1;
       break;
     }
-    case "floresta": {
-      // raízes escuras serpenteando + musgo profundo
-      c.globalAlpha = 0.5;
-      for (let i = 0; i < 60; i++) {
-        const x = rng() * W, y = rng() * H;
-        c.strokeStyle = "#12241a";
-        c.lineWidth = 2;
-        c.beginPath();
-        c.moveTo(x, y);
-        c.quadraticCurveTo(x + rand(-50, 50), y + rand(-30, 30), x + rand(-90, 90), y + rand(-40, 40));
-        c.stroke();
-      }
-      c.globalAlpha = 1;
-      break;
-    }
-    case "pantano": {
-      // poças de água parada com filete de luz + vitórias-régias
-      for (let i = 0; i < 26; i++) {
-        const x = rng() * W, y = rng() * H, r = (14 + rng() * 34);
-        c.fillStyle = "rgba(90,184,190,0.16)";
-        c.beginPath(); c.ellipse(x, y, r, r * 0.6, rng() * TAU, 0, TAU); c.fill();
-        c.strokeStyle = "rgba(150,235,225,0.22)";
-        c.lineWidth = 1.5;
-        c.beginPath(); c.ellipse(x, y, r, r * 0.6, rng() * TAU, 0, TAU); c.stroke();
-      }
-      for (let i = 0; i < 60; i++) {
-        const x = rng() * W, y = rng() * H;
-        c.fillStyle = "#3f8a5c";
-        c.globalAlpha = 0.8;
-        c.fillRect(x, y, 4, 2); c.fillRect(x + 1, y - 1, 2, 1);
-      }
-      c.globalAlpha = 1;
-      break;
-    }
-    case "deserto": {
-      // incisões de vento + riachos de dunas
-      c.globalAlpha = 0.35;
-      c.strokeStyle = "#2b1f10";
-      for (let i = 0; i < 120; i++) {
-        const x = rng() * W, y = rng() * H, len = 20 + rng() * 60;
-        c.lineWidth = 2;
-        c.beginPath();
-        c.moveTo(x, y);
-        c.lineTo(x + len, y + len * 0.15);
-        c.stroke();
-        c.strokeStyle = "#6b5330";
-        c.beginPath();
-        c.moveTo(x, y + 2);
-        c.lineTo(x + len * 0.6, y + 2 + len * 0.09);
-        c.stroke();
-        c.strokeStyle = "#2b1f10";
-      }
-      c.globalAlpha = 1;
-      // fendas de solo ressecado
-      c.strokeStyle = "#241a0c";
-      c.globalAlpha = 0.55;
-      for (let i = 0; i < 40; i++) {
-        const x = rng() * W, y = rng() * H;
-        c.lineWidth = 1.5;
-        c.beginPath();
-        c.moveTo(x, y);
-        c.lineTo(x + rand(-14, 14), y + rand(-14, 14));
-        c.lineTo(x + rand(-22, 22), y + rand(-22, 22));
-        c.stroke();
-      }
-      c.globalAlpha = 1;
-      break;
-    }
-    case "outono": {
-      // tapetes de folhas caídas
-      const cols = ["#c07a33", "#b06a2e", "#d88a3d", "#8a5628", "#e09a4a"];
-      for (let i = 0; i < 130; i++) {
-        const x = rng() * W, y = rng() * H, r = (8 + rng() * 22);
-        c.fillStyle = cols[(rng() * cols.length) | 0];
-        c.globalAlpha = 0.16 + rng() * 0.2;
-        c.beginPath(); c.ellipse(x, y, r, r * 0.5, rng() * TAU, 0, TAU); c.fill();
-      }
-      c.globalAlpha = 0.75;
-      for (let i = 0; i < 900; i++) {
-        c.fillStyle = cols[(rng() * cols.length) | 0];
-        c.fillRect(rng() * W, rng() * H, 2, 2);
-      }
-      c.globalAlpha = 1;
-      break;
-    }
-    case "gelo": {
-      // montes de neve amontoada + rachaduras de gelo azulado
-      for (let i = 0; i < 90; i++) {
-        const x = rng() * W, y = rng() * H, r = (12 + rng() * 30);
-        c.fillStyle = "rgba(200,220,245,0.18)";
-        c.beginPath(); c.ellipse(x, y, r, r * 0.45, rng() * TAU, 0, TAU); c.fill();
-        c.strokeStyle = "rgba(235,245,255,0.25)";
-        c.lineWidth = 1;
-        c.beginPath(); c.ellipse(x, y, r, r * 0.45, rng() * TAU, -0.4, 1.1); c.stroke();
-      }
-      c.strokeStyle = "#9fc4e8";
-      c.globalAlpha = 0.5;
+    case "floresta": {     // raízes escuras serpenteando
       for (let i = 0; i < 50; i++) {
-        const x = rng() * W, y = rng() * H;
-        c.lineWidth = 1.5;
-        c.beginPath();
-        c.moveTo(x, y);
-        c.lineTo(x + rand(-20, 20), y + rand(-20, 20));
-        c.lineTo(x + rand(-32, 32), y + rand(-32, 32));
-        c.stroke();
+        const x = rng() * WORLD_W, y = rng() * WORLD_H, a = rng() * TAU, len = 120 + rng() * 220;
+        for (let k = 0; k < 10; k++) {
+          const t = k / 9;
+          stamp(x + Math.cos(a) * len * t, y + Math.sin(a) * len * t, 16, 12, MAT_TRILHA, -1);
+        }
       }
-      c.globalAlpha = 1;
+      for (let i = 0; i < 30; i++) {
+        const r = 40 + rng() * 90;
+        stamp(rng() * WORLD_W, rng() * WORLD_H, r, r * 0.6, MAT_MUSGO, -1);
+      }
+      break;
+    }
+    case "pantano": {      // poças de água parada + aguapés
+      for (let i = 0; i < 26; i++) {
+        const r = 30 + rng() * 80;
+        stamp(rng() * WORLD_W, rng() * WORLD_H, r, r * 0.6, MAT_MUSGO, -1);
+      }
+      for (let i = 0; i < 40; i++) {
+        const r = 24 + rng() * 60;
+        stamp(rng() * WORLD_W, rng() * WORLD_H, r, r * 0.5, MAT_ACENTO, -1);
+      }
+      break;
+    }
+    case "deserto": {      // riachos de dunas + fendas de solo ressecado
+      for (let i = 0; i < 120; i++) {
+        const x = rng() * WORLD_W, y = rng() * WORLD_H, a = rng() * TAU, len = 40 + rng() * 120;
+        for (let k = 0; k < 6; k++) {
+          const t = k / 5;
+          stamp(x + Math.cos(a) * len * t, y + Math.sin(a) * len * t * 0.15, 12, 8, MAT_ACENTO, -1);
+        }
+      }
+      for (let i = 0; i < 40; i++) {
+        const x = rng() * WORLD_W, y = rng() * WORLD_H, a = rng() * TAU;
+        for (let k = 0; k < 4; k++) {
+          stamp(x + Math.cos(a) * k * 14, y + Math.sin(a) * k * 14, 8, 8, MAT_TRILHA, -1);
+        }
+      }
+      break;
+    }
+    case "outono": {       // tapetes de folhas caídas
+      for (let i = 0; i < 130; i++) {
+        const r = 25 + rng() * 70;
+        stamp(rng() * WORLD_W, rng() * WORLD_H, r, r * 0.5, MAT_ACENTO, -1);
+      }
+      break;
+    }
+    case "gelo": {         // montes de neve amontoada + rachaduras
+      for (let i = 0; i < 90; i++) {
+        const r = 30 + rng() * 80;
+        stamp(rng() * WORLD_W, rng() * WORLD_H, r, r * 0.45, MAT_ACENTO, -1);
+      }
+      for (let i = 0; i < 50; i++) {
+        const x = rng() * WORLD_W, y = rng() * WORLD_H, a = rng() * TAU;
+        for (let k = 0; k < 4; k++) {
+          stamp(x + Math.cos(a) * k * 16, y + Math.sin(a) * k * 16, 9, 9, MAT_TRILHA, -1);
+        }
+      }
       break;
     }
   }
-}
-
-function shade(hex, t) {
-  const h = hex.replace("#", "");
-  const r = parseInt(h.substr(0, 2), 16), g = parseInt(h.substr(2, 2), 16), b = parseInt(h.substr(4, 2), 16);
-  const f = 1 - 0.35 * (1 - t);
-  return `rgb(${(r * f) | 0},${(g * f) | 0},${(b * f) | 0})`;
 }
 
 // ------------------------------------------------------------- minimapa -----

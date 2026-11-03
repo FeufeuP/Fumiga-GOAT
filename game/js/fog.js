@@ -2,6 +2,9 @@
 // FUMIGA — Fog of War: grade de visão da colônia (explorado vs visível)
 // ============================================================================
 import { WORLD_W, WORLD_H } from "./config.js";
+// F0b: dentro da passada de mundo o quadro vai para o buffer 320x180, onde
+// suavização é proibida (Regra 6) — a névoa passa a ter borda dura.
+import { pixelWorldPass } from "./pixel_celeste.js";
 
 const CELL = 32;                       // tamanho da célula em pixels do mundo
 const COLS = Math.ceil(WORLD_W / CELL);
@@ -82,7 +85,9 @@ function rebuildVeil() {
 export function fogDraw(ctx, originX, originY, zoom, time) {
   if (dirty) rebuildVeil();
   const prev = ctx.imageSmoothingEnabled;
-  ctx.imageSmoothingEnabled = true; // bordas suaves, estilo Dead Cells
+  // Fora do buffer mantém as bordas suaves de sempre; dentro do frame pixel a
+  // névoa é desenhada com vizinho-mais-próximo, em degraus de 1 px.
+  ctx.imageSmoothingEnabled = !pixelWorldPass();
   ctx.drawImage(veil, originX, originY, WORLD_W * zoom, WORLD_H * zoom);
   ctx.imageSmoothingEnabled = prev;
 }

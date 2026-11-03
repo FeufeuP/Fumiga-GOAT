@@ -41,10 +41,14 @@ export function auditArtHandoff(read = diskRead) {
   assert.equal(direction.anterior, 'papel-recortado-06', 'estilo anterior registrado');
   assert.equal(direction.prompt_anterior, 'FUMIGA-PAPEL-v4-CHROMA', 'prompt anterior preservado');
   assert.equal(direction.direcao_aprovada, true, 'direção explicitamente aprovada');
-  assert.equal(direction.refinamento_implementado_no_jogo, false,
-    'nada de arte nova foi integrado ainda — não declarar rework no jogo');
-  assert(direction.escopo_implementacao.startsWith('nenhum'),
-    'esta rodada não alterou runtime nem assets');
+  // F0b (2026-10-26) levou o frame pixel ao jogo. O que continua proibido é declarar
+  // rework de ASSET (F1 em diante): nenhum PNG foi trocado, só o frame técnico entrou.
+  assert.equal(direction.refinamento_implementado_no_jogo, true,
+    'o frame F0b está implementado no jogo');
+  assert(direction.escopo_implementacao.startsWith('F0b implementada em 2026-10-26'),
+    'escopo implementado declara a F0b e nada além do frame');
+  assert(/não é opção/i.test(direction.escopo_implementacao),
+    'o frame é obrigatório — nunca um botão de liga/desliga em VÍDEO');
   assert(direction.decisao_usuario.includes('idêntico ao pixel de celeste'),
     'decisão do usuário registrada com as palavras dele');
   assert(direction.decisoes.tecnica.includes('320x180'), 'técnica do frame registrada');

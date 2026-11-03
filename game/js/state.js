@@ -34,6 +34,11 @@ export const G = {
     cutscenes: {},       // MEGA LORE: memórias vistas
     clearedMaps: {},     // FASE 3: mapas vencidos na campanha (mapId -> true) — libera frutos (Noite Branca + 6 degraus + Pálida)
     tutorial: 0,         // 1 = tutorial concluído (ou pulado)
+    // PIXEL CELESTE (F0b, 2026-10-26): marca de migração do frame pixel. Vale 1
+    // nos saves criados de agora em diante. Saves antigos (sem a marca) recebem
+    // o novo padrão de vídeo UMA vez — ver loadSave(). Depois disso a escolha do
+    // jogador é soberana: as duas opções continuam vivas em OPÇÕES → VÍDEO.
+    pixelFrame: 1,
     accessibility: {     // modo acessível - escolha do usuário
       invincible: false,
       slowMo: false,
@@ -45,11 +50,18 @@ export const G = {
     settings: {
       particles: true,
       screenshake: true,
-      scanline: true,
+      // PIXEL CELESTE (F0b, 2026-10-26): a listra de CRT cobre o canvas e
+      // desfaz o frame pixel — cada bloco 3x3 do mundo passa a ter faixas
+      // claras e escuras dentro dele. O padrão de fábrica passa a ser DESLIGADO.
+      // Quem gosta do efeito religa em OPÇÕES → VÍDEO e a escolha persiste.
+      scanline: false,
       // FILTRO PS1 (OPÇÕES → VÍDEO): 0 desligado · 1 ligado na intensidade
-      // máxima (dither Bayer 4x4 + cores achatadas de 15 bits). Ligado por
-      // padrão — ver o cabeçalho de js/psx_filter.js (filtro 2D, sem modelagem 3D).
-      psx: 1,
+      // máxima (dither Bayer 4x4 + cores achatadas de 15 bits).
+      // DESLIGADO por padrão desde 2026-10-26: o filtro é pintado SOBRE o
+      // canvas e destrói o frame pixel (blocos 3x3 uniformes caem de 100% para
+      // 1% na tela). Continua disponível — ver o cabeçalho de js/psx_filter.js
+      // (filtro 2D, sem modelagem 3D) e loadSave() para a migração dos antigos.
+      psx: 0,
       musicVol: 1,
       sfxVol: 1,
       gameSpeed: 1,      // 0.5, 1, 1.5, 2
@@ -103,6 +115,7 @@ export function loadSave() {
     G.save.cutscenes = flags(data.cutscenes);
     G.save.clearedMaps = flags(data.clearedMaps);
     G.save.tutorial = data.tutorial === true || data.tutorial === 1 ? 1 : 0;
+    G.save.pixelFrame = nonNegativeInt(data.pixelFrame, 1);   // 1 = já no padrão do frame pixel
     if (record(data.accessibility)) {
       for (const key of Object.keys(G.save.accessibility)) {
         if (typeof data.accessibility[key] === "boolean") G.save.accessibility[key] = data.accessibility[key];
@@ -126,6 +139,18 @@ export function loadSave() {
         }
       }
       if (["pt-BR", "en-US", "es"].includes(data.settings.language)) G.save.settings.language = data.settings.language;
+    }
+
+    // Migração única do frame pixel (2026-10-26): saves anteriores não têm a
+    // marca `pixelFrame` e foram gravados quando o filtro PS1 e as scanlines
+    // eram o padrão. Eles recebem o novo padrão (tudo desligado) e ganham a
+    // marca, para nunca mais serem tocados — religar depois é escolha do
+    // jogador e sobrevive a qualquer recarregamento. Roda DEPOIS da leitura
+    // das preferências, senão a leitura sobrescreveria a migração.
+    if (G.save.pixelFrame < 1) {
+      G.save.settings.psx = 0;
+      G.save.settings.scanline = false;
+      G.save.pixelFrame = 1;
     }
     return true;
   } catch (e) { return false; /* JSON/armazenamento indisponível: não destrói o estado em memória */ }
