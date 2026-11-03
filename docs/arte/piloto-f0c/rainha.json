@@ -9,32 +9,32 @@
       1024,
       1024
     ],
-    "sha256": "f3fa660c2aebf489edb34116e1ae0a550fd4d9257c7da7546601b473f2c637d6"
+    "sha256": "745a9a6607f8d8d564b5ef6547621f2a8fa63f32d26e67fcea1c435678d88159"
   },
   "chroma": {
     "familia": "azul",
-    "cor_medida": "#0617ef",
+    "cor_medida": "#1d58d4",
     "tolerancia": 40,
     "metodo": "inundação pelas bordas (preserva detalhe da cor da chave no interior da peça)",
-    "pixels_recortados": 828372,
-    "pixels_da_chave_preservados_no_interior": 1139,
-    "pixels_com_spill_corrigido": 10006
+    "pixels_recortados": 867625,
+    "pixels_da_chave_preservados_no_interior": 599,
+    "pixels_com_spill_corrigido": 5152
   },
   "caixa_conteudo": [
-    112,
-    286,
+    101,
+    316,
     923,
-    758
+    707
   ],
   "grade": {
     "bloco_px": 0,
-    "confianca": 0.777,
+    "confianca": 0.7271,
     "tem_grade": false,
     "metodo_reducao": "média de área",
     "encaixe": "conter",
     "desenho_efetivo": [
       63,
-      37
+      30
     ]
   },
   "nativo": {
@@ -43,38 +43,36 @@
       63
     ],
     "arquivo": "docs/arte/piloto-f0c/rainha-nativo.png",
-    "sha256": "48e9800e3a333a6dca5127009f610999be8a074a129d4aacdabf16db61bec166",
+    "sha256": "dc1b2fe6616e763ff8fad86fcf49ddd320924036c7164c8ae1ae3c58610fa97f",
     "cores_usadas": [
-      "#141a10",
       "#c98d3a",
-      "#4c6640",
       "#14100c",
-      "#28351d",
       "#6b8a52",
-      "#ffd479"
+      "#4c6640",
+      "#42663a"
     ],
-    "contagem_de_cores": 7,
-    "pixels_opacos": 1588,
-    "pixels_transparentes": 2381
+    "contagem_de_cores": 5,
+    "pixels_opacos": 1288,
+    "pixels_transparentes": 2681
   },
   "quantizacao": {
     "paleta": "docs/arte/paleta-celeste.json",
     "compartilhado": false,
     "rampa": {
-      "antes": 13,
-      "depois": 6,
+      "antes": 4,
+      "depois": 4,
       "orcamento": 6
     },
     "contorno": {
       "feito": true,
-      "px": 243
+      "px": 227
     },
     "cores_na_paleta": 20,
     "dither": false,
     "metrica": "dr^2*3 + dg^2*6 + db^2 (igual ao quantizeToPalette do runtime)",
-    "pixels_ajustados": 1345,
-    "distancia_media": 5105.4,
-    "distancia_maxima": 42217
+    "pixels_ajustados": 1061,
+    "distancia_media": 1309.3,
+    "distancia_maxima": 24300
   },
   "validacao": {
     "ok": true,

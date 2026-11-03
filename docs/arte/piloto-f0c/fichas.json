@@ -4,9 +4,9 @@
   "data": "2026-10-26",
   "bioma": "planicie",
   "nota": "As cinco peças do aceite da F0c. Decisões desta rodada: a Cortadeira fica em UM FRAME (vale a decisão de 2026-10-26, as 24 rotações ficam para F2); a base da Planície é uma FOLHA DE TILES estilo Celeste que o bake de F0b passa a consumir; e as cinco peças são INTEGRADAS no jogo nesta rodada.",
-  "regra_de_tamanho": "buffer 320x180 com transform de 1/3: o que é desenhado em 48 px de tela cai em 16 px de buffer. Nativo = mundo / 3.",
+  "regra_de_tamanho": "DECISAO DO USUARIO 2026-11-03: NAO ha tamanho fixo por personagem. O unico requisito e que tudo caia na MESMA GRADE de pixels — 1 px nativo = 1 px do buffer de 320x180 = 3 unidades de mundo. O tamanho de cada peca e escolhido pelo que faz a silhueta ler no tamanho nativo, e NAO por round(mundo/3).",
   "aceite_original": "silhueta legível no tamanho nativo; mesma paleta nos 5; mock no jogo com o HUD atual e com o HUD da F1; 24 rotações da Cortadeira sem corte; aprovação visual do usuário antes de qualquer lote.",
-  "aceite_ajustado": "as 24 rotações saem do aceite por decisão do usuário (1 frame); o mock com o HUD da F1 fica bloqueado até a F1 existir — vale o mock com o HUD atual.",
+  "aceite_ajustado": "as 24 rotações saem do aceite por decisão do usuário (1 frame); o mock com o HUD da F1 fica bloqueado até a F1 existir — vale o mock com o HUD atual. | TAMANHO: substituido — 'silhueta legivel no tamanho nativo' continua valendo, mas o tamanho nativo agora e uma DECISAO DE ARTE, nao uma consequencia de ANT_SIZES.",
   "pecas": [
     {
       "id": "rainha",
@@ -72,10 +72,10 @@
       "estagio": "fonte de alta resolução para redução pelo pipeline",
       "camera": "ortográfica estritamente de cima (top-down), sem horizonte e sem isometria",
       "nativo": [
-        15,
-        15
+        21,
+        21
       ],
-      "nativo_calculo": "mundo 45 / 3 = 15",
+      "nativo_calculo": "escolhido para a silhueta ler: em 15 px as tres massas do corpo nao se separavam nem com contorno. NAO e round(mundo/3) — decisao do usuario em 2026-11-03: o unico requisito e a grade de pixels comum (1 px nativo = 1 px de buffer). 21 px = 63 unidades de mundo; o corpo da operaria e 45, entao o sprite transborda o corpo em 1.4x (normal: sprite maior que hitbox).",
       "margem": "1 px de cada lado; a formiga ocupa ~13x13 dentro do quadro",
       "ancora": "centro do quadro",
       "consumidor": "game/js/assets.js (bake de castas) → ANT_NATIVE.worker",
@@ -180,10 +180,10 @@
       "estagio": "fonte de alta resolução para redução pelo pipeline",
       "camera": "vista de cima (top-down), sem horizonte e sem isometria",
       "nativo": [
-        16,
-        16
+        24,
+        24
       ],
-      "nativo_calculo": "mundo 48 / 3 = 16",
+      "nativo_calculo": "escolhido pelo mesmo motivo: em 16 px a base nao separava do corpo. 24 px = 72 unidades de mundo; o no de essencia tem raio 26 (52 unidades = 17 px), entao o cristal aparece 1.4x maior que o no — proposital, o cristal e o que se ve.",
       "margem": "1 px de cada lado; o cristal ocupa ~14x14 dentro do quadro",
       "ancora": "base central do quadro",
       "consumidor": "game/js/render.js (nó de essência) — substitui o gradiente radial",
@@ -279,7 +279,8 @@
         "quantizacao": "vizinho-mais-próximo na paleta do bioma, sem dither",
         "validacao": "alfa binário, 0 cor fora da paleta, todos os tiles no mesmo tamanho, folha exportada em escala inteira"
       },
-      "fonte": "art-source/f0c/base-fonte.png"
+      "fonte": "art-source/f0c/base-fonte.png",
+      "recorte_global": true
     }
   ]
 }

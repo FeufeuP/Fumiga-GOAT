@@ -544,7 +544,7 @@ def sha256_png(im):
 
 
 # ----------------------------------------------------------------- validação --
-def validar(grade, pal, peca_opaca):
+def validar(grade, pal, peca_opaca, exigir_transparente=True):
     problemas = []
     alfas = Counter()
     fora = []
@@ -565,7 +565,7 @@ def validar(grade, pal, peca_opaca):
     if fora:
         problemas.append("%d pixel(s) fora da paleta: %s"
                          % (len(fora), sorted(set(fora))[:5]))
-    if not peca_opaca and alfas.get(0, 0) == 0:
+    if exigir_transparente and not peca_opaca and alfas.get(0, 0) == 0:
         problemas.append("sem alfa real: nenhum pixel transparente (recorte falhou?)")
     if preto:
         problemas.append("preto puro como cor de cena: %d pixel(s)" % preto)
@@ -746,28 +746,40 @@ def processar(ficha, args):
 LADOS = (("norte", 1), ("leste", 2), ("sul", 4), ("oeste", 8))
 
 
-def lados_abertos(grade):
+def lados_abertos(grade, marcador=None):
     """Quais das 4 bordas do tile encostam no vazio — é a chave do autotile.
 
-    Um lado é 'aberto' quando a maioria dos seus 8 px de borda é transparente:
-    é ali que o terreno termina e que o jogo precisa desenhar borda em vez de
-    infill. O código de 4 bits (N=1, L=2, S=4, O=8) é o índice da tabela que
-    `bakeGround` vai consultar.
+    O código de 4 bits (N=1, L=2, S=4, O=8) é o índice da tabela que
+    `bakeGround` vai consultar. A fonte marca a borda de dois jeitos possíveis,
+    então o teste tem dois modos:
+
+    • **transparência** — o vazio veio recortado junto com o chroma. Um lado é
+      aberto quando a maioria dos seus 8 px de borda é transparente;
+    • **marcador** — a fonte NÃO recortou o vazio e marcou a borda exposta
+      pintando ali o tom mais claro da rampa (a grama na beira do terreno).
+      Um lado é aberto quando ele tem pelo menos 2 px do marcador e não fica
+      muito atrás do lado mais marcado (60%): numa borda reta o tom claro
+      corre a fileira inteira, num canto ele se concentra na quina.
     """
     h, w = len(grade), len(grade[0])
-    abertos = []
-    for nome, bit in LADOS:
-        if nome == "norte":
-            fila = [grade[0][x][3] for x in range(w)]
-        elif nome == "sul":
-            fila = [grade[h - 1][x][3] for x in range(w)]
-        elif nome == "oeste":
-            fila = [grade[y][0][3] for y in range(h)]
-        else:
-            fila = [grade[y][w - 1][3] for y in range(h)]
-        if sum(1 for a in fila if a == 0) * 2 > len(fila):
-            abertos.append(nome)
-    return abertos
+    filas = {
+        "norte": [grade[0][x] for x in range(w)],
+        "sul":   [grade[h - 1][x] for x in range(w)],
+        "oeste": [grade[y][0] for y in range(h)],
+        "leste": [grade[y][w - 1] for y in range(h)],
+    }
+    contagem = {}
+    for nome, _ in LADOS:
+        fila = filas[nome]
+        contagem[nome] = (sum(1 for p in fila if p[3] == 0) if marcador is None
+                          else sum(1 for p in fila if p[3] and p[:3] == marcador))
+    if marcador is None:
+        return [n for n, _ in LADOS if contagem[n] * 2 > len(filas[n])], contagem
+    topo = max(contagem.values())
+    if topo == 0:
+        return [], contagem            # tile de infill: nenhum tom claro na borda
+    limiar = max(2, 0.6 * topo)
+    return [n for n, _ in LADOS if contagem[n] >= limiar], contagem
 
 
 def processar_folha(ficha, args):
@@ -805,6 +817,22 @@ def processar_folha(ficha, args):
     print("  chroma %s %s (tol %d): %d px de fundo recortados, %d da chave "
           "preservados dentro da folha, %d com spill"
           % (familia, rgb_para_hex(chave), tol, removidos, marcados - removidos, spill))
+
+    # O vazio DENTRO de um tile está cercado de terra opaca, então a inundação
+    # pelas bordas não chega nele — e um tile de borda sairia idêntico a um de
+    # infill. Um segundo passe por distância de cor resolve: a chave #04fa02 é
+    # absurdamente distante dos verdes de terreno da Planície, então não há
+    # risco de a grama ser comida junto.
+    if ficha.get("recorte_global"):
+        pxg = im.load()
+        extra = 0
+        for i in range(im.width * im.height):
+            x, y = i % im.width, i // im.width
+            r, g, b, a = pxg[x, y]
+            if a and (r - chave[0]) ** 2 * 3 + (g - chave[1]) ** 2 * 6 + (b - chave[2]) ** 2 <= lim:
+                pxg[x, y] = (r, g, b, 0)
+                extra += 1
+        print("  recorte global: +%d px de vazio dentro dos tiles" % extra)
 
     # ── 2. fatiar ────────────────────────────────────────────────────────────
     layout = ficha["layout"]
@@ -848,19 +876,29 @@ def processar_folha(ficha, args):
     print("  rampa compartilhada: %d → %d cores próprias (orçamento %d)" % (antes, depois, k))
 
     # ── 4. classificação e validação ─────────────────────────────────────────
+    # O vazio interno do tile só sai no recorte global; sem ele, a fonte marcou
+    # a borda exposta com o tom mais claro da rampa e é por ele que classifico.
+    tem_vazio = any(p[3] == 0 for g in grades for linha in g for p in linha)
+    marcador = None
+    if not tem_vazio:
+        marcador = max({p[:3] for g in grades for linha in g for p in linha if p[3]},
+                       key=lambda c: c[0] * 3 + c[1] * 6 + c[2])
+        print("  sem vazio recortado: classificando pelo tom claro da borda (%s)"
+              % rgb_para_hex(marcador))
     problemas, alfas_totais, tiles = [], Counter(), []
     for i, g in enumerate(grades):
-        probs, alfas = validar(g, pal, False)
+        probs, alfas = validar(g, pal, False, exigir_transparente=False)
         for pr in probs:
             problemas.append("tile %d: %s" % (i, pr))
         alfas_totais += alfas
-        abertos = lados_abertos(g)
+        abertos, contagem = lados_abertos(g, marcador)
         bit = sum(b for nome, b in LADOS if nome in abertos)
         tiles.append({
             "indice": i,
             "linha": i // cols,
             "coluna": i % cols,
             "lados_abertos": abertos,
+            "marcador_por_borda": {n: contagem[n] for n, _ in LADOS},
             "codigo_autotile": bit,
             "pixels_opacos": alfas.get(255, 0),
             "preenchimento": round(alfas.get(255, 0) / (tw * th), 3),
@@ -948,6 +986,8 @@ def processar_folha(ficha, args):
         },
         "autotile": {
             "codigo": "bit 1=norte, 2=leste, 4=sul, 8=oeste; 0 = infill",
+            "modo": "transparência" if tem_vazio else "marcador de borda clara",
+            "marcador": None if tem_vazio else rgb_para_hex(marcador),
             "casos_cobertos": len(tabela),
             "tabela": {str(c): v for c, v in sorted(tabela.items())},
             "tiles": tiles,

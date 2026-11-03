@@ -6,24 +6,24 @@
   "fonte": {
     "arquivo": "art-source/f0c/base-fonte.png",
     "dimensoes": [
-      1936,
-      1200
+      1280,
+      800
     ],
-    "sha256": "31fd76a0bed49421b62b018c2947666ee52d4222b6ecb33015f8ac9bae66ebc3"
+    "sha256": "1a619c7339679f41b0428e8187fea24a3fb3a6dadf055f591aaa2c0b4f62c5fc"
   },
   "chroma": {
     "familia": "verde",
-    "cor_medida": "#13a606",
-    "tolerancia": 117,
+    "cor_medida": "#04fa02",
+    "tolerancia": 40,
     "metodo": "inundação pelas bordas",
-    "pixels_recortados": 933769,
-    "pixels_com_spill_corrigido": 116901
+    "pixels_recortados": 266882,
+    "pixels_com_spill_corrigido": 44545
   },
   "caixa_conteudo": [
-    24,
-    15,
-    1912,
-    1177
+    32,
+    26,
+    1249,
+    774
   ],
   "folha": {
     "colunas": 8,
@@ -34,8 +34,8 @@
       8
     ],
     "celula_na_fonte": [
-      236,
-      232
+      152,
+      150
     ],
     "celulas_vazias": 0,
     "metodo_reducao": "média de área"
@@ -46,23 +46,23 @@
       40
     ],
     "arquivo": "docs/arte/piloto-f0c/base-nativo.png",
-    "sha256": "8e75567a5ff7fcbe06b5d5553af9427e25c59b8281745daea8434c81082694e9",
+    "sha256": "2a7c30771b047a676d033365b19956bbe6a8663d5c40b75aa7737085f9f1f27c",
     "cores_usadas": [
+      "#2f4a2e",
       "#3a5030",
+      "#5a8547",
       "#2c3d24",
-      "#28351d",
-      "#4c6640",
-      "#5a8547"
+      "#42663a"
     ],
     "contagem_de_cores": 5,
-    "pixels_opacos": 2040,
-    "pixels_transparentes": 520
+    "pixels_opacos": 2560,
+    "pixels_transparentes": 0
   },
   "quantizacao": {
     "paleta": "docs/arte/paleta-celeste.json",
     "compartilhado": false,
     "rampa": {
-      "antes": 10,
+      "antes": 9,
       "depois": 5,
       "orcamento": 5,
       "compartilhada_entre_tiles": true
@@ -74,11 +74,13 @@
     "cores_na_paleta": 19,
     "dither": false,
     "metrica": "dr^2*3 + dg^2*6 + db^2 (igual ao quantizeToPalette do runtime)",
-    "pixels_ajustados": 2040
+    "pixels_ajustados": 2560
   },
   "autotile": {
     "codigo": "bit 1=norte, 2=leste, 4=sul, 8=oeste; 0 = infill",
-    "casos_cobertos": 8,
+    "modo": "marcador de borda clara",
+    "marcador": "#5a8547",
+    "casos_cobertos": 9,
     "tabela": {
       "0": [
         0,
@@ -88,53 +90,55 @@
         4,
         5,
         6,
-        7,
-        16,
-        18,
-        19,
-        20,
-        22
+        7
       ],
       "1": [
-        17,
+        8,
+        9,
+        10,
+        11
+      ],
+      "2": [
+        20,
         21,
+        22,
         23,
-        24,
-        25,
-        26,
-        32,
-        33,
-        34,
-        35,
-        36,
-        37,
-        38,
-        39
+        29
       ],
       "3": [
-        27,
-        29,
-        31
+        32,
+        37,
+        38
       ],
-      "5": [
-        12
-      ],
-      "9": [
-        28,
-        30
-      ],
-      "10": [
-        10,
+      "4": [
+        12,
+        13,
         14,
         15
       ],
-      "11": [
-        11,
-        13
+      "8": [
+        16,
+        17,
+        18,
+        19,
+        27
       ],
-      "13": [
-        8,
-        9
+      "9": [
+        26,
+        35,
+        39
+      ],
+      "14": [
+        28
+      ],
+      "15": [
+        24,
+        25,
+        30,
+        31,
+        33,
+        34,
+        36
       ]
     },
     "tiles": [
@@ -143,319 +147,503 @@
         "linha": 0,
         "coluna": 0,
         "lados_abertos": [],
+        "marcador_por_borda": {
+          "norte": 0,
+          "leste": 0,
+          "sul": 0,
+          "oeste": 0
+        },
         "codigo_autotile": 0,
-        "pixels_opacos": 62,
-        "preenchimento": 0.969
+        "pixels_opacos": 64,
+        "preenchimento": 1.0
       },
       {
         "indice": 1,
         "linha": 0,
         "coluna": 1,
         "lados_abertos": [],
+        "marcador_por_borda": {
+          "norte": 0,
+          "leste": 0,
+          "sul": 0,
+          "oeste": 0
+        },
         "codigo_autotile": 0,
-        "pixels_opacos": 63,
-        "preenchimento": 0.984
+        "pixels_opacos": 64,
+        "preenchimento": 1.0
       },
       {
         "indice": 2,
         "linha": 0,
         "coluna": 2,
         "lados_abertos": [],
+        "marcador_por_borda": {
+          "norte": 0,
+          "leste": 0,
+          "sul": 0,
+          "oeste": 0
+        },
         "codigo_autotile": 0,
-        "pixels_opacos": 62,
-        "preenchimento": 0.969
+        "pixels_opacos": 64,
+        "preenchimento": 1.0
       },
       {
         "indice": 3,
         "linha": 0,
         "coluna": 3,
         "lados_abertos": [],
+        "marcador_por_borda": {
+          "norte": 0,
+          "leste": 0,
+          "sul": 0,
+          "oeste": 0
+        },
         "codigo_autotile": 0,
-        "pixels_opacos": 62,
-        "preenchimento": 0.969
+        "pixels_opacos": 64,
+        "preenchimento": 1.0
       },
       {
         "indice": 4,
         "linha": 0,
         "coluna": 4,
         "lados_abertos": [],
+        "marcador_por_borda": {
+          "norte": 0,
+          "leste": 0,
+          "sul": 0,
+          "oeste": 0
+        },
         "codigo_autotile": 0,
-        "pixels_opacos": 61,
-        "preenchimento": 0.953
+        "pixels_opacos": 64,
+        "preenchimento": 1.0
       },
       {
         "indice": 5,
         "linha": 0,
         "coluna": 5,
         "lados_abertos": [],
+        "marcador_por_borda": {
+          "norte": 0,
+          "leste": 0,
+          "sul": 0,
+          "oeste": 0
+        },
         "codigo_autotile": 0,
-        "pixels_opacos": 63,
-        "preenchimento": 0.984
+        "pixels_opacos": 64,
+        "preenchimento": 1.0
       },
       {
         "indice": 6,
         "linha": 0,
         "coluna": 6,
         "lados_abertos": [],
+        "marcador_por_borda": {
+          "norte": 0,
+          "leste": 0,
+          "sul": 0,
+          "oeste": 0
+        },
         "codigo_autotile": 0,
-        "pixels_opacos": 62,
-        "preenchimento": 0.969
+        "pixels_opacos": 64,
+        "preenchimento": 1.0
       },
       {
         "indice": 7,
         "linha": 0,
         "coluna": 7,
         "lados_abertos": [],
+        "marcador_por_borda": {
+          "norte": 0,
+          "leste": 0,
+          "sul": 0,
+          "oeste": 0
+        },
         "codigo_autotile": 0,
-        "pixels_opacos": 60,
-        "preenchimento": 0.938
+        "pixels_opacos": 64,
+        "preenchimento": 1.0
       },
       {
         "indice": 8,
         "linha": 1,
         "coluna": 0,
         "lados_abertos": [
-          "norte",
-          "sul",
-          "oeste"
+          "norte"
         ],
-        "codigo_autotile": 13,
-        "pixels_opacos": 31,
-        "preenchimento": 0.484
+        "marcador_por_borda": {
+          "norte": 8,
+          "leste": 2,
+          "sul": 0,
+          "oeste": 2
+        },
+        "codigo_autotile": 1,
+        "pixels_opacos": 64,
+        "preenchimento": 1.0
       },
       {
         "indice": 9,
         "linha": 1,
         "coluna": 1,
         "lados_abertos": [
-          "norte",
-          "sul",
-          "oeste"
+          "norte"
         ],
-        "codigo_autotile": 13,
-        "pixels_opacos": 31,
-        "preenchimento": 0.484
+        "marcador_por_borda": {
+          "norte": 8,
+          "leste": 2,
+          "sul": 0,
+          "oeste": 2
+        },
+        "codigo_autotile": 1,
+        "pixels_opacos": 64,
+        "preenchimento": 1.0
       },
       {
         "indice": 10,
         "linha": 1,
         "coluna": 2,
         "lados_abertos": [
-          "leste",
-          "oeste"
+          "norte"
         ],
-        "codigo_autotile": 10,
-        "pixels_opacos": 39,
-        "preenchimento": 0.609
+        "marcador_por_borda": {
+          "norte": 8,
+          "leste": 2,
+          "sul": 0,
+          "oeste": 2
+        },
+        "codigo_autotile": 1,
+        "pixels_opacos": 64,
+        "preenchimento": 1.0
       },
       {
         "indice": 11,
         "linha": 1,
         "coluna": 3,
         "lados_abertos": [
-          "norte",
-          "leste",
-          "oeste"
+          "norte"
         ],
-        "codigo_autotile": 11,
-        "pixels_opacos": 38,
-        "preenchimento": 0.594
+        "marcador_por_borda": {
+          "norte": 8,
+          "leste": 2,
+          "sul": 0,
+          "oeste": 2
+        },
+        "codigo_autotile": 1,
+        "pixels_opacos": 64,
+        "preenchimento": 1.0
       },
       {
         "indice": 12,
         "linha": 1,
         "coluna": 4,
         "lados_abertos": [
-          "norte",
           "sul"
         ],
-        "codigo_autotile": 5,
-        "pixels_opacos": 32,
-        "preenchimento": 0.5
+        "marcador_por_borda": {
+          "norte": 0,
+          "leste": 2,
+          "sul": 8,
+          "oeste": 2
+        },
+        "codigo_autotile": 4,
+        "pixels_opacos": 64,
+        "preenchimento": 1.0
       },
       {
         "indice": 13,
         "linha": 1,
         "coluna": 5,
         "lados_abertos": [
-          "norte",
-          "leste",
-          "oeste"
+          "sul"
         ],
-        "codigo_autotile": 11,
-        "pixels_opacos": 38,
-        "preenchimento": 0.594
+        "marcador_por_borda": {
+          "norte": 0,
+          "leste": 2,
+          "sul": 8,
+          "oeste": 2
+        },
+        "codigo_autotile": 4,
+        "pixels_opacos": 64,
+        "preenchimento": 1.0
       },
       {
         "indice": 14,
         "linha": 1,
         "coluna": 6,
         "lados_abertos": [
-          "leste",
-          "oeste"
+          "sul"
         ],
-        "codigo_autotile": 10,
-        "pixels_opacos": 39,
-        "preenchimento": 0.609
+        "marcador_por_borda": {
+          "norte": 0,
+          "leste": 2,
+          "sul": 8,
+          "oeste": 2
+        },
+        "codigo_autotile": 4,
+        "pixels_opacos": 64,
+        "preenchimento": 1.0
       },
       {
         "indice": 15,
         "linha": 1,
         "coluna": 7,
         "lados_abertos": [
-          "leste",
-          "oeste"
+          "sul"
         ],
-        "codigo_autotile": 10,
-        "pixels_opacos": 39,
-        "preenchimento": 0.609
+        "marcador_por_borda": {
+          "norte": 0,
+          "leste": 2,
+          "sul": 8,
+          "oeste": 2
+        },
+        "codigo_autotile": 4,
+        "pixels_opacos": 64,
+        "preenchimento": 1.0
       },
       {
         "indice": 16,
         "linha": 2,
         "coluna": 0,
-        "lados_abertos": [],
-        "codigo_autotile": 0,
-        "pixels_opacos": 62,
-        "preenchimento": 0.969
+        "lados_abertos": [
+          "oeste"
+        ],
+        "marcador_por_borda": {
+          "norte": 2,
+          "leste": 0,
+          "sul": 2,
+          "oeste": 8
+        },
+        "codigo_autotile": 8,
+        "pixels_opacos": 64,
+        "preenchimento": 1.0
       },
       {
         "indice": 17,
         "linha": 2,
         "coluna": 1,
         "lados_abertos": [
-          "norte"
+          "oeste"
         ],
-        "codigo_autotile": 1,
-        "pixels_opacos": 53,
-        "preenchimento": 0.828
+        "marcador_por_borda": {
+          "norte": 2,
+          "leste": 0,
+          "sul": 2,
+          "oeste": 8
+        },
+        "codigo_autotile": 8,
+        "pixels_opacos": 64,
+        "preenchimento": 1.0
       },
       {
         "indice": 18,
         "linha": 2,
         "coluna": 2,
-        "lados_abertos": [],
-        "codigo_autotile": 0,
-        "pixels_opacos": 52,
-        "preenchimento": 0.812
+        "lados_abertos": [
+          "oeste"
+        ],
+        "marcador_por_borda": {
+          "norte": 2,
+          "leste": 0,
+          "sul": 2,
+          "oeste": 8
+        },
+        "codigo_autotile": 8,
+        "pixels_opacos": 64,
+        "preenchimento": 1.0
       },
       {
         "indice": 19,
         "linha": 2,
         "coluna": 3,
-        "lados_abertos": [],
-        "codigo_autotile": 0,
-        "pixels_opacos": 54,
-        "preenchimento": 0.844
+        "lados_abertos": [
+          "oeste"
+        ],
+        "marcador_por_borda": {
+          "norte": 2,
+          "leste": 0,
+          "sul": 2,
+          "oeste": 8
+        },
+        "codigo_autotile": 8,
+        "pixels_opacos": 64,
+        "preenchimento": 1.0
       },
       {
         "indice": 20,
         "linha": 2,
         "coluna": 4,
-        "lados_abertos": [],
-        "codigo_autotile": 0,
-        "pixels_opacos": 52,
-        "preenchimento": 0.812
+        "lados_abertos": [
+          "leste"
+        ],
+        "marcador_por_borda": {
+          "norte": 2,
+          "leste": 8,
+          "sul": 2,
+          "oeste": 0
+        },
+        "codigo_autotile": 2,
+        "pixels_opacos": 64,
+        "preenchimento": 1.0
       },
       {
         "indice": 21,
         "linha": 2,
         "coluna": 5,
         "lados_abertos": [
-          "norte"
+          "leste"
         ],
-        "codigo_autotile": 1,
-        "pixels_opacos": 53,
-        "preenchimento": 0.828
+        "marcador_por_borda": {
+          "norte": 2,
+          "leste": 8,
+          "sul": 2,
+          "oeste": 0
+        },
+        "codigo_autotile": 2,
+        "pixels_opacos": 64,
+        "preenchimento": 1.0
       },
       {
         "indice": 22,
         "linha": 2,
         "coluna": 6,
-        "lados_abertos": [],
-        "codigo_autotile": 0,
-        "pixels_opacos": 53,
-        "preenchimento": 0.828
+        "lados_abertos": [
+          "leste"
+        ],
+        "marcador_por_borda": {
+          "norte": 2,
+          "leste": 8,
+          "sul": 2,
+          "oeste": 0
+        },
+        "codigo_autotile": 2,
+        "pixels_opacos": 64,
+        "preenchimento": 1.0
       },
       {
         "indice": 23,
         "linha": 2,
         "coluna": 7,
         "lados_abertos": [
-          "norte"
+          "leste"
         ],
-        "codigo_autotile": 1,
-        "pixels_opacos": 57,
-        "preenchimento": 0.891
+        "marcador_por_borda": {
+          "norte": 2,
+          "leste": 8,
+          "sul": 2,
+          "oeste": 0
+        },
+        "codigo_autotile": 2,
+        "pixels_opacos": 64,
+        "preenchimento": 1.0
       },
       {
         "indice": 24,
         "linha": 3,
         "coluna": 0,
         "lados_abertos": [
-          "norte"
+          "norte",
+          "leste",
+          "sul",
+          "oeste"
         ],
-        "codigo_autotile": 1,
-        "pixels_opacos": 53,
-        "preenchimento": 0.828
+        "marcador_por_borda": {
+          "norte": 2,
+          "leste": 3,
+          "sul": 2,
+          "oeste": 3
+        },
+        "codigo_autotile": 15,
+        "pixels_opacos": 64,
+        "preenchimento": 1.0
       },
       {
         "indice": 25,
         "linha": 3,
         "coluna": 1,
         "lados_abertos": [
-          "norte"
+          "norte",
+          "leste",
+          "sul",
+          "oeste"
         ],
-        "codigo_autotile": 1,
-        "pixels_opacos": 50,
-        "preenchimento": 0.781
+        "marcador_por_borda": {
+          "norte": 2,
+          "leste": 3,
+          "sul": 2,
+          "oeste": 3
+        },
+        "codigo_autotile": 15,
+        "pixels_opacos": 64,
+        "preenchimento": 1.0
       },
       {
         "indice": 26,
         "linha": 3,
         "coluna": 2,
         "lados_abertos": [
-          "norte"
+          "norte",
+          "oeste"
         ],
-        "codigo_autotile": 1,
-        "pixels_opacos": 47,
-        "preenchimento": 0.734
+        "marcador_por_borda": {
+          "norte": 2,
+          "leste": 0,
+          "sul": 0,
+          "oeste": 3
+        },
+        "codigo_autotile": 9,
+        "pixels_opacos": 64,
+        "preenchimento": 1.0
       },
       {
         "indice": 27,
         "linha": 3,
         "coluna": 3,
         "lados_abertos": [
-          "norte",
-          "leste"
+          "oeste"
         ],
-        "codigo_autotile": 3,
-        "pixels_opacos": 46,
-        "preenchimento": 0.719
+        "marcador_por_borda": {
+          "norte": 2,
+          "leste": 0,
+          "sul": 3,
+          "oeste": 6
+        },
+        "codigo_autotile": 8,
+        "pixels_opacos": 64,
+        "preenchimento": 1.0
       },
       {
         "indice": 28,
         "linha": 3,
         "coluna": 4,
         "lados_abertos": [
-          "norte",
+          "leste",
+          "sul",
           "oeste"
         ],
-        "codigo_autotile": 9,
-        "pixels_opacos": 49,
-        "preenchimento": 0.766
+        "marcador_por_borda": {
+          "norte": 0,
+          "leste": 3,
+          "sul": 4,
+          "oeste": 3
+        },
+        "codigo_autotile": 14,
+        "pixels_opacos": 64,
+        "preenchimento": 1.0
       },
       {
         "indice": 29,
         "linha": 3,
         "coluna": 5,
         "lados_abertos": [
-          "norte",
           "leste"
         ],
-        "codigo_autotile": 3,
-        "pixels_opacos": 47,
-        "preenchimento": 0.734
+        "marcador_por_borda": {
+          "norte": 2,
+          "leste": 5,
+          "sul": 2,
+          "oeste": 0
+        },
+        "codigo_autotile": 2,
+        "pixels_opacos": 64,
+        "preenchimento": 1.0
       },
       {
         "indice": 30,
@@ -463,11 +651,19 @@
         "coluna": 6,
         "lados_abertos": [
           "norte",
+          "leste",
+          "sul",
           "oeste"
         ],
-        "codigo_autotile": 9,
-        "pixels_opacos": 49,
-        "preenchimento": 0.766
+        "marcador_por_borda": {
+          "norte": 2,
+          "leste": 3,
+          "sul": 3,
+          "oeste": 3
+        },
+        "codigo_autotile": 15,
+        "pixels_opacos": 64,
+        "preenchimento": 1.0
       },
       {
         "indice": 31,
@@ -475,99 +671,169 @@
         "coluna": 7,
         "lados_abertos": [
           "norte",
-          "leste"
+          "leste",
+          "sul",
+          "oeste"
         ],
-        "codigo_autotile": 3,
-        "pixels_opacos": 42,
-        "preenchimento": 0.656
+        "marcador_por_borda": {
+          "norte": 2,
+          "leste": 3,
+          "sul": 3,
+          "oeste": 3
+        },
+        "codigo_autotile": 15,
+        "pixels_opacos": 64,
+        "preenchimento": 1.0
       },
       {
         "indice": 32,
         "linha": 4,
         "coluna": 0,
         "lados_abertos": [
-          "norte"
+          "norte",
+          "leste"
         ],
-        "codigo_autotile": 1,
-        "pixels_opacos": 56,
-        "preenchimento": 0.875
+        "marcador_por_borda": {
+          "norte": 2,
+          "leste": 3,
+          "sul": 0,
+          "oeste": 0
+        },
+        "codigo_autotile": 3,
+        "pixels_opacos": 64,
+        "preenchimento": 1.0
       },
       {
         "indice": 33,
         "linha": 4,
         "coluna": 1,
         "lados_abertos": [
-          "norte"
+          "norte",
+          "leste",
+          "sul",
+          "oeste"
         ],
-        "codigo_autotile": 1,
-        "pixels_opacos": 54,
-        "preenchimento": 0.844
+        "marcador_por_borda": {
+          "norte": 2,
+          "leste": 3,
+          "sul": 2,
+          "oeste": 3
+        },
+        "codigo_autotile": 15,
+        "pixels_opacos": 64,
+        "preenchimento": 1.0
       },
       {
         "indice": 34,
         "linha": 4,
         "coluna": 2,
         "lados_abertos": [
-          "norte"
+          "norte",
+          "leste",
+          "sul",
+          "oeste"
         ],
-        "codigo_autotile": 1,
-        "pixels_opacos": 54,
-        "preenchimento": 0.844
+        "marcador_por_borda": {
+          "norte": 2,
+          "leste": 3,
+          "sul": 2,
+          "oeste": 3
+        },
+        "codigo_autotile": 15,
+        "pixels_opacos": 64,
+        "preenchimento": 1.0
       },
       {
         "indice": 35,
         "linha": 4,
         "coluna": 3,
         "lados_abertos": [
-          "norte"
+          "norte",
+          "oeste"
         ],
-        "codigo_autotile": 1,
-        "pixels_opacos": 55,
-        "preenchimento": 0.859
+        "marcador_por_borda": {
+          "norte": 2,
+          "leste": 0,
+          "sul": 0,
+          "oeste": 3
+        },
+        "codigo_autotile": 9,
+        "pixels_opacos": 64,
+        "preenchimento": 1.0
       },
       {
         "indice": 36,
         "linha": 4,
         "coluna": 4,
         "lados_abertos": [
-          "norte"
+          "norte",
+          "leste",
+          "sul",
+          "oeste"
         ],
-        "codigo_autotile": 1,
-        "pixels_opacos": 55,
-        "preenchimento": 0.859
+        "marcador_por_borda": {
+          "norte": 2,
+          "leste": 3,
+          "sul": 2,
+          "oeste": 3
+        },
+        "codigo_autotile": 15,
+        "pixels_opacos": 64,
+        "preenchimento": 1.0
       },
       {
         "indice": 37,
         "linha": 4,
         "coluna": 5,
         "lados_abertos": [
-          "norte"
+          "norte",
+          "leste"
         ],
-        "codigo_autotile": 1,
-        "pixels_opacos": 55,
-        "preenchimento": 0.859
+        "marcador_por_borda": {
+          "norte": 2,
+          "leste": 3,
+          "sul": 0,
+          "oeste": 0
+        },
+        "codigo_autotile": 3,
+        "pixels_opacos": 64,
+        "preenchimento": 1.0
       },
       {
         "indice": 38,
         "linha": 4,
         "coluna": 6,
         "lados_abertos": [
-          "norte"
+          "norte",
+          "leste"
         ],
-        "codigo_autotile": 1,
-        "pixels_opacos": 55,
-        "preenchimento": 0.859
+        "marcador_por_borda": {
+          "norte": 2,
+          "leste": 3,
+          "sul": 0,
+          "oeste": 0
+        },
+        "codigo_autotile": 3,
+        "pixels_opacos": 64,
+        "preenchimento": 1.0
       },
       {
         "indice": 39,
         "linha": 4,
         "coluna": 7,
         "lados_abertos": [
-          "norte"
+          "norte",
+          "oeste"
         ],
-        "codigo_autotile": 1,
-        "pixels_opacos": 55,
-        "preenchimento": 0.859
+        "marcador_por_borda": {
+          "norte": 3,
+          "leste": 0,
+          "sul": 0,
+          "oeste": 3
+        },
+        "codigo_autotile": 9,
+        "pixels_opacos": 64,
+        "preenchimento": 1.0
       }
     ]
   },

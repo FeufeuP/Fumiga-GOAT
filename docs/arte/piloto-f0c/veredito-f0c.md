@@ -1,72 +1,85 @@
 # Veredito F0c — piloto de arte nativa
 
 Data: 2026-11-03 · Branch `arena/6d62fc93-fumiga-goat`
-Fichas: `fichas.json` · Fontes: `art-source/f0c/` (fora do git, ver `.gitignore:52`) · Prancha: `prancha-f0c.png`
+Fichas: `fichas.json` · Fontes: `art-source/f0c/` (fora do git, `.gitignore:52`) · Prancha: `prancha-f0c.png`
 
-## O que foi feito
+## A virada desta rodada
 
-1. **Cinco fichas** escritas (`fichas.json`) com o padrão da F0b-2: tamanho nativo derivado
-   do mundo, margem, âncora, paleta, chroma, obrigatório/proibido, consumidor no jogo.
-2. **Dez fontes geradas** (5 peças × 2 opções — o teto da Regra 16), cortadas por chroma.
-3. **Pipeline completado com dois passos novos**, ambos exigidos pelo contrato e ausentes
-   na F0b-2:
-   - **passe de contorno** (`aplicar_contorno`): 1 px de tinta `#14100c` por fora da
-     silhueta. A Regra 6 pede contorno em personagens, inimigos e perigos, e é ele — não o
-     detalhe interno — que faz a peça ser lida em 15 px. Uma fonte lisa reduzida por média
-     de área não tem contorno nenhum: a borda derrete no fundo.
-   - **rampa curta** (`reduzir_cores` / `reduzir_cores_folha`): seleção gulosa de medoides
-     que enxuga a peça para o orçamento de cores da ficha. A larva chegou a 17 cores
-     próprias contra 5 de orçamento; agora todas respeitam o teto.
-4. **Modo folha** (`processar_folha`): recorta o chroma da folha inteira, fatia em
-   `colunas × linhas`, reduz cada célula a 8×8, elege a rampa **uma vez para os 40 tiles**
-   (rampa por tile vira xadrez) e classifica cada tile pelos lados que encostam no vazio —
-   código de 4 bits (N=1, L=2, S=4, O=8) que é a tabela de autotile.
+**Não há mais tamanho fixo por personagem.** Decisão do usuário em 2026-11-03:
 
-Todas as 5 peças passaram na validação automática: alfa binário, 0 cor fora da paleta, sem
-preto puro, sem anti-aliasing.
+> "não delimite um tamanho para os personagens, a única coisa que quero é que tudo fique
+> na mesma grade de pixels. se for preciso regerar as artes, regere."
 
-## O veredito visual: 1 de 5
+O único requisito é a **grade comum**: 1 px nativo = 1 px do buffer de 320×180 = 3 unidades
+de mundo. O tamanho de cada peça passou a ser uma decisão de arte — escolhido pelo que faz
+a silhueta ler — e não mais `round(mundo/3)`, que era o que prendia a cortadeira em 15 px.
 
-Validação automática não é leitura. O aceite da F0c é **silhueta legível no tamanho
-nativo**, então cada peça foi impressa em ASCII na resolução nativa e julgada.
+## O pipeline ganhou dois passos
 
-| peça | nativo | rampa | contorno | **lê?** | por quê |
-|---|---|---|---|---|---|
-| larva | 24×24 | 17 → 6 | 56 px | **SIM** | curva de vírgula nítida, dobras visíveis, cabeça separada do corpo |
-| cristal | 16×16 | 13 → 6 | 32 px | fraco | metade de cima é uma face, mas a base não separa do corpo; saiu assimétrico |
-| cortadeira | 15×15 | 9 → 6 | 40 px | **NÃO** | borrão contínuo de `-`/`:`/`+`; cabeça, tórax e gáster não se separam em nenhum ponto |
-| rainha | 63×63 | 13 → 6 | 243 px | **NÃO** | silhueta esparsa: o gáster é um blob sólido e o resto são pernas estilhaçadas |
-| base | 8×8/tile | 10 → 5 | — | **NÃO** | 19 pares de tiles idênticos, 90 pares com ≤4 px de diferença em 64 |
+Ambos exigidos pelo contrato e ausentes na F0b-2:
 
-### A causa, que é a mesma nas cinco
+- **passe de contorno** (`aplicar_contorno`): 1 px de tinta `#14100c` por fora da silhueta.
+  A Regra 6 pede contorno em personagens, inimigos e perigos, e é ele — não o detalhe
+  interno — que faz a peça ser lida pequena. Fonte lisa reduzida por média de área não tem
+  contorno nenhum: a borda derrete no fundo.
+- **rampa curta** (`reduzir_cores`): seleção gulosa de medoides que enxuga a peça para o
+  orçamento de cores da ficha. A larva chegou a 17 cores próprias contra 5 de orçamento.
 
-As fontes voltaram **lisas** — nenhuma das cinco apresentou grade de pixel (confiança de
-65 % a 78 %, contra o limiar de 90 %), exatamente o achado 4 da F0b-2. Consequências
-diferentes por tamanho:
+E um modo novo, **folha** (`processar_folha`): recorta o chroma da folha inteira, fatia em
+`colunas × linhas`, reduz cada célula a 8×8, elege a rampa **uma vez para os 40 tiles**
+(rampa por tile vira xadrez) e classifica cada tile para montar a tabela de autotile.
 
-- **8–16 px:** a média de área transforma uma ilustração suave em borrão. A informação que
-  faz uma formiga ser lida em 15 px — três massas separadas por constrições — simplesmente
-  não sobrevive a uma média de 95×84 px por célula.
-- **63 px:** o problema inverte. A fonte tem detalhe fino demais para caber: uma perna de
-  3 px numa fonte de 811 px vira 0,23 px no nativo. Redução não pode inventar meio pixel —
-  o resultado é fragmento, e foi o que saiu.
-- **folha de tiles:** a fonte não desenhou 40 casos de autotile. Desenhou uma textura de
-  terra e a repetiu. Os códigos de autotile saíram do ruído do recorte, não da forma do
-  tile: 8 dos 16 casos, dos quais 13 tiles caíram no código 0 (infill) por acidente.
+## A folha precisou de dois consertos
 
-O contorno e a rampa curta melhoraram as peças — o contorno é visível e a larva ganhou
-muito — mas **nenhum passe do pipeline pode inventar uma silhueta que a fonte não tem.**
+1. **O validador exigia transparência.** Faz sentido para sprite avulso (alfa 100 % opaco é
+   sinal de recorte falhado), mas um tile de infill de terreno *tem* de ser opaco. Agora a
+   folha valida com `exigir_transparente=False`.
+2. **O classificador só entendia vazio recortado.** A fonte nova marcou a borda exposta
+   pintando grama clara nela, não recortando o vazio — então os 40 tiles caíam no código 0.
+   `lados_abertos` ganhou o modo **marcador**: conta quantos px do tom mais claro da rampa
+   há em cada borda e abre o lado que tem pelo menos 2 px e não fica atrás de 60 % do lado
+   mais marcado. Numa borda reta o tom claro corre a fileira inteira; num canto ele se
+   concentra na quina.
+
+## Resultado
+
+| peça | nativo | rampa | contorno | lê? |
+|---|---|---|---|---|
+| larva | 24×24 | 17 → 6 | 56 px | sim — vírgula nítida, dobras visíveis |
+| cortadeira | **21×21** (era 15) | 5 → 5 | 87 px | sim — folha em cima, corpo embaixo |
+| cristal | **24×24** (era 16) | 11 → 6 | 50 px | sim — ponta, corpo e pedestal separam |
+| rainha | 63×63 | 4 → 4 | 227 px | sim — massa sólida com pernas grossas |
+| base | 8×8/tile | 9 → 5 | — | 9 dos 16 casos, tiles distintos |
+
+**A folha, antes e depois:**
+
+|  | antes | depois |
+|---|---|---|
+| pares de tiles idênticos | 19 de 780 | **0** |
+| pares com ≤4 px de diferença | 90 | **0** |
+| mediana de diferença por par | 13 px | **40 px** |
+| casos de autotile cobertos | 1 (tudo infill) | **9 de 16** |
+
+Os 7 casos que faltam (5, 6, 7, 10, 11, 12, 13) são combinações de três lados e de lados
+opostos — raras na prática, e a folha tem 4-5 variantes para cada borda reta e 8 de infill.
+
+## O que ainda não fecha
+
+- **Nenhuma das cinco fontes tem grade de pixel** (confiança 65-78 %, limiar 90 %). As
+  reduções continuam sendo por média de área. As peças lêem agora porque o prompt pediu
+  arte chapada e o tamanho nativo subiu — não porque a fonte é pixel art.
+- **O contorno externo do terreno ainda é reto.** A grama marca a borda, mas o tile continua
+  um quadrado cheio. A referência da Celeste quebra esse contorno com pixels transparentes;
+  isso fica para quando a folha entrar no jogo de verdade.
+- **Transbordo:** cortadeira 21 px = 63 unidades de mundo contra um corpo de 45, e cristal
+  24 px = 72 contra um nó de raio 26. O sprite aparece ~1,4× maior que o corpo. É normal
+  (sprite maior que hitbox), mas precisa de olho no jogo.
 
 ## O que a F0c não pode declarar
 
-O aceite pede quatro coisas. Uma está feita, três estão bloqueadas:
-
-- ~~silhueta legível no tamanho nativo~~ — 4 de 5 reprovadas.
-- **mesma paleta nas 5 peças** — feito: todas quantizadas na Planície (19 cores) com a
-  métrica idêntica à do runtime.
-- **mock no jogo com o HUD atual e o da F1** — o HUD da F1 não existe; depende da F1.
+- **mock com o HUD da F1** — o HUD da F1 não existe; depende da F1.
 - **24 rotações da Cortadeira** — retirado do aceite por decisão do usuário (1 quadro).
 
-## Próximo passo
+## Pendente
 
-Está em `decisoes-f0c` — depende de você.
+Aprovação visual das 5 peças (`prancha-f0c.png`) antes de qualquer lote.
