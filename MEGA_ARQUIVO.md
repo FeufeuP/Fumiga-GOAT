@@ -38,6 +38,20 @@ repetições, datas, branches, checklists e notas históricas foram preservados.
 > Divergências permanecem visíveis, sem apagar conteúdo. O que efetivamente
 > funciona deve ser confirmado por testes e inspeção no preview.
 
+## Publicação da entrega narrativa — PR #84 (2026-11-04)
+
+**Pull request aberto para revisão:** [PR #84 — docs: consolida a lore completa do jogo](https://github.com/FeufeuP/Fumiga-GOAT/pull/84).
+
+- **Base:** `main`.
+- **Branch de origem:** `arena/43b5ade5-fumiga-goat`.
+- **Commit inicial da entrega:** `3fd0d5d` (`docs: consolida a lore completa do jogo`).
+- **Conteúdo publicado:** `LORE.md`, sincronização e registros deste MEGA, e `docs/lore/diagrama-lore-completa-2026-11-04.png`.
+- **Estado:** aberto, sem merge e sem exclusão da branch.
+- **Validação anterior à abertura:** `npm run test:quick` passou novamente com **34/34 testes** e `git diff --check` ficou limpo.
+- **Escopo preservado:** nenhuma alteração de código de produção ou gameplay; a saga da Pálida permanece narrativa completa, sem anunciar um sétimo mapa jogável.
+
+---
+
 ## Registro — Documento final somente de lore (2026-11-04)
 
 **Status: documento reescrito, sincronizado e verificado.** Pedido do usuário: “crie um documento
@@ -80,7 +94,7 @@ ninho, inimigos, castas e pós-final indicadas pelo `GUIA.md`.
   Capturas de `MEMORY` e `RUN-MAPA1` também foram inspecionadas visualmente. Isso não equivale a
   uma campanha completa nem a teste em aparelho físico.
 - Preview mantido em `0.0.0.0:8000`: `/game/`, `/game/mobile/`, `/LORE.md` e o diagrama responderam
-  HTTP 200. `git diff --check` limpo. Nenhum commit, push, PR ou publicação foi realizado.
+  HTTP 200. `git diff --check` limpo. A publicação posterior está registrada acima, no PR #84.
 
 **Referência estrutural:** a narrativa ambiental e fragmentada de *Hollow Knight* orientou apenas a
 organização das memórias e da ambientação, sem importar fatos ou cânone externo:
