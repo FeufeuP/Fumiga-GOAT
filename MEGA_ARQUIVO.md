@@ -48,7 +48,10 @@ repetições, datas, branches, checklists e notas históricas foram preservados.
 - **Conteúdo publicado:** `LORE.md`, sincronização e registros deste MEGA, e `docs/lore/diagrama-lore-completa-2026-11-04.png`.
 - **Estado:** aberto, sem merge e sem exclusão da branch.
 - **Validação anterior à abertura:** `npm run test:quick` passou novamente com **34/34 testes** e `git diff --check` ficou limpo.
-- **Escopo preservado:** nenhuma alteração de código de produção ou gameplay; a saga da Pálida permanece narrativa completa, sem anunciar um sétimo mapa jogável.
+- **Registro da publicação:** commit `8d274c7` acrescentou esta seção depois que a URL do PR existiu; `node game/test/docs.mjs` voltou a aprovar os seis documentos e 148.373 bytes originais.
+- **Validação completa posterior:** `npm test` executou **42 testes: 40 passaram e 2 falharam**. `mobile` falhou em `game/test/mobile.mjs:274` (`afastar os dedos aproxima o zoom`); `regressions-browser` falhou na asserção `scanlines alinhadas`, com retângulo vazio em vez de `640×360`. O teste mobile isolado reproduziu a mesma falha.
+- **CI do commit `8d274c7`:** a [execução 41819190395](https://github.com/FeufeuP/Fumiga-GOAT/actions/runs/41819190395) reproduziu as duas falhas. No job de navegador, a inspeção completa, o HUD orgânico e as verificações de papel/fontes passaram antes da falha de `regressions-browser`. Essas falhas não foram ocultadas nem contornadas com mudanças fora do escopo documental.
+- **Escopo preservado:** nenhuma alteração de código de produção, testes ou gameplay; a saga da Pálida permanece narrativa completa, sem anunciar um sétimo mapa jogável.
 
 ---
 
